@@ -49,6 +49,8 @@ SUBROUTINE run_pwscf ( exit_status )
   USE qmmm,             ONLY : qmmm_initialization, qmmm_shutdown, &
                                qmmm_update_positions, qmmm_update_forces
   USE qexsd_module,     ONLY:   qexsd_set_status
+  USE input_parameters, ONLY : use_sirius, sirius_cfg
+  USE sirius
   !
   IMPLICIT NONE
   INTEGER, INTENT(OUT) :: exit_status
@@ -57,7 +59,13 @@ SUBROUTINE run_pwscf ( exit_status )
   !! checks if first string is contained in the second
   INTEGER :: idone 
   ! counter of electronic + ionic steps done in this run
+  LOGICAL(C_BOOL) :: flg
   !
+  if (use_sirius) then
+     ! initialize platform-specific stuff (libraries, environment, etc.)
+     flg = .false.
+     CALL sirius_initialize(call_mpi_init=flg)
+  endif
   exit_status = 0
   IF ( ionode ) WRITE( unit = stdout, FMT = 9010 ) ntypx, npk, lmaxx
   !
@@ -91,6 +99,10 @@ SUBROUTINE run_pwscf ( exit_status )
   CALL check_stop_init()
   !
   CALL setup ()
+  !
+  if (use_sirius) then
+    call setup_sirius
+  endif
   !
   CALL qmmm_update_positions()
   !
@@ -210,6 +222,10 @@ SUBROUTINE run_pwscf ( exit_status )
      !
      ethr = 1.0D-6
      !
+     if (use_sirius) then
+       call sirius_clear
+       call setup_sirius
+     endif
   END DO main_loop
   !
   ! ... save final data file
@@ -220,6 +236,11 @@ SUBROUTINE run_pwscf ( exit_status )
   CALL qmmm_shutdown()
   !
   IF ( .NOT. conv_ions )  exit_status =  3
+  if (use_sirius) then
+     call sirius_print_timers
+     call sirius_clear
+     call sirius_finalize(call_mpi_fin=flg)
+  endif
   RETURN
   !
 9010 FORMAT( /,5X,'Current dimensions of program PWSCF are:', &
