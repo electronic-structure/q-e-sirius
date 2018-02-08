@@ -252,13 +252,15 @@ end subroutine get_density_from_sirius
 !end subroutine put_density_to_sirius
 
 subroutine put_potential_to_sirius
-  use scf,                  only : v, vltot, vxc
+  use scf,                  only : v, vltot
   use gvect,                only : mill, ngm
   use mp_bands,             only : intra_bgrp_comm
   use lsda_mod,             only : nspin
   use noncollin_module,     only : nspin_mag
+  USE wavefunctions_module,  ONLY: psic
 
   use fft_base,             only : dfftp
+  USE fft_interfaces,       ONLY : fwfft
   use uspp,                 only : deeq
   use uspp_param,           only : nhm
   use paw_variables,        only : okpaw
@@ -344,45 +346,45 @@ subroutine put_potential_to_sirius
 !  call sirius_set_pw_coeffs(c_str("vxc"), vxcg(1), ngm, mill(1, 1), intra_bgrp_comm)
 !  deallocate(vxcg)
 !
-!  ! update D-operator matrix
-!  call sirius_generate_d_operator_matrix()
-!  if (okpaw) then
-!    allocate(deeq_tmp(nhm, nhm))
-!    ! get D-operator matrix
-!    do ia = 1, nat
-!      do is = 1, nspin
-!        call sirius_get_d_operator_matrix(ia, is, deeq(1, 1, ia, is), nhm)
-!      enddo
-!      if (nspin.eq.2) then
-!        do i = 1, nhm
-!          do j = 1, nhm
-!            d1 = deeq(i, j, ia, 1)
-!            d2 = deeq(i, j, ia, 2)
-!            deeq(i, j, ia, 1) = d1 + d2
-!            deeq(i, j, ia, 2) = d1 - d2
-!          enddo
-!        enddo
-!      endif
-!      ! convert to Ry
-!      deeq(:, :, ia, :) = deeq(:, :, ia, :) * 2
-!    enddo
-!    call add_paw_to_deeq(deeq)
-!    do ia = 1, nat
-!      do is = 1, nspin
-!        if (nspin.eq.2.and.is.eq.1) then
-!          deeq_tmp(:, :) = 0.5 * (deeq(:, :, ia, 1) + deeq(:, :, ia, 2)) / 2 ! convert to Ha
-!        endif
-!        if (nspin.eq.2.and.is.eq.2) then
-!          deeq_tmp(:, :) = 0.5 * (deeq(:, :, ia, 1) - deeq(:, :, ia, 2)) / 2 ! convert to Ha
-!        endif
-!        if (nspin.eq.1.or.nspin.eq.4) then
-!          deeq_tmp(:, :) = deeq(:, :, ia, is) / 2 ! convert to Ha
-!        endif
-!        call sirius_set_d_operator_matrix(ia, is, deeq_tmp(1, 1), nhm)
-!      enddo
-!    enddo
-!    deallocate(deeq_tmp)
-!  endif
+  ! update D-operator matrix
+  !call sirius_generate_d_operator_matrix()
+  if (okpaw) then
+    allocate(deeq_tmp(nhm, nhm))
+    !! get D-operator matrix
+    !do ia = 1, nat
+    !  do is = 1, nspin
+    !    call sirius_get_d_operator_matrix(ia, is, deeq(1, 1, ia, is), nhm)
+    !  enddo
+    !  if (nspin.eq.2) then
+    !    do i = 1, nhm
+    !      do j = 1, nhm
+    !        d1 = deeq(i, j, ia, 1)
+    !        d2 = deeq(i, j, ia, 2)
+    !        deeq(i, j, ia, 1) = d1 + d2
+    !        deeq(i, j, ia, 2) = d1 - d2
+    !      enddo
+    !    enddo
+    !  endif
+    !  ! convert to Ry
+    !  deeq(:, :, ia, :) = deeq(:, :, ia, :) * 2
+    !enddo
+    !call add_paw_to_deeq(deeq)
+    do ia = 1, nat
+      do is = 1, nspin
+        if (nspin.eq.2.and.is.eq.1) then
+          deeq_tmp(:, :) = 0.5 * (deeq(:, :, ia, 1) + deeq(:, :, ia, 2)) / 2 ! convert to Ha
+        endif
+        if (nspin.eq.2.and.is.eq.2) then
+          deeq_tmp(:, :) = 0.5 * (deeq(:, :, ia, 1) - deeq(:, :, ia, 2)) / 2 ! convert to Ha
+        endif
+        if (nspin.eq.1.or.nspin.eq.4) then
+          deeq_tmp(:, :) = deeq(:, :, ia, is) / 2 ! convert to Ha
+        endif
+        call sirius_set_d_operator_matrix(ia, is, deeq_tmp(1, 1), nhm)
+      enddo
+    enddo
+    deallocate(deeq_tmp)
+  endif
 
 end subroutine put_potential_to_sirius
 

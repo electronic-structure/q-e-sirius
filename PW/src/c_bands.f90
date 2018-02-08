@@ -19,7 +19,7 @@ SUBROUTINE c_bands( iter )
   USE io_global,            ONLY : stdout
   USE io_files,             ONLY : iunhub, iunwfc, nwordwfc, nwordwfcU
   USE buffers,              ONLY : get_buffer, save_buffer, close_buffer
-  USE klist,                ONLY : nkstot, nks, xk, ngk, igk_k
+  USE klist,                ONLY : nkstot, nks, xk, ngk, igk_k, kset_id
   USE uspp,                 ONLY : vkb, nkb
   USE gvect,                ONLY : g
   USE wvfct,                ONLY : et, nbnd, npwx, current_k
@@ -31,6 +31,8 @@ SUBROUTINE c_bands( iter )
   USE mp_pools,             ONLY : npool, kunit, inter_pool_comm
   USE mp,                   ONLY : mp_sum
   USE check_stop,           ONLY : check_stop_now
+  USE input_parameters,     ONLY : use_sirius
+  USE sirius
   !
   IMPLICIT NONE
   !
@@ -45,6 +47,16 @@ SUBROUTINE c_bands( iter )
   ! ik_: k-point already done in a previous run
   LOGICAL :: exst
 !------------------------------------------------------------------------
+  if (use_sirius) then
+    call put_potential_to_sirius
+    if (iter.eq.1) then
+      ! initialize subspace before calling "sirius_find_eigen_states"
+      call sirius_initialize_subspace(kset_id)
+    endif
+    call sirius_set_iterative_solver_tolerance(ethr / 2)
+    ! solve H\spi = E\psi
+    call sirius_find_eigen_states(kset_id, precompute=1)
+  endif
 
   !
   CALL start_clock( 'c_bands' ); !write (*,*) 'start c_bands' ; FLUSH(6)

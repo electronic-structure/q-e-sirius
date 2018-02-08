@@ -187,7 +187,7 @@ subroutine setup_sirius()
     ! set the atomic radial functions
     do iwf = 1, upf(iat)%nwfc
       l = upf(iat)%lchi(iwf)
-      call sirius_add_atom_type_ps_atomic_wf(c_str(atm(iat)), l, upf(iat)%chi(1, iwf), msh(iat))
+      call sirius_add_atom_type_ps_atomic_wf(c_str(atm(iat)), l, upf(iat)%chi(1, iwf), 0.d0, msh(iat))
     enddo
 
     allocate(dion(upf(iat)%nbeta, upf(iat)%nbeta))
@@ -279,6 +279,8 @@ subroutine setup_sirius()
 
   ! initialize global variables/indices/arrays/etc. of the simulation
   call sirius_initialize_simulation_context()
+
+  call sirius_create_potential
     
   !! get number of g-vectors of the dense fft grid
   !call sirius_get_num_gvec(num_gvec)
@@ -339,7 +341,16 @@ subroutine setup_sirius()
   endif
   call sirius_create_kset(num_kp, xk_tmp(1, 1), wk_tmp(1), 1, kset_id)
 
+  ! create Density class
+  call sirius_create_density()
+   
+  ! create Potential class
+  call sirius_create_potential()
+  
+  ! create ground-state class
+  call sirius_create_ground_state(kset_id)
 
+  ! create ground-state class
   ! create a set of k-points
   ! WARNING: k-points must be provided in fractional coordinates of the reciprocal lattice
   !if (nspin.eq.2) then
