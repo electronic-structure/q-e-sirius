@@ -49,8 +49,7 @@ SUBROUTINE run_pwscf ( exit_status )
   USE qmmm,             ONLY : qmmm_initialization, qmmm_shutdown, &
                                qmmm_update_positions, qmmm_update_forces
   USE qexsd_module,     ONLY:   qexsd_set_status
-  USE input_parameters, ONLY : use_sirius, sirius_cfg
-  USE sirius
+  use mod_sirius
   !
   IMPLICIT NONE
   INTEGER, INTENT(OUT) :: exit_status

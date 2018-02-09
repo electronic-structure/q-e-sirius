@@ -231,6 +231,7 @@ c_bands.o : g_psi_mod.o
 c_bands.o : ldaU.o
 c_bands.o : pwcom.o
 c_bands.o : scf_mod.o
+c_bands.o : mod_sirius.o
 c_phase_field.o : ../../Modules/becmod.o
 c_phase_field.o : ../../Modules/cell_base.o
 c_phase_field.o : ../../Modules/constants.o
@@ -2326,3 +2327,4 @@ xdm_dispersion.o : ../../UtilXlib/mp.o
 xdm_dispersion.o : paw_onecenter.o
 xdm_dispersion.o : pwcom.o
 xdm_dispersion.o : scf_mod.o
+mod_sirius.o : esm.o

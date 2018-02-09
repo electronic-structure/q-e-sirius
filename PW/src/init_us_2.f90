@@ -29,6 +29,7 @@ subroutine init_us_2 (npw_, igk_, q_, vkb_)
   USE splinelib
   USE uspp,       ONLY : nkb, nhtol, nhtolm, indv
   USE uspp_param, ONLY : upf, lmaxkb, nhm, nh
+  USE mod_sirius
   !
   implicit none
   !
@@ -48,9 +49,22 @@ subroutine init_us_2 (npw_, igk_, q_, vkb_)
 
   real(DP), allocatable :: xdata(:)
   integer :: iq
+  integer, allocatable :: gvl(:,:)
+  real(8) vkl(3)
 
   !
   if (lmaxkb.lt.0) return
+  if (use_sirius) then
+    vkl = matmul(bg_inv, q_)
+    allocate(gvl(3, npw_))
+    do ig = 1, npw_
+      gvl(:,ig) = mill(:, igk_(ig))
+    enddo
+    call sirius_get_beta_projectors_by_kp(kset_id, vkl(1), npw_, gvl(1, 1), vkb_(1, 1), npwx, nkb)
+    deallocate(gvl)
+    return
+  endif
+
   call start_clock ('init_us_2')
   allocate (vkb1( npw_,nhm))    
   allocate (  sk( npw_))    

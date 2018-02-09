@@ -46,7 +46,6 @@ MODULE klist
        lxkcry=.false., &! if .TRUE.:k-pnts in cryst. basis accepted in input
        two_fermi_energies ! if .TRUE.: nelup and neldw set ef_up and ef_dw
                           ! separately
-  INTEGER :: kset_id
   !
 CONTAINS
   !

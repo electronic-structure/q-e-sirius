@@ -19,7 +19,7 @@ SUBROUTINE c_bands( iter )
   USE io_global,            ONLY : stdout
   USE io_files,             ONLY : iunhub, iunwfc, nwordwfc, nwordwfcU
   USE buffers,              ONLY : get_buffer, save_buffer, close_buffer
-  USE klist,                ONLY : nkstot, nks, xk, ngk, igk_k, kset_id
+  USE klist,                ONLY : nkstot, nks, xk, ngk, igk_k
   USE uspp,                 ONLY : vkb, nkb
   USE gvect,                ONLY : g
   USE wvfct,                ONLY : et, nbnd, npwx, current_k
@@ -31,8 +31,7 @@ SUBROUTINE c_bands( iter )
   USE mp_pools,             ONLY : npool, kunit, inter_pool_comm
   USE mp,                   ONLY : mp_sum
   USE check_stop,           ONLY : check_stop_now
-  USE input_parameters,     ONLY : use_sirius
-  USE sirius
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
