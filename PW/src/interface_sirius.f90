@@ -306,8 +306,8 @@ subroutine put_potential_to_sirius
       v%of_g(ig, 2) = 0.5 * (z1 - z2)
     enddo
     ! set effective potential and magnetization
-    call sirius_set_pw_coeffs(c_str("veff"),v%of_g(1, 1), ngm, mill(1, 1), intra_bgrp_comm)
-    call sirius_set_pw_coeffs(c_str("bz"),v%of_g(1, 2), ngm, mill(1, 1), intra_bgrp_comm)
+    call sirius_set_pw_coeffs(c_str("veff"), v%of_g(1, 1), ngm, mill(1, 1), intra_bgrp_comm)
+    call sirius_set_pw_coeffs(c_str("bz"),   v%of_g(1, 2), ngm, mill(1, 1), intra_bgrp_comm)
   endif
 
   if (nspin.eq.4) then
@@ -322,7 +322,7 @@ subroutine put_potential_to_sirius
       if (is.eq.3) label="by"
       if (is.eq.4) label="bz"
 
-      call sirius_set_pw_coeffs(c_str(label),v%of_g(1, is), ngm, mill(1, 1), intra_bgrp_comm)
+      call sirius_set_pw_coeffs(c_str(label), v%of_g(1, is), ngm, mill(1, 1), intra_bgrp_comm)
     enddo
   endif
 
@@ -348,27 +348,27 @@ subroutine put_potential_to_sirius
 !
   ! update D-operator matrix
   !call sirius_generate_d_operator_matrix()
-  if (okpaw) then
+  !if (okpaw) then
     allocate(deeq_tmp(nhm, nhm))
-    !! get D-operator matrix
-    !do ia = 1, nat
-    !  do is = 1, nspin
-    !    call sirius_get_d_operator_matrix(ia, is, deeq(1, 1, ia, is), nhm)
-    !  enddo
-    !  if (nspin.eq.2) then
-    !    do i = 1, nhm
-    !      do j = 1, nhm
-    !        d1 = deeq(i, j, ia, 1)
-    !        d2 = deeq(i, j, ia, 2)
-    !        deeq(i, j, ia, 1) = d1 + d2
-    !        deeq(i, j, ia, 2) = d1 - d2
-    !      enddo
-    !    enddo
-    !  endif
-    !  ! convert to Ry
-    !  deeq(:, :, ia, :) = deeq(:, :, ia, :) * 2
-    !enddo
-    !call add_paw_to_deeq(deeq)
+  !  !! get D-operator matrix
+  !  !do ia = 1, nat
+  !  !  do is = 1, nspin
+  !  !    call sirius_get_d_operator_matrix(ia, is, deeq(1, 1, ia, is), nhm)
+  !  !  enddo
+  !  !  if (nspin.eq.2) then
+  !  !    do i = 1, nhm
+  !  !      do j = 1, nhm
+  !  !        d1 = deeq(i, j, ia, 1)
+  !  !        d2 = deeq(i, j, ia, 2)
+  !  !        deeq(i, j, ia, 1) = d1 + d2
+  !  !        deeq(i, j, ia, 2) = d1 - d2
+  !  !      enddo
+  !  !    enddo
+  !  !  endif
+  !  !  ! convert to Ry
+  !  !  deeq(:, :, ia, :) = deeq(:, :, ia, :) * 2
+  !  !enddo
+  !  !call add_paw_to_deeq(deeq)
     do ia = 1, nat
       do is = 1, nspin
         if (nspin.eq.2.and.is.eq.1) then
@@ -384,7 +384,7 @@ subroutine put_potential_to_sirius
       enddo
     enddo
     deallocate(deeq_tmp)
-  endif
+  !endif
 
 end subroutine put_potential_to_sirius
 
