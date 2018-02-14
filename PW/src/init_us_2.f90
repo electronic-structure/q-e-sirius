@@ -54,7 +54,7 @@ subroutine init_us_2 (npw_, igk_, q_, vkb_)
 
   !
   if (lmaxkb.lt.0) return
-  if (use_sirius) then
+  if (use_sirius.and.use_sirius_beta_projectors) then
     vkl = matmul(bg_inv, q_)
     allocate(gvl(3, npw_))
     do ig = 1, npw_
