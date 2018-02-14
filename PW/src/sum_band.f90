@@ -77,13 +77,31 @@ SUBROUTINE sum_band()
     ! get band energies
     call get_band_energies_from_sirius
   endif
+
   CALL weights ( )
-  !if (use_sirius) then
-  !  call put_band_occupancies_to_sirius
-  !  call sirius_generate_density(kset_id)
-  !  call get_density_from_sirius
-  !  return
-  !endif
+
+  if (use_sirius.and.use_sirius_density) then
+    call put_band_occupancies_to_sirius
+    call sirius_generate_density(kset_id)
+    call get_density_from_sirius
+    call sirius_get_evalsum(eband)
+    eband = eband * 2 ! convert to Ry
+
+    if (okvan.and.okpaw)  then
+      call paw_symmetrize(rho%bec)
+    endif
+
+    call sym_rho(nspin_mag, rho%of_g)
+    do is = 1, nspin_mag
+       psic(:) = ( 0.d0, 0.d0 )
+       psic(dfftp%nl(:)) = rho%of_g(:,is)
+       if ( gamma_only ) psic(dfftp%nlm(:)) = conjg( rho%of_g(:,is) )
+       call invfft ('Rho', psic, dfftp)
+       rho%of_r(:,is) = psic(:)
+    enddo
+
+    return
+  endif
 
   !
   IF (one_atom_occupations) CALL new_evc()

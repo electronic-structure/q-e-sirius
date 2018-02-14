@@ -4,8 +4,9 @@ use sirius
 implicit none
 
 logical :: use_sirius_beta_projectors = .true.
-logical :: use_sirius_q_operator = .true.
-logical :: use_sirius_ks_solver = .true.
+logical :: use_sirius_q_operator      = .true.
+logical :: use_sirius_ks_solver       = .true.
+logical :: use_sirius_density         = .false.
 
 ! inverse of the reciprocal lattice vectors matrix
 real(8) bg_inv(3,3)
