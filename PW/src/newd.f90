@@ -33,6 +33,7 @@ SUBROUTINE newq(vr,deeq,skip_vltot)
   USE mp_bands,             ONLY : intra_bgrp_comm
   USE mp_pools,             ONLY : inter_pool_comm
   USE mp,                   ONLY : mp_sum
+  use mod_sirius
   !
   IMPLICIT NONE
   !
@@ -121,7 +122,13 @@ SUBROUTINE newq(vr,deeq,skip_vltot)
         DO ih = 1, nh(nt)
            DO jh = ih, nh(nt)
               ijh = ijh + 1
-              CALL qvan2 ( ngm_l, ih, jh, nt, qmod, qgm(1,ijh), ylmk0 )
+              if (use_sirius.and.use_sirius_q_operator.and.allocated(atom_type(nt)%qpw)) then
+                do ig=1,ngm_l
+                  qgm(ig, ijh) = atom_type(nt)%qpw(ig+ngm_s-1, ijh)
+                enddo
+              else
+                CALL qvan2 ( ngm_l, ih, jh, nt, qmod, qgm(1,ijh), ylmk0 )
+              endif
            END DO
         END DO
         !
