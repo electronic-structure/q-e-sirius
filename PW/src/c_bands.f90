@@ -21,7 +21,7 @@ SUBROUTINE c_bands( iter )
   USE buffers,              ONLY : get_buffer, save_buffer, close_buffer
   USE klist,                ONLY : nkstot, nks, xk, ngk, igk_k
   USE uspp,                 ONLY : vkb, nkb
-  USE gvect,                ONLY : g
+  USE gvect,                ONLY : g, mill
   USE wvfct,                ONLY : et, nbnd, npwx, current_k
   USE control_flags,        ONLY : ethr, isolve, restart
   USE ldaU,                 ONLY : lda_plus_u, U_projection, wfcU
@@ -31,6 +31,7 @@ SUBROUTINE c_bands( iter )
   USE mp_pools,             ONLY : npool, kunit, inter_pool_comm
   USE mp,                   ONLY : mp_sum
   USE check_stop,           ONLY : check_stop_now
+  USE noncollin_module,     ONLY : npol
   USE mod_sirius
   !
   IMPLICIT NONE
@@ -45,9 +46,13 @@ SUBROUTINE c_bands( iter )
   ! ik : counter on k points
   ! ik_: k-point already done in a previous run
   LOGICAL :: exst
+  integer, external :: global_kpoint_index
+  integer, allocatable :: gvl(:,:)
+  integer ig
 !------------------------------------------------------------------------
-  if (use_sirius) then
+  if (use_sirius.and.use_sirius_ks_solver) then
     call put_potential_to_sirius
+    !call put_q_operator_matrix_to_sirius
     if (iter.eq.1) then
       ! initialize subspace before calling "sirius_find_eigen_states"
       call sirius_initialize_subspace(kset_id)
@@ -55,6 +60,20 @@ SUBROUTINE c_bands( iter )
     call sirius_set_iterative_solver_tolerance(ethr / 2)
     ! solve H\spi = E\psi
     call sirius_find_eigen_states(kset_id, precompute=1)
+    allocate(gvl(3, npwx))
+    do ik = 1, nks
+      do ig = 1, ngk(ik)
+        gvl(:,ig) = mill(:, igk_k(ig, ik))
+      enddo
+      !
+      ik_ = global_kpoint_index(nkstot, ik)
+      call sirius_get_wave_functions(kset_id, ik_, ngk(ik), gvl(1, 1), evc(1, 1), npwx * npol) 
+      !
+      IF ( nks > 1 .OR. lelfield ) &
+        CALL save_buffer ( evc, nwordwfc, iunwfc, ik )
+    enddo
+    deallocate(gvl)
+    return
   endif
 
   !
