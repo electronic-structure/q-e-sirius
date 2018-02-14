@@ -85,6 +85,7 @@ addusdens.o : ../../Modules/recvec.o
 addusdens.o : ../../Modules/uspp.o
 addusdens.o : ../../UtilXlib/mp.o
 addusdens.o : realus.o
+addusdens.o : mod_sirius.o
 addusforce.o : ../../FFTXlib/fft_interfaces.o
 addusforce.o : ../../Modules/cell_base.o
 addusforce.o : ../../Modules/control_flags.o
@@ -886,6 +887,7 @@ init_us_2.o : ../../Modules/recvec.o
 init_us_2.o : ../../Modules/splinelib.o
 init_us_2.o : ../../Modules/uspp.o
 init_us_2.o : pwcom.o
+init_us_2.o : mod_sirius.o
 init_us_b0.o : ../../Modules/atom.o
 init_us_b0.o : ../../Modules/constants.o
 init_us_b0.o : ../../Modules/gvecw.o
@@ -1156,6 +1158,7 @@ newd.o : ldaU.o
 newd.o : pwcom.o
 newd.o : realus.o
 newd.o : scf_mod.o
+newd.o : mod_sirius.o
 non_scf.o : ../../Modules/check_stop.o
 non_scf.o : ../../Modules/control_flags.o
 non_scf.o : ../../Modules/io_files.o
