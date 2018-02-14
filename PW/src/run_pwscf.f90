@@ -106,6 +106,9 @@ SUBROUTINE run_pwscf ( exit_status )
   CALL qmmm_update_positions()
   !
   CALL init_run()
+  if (use_sirius) then
+    call get_q_operator_from_sirius
+  endif
   !
   ! ... dry run: code will stop here if called with exit file present
   ! ... useful for a quick and automated way to check input data
@@ -224,6 +227,7 @@ SUBROUTINE run_pwscf ( exit_status )
      if (use_sirius) then
        call sirius_clear
        call setup_sirius
+       call get_q_operator_from_sirius
      endif
   END DO main_loop
   !
