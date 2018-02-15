@@ -43,6 +43,7 @@ subroutine init_us_1
   USE paw_variables,ONLY : okpaw
   USE mp_bands,     ONLY : intra_bgrp_comm
   USE mp,           ONLY : mp_sum
+  use mod_sirius
   !
   implicit none
   !
@@ -393,7 +394,11 @@ subroutine init_us_1
            do ir = 1, upf(nt)%kkbeta
               aux (ir) = upf(nt)%beta (ir, nb) * besr (ir) * rgrid(nt)%r(ir)
            enddo
-           call simpson (upf(nt)%kkbeta, aux, rgrid(nt)%rab, vqint)
+           if (use_sirius.and.use_sirius_radial_integration_beta) then
+             call sirius_integrate(0, upf(nt)%kkbeta, rgrid(nt)%r(1), aux(1), vqint)
+           else
+             call simpson (upf(nt)%kkbeta, aux, rgrid(nt)%rab, vqint)
+           endif
            tab (iq, nb, nt) = vqint * pref
         enddo
      enddo
