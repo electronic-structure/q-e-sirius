@@ -33,6 +33,7 @@ SUBROUTINE force_us( forcenl )
   USE mp_pools,             ONLY : inter_pool_comm
   USE mp_bands,             ONLY : intra_bgrp_comm
   USE mp,                   ONLY : mp_sum, mp_get_comm_null
+  use mod_sirius
   !
   IMPLICIT NONE
   !
@@ -43,6 +44,13 @@ SUBROUTINE force_us( forcenl )
   REAL(DP), ALLOCATABLE :: deff(:,:,:)
   TYPE(bec_type) :: dbecp                 ! contains <dbeta|psi>
   INTEGER    :: npw, ik, ipol, ig, jkb
+  !
+  if (use_sirius.and.use_sirius_ks_solver) then
+    call sirius_get_forces(c_str("usnl"), forcenl(1, 1))
+    forcenl = forcenl * 2 ! convert to Ry
+    call symvector(nat, forcenl)
+    return
+  endif
   !
   forcenl(:,:) = 0.D0
   !

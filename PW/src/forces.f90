@@ -57,6 +57,7 @@ SUBROUTINE forces()
   USE tsvdw_module,  ONLY : FtsvdW
   USE esm,           ONLY : do_comp_esm, esm_bc, esm_force_ew
   USE qmmm,          ONLY : qmmm_mode
+  use mod_sirius
   !
   IMPLICIT NONE
   !
@@ -89,6 +90,9 @@ SUBROUTINE forces()
   REAL(DP) :: stress_dftd3(3,3)
   !
   !
+  if (use_sirius) then
+    call sirius_calculate_forces(kset_id)
+  endif
   CALL start_clock( 'forces' )
   !
   ALLOCATE( forcenl( 3, nat ), forcelc( 3, nat ), forcecc( 3, nat ), &
