@@ -8,6 +8,7 @@ logical :: use_sirius_beta_projectors         = .true.
 logical :: use_sirius_q_operator              = .true.
 logical :: use_sirius_ks_solver               = .true.
 logical :: use_sirius_density                 = .true.
+logical :: use_sirius_density_matrix          = .true.
 
 ! inverse of the reciprocal lattice vectors matrix
 real(8) bg_inv(3,3)
@@ -113,6 +114,7 @@ use cell_base, only : omega
 use symm_base, only : nosym
 use spin_orb,  only : lspinorb
 use esm,       only : esm_local, esm_bc, do_comp_esm
+use mp_diag, only : nproc_ortho
 implicit none
 !
 integer :: dims(3), i, ia, iat, rank, ierr, ijv, ik, li, lj, mb, nb, j, l,&
@@ -120,7 +122,7 @@ integer :: dims(3), i, ia, iat, rank, ierr, ijv, ik, li, lj, mb, nb, j, l,&
 real(8) :: a1(3), a2(3), a3(3), vlat(3, 3), vlat_inv(3, 3), v1(3), v2(3), tmp
 real(8), allocatable :: dion(:, :), qij(:,:,:), vloc(:), wk_tmp(:), xk_tmp(:,:)
 integer, allocatable :: nk_loc(:)
-integer :: ih, jh, ijh, ig
+integer :: ih, jh, ijh, lmax_beta
 logical(C_BOOL) bool_var
 
 if (allocated(atom_type)) then
@@ -148,17 +150,18 @@ call sirius_set_gamma_point(bool_var)
 num_ranks_k = nproc_image / npool
 i = sqrt(dble(num_ranks_k) + 1d-10)
 if (i * i .ne. num_ranks_k) then
-  stop ("not a square MPI grid")
-endif
-
-if (i.eq.1) then
-  dims(1) = 1
+  !stop ("not a square MPI grid")
+  dims(1) = num_ranks_k
   dims(2) = 1
-else
+else 
   dims(1) = i
   dims(2) = i
 endif
 call sirius_set_mpi_grid_dims(2, dims(1))
+
+!write(*,*)'i=',i
+!write(*,*)'num_ranks_k=',num_ranks_k
+!write(*,*)'nproc_ortho=',nproc_ortho
 
 ! set |G| cutoff of the dense FFT grid
 ! convert from G^2/2 Rydbergs to |G| in [a.u.^-1]
@@ -202,11 +205,11 @@ call mpi_comm_rank(inter_pool_comm, rank, ierr)
 ! initialize atom types
 do iat = 1, nsp
 
-  !! get lmax_beta for this atom type
-  !lmax_beta = -1
-  !do i = 1, upf(iat)%nbeta
-  !  lmax_beta = max(lmax_beta, upf(iat)%lll(i))
-  !enddo
+  ! get lmax_beta for this atom type
+  lmax_beta = -1
+  do i = 1, upf(iat)%nbeta
+    lmax_beta = max(lmax_beta, upf(iat)%lll(i))
+  enddo
   !if (upf(iat)%lmax .ne. lmax_beta) then
   !  write(*,*)
   !  write(*,'("Mismatch between lmax_beta and upf%lmax for atom type", I2)')iat
@@ -246,7 +249,8 @@ do iat = 1, nsp
 
   ! set radial function of augmentation charge
   if (upf(iat)%tvanp) then
-    do l = 0, upf(iat)%nqlc - 1
+    !do l = 0, upf(iat)%nqlc - 1
+    do l = 0, 2 * lmax_beta
       do i = 0, upf(iat)%nbeta - 1
         do j = i, upf(iat)%nbeta - 1
           ijv = j * (j + 1) / 2 + i + 1
@@ -546,6 +550,51 @@ subroutine put_band_occupancies_to_sirius
 
 end subroutine put_band_occupancies_to_sirius
 
+subroutine get_density_matrix_from_sirius
+use scf,        only : rho
+use ions_base,  only : nat, nsp, ityp
+use uspp_param, only : nhm, nh
+use lsda_mod,   only : nspin
+implicit none
+complex(8), allocatable :: dens_mtrx(:,:,:)
+integer iat, na, ijh, ih, jh, ispn
+! complex density matrix in SIRIUS has at maximum three components
+allocate(dens_mtrx(nhm, nhm, 3))
+do iat = 1, nsp
+  do na = 1, nat
+    if (ityp(na).eq.iat.and.allocated(rho%bec)) then
+      rho%bec(:, na, :) = 0.d0
+      call sirius_get_density_matrix(na, dens_mtrx(1, 1, 1), nhm)
+
+      ijh = 0
+      do ih = 1, nh(iat)
+        do jh = ih, nh(iat)
+          ijh = ijh + 1
+          if (nspin.le.2) then
+            do ispn = 1, nspin
+              rho%bec(ijh, na, ispn) = dreal(dens_mtrx(ih, jh, ispn))
+            enddo
+          endif
+          if (nspin.eq.4) then
+            rho%bec(ijh, na, 1) = dreal(dens_mtrx(ih, jh, 1) + dens_mtrx(ih, jh, 2))
+            rho%bec(ijh, na, 4) = dreal(dens_mtrx(ih, jh, 1) - dens_mtrx(ih, jh, 2))
+            rho%bec(ijh, na, 2) = 2.d0 * dreal(dens_mtrx(ih, jh, 3))
+            rho%bec(ijh, na, 3) = -2.d0 * dimag(dens_mtrx(ih, jh, 3))
+          endif
+          ! off-diagonal elements have a weight of 2
+          if (ih.ne.jh) then
+            do ispn = 1, nspin
+              rho%bec(ijh, na, ispn) = rho%bec(ijh, na, ispn) * 2.d0
+            enddo
+          endif
+        enddo
+      enddo
+    endif
+  enddo
+enddo
+deallocate(dens_mtrx)
+end subroutine get_density_matrix_from_sirius
+
 subroutine get_density_from_sirius
   !
   use scf,        only : rho
@@ -558,7 +607,6 @@ subroutine get_density_from_sirius
   !
   implicit none
   !
-  complex(8), allocatable :: dens_mtrx(:,:,:)
   integer iat, ig, ih, jh, ijh, na, ispn
   complex(8) z1, z2
   
@@ -581,41 +629,7 @@ subroutine get_density_from_sirius
     call sirius_get_pw_coeffs(c_str("magz"), rho%of_g(1, 4), ngm, mill(1, 1), intra_bgrp_comm)
   endif
   ! get density matrix
-  ! complex density matrix in SIRIUS has at maximum three components
-  allocate(dens_mtrx(nhm, nhm, 3))
-  do iat = 1, nsp
-    do na = 1, nat
-      if (ityp(na).eq.iat.and.allocated(rho%bec)) then
-        rho%bec(:, na, :) = 0.d0
-        call sirius_get_density_matrix(na, dens_mtrx(1, 1, 1), nhm)
-
-        ijh = 0
-        do ih = 1, nh(iat)
-          do jh = ih, nh(iat)
-            ijh = ijh + 1
-            if (nspin.le.2) then
-              do ispn = 1, nspin
-                rho%bec(ijh, na, ispn) = dreal(dens_mtrx(ih, jh, ispn))
-              enddo
-            endif
-            if (nspin.eq.4) then
-              rho%bec(ijh, na, 1) = dreal(dens_mtrx(ih, jh, 1) + dens_mtrx(ih, jh, 2))
-              rho%bec(ijh, na, 4) = dreal(dens_mtrx(ih, jh, 1) - dens_mtrx(ih, jh, 2))
-              rho%bec(ijh, na, 2) = 2.d0 * dreal(dens_mtrx(ih, jh, 3))
-              rho%bec(ijh, na, 3) = -2.d0 * dimag(dens_mtrx(ih, jh, 3))
-            endif
-            ! off-diagonal elements have a weight of 2
-            if (ih.ne.jh) then
-              do ispn = 1, nspin
-                rho%bec(ijh, na, ispn) = rho%bec(ijh, na, ispn) * 2.d0
-              enddo
-            endif
-          enddo
-        enddo
-      endif
-    enddo
-  enddo
-  deallocate(dens_mtrx)
+  call get_density_matrix_from_sirius
 end subroutine get_density_from_sirius
 
 !subroutine put_density_to_sirius
@@ -852,6 +866,36 @@ do iat = 1, nsp
 enddo
 
 end subroutine put_q_operator_matrix_to_sirius
+
+subroutine get_wave_functions_from_sirius
+use klist, only : nkstot, nks, ngk, igk_k
+use gvect, only : mill
+use buffers, only : save_buffer
+use io_files, only : iunwfc, nwordwfc
+use bp, only : lelfield
+use noncollin_module, only : npol
+use wvfct, only : npwx
+use wavefunctions_module, only : evc
+implicit none
+integer, external :: global_kpoint_index
+integer, allocatable :: gvl(:,:)
+integer ig, ik, ik_
+
+allocate(gvl(3, npwx))
+do ik = 1, nks
+  do ig = 1, ngk(ik)
+    gvl(:,ig) = mill(:, igk_k(ig, ik))
+  enddo
+  !
+  ik_ = global_kpoint_index(nkstot, ik)
+  call sirius_get_wave_functions(kset_id, ik_, ngk(ik), gvl(1, 1), evc(1, 1), npwx * npol) 
+  !
+  IF ( nks > 1 .OR. lelfield ) &
+    CALL save_buffer ( evc, nwordwfc, iunwfc, ik )
+enddo
+deallocate(gvl)
+
+end subroutine get_wave_functions_from_sirius
 
 !subroutine put_vltot_to_sirius
 !  use scf,       only : vltot
