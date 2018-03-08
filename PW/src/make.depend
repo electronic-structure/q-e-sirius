@@ -2331,3 +2331,4 @@ xdm_dispersion.o : paw_onecenter.o
 xdm_dispersion.o : pwcom.o
 xdm_dispersion.o : scf_mod.o
 mod_sirius.o : esm.o
+mod_sirius.o : bp_mod.o

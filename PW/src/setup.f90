@@ -93,6 +93,7 @@ SUBROUTINE setup()
   USE paw_variables,      ONLY : okpaw
   USE fcp_variables,      ONLY : lfcpopt, lfcpdyn
   USE extfield,           ONLY : gate
+  use mod_sirius
   !
   IMPLICIT NONE
   !
@@ -603,6 +604,15 @@ SUBROUTINE setup()
      CALL qes_reset_general_info ( geninfo_obj ) 
   END IF 
 #endif
+  if (use_sirius) then
+    num_kpoints = nkstot
+    if (allocated(kpoints)) deallocate(kpoints)
+    allocate(kpoints(3, num_kpoints))
+    kpoints(:, 1:num_kpoints) = xk(:, 1:num_kpoints)
+    if (allocated(wkpoints)) deallocate(wkpoints)
+    allocate(wkpoints(num_kpoints))
+    wkpoints(1:num_kpoints) = wk(1:num_kpoints)
+  endif
   !
   !
   IF ( lsda ) THEN
