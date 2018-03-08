@@ -108,7 +108,7 @@ use gvect, only : ngm_g, ecutrho, ngm, mill
 use gvecw, only : ecutwfc
 use control_flags, only : gamma_only
 use mp_pools, only : inter_pool_comm, npool
-use mp_images,        only : nproc_image
+use mp_images,        only : nproc_image, intra_image_comm
 use mp, only : mp_sum, mp_bcast
 use wvfct, only : nbnd
 use parallel_include
@@ -145,7 +145,7 @@ do iat = 1, nsp
 enddo
 
 ! create context of simulation
-call sirius_create_simulation_context(c_str(trim(adjustl(sirius_cfg))), c_str("pseudopotential"))
+call sirius_create_simulation_context(c_str(trim(adjustl(sirius_cfg))), c_str("pseudopotential"), intra_image_comm)
 
 ! set number of first-variational states
 call sirius_set_num_bands(nbnd)
