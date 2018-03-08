@@ -56,6 +56,7 @@ SUBROUTINE move_ions ( idone )
                                      fcp_relax, fcp_relax_crit
   USE klist,                  ONLY : nelec
   USE dfunct,                 only : newd
+  use mod_sirius
   !
   IMPLICIT NONE
   !
@@ -161,7 +162,9 @@ SUBROUTINE move_ions ( idone )
               !  with the correct g vectors corresponding to the relaxed
               !  cell.
               !
-              final_cell_calculation=.TRUE.
+              if (init_gvec_once) then
+                 final_cell_calculation=.TRUE.
+              endif
               CALL terminate_bfgs ( etot, epse, epsf, epsp, lmovecell, &
                                     stdout, tmp_dir )
               !
