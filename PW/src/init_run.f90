@@ -39,8 +39,13 @@ SUBROUTINE init_run()
 #if defined(__HDF5) && defined(__OLDXML)
   USE hdf5_qe, ONLY : initialize_hdf5
 #endif
+  use mod_sirius
+  USE control_flags,        ONLY : io_level
+  USE io_files,             ONLY : iunwfc, nwordwfc
+  USE buffers,              ONLY : open_buffer
   !
   IMPLICIT NONE
+  logical exst_file,exst_mem
   !
   !
   CALL start_clock( 'init_run' )
@@ -127,7 +132,11 @@ SUBROUTINE init_run()
   CALL initialize_hdf5()
 #endif 
   !
-  CALL wfcinit()
+  if (.not.(use_sirius.and.use_sirius_ks_solver)) then
+    CALL wfcinit()
+  else
+    CALL open_buffer( iunwfc, 'wfc', nwordwfc, io_level, exst_mem, exst_file )
+  endif
   !
   IF(use_wannier) CALL wannier_init()
   !

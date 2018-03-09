@@ -129,7 +129,9 @@ SUBROUTINE run_pwscf ( exit_status )
   !
   main_loop: DO idone = 1, nstep
      if (.not.init_gvec_once) then
-        CALL reset_starting_magnetization ( )
+        if (idone.gt.1) then
+          CALL reset_starting_magnetization ( )
+        endif
         CALL clean_pw( .FALSE. )
         CALL close_files(.TRUE.)
         dfftp%nr1=0; dfftp%nr2=0; dfftp%nr3=0
