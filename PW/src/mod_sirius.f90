@@ -392,12 +392,12 @@ call sirius_create_potential
 !  num_kp = nkstot
 !endif
 
-allocate(xk_tmp(3, num_kpoints))
-do i = 1, num_kpoints
-  xk_tmp(:, i) =  matmul(bg_inv, kpoints(:, i))
-enddo
-call sirius_create_kset(num_kpoints, xk_tmp(1, 1), wkpoints(1), 1, kset_id)
-deallocate(xk_tmp)
+!allocate(xk_tmp(3, num_kpoints))
+!do i = 1, num_kpoints
+!  xk_tmp(:, i) =  matmul(bg_inv, kpoints(:, i))
+!enddo
+call sirius_create_kset(num_kpoints, kpoints(1, 1), wkpoints(1), 1, kset_id)
+!deallocate(xk_tmp)
 
 ! create Density class
 call sirius_create_density()

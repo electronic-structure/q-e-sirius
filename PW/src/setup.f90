@@ -605,10 +605,15 @@ SUBROUTINE setup()
   END IF 
 #endif
   if (use_sirius) then
+    ! get inverse of the reciprocal lattice vectors
+    call invert_mtrx(bg, bg_inv)
     num_kpoints = nkstot
     if (allocated(kpoints)) deallocate(kpoints)
     allocate(kpoints(3, num_kpoints))
-    kpoints(:, 1:num_kpoints) = xk(:, 1:num_kpoints)
+    ! save the k-point list in lattice coordinates
+    do ik = 1, num_kpoints
+      kpoints(:, ik) =  matmul(bg_inv, xk(:, ik))
+    enddo
     if (allocated(wkpoints)) deallocate(wkpoints)
     allocate(wkpoints(num_kpoints))
     wkpoints(1:num_kpoints) = wk(1:num_kpoints)
