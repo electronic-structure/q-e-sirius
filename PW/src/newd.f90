@@ -53,6 +53,7 @@ SUBROUTINE newq(vr,deeq,skip_vltot)
   REAL(DP), ALLOCATABLE :: ylmk0(:,:), qmod(:), deeaux(:,:)
     ! spherical harmonics, modulus of G
   REAL(DP) :: fact
+  logical flg
   !
   IF ( gamma_only ) THEN
      fact = 2.0_dp
@@ -122,11 +123,16 @@ SUBROUTINE newq(vr,deeq,skip_vltot)
         DO ih = 1, nh(nt)
            DO jh = ih, nh(nt)
               ijh = ijh + 1
-              if (use_sirius.and.use_sirius_q_operator.and.allocated(atom_type(nt)%qpw)) then
-                do ig=1,ngm_l
-                  qgm(ig, ijh) = atom_type(nt)%qpw(ig+ngm_s-1, ijh)
-                enddo
-              else
+              flg = .true.
+              if (use_sirius.and.use_sirius_q_operator.and.allocated(atom_type)) then
+                if (allocated(atom_type(nt)%qpw)) then
+                  do ig=1,ngm_l
+                    qgm(ig, ijh) = atom_type(nt)%qpw(ig+ngm_s-1, ijh)
+                  enddo
+                  flg = .false.
+                endif
+              endif
+              if (flg) then
                 CALL qvan2 ( ngm_l, ih, jh, nt, qmod, qgm(1,ijh), ylmk0 )
               endif
            END DO

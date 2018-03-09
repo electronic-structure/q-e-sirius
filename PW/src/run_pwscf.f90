@@ -105,14 +105,13 @@ SUBROUTINE run_pwscf ( exit_status )
   !
   CALL setup ()
   !
-  if (use_sirius) then
-    call setup_sirius
-  endif
-  !
   CALL qmmm_update_positions()
   !
   if (init_gvec_once) then
     CALL init_run()
+    if (use_sirius) then
+      call setup_sirius
+    endif
     if (use_sirius.and.use_sirius_q_operator) then
       call get_q_operator_from_sirius
     endif
@@ -138,6 +137,9 @@ SUBROUTINE run_pwscf ( exit_status )
         dffts%nr1=0; dffts%nr2=0; dffts%nr3=0
         CALL fft_type_allocate (dffts, at, bg, gcutms,intra_bgrp_comm, nyfft=nyfft)
         CALL init_run()
+        if (use_sirius) then
+          call setup_sirius
+        endif
         if (use_sirius.and.use_sirius_q_operator) then
           call get_q_operator_from_sirius
         endif
@@ -256,9 +258,9 @@ SUBROUTINE run_pwscf ( exit_status )
      ethr = 1.0D-6
      !
      if (use_sirius) then
-       call sirius_clear
-       call setup_sirius
-       call get_q_operator_from_sirius
+       call clear_sirius
+       !call setup_sirius
+       !call get_q_operator_from_sirius
      endif
   END DO main_loop
   !

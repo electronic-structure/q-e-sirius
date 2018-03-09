@@ -3,12 +3,12 @@ use input_parameters, only : use_sirius, sirius_cfg
 use sirius
 implicit none
 
-logical :: use_sirius_radial_integration_beta = .true.
-logical :: use_sirius_beta_projectors         = .true.
+logical :: use_sirius_radial_integration_beta = .false.
+logical :: use_sirius_beta_projectors         = .false.
 logical :: use_sirius_q_operator              = .false.
 logical :: use_sirius_ks_solver               = .true.
 logical :: use_sirius_density                 = .true.
-logical :: use_sirius_density_matrix          = .true.
+logical :: use_sirius_density_matrix          = .false.
 ! initialize G-vectors once or at eeach step of ionic relaxation
 logical :: init_gvec_once                     = .false.
 
@@ -123,7 +123,7 @@ use esm,       only : esm_local, esm_bc, do_comp_esm
 use mp_diag, only : nproc_ortho
 implicit none
 !
-integer :: dims(3), i, ia, iat, rank, ierr, ijv, ik, li, lj, mb, nb, j, l,&
+integer :: dims(3), i, ia, iat, rank, ierr, ijv, li, lj, mb, nb, j, l,&
      ilast, ir, num_gvec, num_ranks_k, vt(3), iwf, num_kp
 real(8) :: a1(3), a2(3), a3(3), vlat(3, 3), vlat_inv(3, 3), v1(3), v2(3), tmp
 real(8), allocatable :: dion(:, :), qij(:,:,:), vloc(:), wk_tmp(:), xk_tmp(:,:)
@@ -131,12 +131,12 @@ integer, allocatable :: nk_loc(:)
 integer :: ih, jh, ijh, lmax_beta
 logical(C_BOOL) bool_var
 
-if (allocated(atom_type)) then
-  do iat = 1, nsp
-    if (allocated(atom_type(iat)%qpw)) deallocate(atom_type(iat)%qpw)
-  enddo
-  deallocate(atom_type)
-endif
+!if (allocated(atom_type)) then
+!  do iat = 1, nsp
+!    if (allocated(atom_type(iat)%qpw)) deallocate(atom_type(iat)%qpw)
+!  enddo
+!  deallocate(atom_type)
+!endif
 
 allocate(atom_type(nsp))
 
@@ -352,52 +352,52 @@ call sirius_create_potential
 !  stop 111
 !endif
 
-!!== i = 1
-!!== if (nosym) i = 0
-!!== kmesh(:) = (/nk1, nk2, nk3/)
-!!== kshift(:) = (/k1, k2, k3/)
-!!== call sirius_create_irreducible_kset(kmesh, kshift, i, kset_id)
+!if (.true.) then
+!  do i = 1, num_kpoints
+!    write(*,*)'ik=',i,' kpoint=',matmul(bg_inv,kpoints(:,i))
+!  enddo
+!endif
 
-if (.true.) then
-  do i = 1, num_kpoints
-    write(*,*)'ik=',i,' kpoint=',matmul(bg_inv,kpoints(:,i))
-  enddo
-endif
+!allocate(wk_tmp(nkstot))
+!allocate(xk_tmp(3, nkstot))
+!! weights of k-points in SIRIUS must sum to one
+!do i = 1, nkstot
+!  if (nspin.eq.1) then
+!    wk_tmp(i) = wk(i) / 2.d0
+!  else
+!    wk_tmp(i) = wk(i)
+!  endif
+!  xk_tmp(:,i) = xk(:,i)
+!end do
+!
+!call mpi_bcast(wk_tmp(1),        nkstot, mpi_double, 0, inter_pool_comm, ierr)
+!call mpi_bcast(xk_tmp(1, 1), 3 * nkstot, mpi_double, 0, inter_pool_comm, ierr)
+!
+!! convert to fractional coordinates
+!do ik = 1, nkstot
+!  xk_tmp(:, ik) = matmul(bg_inv, xk_tmp(:, ik))
+!end do
 
-allocate(wk_tmp(nkstot))
-allocate(xk_tmp(3, nkstot))
-! weights of k-points in SIRIUS must sum to one
-do i = 1, nkstot
-  if (nspin.eq.1) then
-    wk_tmp(i) = wk(i) / 2.d0
-  else
-    wk_tmp(i) = wk(i)
-  endif
-  xk_tmp(:,i) = xk(:,i)
-end do
+!allocate(nk_loc(0:npool-1))
+!nk_loc = 0
+!nk_loc(rank) = nks
+!call mp_sum(nk_loc, inter_pool_comm)
+!if (nspin.eq.2) then
+!  nk_loc(:) = nk_loc(:)
+!endif
 
-call mpi_bcast(wk_tmp(1),        nkstot, mpi_double, 0, inter_pool_comm, ierr)
-call mpi_bcast(xk_tmp(1, 1), 3 * nkstot, mpi_double, 0, inter_pool_comm, ierr)
+!if (nspin.eq.2) then
+!  num_kp = nkstot / 2
+!else
+!  num_kp = nkstot
+!endif
 
-! convert to fractional coordinates
-do ik = 1, nkstot
-  xk_tmp(:, ik) = matmul(bg_inv, xk_tmp(:, ik))
-end do
-
-allocate(nk_loc(0:npool-1))
-nk_loc = 0
-nk_loc(rank) = nks
-call mp_sum(nk_loc, inter_pool_comm)
-if (nspin.eq.2) then
-  nk_loc(:) = nk_loc(:)
-endif
-
-if (nspin.eq.2) then
-  num_kp = nkstot / 2
-else
-  num_kp = nkstot
-endif
-call sirius_create_kset(num_kp, xk_tmp(1, 1), wk_tmp(1), 1, kset_id)
+allocate(xk_tmp(3, num_kpoints))
+do i = 1, num_kpoints
+  xk_tmp(:, i) =  matmul(bg_inv, kpoints(:, i))
+enddo
+call sirius_create_kset(num_kpoints, xk_tmp(1, 1), wkpoints(1), 1, kset_id)
+deallocate(xk_tmp)
 
 ! create Density class
 call sirius_create_density()
@@ -416,12 +416,28 @@ call sirius_create_ground_state(kset_id)
 !else
 !  call sirius_create_kset(nkstot, xk_tmp(1, 1), wk_tmp(1), 1, kset_id, nk_loc(0))
 !endif
-deallocate(wk_tmp)
-deallocate(xk_tmp)
-deallocate(nk_loc)
+!deallocate(wk_tmp)
+!deallocate(xk_tmp)
+!deallocate(nk_loc)
 
 
 end subroutine setup_sirius
+
+subroutine clear_sirius
+use ions_base, only : nsp
+implicit none
+integer iat
+
+call sirius_clear
+
+if (allocated(atom_type)) then
+  do iat = 1, nsp
+    if (allocated(atom_type(iat)%qpw)) deallocate(atom_type(iat)%qpw)
+  enddo
+  deallocate(atom_type)
+endif
+
+end subroutine
 
 
 subroutine get_q_operator_from_sirius
