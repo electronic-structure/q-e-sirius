@@ -132,11 +132,11 @@ SUBROUTINE init_run()
   CALL initialize_hdf5()
 #endif 
   !
-  if (.not.(use_sirius.and.use_sirius_ks_solver)) then
+  !if (.not.(use_sirius.and.use_sirius_ks_solver)) then
     CALL wfcinit()
-  else
-    CALL open_buffer( iunwfc, 'wfc', nwordwfc, io_level, exst_mem, exst_file )
-  endif
+  !else
+  !  CALL open_buffer( iunwfc, 'wfc', nwordwfc, io_level, exst_mem, exst_file )
+  !endif
   !
   IF(use_wannier) CALL wannier_init()
   !

@@ -99,7 +99,7 @@ SUBROUTINE sum_band()
        call invfft ('Rho', psic, dfftp)
        rho%of_r(:,is) = psic(:)
     enddo
-
+    CALL stop_clock( 'sum_band' )
     return
   endif
 
