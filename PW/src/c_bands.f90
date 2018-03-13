@@ -46,6 +46,9 @@ SUBROUTINE c_bands( iter )
   ! ik_: k-point already done in a previous run
   LOGICAL :: exst
 !------------------------------------------------------------------------
+  !
+  CALL start_clock( 'c_bands' ); !write (*,*) 'start c_bands' ; FLUSH(6)
+  !
   if (use_sirius.and.use_sirius_ks_solver) then
     call put_potential_to_sirius
     !call put_q_operator_matrix_to_sirius
@@ -59,11 +62,9 @@ SUBROUTINE c_bands( iter )
     if (.not.use_sirius_density) then
       call get_wave_functions_from_sirius
     endif
+    CALL stop_clock( 'c_bands' )
     return
   endif
-
-  !
-  CALL start_clock( 'c_bands' ); !write (*,*) 'start c_bands' ; FLUSH(6)
   !
   ik_ = 0
   avg_iter = 0.D0
