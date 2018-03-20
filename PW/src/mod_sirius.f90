@@ -6,9 +6,19 @@ implicit none
 logical :: use_sirius_radial_integration_beta = .false.
 logical :: use_sirius_beta_projectors         = .false.
 logical :: use_sirius_q_operator              = .false.
+! use SIRIUS to solve KS equations
 logical :: use_sirius_ks_solver               = .true.
+! use SIRIUS to generate density
 logical :: use_sirius_density                 = .true.
+! use SIRIUS to generate effective potential; WARNING: currently must be always set to .false.
+logical :: use_sirius_potential               = .false.
 logical :: use_sirius_density_matrix          = .false.
+! use SIRIUS to generate D-operator matrix (non-local part of pseudopotential)
+logical :: use_sirius_d_operator_matrix       = .true.
+! use SIRIUS to compute local part of pseudopotential
+logical :: use_sirius_vloc                    = .true.
+! use SIRIUS to compute core charge density
+logical :: use_sirius_rho_core                = .false.
 ! initialize G-vectors once or at eeach step of ionic relaxation
 logical :: init_gvec_once                     = .false.
 
@@ -23,7 +33,7 @@ real(8), allocatable :: wkpoints(:)
 
 type atom_type_t
   ! atom label
-  character(len=1, kind=C_CHAR) :: label(100) !c_string(len_trim(f_string) + 1)
+  character(len=1, kind=C_CHAR) :: label(100)
   ! nh(iat) in the QE notation
   integer                 :: num_beta_projectors
   ! plane-wave coefficients of Q-operator
@@ -288,15 +298,22 @@ do iat = 1, nsp
 
   !! set total charge density of a free atom (to compute initial rho(r))
   !call sirius_set_atom_type_rho_tot(c_str(atm(iat)), upf(iat)%mesh, upf(iat)%rho_at(1))
-
-  !allocate(vloc(upf(iat)%mesh)) ! TODO: cut vloc to 10 a.u. here, not in the SIRIUS code
-  !! convert to Hartree                ! issue a warning in SIRIUS if the tail of vloc is not -z/r
-  !do i = 1, upf(iat)%mesh
-  !  vloc(i) = upf(iat)%vloc(i) / 2.d0
-  !end do
-  !! set local part of pseudo-potential
-  !call sirius_set_atom_type_vloc(c_str(atm(iat)), upf(iat)%mesh, vloc(1))
-  !deallocate(vloc)
+  
+  ! the hack is done in Modules/readpp.f90
+  if (use_sirius_vloc) then
+    allocate(vloc(upf(iat)%mesh))
+    do i = 1, msh(iat)
+      vloc(i) = upf(iat)%vloc(i)
+    enddo
+    ! convert to Hartree
+    vloc = vloc / 2.d0
+    do i = msh(iat) + 1, upf(iat)%mesh
+      vloc(i) = -zv(iat) / upf(iat)%r(i)
+    enddo
+    ! set local part of pseudo-potential
+    call sirius_set_atom_type_vloc(c_str(atm(iat)), upf(iat)%mesh, vloc(1))
+    deallocate(vloc)
+  endif
 enddo
   
 ! add atoms to the unit cell
@@ -743,6 +760,60 @@ end subroutine get_density_from_sirius
 !
 !end subroutine put_density_to_sirius
 
+subroutine put_d_matrix_to_sirius
+use uspp_param,           only : nhm
+use ions_base,            only : nat
+use lsda_mod,             only : nspin
+use uspp,                 only : deeq
+implicit none
+real(8), allocatable :: deeq_tmp(:,:)
+integer ia, is
+allocate(deeq_tmp(nhm, nhm))
+do ia = 1, nat
+  do is = 1, nspin
+    if (nspin.eq.2.and.is.eq.1) then
+      deeq_tmp(:, :) = 0.5 * (deeq(:, :, ia, 1) + deeq(:, :, ia, 2)) / 2 ! convert to Ha
+    endif
+    if (nspin.eq.2.and.is.eq.2) then
+      deeq_tmp(:, :) = 0.5 * (deeq(:, :, ia, 1) - deeq(:, :, ia, 2)) / 2 ! convert to Ha
+    endif
+    if (nspin.eq.1.or.nspin.eq.4) then
+      deeq_tmp(:, :) = deeq(:, :, ia, is) / 2 ! convert to Ha
+    endif
+    call sirius_set_d_operator_matrix(ia, is, deeq_tmp(1, 1), nhm)
+  enddo
+enddo
+deallocate(deeq_tmp)
+end subroutine put_d_matrix_to_sirius
+
+subroutine get_d_matrix_from_sirius
+use uspp_param,           only : nhm
+use ions_base,            only : nat
+use lsda_mod,             only : nspin
+use uspp,                 only : deeq
+implicit none
+real(8) d1, d2
+integer ia, is, i, j
+! get D-operator matrix
+do ia = 1, nat
+  do is = 1, nspin
+    call sirius_get_d_operator_matrix(ia, is, deeq(1, 1, ia, is), nhm)
+  enddo
+  if (nspin.eq.2) then
+    do i = 1, nhm
+      do j = 1, nhm
+        d1 = deeq(i, j, ia, 1)
+        d2 = deeq(i, j, ia, 2)
+        deeq(i, j, ia, 1) = d1 + d2
+        deeq(i, j, ia, 2) = d1 - d2
+      enddo
+    enddo
+  endif
+  ! convert to Ry
+  deeq(:, :, ia, :) = deeq(:, :, ia, :) * 2
+enddo
+end subroutine get_d_matrix_from_sirius
+
 subroutine put_potential_to_sirius
   use scf,                  only : v, vltot
   use gvect,                only : mill, ngm
@@ -838,45 +909,45 @@ subroutine put_potential_to_sirius
 !  call sirius_set_pw_coeffs(c_str("vxc"), vxcg(1), ngm, mill(1, 1), intra_bgrp_comm)
 !  deallocate(vxcg)
 !
-  ! update D-operator matrix
-  !call sirius_generate_d_operator_matrix()
-  !if (okpaw) then
-    allocate(deeq_tmp(nhm, nhm))
-  !  !! get D-operator matrix
-  !  !do ia = 1, nat
-  !  !  do is = 1, nspin
-  !  !    call sirius_get_d_operator_matrix(ia, is, deeq(1, 1, ia, is), nhm)
-  !  !  enddo
-  !  !  if (nspin.eq.2) then
-  !  !    do i = 1, nhm
-  !  !      do j = 1, nhm
-  !  !        d1 = deeq(i, j, ia, 1)
-  !  !        d2 = deeq(i, j, ia, 2)
-  !  !        deeq(i, j, ia, 1) = d1 + d2
-  !  !        deeq(i, j, ia, 2) = d1 - d2
-  !  !      enddo
-  !  !    enddo
-  !  !  endif
-  !  !  ! convert to Ry
-  !  !  deeq(:, :, ia, :) = deeq(:, :, ia, :) * 2
-  !  !enddo
-  !  !call add_paw_to_deeq(deeq)
-    do ia = 1, nat
-      do is = 1, nspin
-        if (nspin.eq.2.and.is.eq.1) then
-          deeq_tmp(:, :) = 0.5 * (deeq(:, :, ia, 1) + deeq(:, :, ia, 2)) / 2 ! convert to Ha
-        endif
-        if (nspin.eq.2.and.is.eq.2) then
-          deeq_tmp(:, :) = 0.5 * (deeq(:, :, ia, 1) - deeq(:, :, ia, 2)) / 2 ! convert to Ha
-        endif
-        if (nspin.eq.1.or.nspin.eq.4) then
-          deeq_tmp(:, :) = deeq(:, :, ia, is) / 2 ! convert to Ha
-        endif
-        call sirius_set_d_operator_matrix(ia, is, deeq_tmp(1, 1), nhm)
-      enddo
-    enddo
-    deallocate(deeq_tmp)
-  !endif
+!  ! update D-operator matrix
+!  !call sirius_generate_d_operator_matrix()
+!  !if (okpaw) then
+!    allocate(deeq_tmp(nhm, nhm))
+!  !  !! get D-operator matrix
+!  !  !do ia = 1, nat
+!  !  !  do is = 1, nspin
+!  !  !    call sirius_get_d_operator_matrix(ia, is, deeq(1, 1, ia, is), nhm)
+!  !  !  enddo
+!  !  !  if (nspin.eq.2) then
+!  !  !    do i = 1, nhm
+!  !  !      do j = 1, nhm
+!  !  !        d1 = deeq(i, j, ia, 1)
+!  !  !        d2 = deeq(i, j, ia, 2)
+!  !  !        deeq(i, j, ia, 1) = d1 + d2
+!  !  !        deeq(i, j, ia, 2) = d1 - d2
+!  !  !      enddo
+!  !  !    enddo
+!  !  !  endif
+!  !  !  ! convert to Ry
+!  !  !  deeq(:, :, ia, :) = deeq(:, :, ia, :) * 2
+!  !  !enddo
+!  !  !call add_paw_to_deeq(deeq)
+!    do ia = 1, nat
+!      do is = 1, nspin
+!        if (nspin.eq.2.and.is.eq.1) then
+!          deeq_tmp(:, :) = 0.5 * (deeq(:, :, ia, 1) + deeq(:, :, ia, 2)) / 2 ! convert to Ha
+!        endif
+!        if (nspin.eq.2.and.is.eq.2) then
+!          deeq_tmp(:, :) = 0.5 * (deeq(:, :, ia, 1) - deeq(:, :, ia, 2)) / 2 ! convert to Ha
+!        endif
+!        if (nspin.eq.1.or.nspin.eq.4) then
+!          deeq_tmp(:, :) = deeq(:, :, ia, is) / 2 ! convert to Ha
+!        endif
+!        call sirius_set_d_operator_matrix(ia, is, deeq_tmp(1, 1), nhm)
+!      enddo
+!    enddo
+!    deallocate(deeq_tmp)
+!  !endif
 
 end subroutine put_potential_to_sirius
 

@@ -220,6 +220,7 @@ SUBROUTINE newd( )
   USE realus,        ONLY : newq_r
   USE control_flags, ONLY : tqr
   USE ldaU,          ONLY : lda_plus_U, U_projection
+  use mod_sirius
   !
   IMPLICIT NONE
   !
@@ -228,6 +229,13 @@ SUBROUTINE newd( )
   !   atoms, spin, aux, aux, beta func x2 (again)
   !
   !
+  if (use_sirius.and.use_sirius_d_operator_matrix) then
+    call sirius_generate_d_operator_matrix
+    call get_d_matrix_from_sirius
+    call add_paw_to_deeq(deeq)
+    call put_d_matrix_to_sirius
+    return
+  endif
   IF ( .NOT. okvan ) THEN
      !
      ! ... no ultrasoft potentials: use bare coefficients for projectors

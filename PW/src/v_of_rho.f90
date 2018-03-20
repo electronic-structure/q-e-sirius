@@ -26,6 +26,7 @@ SUBROUTINE v_of_rho( rho, rho_core, rhog_core, &
   USE cell_base,        ONLY : alat
   USE control_flags,    ONLY : ts_vdw
   USE tsvdw_module,     ONLY : tsvdw_calculate, UtsvdW
+  use mod_sirius
   !
   IMPLICIT NONE
   !
@@ -95,6 +96,9 @@ SUBROUTINE v_of_rho( rho, rho_core, rhog_core, &
   END IF
   !
   CALL stop_clock( 'v_of_rho' )
+  if (use_sirius.and.(use_sirius_ks_solver.or.use_sirius_d_operator_matrix)) then
+    call put_potential_to_sirius
+  endif
   !
   RETURN
   !

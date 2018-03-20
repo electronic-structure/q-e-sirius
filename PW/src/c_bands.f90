@@ -50,13 +50,13 @@ SUBROUTINE c_bands( iter )
   CALL start_clock( 'c_bands' ); !write (*,*) 'start c_bands' ; FLUSH(6)
   !
   if (use_sirius.and.use_sirius_ks_solver) then
-    call put_potential_to_sirius
-    !call put_q_operator_matrix_to_sirius
     if (iter.eq.1) then
-      ! initialize subspace before calling "sirius_find_eigen_states"
+      ! initialize subspace before calling "sirius_find_eigen_states" first time
       call sirius_initialize_subspace(kset_id)
     endif
+    ! set the tolerance
     call sirius_set_iterative_solver_tolerance(ethr / 2)
+    ! TODO: set the tolerance for empty states in case of daiag_full_acc=.true.
     ! solve H\spi = E\psi
     call sirius_find_eigen_states(kset_id, precompute=1)
     if (.not.use_sirius_density) then
