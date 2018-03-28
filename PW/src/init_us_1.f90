@@ -43,6 +43,7 @@ subroutine init_us_1
   USE paw_variables,ONLY : okpaw
   USE mp_bands,     ONLY : intra_bgrp_comm
   USE mp,           ONLY : mp_sum
+  use mod_spline
   !
   implicit none
   !
@@ -294,8 +295,13 @@ subroutine init_us_1
                        do ir = 1, upf(nt)%kkbeta
                           aux1 (ir) = aux (ir) * qtot (ir, ijv)
                        enddo
-                       call simpson ( upf(nt)%kkbeta, aux1, rgrid(nt)%rab, &
-                                     qrad(iq,ijv,l + 1, nt) )
+                       if (use_spline) then
+                         call integrate(spline_integration_method, upf(nt)%kkbeta, aux1, rgrid(nt)%r,&
+                                        qrad(iq,ijv,l + 1, nt))
+                       else
+                         call simpson ( upf(nt)%kkbeta, aux1, rgrid(nt)%rab, &
+                                       qrad(iq,ijv,l + 1, nt) )
+                       endif
                     endif
                  enddo
               enddo
@@ -393,7 +399,11 @@ subroutine init_us_1
            do ir = 1, upf(nt)%kkbeta
               aux (ir) = upf(nt)%beta (ir, nb) * besr (ir) * rgrid(nt)%r(ir)
            enddo
-           call simpson (upf(nt)%kkbeta, aux, rgrid(nt)%rab, vqint)
+           if (use_spline) then
+             call integrate(spline_integration_method, upf(nt)%kkbeta, aux, rgrid(nt)%r, vqint)
+           else
+             call simpson (upf(nt)%kkbeta, aux, rgrid(nt)%rab, vqint)
+           endif
            tab (iq, nb, nt) = vqint * pref
         enddo
      enddo
