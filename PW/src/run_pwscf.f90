@@ -107,7 +107,7 @@ SUBROUTINE run_pwscf ( exit_status )
   !
   CALL qmmm_update_positions()
   !
-  if (init_gvec_once) then
+  if (.not.recompute_gvec) then
     if (use_sirius) then
       call setup_sirius
     endif
@@ -128,7 +128,7 @@ SUBROUTINE run_pwscf ( exit_status )
   endif
   !
   main_loop: DO idone = 1, nstep
-     if (.not.init_gvec_once) then
+     if (recompute_gvec) then
         if (idone.gt.1) then
           CALL reset_starting_magnetization ( )
         endif

@@ -3,24 +3,29 @@ use input_parameters, only : use_sirius, sirius_cfg
 use sirius
 implicit none
 
+! use SIRIUS to compute radial integrals of beta projectors
 logical :: use_sirius_radial_integration_beta = .false.
+! use SIRIUS to compute beta projectors
 logical :: use_sirius_beta_projectors         = .false.
+! use SIRIUS to compute Q-operator radial integrals
+logical :: use_sirius_radial_integration_q    = .false.
+! use SIRIUS to compute Q-operator
 logical :: use_sirius_q_operator              = .false.
 ! use SIRIUS to solve KS equations
-logical :: use_sirius_ks_solver               = .true.
+logical :: use_sirius_ks_solver               = .false.
 ! use SIRIUS to generate density
-logical :: use_sirius_density                 = .true.
+logical :: use_sirius_density                 = .false.
 ! use SIRIUS to generate effective potential; WARNING: currently must be always set to .false.
 logical :: use_sirius_potential               = .false.
 logical :: use_sirius_density_matrix          = .false.
 ! use SIRIUS to generate D-operator matrix (non-local part of pseudopotential)
-logical :: use_sirius_d_operator_matrix       = .true.
+logical :: use_sirius_d_operator_matrix       = .false.
 ! use SIRIUS to compute local part of pseudopotential
-logical :: use_sirius_vloc                    = .true.
+logical :: use_sirius_vloc                    = .false.
 ! use SIRIUS to compute core charge density
 logical :: use_sirius_rho_core                = .false.
 ! initialize G-vectors once or at eeach step of ionic relaxation
-logical :: init_gvec_once                     = .false.
+logical :: recompute_gvec                     = .false.
 
 ! inverse of the reciprocal lattice vectors matrix
 real(8) bg_inv(3,3)
@@ -155,7 +160,8 @@ do iat = 1, nsp
 enddo
 
 ! create context of simulation
-call sirius_create_simulation_context(c_str(trim(adjustl(sirius_cfg))), c_str("pseudopotential"), intra_image_comm)
+call sirius_create_simulation_context(c_str('{"parameters" : {"electronic_structure_method" : &
+                                              "pseudopotential"}}'), intra_image_comm)
 
 ! set number of first-variational states
 call sirius_set_num_bands(nbnd)

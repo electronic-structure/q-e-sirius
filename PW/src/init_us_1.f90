@@ -295,8 +295,13 @@ subroutine init_us_1
                        do ir = 1, upf(nt)%kkbeta
                           aux1 (ir) = aux (ir) * qtot (ir, ijv)
                        enddo
-                       call simpson ( upf(nt)%kkbeta, aux1, rgrid(nt)%rab, &
-                                     qrad(iq,ijv,l + 1, nt) )
+                       if (use_sirius.and.use_sirius_radial_integration_q) then
+                         call sirius_integrate(0, upf(nt)%kkbeta, rgrid(nt)%r(1), aux1(1),&
+                                               qrad(iq,ijv,l + 1, nt))
+                       else
+                         call simpson ( upf(nt)%kkbeta, aux1, rgrid(nt)%rab, &
+                                       qrad(iq,ijv,l + 1, nt) )
+                       endif
                     endif
                  enddo
               enddo

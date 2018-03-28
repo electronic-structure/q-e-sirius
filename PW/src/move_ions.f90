@@ -162,7 +162,7 @@ SUBROUTINE move_ions ( idone )
               !  with the correct g vectors corresponding to the relaxed
               !  cell.
               !
-              if (init_gvec_once) then
+              if (.not.recompute_gvec) then
                  final_cell_calculation=.TRUE.
               endif
               CALL terminate_bfgs ( etot, epse, epsf, epsp, lmovecell, &
