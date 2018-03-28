@@ -267,6 +267,9 @@ SUBROUTINE newd( )
         END IF
         !
      END DO
+     if (use_sirius.and..not.use_sirius_d_operator_matrix) then
+       call put_d_matrix_to_sirius
+     endif
      !
      ! ... early return
      !
@@ -324,6 +327,9 @@ SUBROUTINE newd( )
   !
   CALL stop_clock( 'newd' )
   !
+  if (use_sirius.and..not.use_sirius_d_operator_matrix) then
+    call put_d_matrix_to_sirius
+  endif
   RETURN
   !
   CONTAINS

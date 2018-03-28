@@ -4,22 +4,23 @@ use sirius
 implicit none
 
 ! use SIRIUS to compute radial integrals of beta projectors
-logical :: use_sirius_radial_integration_beta = .false.
+logical :: use_sirius_radial_integration_beta = .true.
 ! use SIRIUS to compute beta projectors
-logical :: use_sirius_beta_projectors         = .false.
+logical :: use_sirius_beta_projectors         = .true.
 ! use SIRIUS to compute Q-operator radial integrals
-logical :: use_sirius_radial_integration_q    = .false.
+logical :: use_sirius_radial_integration_q    = .true.
 ! use SIRIUS to compute Q-operator
-logical :: use_sirius_q_operator              = .false.
+logical :: use_sirius_q_operator              = .true.
 ! use SIRIUS to solve KS equations
-logical :: use_sirius_ks_solver               = .false.
+logical :: use_sirius_ks_solver               = .true.
 ! use SIRIUS to generate density
-logical :: use_sirius_density                 = .false.
+logical :: use_sirius_density                 = .true.
 ! use SIRIUS to generate effective potential; WARNING: currently must be always set to .false.
 logical :: use_sirius_potential               = .false.
+! use SIRIUS to generate density matrix ('bec' thing in QE)
 logical :: use_sirius_density_matrix          = .false.
 ! use SIRIUS to generate D-operator matrix (non-local part of pseudopotential)
-logical :: use_sirius_d_operator_matrix       = .false.
+logical :: use_sirius_d_operator_matrix       = .true.
 ! use SIRIUS to compute local part of pseudopotential
 logical :: use_sirius_vloc                    = .false.
 ! use SIRIUS to compute core charge density
@@ -162,6 +163,8 @@ enddo
 ! create context of simulation
 call sirius_create_simulation_context(c_str('{"parameters" : {"electronic_structure_method" : &
                                               "pseudopotential"}}'), intra_image_comm)
+! import config file
+call sirius_import_simulation_context_parameters(c_str(trim(adjustl(sirius_cfg))))
 
 ! set number of first-variational states
 call sirius_set_num_bands(nbnd)
