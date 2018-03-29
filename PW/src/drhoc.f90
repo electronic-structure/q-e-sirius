@@ -12,6 +12,7 @@ subroutine drhoc (ngl, gl, omega, tpiba2, mesh, r, rab, rhoc, rhocg)
   !
   USE kinds
   USE constants, ONLY : pi, fpi
+  use mod_spline
   implicit none
   !
   !    first the dummy variables
@@ -51,7 +52,11 @@ subroutine drhoc (ngl, gl, omega, tpiba2, mesh, r, rab, rhoc, rhocg)
      do ir = 1, mesh
         aux (ir) = r (ir) **2 * rhoc (ir)
      enddo
-     call simpson (mesh, aux, rab, rhocg1)
+     if (use_spline) then
+       call integrate(spline_integration_method, mesh, aux, r, rhocg1)
+     else
+       call simpson (mesh, aux, rab, rhocg1)
+     endif
      rhocg (1) = fpi * rhocg1 / omega
      igl0 = 2
   else
@@ -66,7 +71,11 @@ subroutine drhoc (ngl, gl, omega, tpiba2, mesh, r, rab, rhoc, rhocg)
      do ir = 1, mesh
         aux (ir) = r (ir) **2 * rhoc (ir) * aux (ir)
      enddo
-     call simpson (mesh, aux, rab, rhocg1)
+     if (use_spline) then
+       call integrate(spline_integration_method, mesh, aux, r, rhocg1)
+     else 
+       call simpson (mesh, aux, rab, rhocg1)
+     endif
      rhocg (igl) = fpi * rhocg1 / omega
   enddo
   deallocate(aux)
