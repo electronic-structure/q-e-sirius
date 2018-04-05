@@ -873,17 +873,13 @@ init_run.o : ../../Modules/cell_base.o
 init_run.o : ../../Modules/control_flags.o
 init_run.o : ../../Modules/fft_base.o
 init_run.o : ../../Modules/funct.o
-init_run.o : ../../Modules/hdf5_qe.o
 init_run.o : ../../Modules/ions_base.o
-init_run.o : ../../Modules/mp_bands.o
 init_run.o : ../../Modules/paw_variables.o
 init_run.o : ../../Modules/recvec.o
 init_run.o : ../../Modules/recvec_subs.o
 init_run.o : ../../Modules/tsvdw.o
 init_run.o : ../../Modules/uspp.o
 init_run.o : ../../Modules/wannier_new.o
-init_run.o : ../../Modules/wavefunctions.o
-init_run.o : ../../UtilXlib/mp.o
 init_run.o : Coul_cut_2D.o
 init_run.o : bp_mod.o
 init_run.o : dynamics_module.o
@@ -962,7 +958,6 @@ input.o : ../../Modules/ions_base.o
 input.o : ../../Modules/kernel_table.o
 input.o : ../../Modules/kind.o
 input.o : ../../Modules/mm_dispersion.o
-input.o : ../../Modules/mp_images.o
 input.o : ../../Modules/mp_pools.o
 input.o : ../../Modules/noncol.o
 input.o : ../../Modules/qes_types.o
@@ -974,9 +969,7 @@ input.o : ../../Modules/recvec.o
 input.o : ../../Modules/run_info.o
 input.o : ../../Modules/tsvdw.o
 input.o : ../../Modules/wannier_new.o
-input.o : ../../Modules/wrappers.o
 input.o : ../../Modules/wyckoff.o
-input.o : ../../UtilXlib/mp.o
 input.o : ../../dft-d3/api.o
 input.o : ../../dft-d3/dftd3_qe.o
 input.o : Coul_cut_2D.o
@@ -1220,6 +1213,7 @@ offset_atom_wfc.o : ../../Modules/noncol.o
 offset_atom_wfc.o : ../../Modules/uspp.o
 offset_atom_wfc.o : ldaU.o
 openfil.o : ../../Modules/control_flags.o
+openfil.o : ../../Modules/hdf5_qe.o
 openfil.o : ../../Modules/io_files.o
 openfil.o : ../../Modules/kind.o
 openfil.o : ../../Modules/noncol.o
@@ -1453,7 +1447,6 @@ punch.o : ../../Modules/ions_base.o
 punch.o : ../../Modules/kernel_table.o
 punch.o : ../../Modules/wavefunctions.o
 punch.o : ../../Modules/wrappers.o
-punch.o : ../../Modules/xml_io_base.o
 punch.o : a2fmod.o
 punch.o : io_rho_xml.o
 punch.o : pw_restart.o
@@ -1669,6 +1662,7 @@ read_file.o : scf_mod.o
 read_file.o : symm_base.o
 read_file_new.o : ../../FFTXlib/fft_interfaces.o
 read_file_new.o : ../../FFTXlib/fft_types.o
+read_file_new.o : ../../Modules/bcast_qes_module.o
 read_file_new.o : ../../Modules/cell_base.o
 read_file_new.o : ../../Modules/constants.o
 read_file_new.o : ../../Modules/control_flags.o
@@ -1682,6 +1676,7 @@ read_file_new.o : ../../Modules/ions_base.o
 read_file_new.o : ../../Modules/kernel_table.o
 read_file_new.o : ../../Modules/kind.o
 read_file_new.o : ../../Modules/mp_bands.o
+read_file_new.o : ../../Modules/mp_images.o
 read_file_new.o : ../../Modules/noncol.o
 read_file_new.o : ../../Modules/paw_variables.o
 read_file_new.o : ../../Modules/qes_libs.o
