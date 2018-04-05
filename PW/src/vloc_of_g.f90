@@ -91,7 +91,7 @@ subroutine vloc_of_g (mesh, msh, rab, r, vloc_at, zp, tpiba2, ngl, &
         enddo
      END IF
      if (use_spline) then
-       call integrate(spline_integration_method, msh, aux, r, vlcp)
+       call integrate(msh, aux, r, vlcp)
      else
        call simpson (msh, aux, rab, vlcp)
      endif
@@ -118,7 +118,7 @@ subroutine vloc_of_g (mesh, msh, rab, r, vloc_at, zp, tpiba2, ngl, &
         aux (ir) = aux1 (ir) * sin (gx * r (ir) ) / gx
      enddo
      if (use_spline) then
-       call integrate(spline_integration_method, msh, aux, r, vlcp)
+       call integrate(msh, aux, r, vlcp)
      else
        call simpson (msh, aux, rab, vlcp)
      endif

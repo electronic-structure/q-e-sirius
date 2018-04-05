@@ -53,7 +53,7 @@ subroutine drhoc (ngl, gl, omega, tpiba2, mesh, r, rab, rhoc, rhocg)
         aux (ir) = r (ir) **2 * rhoc (ir)
      enddo
      if (use_spline) then
-       call integrate(spline_integration_method, mesh, aux, r, rhocg1)
+       call integrate(mesh, aux, r, rhocg1)
      else
        call simpson (mesh, aux, rab, rhocg1)
      endif
@@ -72,7 +72,7 @@ subroutine drhoc (ngl, gl, omega, tpiba2, mesh, r, rab, rhoc, rhocg)
         aux (ir) = r (ir) **2 * rhoc (ir) * aux (ir)
      enddo
      if (use_spline) then
-       call integrate(spline_integration_method, mesh, aux, r, rhocg1)
+       call integrate(mesh, aux, r, rhocg1)
      else 
        call simpson (mesh, aux, rab, rhocg1)
      endif

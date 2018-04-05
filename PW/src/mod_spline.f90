@@ -141,16 +141,15 @@ end subroutine
 ! This file is distributed under the terms of the GNU Lesser General Public
 ! License. See the file COPYING for license details.
 
-subroutine integrate(m,n,f,x,res)
+subroutine integrate(n,f,x,res)
 ! !INPUT/OUTPUT PARAMETERS:
-!   m : order of derivative (in,integer)
 !   n : number of points (in,integer)
 !   x : abscissa array (in,real(n))
 !   f : function array (in,real(n))
 !   res : resulting integral
 implicit none
 ! arguments
-integer, intent(in) :: m,n
+integer, intent(in) :: n
 real(8), intent(in) :: x(n),f(n)
 real(8), intent(out) :: res
 ! local variables
@@ -165,7 +164,7 @@ if (n.le.0) then
   write(*,*)
   stop
 end if
-select case(m)
+select case(spline_integration_method)
 case(-3)
 ! low accuracy trapezoidal integration
   g(1)=0.d0
@@ -197,7 +196,7 @@ case(-1)
   end do
 case default
   write(*,*)
-  write(*,'("Error(integrate): wrong integration type: ",I8)') m
+  write(*,'("Error(integrate): wrong integration type: ",I8)') spline_integration_method
   write(*,*)
   stop
 end select

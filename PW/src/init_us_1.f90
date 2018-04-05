@@ -296,7 +296,7 @@ subroutine init_us_1
                           aux1 (ir) = aux (ir) * qtot (ir, ijv)
                        enddo
                        if (use_spline) then
-                         call integrate(spline_integration_method, upf(nt)%kkbeta, aux1, rgrid(nt)%r,&
+                         call integrate(upf(nt)%kkbeta, aux1, rgrid(nt)%r,&
                                         qrad(iq,ijv,l + 1, nt))
                        else
                          call simpson ( upf(nt)%kkbeta, aux1, rgrid(nt)%rab, &
@@ -400,7 +400,7 @@ subroutine init_us_1
               aux (ir) = upf(nt)%beta (ir, nb) * besr (ir) * rgrid(nt)%r(ir)
            enddo
            if (use_spline) then
-             call integrate(spline_integration_method, upf(nt)%kkbeta, aux, rgrid(nt)%r, vqint)
+             call integrate(upf(nt)%kkbeta, aux, rgrid(nt)%r, vqint)
            else
              call simpson (upf(nt)%kkbeta, aux, rgrid(nt)%rab, vqint)
            endif

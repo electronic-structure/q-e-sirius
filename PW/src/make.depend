@@ -369,6 +369,7 @@ dqvan2.o : ../../Modules/uspp.o
 dqvan2.o : pwcom.o
 drhoc.o : ../../Modules/constants.o
 drhoc.o : ../../Modules/kind.o
+drhoc.o : mod_spline.o
 dvloc_of_g.o : ../../Modules/constants.o
 dvloc_of_g.o : ../../Modules/kind.o
 dvloc_of_g.o : Coul_cut_2D.o
@@ -2257,6 +2258,7 @@ vloc_of_g.o : ../../Modules/constants.o
 vloc_of_g.o : ../../Modules/kind.o
 vloc_of_g.o : Coul_cut_2D.o
 vloc_of_g.o : esm.o
+vloc_of_g.o : mod_spline.o
 vloc_psi.o : ../../FFTXlib/fft_helper_subroutines.o
 vloc_psi.o : ../../FFTXlib/fft_interfaces.o
 vloc_psi.o : ../../Modules/fft_base.o
