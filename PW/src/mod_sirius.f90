@@ -22,11 +22,11 @@ logical :: use_sirius_density_matrix          = .false.
 ! use SIRIUS to generate D-operator matrix (non-local part of pseudopotential)
 logical :: use_sirius_d_operator_matrix       = .true.
 ! use SIRIUS to compute local part of pseudopotential
-logical :: use_sirius_vloc                    = .false.
+logical :: use_sirius_vloc                    = .true.
 ! use SIRIUS to compute core charge density
-logical :: use_sirius_rho_core                = .false.
-! initialize G-vectors once or at eeach step of ionic relaxation
-logical :: recompute_gvec                     = .false.
+logical :: use_sirius_rho_core                = .true.
+! initialize G-vectors once or at each step of ionic relaxation
+logical :: recompute_gvec                     = .true.
 
 ! inverse of the reciprocal lattice vectors matrix
 real(8) bg_inv(3,3)
@@ -258,7 +258,7 @@ do iat = 1, nsp
   ! set the atomic radial functions
   do iwf = 1, upf(iat)%nwfc
     l = upf(iat)%lchi(iwf)
-    call sirius_add_atom_type_ps_atomic_wf(c_str(atm(iat)), l, upf(iat)%chi(1, iwf), 0.d0, msh(iat))
+    call sirius_add_atom_type_ps_atomic_wf(atom_type(iat)%label, l, upf(iat)%chi(1, iwf), 0.d0, msh(iat))
   enddo
 
   allocate(dion(upf(iat)%nbeta, upf(iat)%nbeta))
@@ -269,7 +269,7 @@ do iat = 1, nsp
     end do
   end do
   ! sed d^{ion}_{i,j}
-  call sirius_set_atom_type_dion(c_str(atm(iat)), upf(iat)%nbeta, dion(1, 1))
+  call sirius_set_atom_type_dion(atom_type(iat)%label, upf(iat)%nbeta, dion(1, 1))
   deallocate(dion)
 
   ! set radial function of augmentation charge
@@ -279,7 +279,7 @@ do iat = 1, nsp
       do i = 0, upf(iat)%nbeta - 1
         do j = i, upf(iat)%nbeta - 1
           ijv = j * (j + 1) / 2 + i + 1
-          call sirius_add_atom_type_q_radial_function(c_str(atm(iat)), l, i, j,&
+          call sirius_add_atom_type_q_radial_function(atom_type(iat)%label, l, i, j,&
                                                      &upf(iat)%qfuncl(1, ijv, l), upf(iat)%kkbeta)
         enddo
       enddo
@@ -287,7 +287,7 @@ do iat = 1, nsp
   endif
 
   if (upf(iat)%tpawp) then ! TODO: cleaup this
-    call sirius_set_atom_type_paw_data(c_str(atm(iat)), upf(iat)%aewfc(1,1), upf(iat)%pswfc(1,1),&
+    call sirius_set_atom_type_paw_data(atom_type(iat)%label, upf(iat)%aewfc(1,1), upf(iat)%pswfc(1,1),&
          &upf(iat)%nbeta, upf(iat)%mesh, upf(iat)%paw%iraug,&
          &upf(iat)%paw%core_energy, upf(iat)%paw%ae_rho_atc(1),&
          &upf(iat)%mesh, upf(iat)%paw%oc(1), upf(iat)%nbeta )
@@ -295,15 +295,18 @@ do iat = 1, nsp
   
   ! TODO: pass PW coefficients of this functions
 
-  !! set non-linear core correction
-  !if (associated(upf(iat)%rho_atc)) then
-  !  call sirius_set_atom_type_rho_core(c_str(atm(iat)), upf(iat)%mesh, upf(iat)%rho_atc(1))
-  !else
-  !  allocate(vloc(upf(iat)%mesh))
-  !  vloc = 0.d0
-  !  call sirius_set_atom_type_rho_core(c_str(atm(iat)), upf(iat)%mesh, vloc(1))
-  !  deallocate(vloc)
-  !endif
+  ! set non-linear core correction
+  if (use_sirius_rho_core) then
+    allocate(vloc(upf(iat)%mesh))
+    vloc = 0.d0
+    if (associated(upf(iat)%rho_atc)) then
+      do i = 1, msh(iat)
+        vloc(i) = upf(iat)%rho_atc(i)
+      enddo
+    endif
+    call sirius_set_atom_type_rho_core(atom_type(iat)%label, upf(iat)%mesh, vloc(1))
+    deallocate(vloc)
+  endif
 
   !! set total charge density of a free atom (to compute initial rho(r))
   !call sirius_set_atom_type_rho_tot(c_str(atm(iat)), upf(iat)%mesh, upf(iat)%rho_at(1))
@@ -316,11 +319,12 @@ do iat = 1, nsp
     enddo
     ! convert to Hartree
     vloc = vloc / 2.d0
+    ! add a correct tail
     do i = msh(iat) + 1, upf(iat)%mesh
       vloc(i) = -zv(iat) / upf(iat)%r(i)
     enddo
     ! set local part of pseudo-potential
-    call sirius_set_atom_type_vloc(c_str(atm(iat)), upf(iat)%mesh, vloc(1))
+    call sirius_set_atom_type_vloc(atom_type(iat)%label, upf(iat)%mesh, vloc(1))
     deallocate(vloc)
   endif
 enddo
