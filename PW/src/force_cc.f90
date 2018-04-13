@@ -12,7 +12,7 @@ subroutine force_cc (forcecc)
   !
   USE kinds,                ONLY : DP
   USE constants,            ONLY : tpi
-  USE atom,                 ONLY : rgrid
+  USE atom,                 ONLY : rgrid, msh
   USE uspp_param,           ONLY : upf
   USE ions_base,            ONLY : nat, ntyp => nsp, ityp, tau
   USE cell_base,            ONLY : alat, omega, tpiba, tpiba2
@@ -94,8 +94,8 @@ subroutine force_cc (forcecc)
         if (use_sirius.and.use_sirius_rho_core) then
           call sirius_get_pw_coeffs_real(atom_type(nt)%label, c_str("rhoc"), rho_core_g(1), ngm, mill(1, 1), intra_bgrp_comm)
         else
-          call drhoc (ngl, gl, omega, tpiba2, rgrid(nt)%mesh, rgrid(nt)%r,&
-               rgrid(nt)%rab, upf(nt)%rho_atc, rhocg)
+          call drhoc (ngl, gl, omega, tpiba2, msh(nt), rgrid(nt)%r,&
+                      rgrid(nt)%rab, upf(nt)%rho_atc, rhocg)
           rho_core_g(:) = rhocg(igtongl(:))
         endif
         do na = 1, nat
