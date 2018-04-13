@@ -107,50 +107,35 @@ SUBROUTINE run_pwscf ( exit_status )
   !
   CALL qmmm_update_positions()
   !
-!<<<<<<< HEAD
-!  if (.not.recompute_gvec) then
-!    if (use_sirius) then
-!      call setup_sirius
-!    endif
-!    CALL init_run()
-!    if (use_sirius.and.use_sirius_q_operator) then
-!      call get_q_operator_from_sirius
-!    endif
-!    !
-!    ! ... dry run: code will stop here if called with exit file present
-!    ! ... useful for a quick and automated way to check input data
-!    !
-!    IF ( check_stop_now() ) THEN
-!       CALL qexsd_set_status(255)
-!       CALL punch( 'config' )
-!       exit_status = 255
-!       RETURN
-!    ENDIF
-!  endif
-!=======
-!  ! ... dry run: code will stop here if called with exit file present
-!  ! ... useful for a quick and automated way to check input data
-!  !
-!  IF ( check_stop_now() ) THEN
-!     CALL pre_init()
-!     CALL data_structure( gamma_only )
-!     CALL summary()
-!     CALL memory_report()
-!     CALL qexsd_set_status(255)
-!     CALL punch( 'config' )
-!     exit_status = 255
-!     RETURN
-!  ENDIF
-!  !
-!  CALL init_run()
-!  !
-!  IF ( check_stop_now() ) THEN
-!     CALL qexsd_set_status(255)
-!     CALL punch( 'config' )
-!     exit_status = 255
-!     RETURN
-!  ENDIF
-!>>>>>>> qe_official_copy
+  if (.not.recompute_gvec) then
+    if (use_sirius) then
+      call setup_sirius
+    endif
+    IF ( check_stop_now() ) THEN
+       CALL pre_init()
+       CALL data_structure( gamma_only )
+       CALL summary()
+       CALL memory_report()
+       CALL qexsd_set_status(255)
+       CALL punch( 'config' )
+       exit_status = 255
+       RETURN
+    ENDIF
+    CALL init_run()
+    if (use_sirius.and.use_sirius_q_operator) then
+      call get_q_operator_from_sirius
+    endif
+    !
+    ! ... dry run: code will stop here if called with exit file present
+    ! ... useful for a quick and automated way to check input data
+    !
+    IF ( check_stop_now() ) THEN
+       CALL qexsd_set_status(255)
+       CALL punch( 'config' )
+       exit_status = 255
+       RETURN
+    ENDIF
+  endif
   !
   main_loop: DO idone = 1, nstep
      if (recompute_gvec) then
