@@ -17,6 +17,7 @@ subroutine dvloc_of_g (mesh, msh, rab, r, vloc_at, zp, tpiba2, ngl, gl, &
   USE constants , ONLY : pi, fpi, e2, eps8
   USE Coul_cut_2D, ONLY: do_cutoff_2D
   USE esm, ONLY : do_comp_esm, esm_bc
+  use mod_spline
   implicit none
   !
   !    first the dummy variables
@@ -80,7 +81,11 @@ subroutine dvloc_of_g (mesh, msh, rab, r, vloc_at, zp, tpiba2, ngl, gl, &
         aux (i) = aux1 (i) * (r (i) * cos (gx * r (i) ) / gx - sin (gx &
              * r (i) ) / gx**2)
      enddo
-     call simpson (msh, aux, rab, vlcp)
+     if (use_spline) then
+       call integrate(msh, aux, r, vlcp)
+     else
+       call simpson (msh, aux, rab, vlcp)
+     endif
      ! DV(g^2)/Dg^2 = (DV(g)/Dg)/2g
      vlcp = fpi / omega / 2.0d0 / gx * vlcp
 
