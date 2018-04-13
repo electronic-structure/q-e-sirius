@@ -44,6 +44,7 @@ subroutine init_us_1
   USE mp_bands,     ONLY : intra_bgrp_comm
   USE mp,           ONLY : mp_sum
   use mod_sirius
+  use mod_spline
   !
   implicit none
   !
@@ -299,8 +300,13 @@ subroutine init_us_1
                          call sirius_integrate(0, upf(nt)%kkbeta, rgrid(nt)%r(1), aux1(1),&
                                                qrad(iq,ijv,l + 1, nt))
                        else
-                         call simpson ( upf(nt)%kkbeta, aux1, rgrid(nt)%rab, &
-                                       qrad(iq,ijv,l + 1, nt) )
+                         if (use_spline) then
+                           call integrate(upf(nt)%kkbeta, aux1, rgrid(nt)%r,&
+                                          qrad(iq,ijv,l + 1, nt))
+                         else
+                           call simpson ( upf(nt)%kkbeta, aux1, rgrid(nt)%rab, &
+                                         qrad(iq,ijv,l + 1, nt) )
+                         endif
                        endif
                     endif
                  enddo
@@ -401,8 +407,12 @@ subroutine init_us_1
            enddo
            if (use_sirius.and.use_sirius_radial_integration_beta) then
              call sirius_integrate(0, upf(nt)%kkbeta, rgrid(nt)%r(1), aux(1), vqint)
-           else
-             call simpson (upf(nt)%kkbeta, aux, rgrid(nt)%rab, vqint)
+           else 
+             if (use_spline) then
+               call integrate(upf(nt)%kkbeta, aux, rgrid(nt)%r, vqint)
+             else
+               call simpson (upf(nt)%kkbeta, aux, rgrid(nt)%rab, vqint)
+             endif
            endif
            tab (iq, nb, nt) = vqint * pref
         enddo

@@ -23,6 +23,7 @@ subroutine vloc_of_g (mesh, msh, rab, r, vloc_at, zp, tpiba2, ngl, &
   USE constants, ONLY : pi, fpi, e2, eps8
   USE esm, ONLY : do_comp_esm, esm_bc
   USE Coul_cut_2D, ONLY: do_cutoff_2D, lz 
+  use mod_spline
   implicit none
   !
   !    first the dummy variables
@@ -89,7 +90,11 @@ subroutine vloc_of_g (mesh, msh, rab, r, vloc_at, zp, tpiba2, ngl, &
            aux (ir) = r (ir) * (r (ir) * vloc_at (ir) + zp * e2)
         enddo
      END IF
-     call simpson (msh, aux, rab, vlcp)
+     if (use_spline) then
+       call integrate(msh, aux, r, vlcp)
+     else
+       call simpson (msh, aux, rab, vlcp)
+     endif
      vloc (1) = vlcp        
      igl0 = 2
   else
@@ -112,7 +117,11 @@ subroutine vloc_of_g (mesh, msh, rab, r, vloc_at, zp, tpiba2, ngl, &
      do ir = 1, msh
         aux (ir) = aux1 (ir) * sin (gx * r (ir) ) / gx
      enddo
-     call simpson (msh, aux, rab, vlcp)
+     if (use_spline) then
+       call integrate(msh, aux, r, vlcp)
+     else
+       call simpson (msh, aux, rab, vlcp)
+     endif
      ! if 2D cutoff calculation, do not re-add the FT of erf function
      IF ( ( .not. do_comp_esm ) .or. ( esm_bc .eq. 'pbc' ) ) THEN
         !
