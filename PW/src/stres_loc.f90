@@ -43,8 +43,8 @@ subroutine stres_loc (sigmaloc)
   ! counter on spin components
   if (use_sirius.and.use_sirius_vloc.and.use_sirius_density) then
     call sirius_get_stress_tensor(c_str("vloc"), sigmaloc(1, 1))
-    sigmaloc = -sigmaloc * 2 ! convert to Ha
-    call symmatrix ( sigmaloc )
+    sigmaloc = -sigmaloc * 2 ! convert to Ry
+    !call symmatrix ( sigmaloc )
     return
   endif
 
