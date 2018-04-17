@@ -5,28 +5,30 @@ implicit none
 
 ! use SIRIUS to compute radial integrals of beta projectors
 logical :: use_sirius_radial_integration_beta = .true.
-! use SIRIUS to compute beta projectors
-logical :: use_sirius_beta_projectors         = .true.
 ! use SIRIUS to compute Q-operator radial integrals
 logical :: use_sirius_radial_integration_q    = .true.
+! use SIRIUS to compute radial integrals of Vloc(r)
+logical :: use_sirius_radial_integration_vloc = .true.
+! use SIRIUS to compute beta projectors
+logical :: use_sirius_beta_projectors         = .false.
 ! use SIRIUS to compute Q-operator
-logical :: use_sirius_q_operator              = .true.
+logical :: use_sirius_q_operator              = .false.
 ! use SIRIUS to solve KS equations
-logical :: use_sirius_ks_solver               = .true.
+logical :: use_sirius_ks_solver               = .false.
 ! use SIRIUS to generate density
-logical :: use_sirius_density                 = .true.
+logical :: use_sirius_density                 = .false.
 ! use SIRIUS to generate effective potential; WARNING: currently must be always set to .false.
 logical :: use_sirius_potential               = .false.
 ! use SIRIUS to generate density matrix ('bec' thing in QE)
 logical :: use_sirius_density_matrix          = .false.
 ! use SIRIUS to generate D-operator matrix (non-local part of pseudopotential)
-logical :: use_sirius_d_operator_matrix       = .true.
+logical :: use_sirius_d_operator_matrix       = .false.
 ! use SIRIUS to compute local part of pseudopotential
-logical :: use_sirius_vloc                    = .true.
+logical :: use_sirius_vloc                    = .false.
 ! use SIRIUS to compute core charge density
-logical :: use_sirius_rho_core                = .true.
+logical :: use_sirius_rho_core                = .false.
 ! initialize G-vectors once or at each step of ionic relaxation
-logical :: recompute_gvec                     = .true.
+logical :: recompute_gvec                     = .false.
 
 ! inverse of the reciprocal lattice vectors matrix
 real(8) bg_inv(3,3)
@@ -327,6 +329,8 @@ do iat = 1, nsp
     call sirius_set_atom_type_vloc(atom_type(iat)%label, upf(iat)%mesh, vloc(1))
     deallocate(vloc)
   endif
+  call test_integration(msh(iat), upf(iat)%r, upf(iat)%rab)
+  !call test_integration(upf(iat)%mesh, upf(iat)%r, upf(iat)%rab)
 enddo
   
 ! add atoms to the unit cell
@@ -450,8 +454,282 @@ call sirius_create_ground_state(kset_id)
 !deallocate(xk_tmp)
 !deallocate(nk_loc)
 
-
 end subroutine setup_sirius
+
+subroutine test_integration(nr, r, rab)
+use mod_spline
+implicit none
+!
+integer, intent(in) :: nr
+real(8), intent(in) :: r(nr)
+real(8), intent(in) :: rab(nr)
+!
+real(8) x, x0, x1, exact_val, val1, val2, val3, pi
+real(8), allocatable :: f(:)
+integer ir
+!
+pi = 3.1415926535897932385d0
+allocate(f(nr))
+!-- start of generated code
+write(*,*)"testing f(x)=1"
+x0=r(1)
+x1=r(nr)
+do ir=1,nr
+  x=r(ir)
+  f(ir)=1
+enddo
+exact_val=-x0 + x1
+call simpson(nr,f,rab,val1)
+call integrate(nr,f,r,val2)
+call sirius_integrate(0,nr,r(1),f(1),val3)
+if (abs(exact_val-val3).lt.abs(exact_val-val2)) write(*,*)'sirius spline ok'
+write(*,'("        simpson err: ", G18.10)')abs(exact_val-val1)
+write(*,'(" fortran spline err: ", G18.10)')abs(exact_val-val2)
+write(*,'("  sirius spline err: ", G18.10)')abs(exact_val-val3)
+write(*,*)"testing f(x)=x"
+x0=r(1)
+x1=r(nr)
+do ir=1,nr
+  x=r(ir)
+  f(ir)=x
+enddo
+exact_val=-x0**2/2. + x1**2/2.
+call simpson(nr,f,rab,val1)
+call integrate(nr,f,r,val2)
+call sirius_integrate(0,nr,r(1),f(1),val3)
+if (abs(exact_val-val3).lt.abs(exact_val-val2)) write(*,*)'sirius spline ok'
+write(*,'("        simpson err: ", G18.10)')abs(exact_val-val1)
+write(*,'(" fortran spline err: ", G18.10)')abs(exact_val-val2)
+write(*,'("  sirius spline err: ", G18.10)')abs(exact_val-val3)
+write(*,*)"testing f(x)=x**2"
+x0=r(1)
+x1=r(nr)
+do ir=1,nr
+  x=r(ir)
+  f(ir)=x**2
+enddo
+exact_val=-x0**3/3. + x1**3/3.
+call simpson(nr,f,rab,val1)
+call integrate(nr,f,r,val2)
+call sirius_integrate(0,nr,r(1),f(1),val3)
+if (abs(exact_val-val3).lt.abs(exact_val-val2)) write(*,*)'sirius spline ok'
+write(*,'("        simpson err: ", G18.10)')abs(exact_val-val1)
+write(*,'(" fortran spline err: ", G18.10)')abs(exact_val-val2)
+write(*,'("  sirius spline err: ", G18.10)')abs(exact_val-val3)
+write(*,*)"testing f(x)=x**3"
+x0=r(1)
+x1=r(nr)
+do ir=1,nr
+  x=r(ir)
+  f(ir)=x**3
+enddo
+exact_val=-x0**4/4. + x1**4/4.
+call simpson(nr,f,rab,val1)
+call integrate(nr,f,r,val2)
+call sirius_integrate(0,nr,r(1),f(1),val3)
+if (abs(exact_val-val3).lt.abs(exact_val-val2)) write(*,*)'sirius spline ok'
+write(*,'("        simpson err: ", G18.10)')abs(exact_val-val1)
+write(*,'(" fortran spline err: ", G18.10)')abs(exact_val-val2)
+write(*,'("  sirius spline err: ", G18.10)')abs(exact_val-val3)
+write(*,*)"testing f(x)=1/(1 + x)"
+x0=r(1)
+x1=r(nr)
+do ir=1,nr
+  x=r(ir)
+  f(ir)=1/(1 + x)
+enddo
+exact_val=Log((1 + x1)/(1 + x0))
+call simpson(nr,f,rab,val1)
+call integrate(nr,f,r,val2)
+call sirius_integrate(0,nr,r(1),f(1),val3)
+if (abs(exact_val-val3).lt.abs(exact_val-val2)) write(*,*)'sirius spline ok'
+write(*,'("        simpson err: ", G18.10)')abs(exact_val-val1)
+write(*,'(" fortran spline err: ", G18.10)')abs(exact_val-val2)
+write(*,'("  sirius spline err: ", G18.10)')abs(exact_val-val3)
+write(*,*)"testing f(x)=(1 + x)**(-2)"
+x0=r(1)
+x1=r(nr)
+do ir=1,nr
+  x=r(ir)
+  f(ir)=(1 + x)**(-2)
+enddo
+exact_val=1/(1 + x0) - 1/(1 + x1)
+call simpson(nr,f,rab,val1)
+call integrate(nr,f,r,val2)
+call sirius_integrate(0,nr,r(1),f(1),val3)
+if (abs(exact_val-val3).lt.abs(exact_val-val2)) write(*,*)'sirius spline ok'
+write(*,'("        simpson err: ", G18.10)')abs(exact_val-val1)
+write(*,'(" fortran spline err: ", G18.10)')abs(exact_val-val2)
+write(*,'("  sirius spline err: ", G18.10)')abs(exact_val-val3)
+write(*,*)"testing f(x)=Sqrt(x)"
+x0=r(1)
+x1=r(nr)
+do ir=1,nr
+  x=r(ir)
+  f(ir)=Sqrt(x)
+enddo
+exact_val=(-2*(x0**1.5 - x1**1.5))/3.
+call simpson(nr,f,rab,val1)
+call integrate(nr,f,r,val2)
+call sirius_integrate(0,nr,r(1),f(1),val3)
+if (abs(exact_val-val3).lt.abs(exact_val-val2)) write(*,*)'sirius spline ok'
+write(*,'("        simpson err: ", G18.10)')abs(exact_val-val1)
+write(*,'(" fortran spline err: ", G18.10)')abs(exact_val-val2)
+write(*,'("  sirius spline err: ", G18.10)')abs(exact_val-val3)
+write(*,*)"testing f(x)=exp(-x)"
+x0=r(1)
+x1=r(nr)
+do ir=1,nr
+  x=r(ir)
+  f(ir)=exp(-x)
+enddo
+exact_val=exp(-x0) - exp(-x1)
+call simpson(nr,f,rab,val1)
+call integrate(nr,f,r,val2)
+call sirius_integrate(0,nr,r(1),f(1),val3)
+if (abs(exact_val-val3).lt.abs(exact_val-val2)) write(*,*)'sirius spline ok'
+write(*,'("        simpson err: ", G18.10)')abs(exact_val-val1)
+write(*,'(" fortran spline err: ", G18.10)')abs(exact_val-val2)
+write(*,'("  sirius spline err: ", G18.10)')abs(exact_val-val3)
+write(*,*)"testing f(x)=Sin(x)"
+x0=r(1)
+x1=r(nr)
+do ir=1,nr
+  x=r(ir)
+  f(ir)=Sin(x)
+enddo
+exact_val=cos(x0) - cos(x1)
+call simpson(nr,f,rab,val1)
+call integrate(nr,f,r,val2)
+call sirius_integrate(0,nr,r(1),f(1),val3)
+if (abs(exact_val-val3).lt.abs(exact_val-val2)) write(*,*)'sirius spline ok'
+write(*,'("        simpson err: ", G18.10)')abs(exact_val-val1)
+write(*,'(" fortran spline err: ", G18.10)')abs(exact_val-val2)
+write(*,'("  sirius spline err: ", G18.10)')abs(exact_val-val3)
+write(*,*)"testing f(x)=Sin(2*x)"
+x0=r(1)
+x1=r(nr)
+do ir=1,nr
+  x=r(ir)
+  f(ir)=Sin(2*x)
+enddo
+exact_val=(cos(2*x0) - cos(2*x1))/2.
+call simpson(nr,f,rab,val1)
+call integrate(nr,f,r,val2)
+call sirius_integrate(0,nr,r(1),f(1),val3)
+if (abs(exact_val-val3).lt.abs(exact_val-val2)) write(*,*)'sirius spline ok'
+write(*,'("        simpson err: ", G18.10)')abs(exact_val-val1)
+write(*,'(" fortran spline err: ", G18.10)')abs(exact_val-val2)
+write(*,'("  sirius spline err: ", G18.10)')abs(exact_val-val3)
+write(*,*)"testing f(x)=exp(x)"
+x0=r(1)
+x1=r(nr)
+do ir=1,nr
+  x=r(ir)
+  f(ir)=exp(x)
+enddo
+exact_val=-exp(x0) + exp(x1)
+call simpson(nr,f,rab,val1)
+call integrate(nr,f,r,val2)
+call sirius_integrate(0,nr,r(1),f(1),val3)
+if (abs(exact_val-val3).lt.abs(exact_val-val2)) write(*,*)'sirius spline ok'
+write(*,'("        simpson err: ", G18.10)')abs(exact_val-val1)
+write(*,'(" fortran spline err: ", G18.10)')abs(exact_val-val2)
+write(*,'("  sirius spline err: ", G18.10)')abs(exact_val-val3)
+write(*,*)"testing f(x)=exp(-x**2)"
+x0=r(1)
+x1=r(nr)
+do ir=1,nr
+  x=r(ir)
+  f(ir)=exp(-x**2)
+enddo
+exact_val=(Sqrt(Pi)*(-Erf(x0) + Erf(x1)))/2.
+call simpson(nr,f,rab,val1)
+call integrate(nr,f,r,val2)
+call sirius_integrate(0,nr,r(1),f(1),val3)
+if (abs(exact_val-val3).lt.abs(exact_val-val2)) write(*,*)'sirius spline ok'
+write(*,'("        simpson err: ", G18.10)')abs(exact_val-val1)
+write(*,'(" fortran spline err: ", G18.10)')abs(exact_val-val2)
+write(*,'("  sirius spline err: ", G18.10)')abs(exact_val-val3)
+write(*,*)"testing f(x)=exp(x - x**2)"
+x0=r(1)
+x1=r(nr)
+do ir=1,nr
+  x=r(ir)
+  f(ir)=exp(x - x**2)
+enddo
+exact_val=(exp(0.25)*Sqrt(Pi)*(Erf(0.5 - x0) - Erf(0.5 - x1)))/2.
+call simpson(nr,f,rab,val1)
+call integrate(nr,f,r,val2)
+call sirius_integrate(0,nr,r(1),f(1),val3)
+if (abs(exact_val-val3).lt.abs(exact_val-val2)) write(*,*)'sirius spline ok'
+write(*,'("        simpson err: ", G18.10)')abs(exact_val-val1)
+write(*,'(" fortran spline err: ", G18.10)')abs(exact_val-val2)
+write(*,'("  sirius spline err: ", G18.10)')abs(exact_val-val3)
+write(*,*)"testing f(x)=x/exp(x)"
+x0=r(1)
+x1=r(nr)
+do ir=1,nr
+  x=r(ir)
+  f(ir)=x/exp(x)
+enddo
+exact_val=(1 + x0)/exp(x0) - (1 + x1)/exp(x1)
+call simpson(nr,f,rab,val1)
+call integrate(nr,f,r,val2)
+call sirius_integrate(0,nr,r(1),f(1),val3)
+if (abs(exact_val-val3).lt.abs(exact_val-val2)) write(*,*)'sirius spline ok'
+write(*,'("        simpson err: ", G18.10)')abs(exact_val-val1)
+write(*,'(" fortran spline err: ", G18.10)')abs(exact_val-val2)
+write(*,'("  sirius spline err: ", G18.10)')abs(exact_val-val3)
+write(*,*)"testing f(x)=x**2/exp(x)"
+x0=r(1)
+x1=r(nr)
+do ir=1,nr
+  x=r(ir)
+  f(ir)=x**2/exp(x)
+enddo
+exact_val=(2 + x0*(2 + x0))/exp(x0) - (2 + x1*(2 + x1))/exp(x1)
+call simpson(nr,f,rab,val1)
+call integrate(nr,f,r,val2)
+call sirius_integrate(0,nr,r(1),f(1),val3)
+if (abs(exact_val-val3).lt.abs(exact_val-val2)) write(*,*)'sirius spline ok'
+write(*,'("        simpson err: ", G18.10)')abs(exact_val-val1)
+write(*,'(" fortran spline err: ", G18.10)')abs(exact_val-val2)
+write(*,'("  sirius spline err: ", G18.10)')abs(exact_val-val3)
+write(*,*)"testing f(x)=Log(1 + x)"
+x0=r(1)
+x1=r(nr)
+do ir=1,nr
+  x=r(ir)
+  f(ir)=Log(1 + x)
+enddo
+exact_val=x0 - x1 - (1 + x0)*Log(1 + x0) + (1 + x1)*Log(1 + x1)
+call simpson(nr,f,rab,val1)
+call integrate(nr,f,r,val2)
+call sirius_integrate(0,nr,r(1),f(1),val3)
+if (abs(exact_val-val3).lt.abs(exact_val-val2)) write(*,*)'sirius spline ok'
+write(*,'("        simpson err: ", G18.10)')abs(exact_val-val1)
+write(*,'(" fortran spline err: ", G18.10)')abs(exact_val-val2)
+write(*,'("  sirius spline err: ", G18.10)')abs(exact_val-val3)
+write(*,*)"testing f(x)=Sin(x)/exp(2*x)"
+x0=r(1)
+x1=r(nr)
+do ir=1,nr
+  x=r(ir)
+  f(ir)=Sin(x)/exp(2*x)
+enddo
+exact_val=((cos(x0) + 2*Sin(x0))/exp(2*x0) - (cos(x1) + 2*Sin(x1))/exp(2*x1))/5.
+call simpson(nr,f,rab,val1)
+call integrate(nr,f,r,val2)
+call sirius_integrate(0,nr,r(1),f(1),val3)
+if (abs(exact_val-val3).lt.abs(exact_val-val2)) write(*,*)'sirius spline ok'
+write(*,'("        simpson err: ", G18.10)')abs(exact_val-val1)
+write(*,'(" fortran spline err: ", G18.10)')abs(exact_val-val2)
+write(*,'("  sirius spline err: ", G18.10)')abs(exact_val-val3)
+!-- end of generated code
+deallocate(f)
+end subroutine
+
 
 subroutine clear_sirius
 use ions_base, only : nsp

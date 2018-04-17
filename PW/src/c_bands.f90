@@ -50,6 +50,7 @@ SUBROUTINE c_bands( iter )
   CALL start_clock( 'c_bands' ); !write (*,*) 'start c_bands' ; FLUSH(6)
   !
   if (use_sirius.and.use_sirius_ks_solver) then
+    call put_q_operator_matrix_to_sirius
     if (iter.eq.1) then
       ! initialize subspace before calling "sirius_find_eigen_states" first time
       call sirius_initialize_subspace(kset_id)
