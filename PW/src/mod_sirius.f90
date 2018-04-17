@@ -9,6 +9,8 @@ logical :: use_sirius_radial_integration_beta = .true.
 logical :: use_sirius_radial_integration_q    = .true.
 ! use SIRIUS to compute radial integrals of Vloc(r)
 logical :: use_sirius_radial_integration_vloc = .true.
+! use SIRIUS to compute radial integrals of rho_core(r)
+logical :: use_sirius_radial_integration_rhoc = .true.
 ! use SIRIUS to compute beta projectors
 logical :: use_sirius_beta_projectors         = .false.
 ! use SIRIUS to compute Q-operator

@@ -12,6 +12,7 @@ subroutine drhoc (ngl, gl, omega, tpiba2, mesh, r, rab, rhoc, rhocg)
   !
   USE kinds
   USE constants, ONLY : pi, fpi
+  use mod_sirius
   use mod_spline
   implicit none
   !
@@ -52,10 +53,14 @@ subroutine drhoc (ngl, gl, omega, tpiba2, mesh, r, rab, rhoc, rhocg)
      do ir = 1, mesh
         aux (ir) = r (ir) **2 * rhoc (ir)
      enddo
-     if (use_spline) then
-       call integrate(mesh, aux, r, rhocg1)
+     if (use_sirius.and.use_sirius_radial_integration_rhoc) then
+       call sirius_integrate(0, mesh, r(1), aux(1), rhocg1)
      else
-       call simpson (mesh, aux, rab, rhocg1)
+       if (use_spline) then
+         call integrate(mesh, aux, r, rhocg1)
+       else
+         call simpson (mesh, aux, rab, rhocg1)
+       endif
      endif
      rhocg (1) = fpi * rhocg1 / omega
      igl0 = 2
@@ -71,10 +76,14 @@ subroutine drhoc (ngl, gl, omega, tpiba2, mesh, r, rab, rhoc, rhocg)
      do ir = 1, mesh
         aux (ir) = r (ir) **2 * rhoc (ir) * aux (ir)
      enddo
-     if (use_spline) then
-       call integrate(mesh, aux, r, rhocg1)
-     else 
-       call simpson (mesh, aux, rab, rhocg1)
+     if (use_sirius.and.use_sirius_radial_integration_rhoc) then
+       call sirius_integrate(0, mesh, r(1), aux(1), rhocg1)
+     else
+       if (use_spline) then
+         call integrate(mesh, aux, r, rhocg1)
+       else 
+         call simpson (mesh, aux, rab, rhocg1)
+       endif
      endif
      rhocg (igl) = fpi * rhocg1 / omega
   enddo

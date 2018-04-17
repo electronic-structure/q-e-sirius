@@ -10,6 +10,8 @@ subroutine deriv_drhoc (ngl, gl, omega, tpiba2, mesh, r, rab, rhoc, drhocg)
   !-----------------------------------------------------------------------
   USE kinds
   USE constants, ONLY : pi, fpi
+  use mod_sirius
+  use mod_spline
   implicit none
   !
   !    first the dummy variables
@@ -62,7 +64,15 @@ subroutine deriv_drhoc (ngl, gl, omega, tpiba2, mesh, r, rab, rhoc, drhocg)
         aux (ir) = r (ir) * rhoc (ir) * (r (ir) * cos (gx * r (ir) ) &
              / gx - sin (gx * r (ir) ) / gx**2)
      enddo
-     call simpson (mesh, aux, rab, rhocg1)
+     if (use_sirius.and.use_sirius_radial_integration_rhoc) then
+       call sirius_integrate(0, mesh, r(1), aux(1), rhocg1)
+     else
+       if (use_spline) then
+         call integrate(mesh, aux, r, rhocg1)
+       else
+         call simpson (mesh, aux, rab, rhocg1)
+       endif
+     endif
      drhocg (igl) = fpi / omega * rhocg1
   enddo
   deallocate (aux)
