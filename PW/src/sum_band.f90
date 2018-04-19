@@ -80,6 +80,10 @@ SUBROUTINE sum_band()
 
   CALL weights ( )
 
+  if (use_sirius.and.use_sirius_ks_solver) then
+    call put_band_occupancies_to_sirius
+  endif
+
   if (use_sirius.and.use_sirius_density) then
     call put_band_occupancies_to_sirius
     call sirius_generate_density(kset_id)
@@ -243,6 +247,10 @@ SUBROUTINE sum_band()
      END DO
      !
   END IF
+  !
+  if (use_sirius.and.use_sirius_ks_solver.and..not.use_sirius_density) then
+    call put_density_matrix_to_sirius
+  endif
   !
   CALL stop_clock( 'sum_band' )
   !
@@ -762,7 +770,9 @@ SUBROUTINE sum_band()
           !
           ! ... If we have a US pseudopotential we compute here the becsum term
           !
-          IF ( okvan ) CALL sum_bec ( ik, current_spin, ibnd_start,ibnd_end,this_bgrp_nbnd ) 
+          IF ( okvan ) CALL sum_bec ( ik, current_spin, ibnd_start,ibnd_end,this_bgrp_nbnd )
+          !CALL calbec( npw, vkb, evc, becp )
+          !call check_residuals(ik)
           !
        END DO k_loop
        !
