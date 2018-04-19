@@ -11,12 +11,14 @@ logical :: use_sirius_radial_integration_q    = .true.
 logical :: use_sirius_radial_integration_vloc = .true.
 ! use SIRIUS to compute radial integrals of rho_core(r)
 logical :: use_sirius_radial_integration_rhoc = .true.
+! use SIRIUS to get radial integrals of beta-projectors
+logical :: use_sirius_radial_integrals_beta   = .true.
 ! use SIRIUS to compute beta projectors
-logical :: use_sirius_beta_projectors         = .false.
+logical :: use_sirius_beta_projectors         = .true.
 ! use SIRIUS to compute Q-operator
-logical :: use_sirius_q_operator              = .false.
+logical :: use_sirius_q_operator              = .true.
 ! use SIRIUS to solve KS equations
-logical :: use_sirius_ks_solver               = .false.
+logical :: use_sirius_ks_solver               = .true.
 ! use SIRIUS to generate density
 logical :: use_sirius_density                 = .false.
 ! use SIRIUS to generate effective potential; WARNING: currently must be always set to .false.
@@ -116,6 +118,7 @@ implicit none
   !endif
 end subroutine put_xc_functional_to_sirius
 
+
 subroutine setup_sirius()
 use cell_base, only : alat, at, bg
 use funct, only : get_iexch, get_icorr, get_inlc, get_meta, get_igcc, get_igcx
@@ -126,7 +129,7 @@ use fft_base, only :  dfftp
 use klist, only : nks, xk, nkstot, wk
 use gvect, only : ngm_g, ecutrho, ngm, mill
 use gvecw, only : ecutwfc
-use control_flags, only : gamma_only
+use control_flags, only : gamma_only, diago_full_acc
 use mp_pools, only : inter_pool_comm, npool
 use mp_images,        only : nproc_image, intra_image_comm
 use mp, only : mp_sum, mp_bcast
@@ -213,6 +216,10 @@ else
          call sirius_set_num_mag_dims(0)
       endif
    endif
+endif
+
+if (diago_full_acc) then
+  call sirius_set_empty_states_tolerance(0.d0)
 endif
 
 ! set lattice vectors of the unit cell (length is in [a.u.])
@@ -331,7 +338,7 @@ do iat = 1, nsp
     call sirius_set_atom_type_vloc(atom_type(iat)%label, upf(iat)%mesh, vloc(1))
     deallocate(vloc)
   endif
-  call test_integration(msh(iat), upf(iat)%r, upf(iat)%rab)
+  !call test_integration(msh(iat), upf(iat)%r, upf(iat)%rab)
   !call test_integration(upf(iat)%mesh, upf(iat)%r, upf(iat)%rab)
 enddo
   
@@ -457,6 +464,7 @@ call sirius_create_ground_state(kset_id)
 !deallocate(nk_loc)
 
 end subroutine setup_sirius
+
 
 subroutine test_integration(nr, r, rab)
 use mod_spline
@@ -799,6 +807,7 @@ subroutine invert_mtrx(vlat, vlat_inv)
   vlat_inv(3,3)=(vlat(1,1)*vlat(2,2)-vlat(1,2)*vlat(2,1))*d1
 end subroutine
 
+
 subroutine get_band_energies_from_sirius
   !
   use wvfct,    only : nbnd, et
@@ -840,6 +849,7 @@ subroutine get_band_energies_from_sirius
   deallocate(band_e)
 
 end subroutine get_band_energies_from_sirius
+
 
 subroutine put_band_occupancies_to_sirius
   !
@@ -888,50 +898,55 @@ subroutine put_band_occupancies_to_sirius
 
 end subroutine put_band_occupancies_to_sirius
 
-subroutine get_density_matrix_from_sirius
-use scf,        only : rho
-use ions_base,  only : nat, nsp, ityp
-use uspp_param, only : nhm, nh
-use lsda_mod,   only : nspin
-implicit none
-complex(8), allocatable :: dens_mtrx(:,:,:)
-integer iat, na, ijh, ih, jh, ispn
-! complex density matrix in SIRIUS has at maximum three components
-allocate(dens_mtrx(nhm, nhm, 3))
-do iat = 1, nsp
-  do na = 1, nat
-    if (ityp(na).eq.iat.and.allocated(rho%bec)) then
-      rho%bec(:, na, :) = 0.d0
-      call sirius_get_density_matrix(na, dens_mtrx(1, 1, 1), nhm)
 
-      ijh = 0
-      do ih = 1, nh(iat)
-        do jh = ih, nh(iat)
-          ijh = ijh + 1
-          if (nspin.le.2) then
-            do ispn = 1, nspin
-              rho%bec(ijh, na, ispn) = dreal(dens_mtrx(ih, jh, ispn))
-            enddo
-          endif
-          if (nspin.eq.4) then
-            rho%bec(ijh, na, 1) = dreal(dens_mtrx(ih, jh, 1) + dens_mtrx(ih, jh, 2))
-            rho%bec(ijh, na, 4) = dreal(dens_mtrx(ih, jh, 1) - dens_mtrx(ih, jh, 2))
-            rho%bec(ijh, na, 2) = 2.d0 * dreal(dens_mtrx(ih, jh, 3))
-            rho%bec(ijh, na, 3) = -2.d0 * dimag(dens_mtrx(ih, jh, 3))
-          endif
-          ! off-diagonal elements have a weight of 2
-          if (ih.ne.jh) then
-            do ispn = 1, nspin
-              rho%bec(ijh, na, ispn) = rho%bec(ijh, na, ispn) * 2.d0
-            enddo
-          endif
+subroutine get_density_matrix_from_sirius
+  !
+  use scf,        only : rho
+  use ions_base,  only : nat, nsp, ityp
+  use uspp_param, only : nhm, nh
+  use lsda_mod,   only : nspin
+  !
+  implicit none
+  !
+  complex(8), allocatable :: dens_mtrx(:,:,:)
+  integer iat, na, ijh, ih, jh, ispn
+  ! complex density matrix in SIRIUS has at maximum three components
+  allocate(dens_mtrx(nhm, nhm, 3))
+  do iat = 1, nsp
+    do na = 1, nat
+      if (ityp(na).eq.iat.and.allocated(rho%bec)) then
+        rho%bec(:, na, :) = 0.d0
+        call sirius_get_density_matrix(na, dens_mtrx(1, 1, 1), nhm)
+  
+        ijh = 0
+        do ih = 1, nh(iat)
+          do jh = ih, nh(iat)
+            ijh = ijh + 1
+            if (nspin.le.2) then
+              do ispn = 1, nspin
+                rho%bec(ijh, na, ispn) = dreal(dens_mtrx(ih, jh, ispn))
+              enddo
+            endif
+            if (nspin.eq.4) then
+              rho%bec(ijh, na, 1) = dreal(dens_mtrx(ih, jh, 1) + dens_mtrx(ih, jh, 2))
+              rho%bec(ijh, na, 4) = dreal(dens_mtrx(ih, jh, 1) - dens_mtrx(ih, jh, 2))
+              rho%bec(ijh, na, 2) = 2.d0 * dreal(dens_mtrx(ih, jh, 3))
+              rho%bec(ijh, na, 3) = -2.d0 * dimag(dens_mtrx(ih, jh, 3))
+            endif
+            ! off-diagonal elements have a weight of 2
+            if (ih.ne.jh) then
+              do ispn = 1, nspin
+                rho%bec(ijh, na, ispn) = rho%bec(ijh, na, ispn) * 2.d0
+              enddo
+            endif
+          enddo
         enddo
-      enddo
-    endif
+      endif
+    enddo
   enddo
-enddo
-deallocate(dens_mtrx)
+  deallocate(dens_mtrx)
 end subroutine get_density_matrix_from_sirius
+
 
 subroutine get_density_from_sirius
   !
@@ -970,6 +985,7 @@ subroutine get_density_from_sirius
   call get_density_matrix_from_sirius
 end subroutine get_density_from_sirius
 
+
 subroutine put_density_to_sirius
   !
   use scf,        only : rho
@@ -982,7 +998,6 @@ subroutine put_density_to_sirius
   implicit none
   !
   complex(8), allocatable :: rho_tot(:), mag(:)
-  complex(8), allocatable :: dens_mtrx(:,:,:)
   integer iat, ig, ih, jh, ijh, na, ispn
   real(8) :: fact
   !
@@ -1008,50 +1023,73 @@ subroutine put_density_to_sirius
     call sirius_set_pw_coeffs(c_str("magy"), rho%of_g(1, 3), ngm, mill(1, 1), intra_bgrp_comm)
     call sirius_set_pw_coeffs(c_str("magz"), rho%of_g(1, 4), ngm, mill(1, 1), intra_bgrp_comm)
   endif
-
-  !!== ! set density matrix
-  !!== ! complex density matrix in SIRIUS has at maximum three components
-  !!== allocate(dens_mtrx(nhm, nhm, 3))
-  !!== do iat = 1, nsp
-  !!==   do na = 1, nat
-  !!==     if (ityp(na).eq.iat.and.allocated(rho%bec)) then
-  !!==       dens_mtrx = (0.d0, 0.d0)
-  !!==       ijh = 0
-  !!==       do ih = 1, nh(iat)
-  !!==         do jh = ih, nh(iat)
-  !!==           ijh = ijh + 1
-  !!==           ! off-diagonal elements have a weight of 2
-  !!==           if (ih.ne.jh) then
-  !!==             fact = 0.5d0
-  !!==           else
-  !!==             fact = 1.d0
-  !!==           endif
-  !!==           if (nspin.le.2) then
-  !!==             do ispn = 1, nspin
-  !!==               dens_mtrx(ih, jh, ispn) = fact * rho%bec(ijh, na, ispn)
-  !!==               dens_mtrx(jh, ih, ispn) = fact * rho%bec(ijh, na, ispn)
-  !!==             enddo
-  !!==           endif
-  !!==           if (nspin.eq.4) then
-  !!==             ! 0.5 * (rho + mz)
-  !!==             dens_mtrx(ih, jh, 1) = fact * 0.5 * (rho%bec(ijh, na, 1) + rho%bec(ijh, na, 4))
-  !!==             dens_mtrx(jh, ih, 1) = fact * 0.5 * (rho%bec(ijh, na, 1) + rho%bec(ijh, na, 4))
-  !!==             ! 0.5 * (rho - mz)
-  !!==             dens_mtrx(ih, jh, 2) = fact * 0.5 * (rho%bec(ijh, na, 1) - rho%bec(ijh, na, 4))
-  !!==             dens_mtrx(jh, ih, 2) = fact * 0.5 * (rho%bec(ijh, na, 1) - rho%bec(ijh, na, 4))
-  !!==             ! 0.5 * (mx - I * my)
-  !!==             dens_mtrx(ih, jh, 3) = fact * 0.5 * dcmplx(rho%bec(ijh, na, 2), -rho%bec(ijh, na, 3))
-  !!==             dens_mtrx(jh, ih, 3) = fact * 0.5 * dcmplx(rho%bec(ijh, na, 2), -rho%bec(ijh, na, 3))
-  !!==           endif
-  !!==         enddo
-  !!==       enddo
-  !!==       call sirius_set_density_matrix(na, dens_mtrx(1, 1, 1), nhm)
-  !!==     endif
-  !!==   enddo
-  !!== enddo
-  !!== deallocate(dens_mtrx)
-
 end subroutine put_density_to_sirius
+
+
+subroutine put_density_matrix_to_sirius
+  !
+  use scf,        only : rho
+  use ions_base,  only : nat, nsp, ityp
+  use lsda_mod,   only : nspin
+  use uspp_param, only : nhm, nh
+  use uspp,       only : becsum
+  implicit none
+  !
+  integer iat, na, ih, jh, ijh, ispn
+  complex(8), allocatable :: dens_mtrx(:,:,:)
+  real(8), allocatable :: dens_mtrx_tmp(:, :, :)
+  real(8) fact
+  ! set density matrix
+  ! complex density matrix in SIRIUS has at maximum three components
+  allocate(dens_mtrx_tmp(nhm * (nhm + 1) / 2, nat, nspin))
+  if (allocated(rho%bec)) then
+    dens_mtrx_tmp = rho%bec
+  else
+    dens_mtrx_tmp = becsum
+  endif
+
+  allocate(dens_mtrx(nhm, nhm, 3))
+  do iat = 1, nsp
+    do na = 1, nat
+      if (ityp(na).eq.iat) then
+        dens_mtrx = (0.d0, 0.d0)
+        ijh = 0
+        do ih = 1, nh(iat)
+          do jh = ih, nh(iat)
+            ijh = ijh + 1
+            ! off-diagonal elements have a weight of 2
+            if (ih.ne.jh) then
+              fact = 0.5d0
+            else
+              fact = 1.d0
+            endif
+            if (nspin.le.2) then
+              do ispn = 1, nspin
+                dens_mtrx(ih, jh, ispn) = fact * dens_mtrx_tmp(ijh, na, ispn)
+                dens_mtrx(jh, ih, ispn) = fact * dens_mtrx_tmp(ijh, na, ispn)
+              enddo
+            endif
+            if (nspin.eq.4) then
+              ! 0.5 * (rho + mz)
+              dens_mtrx(ih, jh, 1) = fact * 0.5 * (dens_mtrx_tmp(ijh, na, 1) + dens_mtrx_tmp(ijh, na, 4))
+              dens_mtrx(jh, ih, 1) = fact * 0.5 * (dens_mtrx_tmp(ijh, na, 1) + dens_mtrx_tmp(ijh, na, 4))
+              ! 0.5 * (rho - mz)
+              dens_mtrx(ih, jh, 2) = fact * 0.5 * (dens_mtrx_tmp(ijh, na, 1) - dens_mtrx_tmp(ijh, na, 4))
+              dens_mtrx(jh, ih, 2) = fact * 0.5 * (dens_mtrx_tmp(ijh, na, 1) - dens_mtrx_tmp(ijh, na, 4))
+              ! 0.5 * (mx - I * my)
+              dens_mtrx(ih, jh, 3) = fact * 0.5 * dcmplx(dens_mtrx_tmp(ijh, na, 2), -dens_mtrx_tmp(ijh, na, 3))
+              dens_mtrx(jh, ih, 3) = fact * 0.5 * dcmplx(dens_mtrx_tmp(ijh, na, 2), -dens_mtrx_tmp(ijh, na, 3))
+            endif
+          enddo
+        enddo
+        call sirius_set_density_matrix(na, dens_mtrx(1, 1, 1), nhm)
+      endif
+    enddo
+  enddo
+  deallocate(dens_mtrx)
+  deallocate(dens_mtrx_tmp)
+end subroutine put_density_matrix_to_sirius
+
 
 subroutine put_d_matrix_to_sirius
 use uspp_param,           only : nhm
@@ -1078,6 +1116,7 @@ do ia = 1, nat
 enddo
 deallocate(deeq_tmp)
 end subroutine put_d_matrix_to_sirius
+
 
 subroutine get_d_matrix_from_sirius
 use uspp_param,           only : nhm
@@ -1302,6 +1341,7 @@ enddo
 deallocate(gvl)
 
 end subroutine get_wave_functions_from_sirius
+
 
 !subroutine put_vltot_to_sirius
 !  use scf,       only : vltot
