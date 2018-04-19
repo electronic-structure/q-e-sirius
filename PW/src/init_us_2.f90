@@ -29,6 +29,8 @@ subroutine init_us_2 (npw_, igk_, q_, vkb_)
   USE splinelib
   USE uspp,       ONLY : nkb, nhtol, nhtolm, indv
   USE uspp_param, ONLY : upf, lmaxkb, nhm, nh
+  USE constants,    ONLY : fpi
+  USE cell_base,    ONLY : omega
   USE mod_sirius
   !
   implicit none
@@ -116,10 +118,15 @@ subroutine init_us_2 (npw_, igk_, q_, vkb_)
                 i1 = i0 + 1
                 i2 = i0 + 2
                 i3 = i0 + 3
-                vq (ig) = tab (i0, nb, nt) * ux * vx * wx / 6.d0 + &
-                          tab (i1, nb, nt) * px * vx * wx / 2.d0 - &
-                          tab (i2, nb, nt) * px * ux * wx / 2.d0 + &
-                          tab (i3, nb, nt) * px * ux * vx / 6.d0
+                if (use_sirius.and.use_sirius_radial_integrals_beta) then
+                  call sirius_ri_beta(nb, nt, qg(ig), vq(ig)) 
+                  vq(ig) = vq(ig) * fpi / sqrt(omega)
+                else
+                  vq (ig) = tab (i0, nb, nt) * ux * vx * wx / 6.d0 + &
+                            tab (i1, nb, nt) * px * vx * wx / 2.d0 - &
+                            tab (i2, nb, nt) * px * ux * wx / 2.d0 + &
+                            tab (i3, nb, nt) * px * ux * vx / 6.d0
+                endif
               endif
            enddo
         endif
