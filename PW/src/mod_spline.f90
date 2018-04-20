@@ -5,6 +5,59 @@ integer, parameter :: spline_integration_method = -1 ! -1: spline, -2: simpson
 
 contains
 
+subroutine spline_v3(n, r, f, cf)
+implicit none
+integer, intent(in)  :: n
+real(8), intent(in)  :: r(n)
+real(8), intent(in)  :: f(n)
+real(8), intent(out) :: cf(3, n)
+!
+real(8) dl(n - 1)
+real(8) du(n - 1)
+real(8) d(n)
+real(8) x(n)
+real(8) dy(n - 1)
+real(8) dr(n - 1)
+integer i
+real(8) h0, h1
+
+do i = 1, n - 1
+  dr(i) = r(i + 1) - r(i)
+  dy(i) = (f(i + 1) - f(i)) / dr(i)
+enddo
+do i = 1, n - 2
+  x(i + 1) = 6.d0 * (dy(i + 1) - dy(i))
+enddo
+x(1) = x(2)
+x(n) = x(n-1)
+do i = 1, n - 2
+  d(i + 1) = 2.d0 * (dr(i) + dr(i + 1))
+enddo
+do i = 1, n - 1
+  du(i) = dr(i)
+  dl(i) = dr(i)
+enddo
+h0 = dr(1)
+h1 = dr(2)
+d(1) = h0 - (h1 / h0) * h1
+du(1) = h1 * ((h1 / h0) + 1) + 2 * (h0 + h1)
+
+h0 = dr(n-1)
+h1 = dr(n-2)
+d(n) = h0 - (h1 / h0) * h1;
+dl(n-1) = h1 * ((h1 / h0) + 1) + 2 * (h0 + h1);
+
+call dgtsv(n, 1, dl, d, du, x, n, i)
+do i = 1, n - 1
+  cf(2, i) = x(i) / 2.d0
+  h0 = (x(i + 1) - x(i)) / 6.d0
+  cf(1, i) = dy(i) - (cf(2, i) + h0) * dr(i)
+  cf(3, i) = h0 / dr(i)
+enddo
+cf(:,n) = 0.d0
+end subroutine
+
+
 Subroutine spline_v2 (n, x, f, cf)
 ! !INPUT/OUTPUT PARAMETERS:
 !   n  : number of points (in,integer)
@@ -242,6 +295,7 @@ integer i
 real(8) x0,x1,x2,dx
 ! automatic arrays
 real(8) cf(3,n)
+real(8) cf1(3,n)
 real(8) g(n)
 if (n.le.0) then
   write(*,*)
@@ -273,7 +327,8 @@ case(-2)
    +f(n-1)*(x0-x2)*(3.d0*x2-2.d0*x1-x0))/(6.d0*(x2-x1)*(x2-x0))
 case(-1)
   !call cubic_spline(n,x,f,cf)
-  call spline_v2(n,x,f,cf)
+  call spline_v3(n,x,f,cf)
+  !call sirius_spline(n, x, f, cf1)
   g(1)=0.d0
   do i=1,n-1
     dx=x(i+1)-x(i)
