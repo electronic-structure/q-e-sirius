@@ -12,13 +12,13 @@ logical :: use_sirius_radial_integration_vloc = .true.
 ! use SIRIUS to compute radial integrals of rho_core(r)
 logical :: use_sirius_radial_integration_rhoc = .true.
 ! use SIRIUS to get radial integrals of beta-projectors
-logical :: use_sirius_radial_integrals_beta   = .true.
+logical :: use_sirius_radial_integrals_beta   = .false.
 ! use SIRIUS to compute beta projectors
 logical :: use_sirius_beta_projectors         = .true.
 ! use SIRIUS to compute Q-operator
 logical :: use_sirius_q_operator              = .true.
 ! use SIRIUS to solve KS equations
-logical :: use_sirius_ks_solver               = .true.
+logical :: use_sirius_ks_solver               = .false.
 ! use SIRIUS to generate density
 logical :: use_sirius_density                 = .false.
 ! use SIRIUS to generate effective potential; WARNING: currently must be always set to .false.
@@ -352,7 +352,8 @@ do ia = 1, nat
   ! fractional coordinates
   v1(:) = matmul(vlat_inv, v1)
   ! reduce coordinates to [0, 1) interval
-  call sirius_reduce_coordinates(v1(1), v2(1), vt(1))
+  !call sirius_reduce_coordinates(v1(1), v2(1), vt(1))
+  v2 = v1
   if (noncolin) then
     v1(1) = zv(iat) * starting_magnetization(iat) * sin(angle1(iat)) * cos(angle2(iat))
     v1(2) = zv(iat) * starting_magnetization(iat) * sin(angle1(iat)) * sin(angle2(iat))
@@ -1042,11 +1043,11 @@ subroutine put_density_matrix_to_sirius
   ! set density matrix
   ! complex density matrix in SIRIUS has at maximum three components
   allocate(dens_mtrx_tmp(nhm * (nhm + 1) / 2, nat, nspin))
-  if (allocated(rho%bec)) then
-    dens_mtrx_tmp = rho%bec
-  else
+  !if (allocated(rho%bec)) then
+  !  dens_mtrx_tmp = rho%bec
+  !else
     dens_mtrx_tmp = becsum
-  endif
+  !endif
 
   allocate(dens_mtrx(nhm, nhm, 3))
   do iat = 1, nsp
