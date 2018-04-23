@@ -16,17 +16,17 @@ logical :: use_sirius_radial_integrals_beta   = .true.
 ! use SIRIUS to get radial integrals of Q-operator
 logical :: use_sirius_radial_integrals_q      = .true.
 ! use SIRIUS to compute beta projectors
-logical :: use_sirius_beta_projectors         = .false.
+logical :: use_sirius_beta_projectors         = .true.
 ! use SIRIUS to compute Q-operator
-logical :: use_sirius_q_operator              = .false.
+logical :: use_sirius_q_operator              = .true.
 ! use SIRIUS to solve KS equations
-logical :: use_sirius_ks_solver               = .false.
+logical :: use_sirius_ks_solver               = .true.
 ! use SIRIUS to generate density
-logical :: use_sirius_density                 = .false.
+logical :: use_sirius_density                 = .true.
 ! use SIRIUS to generate effective potential; WARNING: currently must be always set to .false.
 logical :: use_sirius_potential               = .false.
-! use SIRIUS to generate density matrix ('bec' thing in QE)
-logical :: use_sirius_density_matrix          = .false.
+! use SIRIUS to generate density matrix ('bec' thing in QE) WARNING: currently must be set to the value of use_sirius_density
+logical :: use_sirius_density_matrix          = .true.
 ! use SIRIUS to generate D-operator matrix (non-local part of pseudopotential)
 logical :: use_sirius_d_operator_matrix       = .false.
 ! use SIRIUS to compute local part of pseudopotential

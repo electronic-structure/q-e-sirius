@@ -248,7 +248,7 @@ SUBROUTINE sum_band()
      !
   END IF
   !
-  if (use_sirius.and.use_sirius_ks_solver.and..not.use_sirius_density) then
+  if (use_sirius.and.use_sirius_ks_solver.and..not.use_sirius_density_matrix) then
     call put_density_matrix_to_sirius
   endif
   !

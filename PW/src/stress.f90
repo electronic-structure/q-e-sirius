@@ -69,7 +69,9 @@ subroutine stress ( sigma )
   END IF
   if (use_sirius) then
     call put_density_to_sirius
-    call put_density_matrix_to_sirius
+    if (.not.use_sirius_density_matrix) then
+      call put_density_matrix_to_sirius
+    endif
     call sirius_calculate_stress_tensor(kset_id)
   endif
   !
