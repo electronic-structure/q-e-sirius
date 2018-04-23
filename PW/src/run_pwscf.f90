@@ -122,6 +122,9 @@ SUBROUTINE run_pwscf ( exit_status )
        RETURN
     ENDIF
     CALL init_run()
+    !if (use_sirius.and.use_sirius_radial_integrals_q) then
+    !  call get_q_operator_matrix_from_sirius
+    !endif
     if (use_sirius.and.use_sirius_q_operator) then
       call get_q_operator_from_sirius
     endif

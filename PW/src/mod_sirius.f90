@@ -12,11 +12,13 @@ logical :: use_sirius_radial_integration_vloc = .true.
 ! use SIRIUS to compute radial integrals of rho_core(r)
 logical :: use_sirius_radial_integration_rhoc = .true.
 ! use SIRIUS to get radial integrals of beta-projectors
-logical :: use_sirius_radial_integrals_beta   = .false.
+logical :: use_sirius_radial_integrals_beta   = .true.
+! use SIRIUS to get radial integrals of Q-operator
+logical :: use_sirius_radial_integrals_q      = .true.
 ! use SIRIUS to compute beta projectors
-logical :: use_sirius_beta_projectors         = .true.
+logical :: use_sirius_beta_projectors         = .false.
 ! use SIRIUS to compute Q-operator
-logical :: use_sirius_q_operator              = .true.
+logical :: use_sirius_q_operator              = .false.
 ! use SIRIUS to solve KS equations
 logical :: use_sirius_ks_solver               = .false.
 ! use SIRIUS to generate density
@@ -780,13 +782,45 @@ do iat = 1, nsp
       do jh = ih, atom_type(iat)%num_beta_projectors
         ijh = ijh + 1
         call sirius_get_q_operator(atom_type(iat)%label, ih, jh, ngm, mill(1, 1), atom_type(iat)%qpw(1, ijh))
-        call sirius_get_q_operator_matrix(atom_type(iat)%label, qq_nt(1, 1, iat), nhm)
       enddo
     enddo
   endif
 enddo
 
+call get_q_operator_matrix_from_sirius
+
 end subroutine get_q_operator_from_sirius
+
+
+subroutine get_q_operator_matrix_from_sirius
+use uspp_param, only : upf, nh, nhm
+use ions_base,  only : nsp, ityp, nat
+use uspp,       only : qq_nt, qq_at
+implicit none
+integer iat, ih, jh, ijh, ia
+
+qq_nt = 0
+do iat = 1, nsp
+  call sirius_get_num_beta_projectors(atom_type(iat)%label, atom_type(iat)%num_beta_projectors)
+  if (nh(iat).ne.atom_type(iat)%num_beta_projectors) then
+    stop 'wrong number of beta projectors'
+  endif
+  if (upf(iat)%tvanp) then
+    ijh = 0
+    do ih = 1, atom_type(iat)%num_beta_projectors
+      do jh = ih, atom_type(iat)%num_beta_projectors
+        ijh = ijh + 1
+        call sirius_get_q_operator_matrix(atom_type(iat)%label, qq_nt(1, 1, iat), nhm)
+      enddo
+    enddo
+  endif
+enddo
+do ia = 1, nat
+   qq_at(:, :, ia) = qq_nt(:, :, ityp(ia))
+end do
+
+end subroutine get_q_operator_matrix_from_sirius
+
 
 subroutine invert_mtrx(vlat, vlat_inv)
   implicit none
@@ -1298,6 +1332,7 @@ do iat = 1, nsp
 enddo
 
 end subroutine put_q_operator_matrix_to_sirius
+
 
 subroutine get_wave_functions_from_sirius
 use klist, only : nkstot, nks, ngk, igk_k

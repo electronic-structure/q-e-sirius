@@ -100,7 +100,7 @@ subroutine gen_us_dy (ik, u, dvkb)
              i1 = i0 + 1
              i2 = i0 + 2
              i3 = i0 + 3
-             if (use_sirius.and.use_sirius_radial_integrals_beta) then
+             if (use_sirius.and.use_sirius_radial_integrals_beta.and.sirius_initialized()) then
                call sirius_ri_beta(nb, nt, q(ig), vkb0 (ig, nb, nt) ) 
                vkb0 (ig, nb, nt) = vkb0 (ig, nb, nt) * fpi / sqrt(omega)
              else
