@@ -12,7 +12,7 @@ logical :: use_sirius_radial_integration_vloc = .true.
 ! use SIRIUS to compute radial integrals of rho_core(r)
 logical :: use_sirius_radial_integration_rhoc = .true.
 ! use SIRIUS to get radial integrals of beta-projectors
-logical :: use_sirius_radial_integrals_beta   = .true.
+logical :: use_sirius_radial_integrals_beta   = .false.
 ! use SIRIUS to get radial integrals of Q-operator
 logical :: use_sirius_radial_integrals_q      = .true.
 ! use SIRIUS to compute beta projectors
@@ -28,13 +28,13 @@ logical :: use_sirius_potential               = .false.
 ! use SIRIUS to generate density matrix ('bec' thing in QE) WARNING: currently must be set to the value of use_sirius_density
 logical :: use_sirius_density_matrix          = .true.
 ! use SIRIUS to generate D-operator matrix (non-local part of pseudopotential)
-logical :: use_sirius_d_operator_matrix       = .false.
+logical :: use_sirius_d_operator_matrix       = .true.
 ! use SIRIUS to compute local part of pseudopotential
-logical :: use_sirius_vloc                    = .false.
+logical :: use_sirius_vloc                    = .true.
 ! use SIRIUS to compute core charge density
-logical :: use_sirius_rho_core                = .false.
+logical :: use_sirius_rho_core                = .true.
 ! initialize G-vectors once or at each step of ionic relaxation
-logical :: recompute_gvec                     = .false.
+logical :: recompute_gvec                     = .true.
 
 ! inverse of the reciprocal lattice vectors matrix
 real(8) bg_inv(3,3)
