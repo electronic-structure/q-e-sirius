@@ -108,9 +108,6 @@ SUBROUTINE run_pwscf ( exit_status )
   CALL qmmm_update_positions()
   !
   if (.not.recompute_gvec) then
-    if (use_sirius) then
-      call setup_sirius
-    endif
     IF ( check_stop_now() ) THEN
        CALL pre_init()
        CALL data_structure( gamma_only )
@@ -122,12 +119,6 @@ SUBROUTINE run_pwscf ( exit_status )
        RETURN
     ENDIF
     CALL init_run()
-    !if (use_sirius.and.use_sirius_radial_integrals_q) then
-    !  call get_q_operator_matrix_from_sirius
-    !endif
-    if (use_sirius.and.use_sirius_q_operator) then
-      call get_q_operator_from_sirius
-    endif
     !
     ! ... dry run: code will stop here if called with exit file present
     ! ... useful for a quick and automated way to check input data
@@ -151,13 +142,7 @@ SUBROUTINE run_pwscf ( exit_status )
         CALL fft_type_allocate (dfftp, at, bg, gcutm, intra_bgrp_comm, nyfft=nyfft)
         dffts%nr1=0; dffts%nr2=0; dffts%nr3=0
         CALL fft_type_allocate (dffts, at, bg, gcutms,intra_bgrp_comm, nyfft=nyfft)
-        if (use_sirius) then
-          call setup_sirius
-        endif
         CALL init_run()
-        if (use_sirius.and.use_sirius_q_operator) then
-          call get_q_operator_from_sirius
-        endif
         !
         ! ... dry run: code will stop here if called with exit file present
         ! ... useful for a quick and automated way to check input data
@@ -274,8 +259,6 @@ SUBROUTINE run_pwscf ( exit_status )
      !
      if (use_sirius) then
        call clear_sirius
-       !call setup_sirius
-       !call get_q_operator_from_sirius
      endif
   END DO main_loop
   !

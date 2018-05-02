@@ -33,6 +33,7 @@ SUBROUTINE init_run()
   USE esm,                ONLY : do_comp_esm, esm_init
   USE tsvdw_module,       ONLY : tsvdw_initialize
   USE Coul_cut_2D,        ONLY : do_cutoff_2D, cutoff_fact 
+  use mod_sirius
 !  USE wavefunctions_module, ONLY : evc
 !#if defined(__HDF5) && defined(__OLDXML)
 !  USE hdf5_qe, ONLY : initialize_hdf5
@@ -46,6 +47,11 @@ SUBROUTINE init_run()
   logical exst_file,exst_mem
   !
   CALL start_clock( 'init_run' )
+  if (use_sirius) then
+    call sirius_start_timer(c_str("qe|init_run|setup_sirius"))
+    call setup_sirius
+    call sirius_stop_timer(c_str("qe|init_run|setup_sirius"))
+  endif
   !
   ! ... calculate limits of some indices, used in subsequent allocations
   !
@@ -140,6 +146,9 @@ SUBROUTINE init_run()
   !
   IF ( lmd ) CALL allocate_dyn_vars()
   !
+  if (use_sirius.and.use_sirius_q_operator) then
+    call get_q_operator_from_sirius
+  endif
   CALL stop_clock( 'init_run' )
   !
   RETURN
