@@ -30,7 +30,7 @@ subroutine init_us_2 (npw_, igk_, q_, vkb_)
   USE uspp,       ONLY : nkb, nhtol, nhtolm, indv
   USE uspp_param, ONLY : upf, lmaxkb, nhm, nh
   USE constants,    ONLY : fpi
-  USE cell_base,    ONLY : omega
+  USE cell_base,    ONLY : omega, bg
   USE mod_sirius
   !
   implicit none
@@ -57,6 +57,7 @@ subroutine init_us_2 (npw_, igk_, q_, vkb_)
   !
   if (lmaxkb.lt.0) return
   if (use_sirius.and.use_sirius_beta_projectors) then
+    call invert_mtrx(bg, bg_inv)
     vkl = matmul(bg_inv, q_)
     allocate(gvl(3, npw_))
     do ig = 1, npw_

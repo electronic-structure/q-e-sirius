@@ -245,7 +245,9 @@ SUBROUTINE run_pwscf ( exit_status )
         ! ... update the wavefunctions, charge density, potential
         ! ... update_pot initializes structure factor array as well
         !
-        CALL update_pot()
+        if (.not.(use_sirius.and.recompute_gvec)) then
+          CALL update_pot()
+        endif
         !
         ! ... re-initialize atomic position-dependent quantities
         !
@@ -265,6 +267,9 @@ SUBROUTINE run_pwscf ( exit_status )
   ! ... save final data file
   !
   CALL qexsd_set_status(exit_status)
+  if (use_sirius.and.use_sirius_ks_solver) then
+    call get_wave_functions_from_sirius
+  endif
   CALL punch('all')
   !
   CALL qmmm_shutdown()

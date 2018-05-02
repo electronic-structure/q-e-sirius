@@ -48,7 +48,9 @@ SUBROUTINE hinit0()
   if (tbeta_smoothing) CALL init_us_b0()
   if (tq_smoothing) CALL init_us_0()
   call sirius_start_timer(c_str("qe|init_run|hinit0|init_us_1"))
-  CALL init_us_1()
+  if (.not.(use_sirius.and.use_sirius_ks_solver.and.use_sirius_density)) then
+    CALL init_us_1()
+  endif
   call sirius_stop_timer(c_str("qe|init_run|hinit0|init_us_1"))
   IF ( lda_plus_U .AND. ( U_projection == 'pseudo' ) ) CALL init_q_aeps()
   call sirius_start_timer(c_str("qe|init_run|hinit0|init_at_1"))

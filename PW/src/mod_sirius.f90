@@ -16,7 +16,7 @@ logical :: use_sirius_radial_integrals_beta   = .false.
 ! use SIRIUS to get radial integrals of Q-operator
 logical :: use_sirius_radial_integrals_q      = .true.
 ! use SIRIUS to compute beta projectors
-logical :: use_sirius_beta_projectors         = .true.
+logical :: use_sirius_beta_projectors         = .false.
 ! use SIRIUS to compute Q-operator
 logical :: use_sirius_q_operator              = .true.
 ! use SIRIUS to solve KS equations

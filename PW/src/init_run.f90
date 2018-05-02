@@ -9,7 +9,7 @@
 SUBROUTINE init_run()
   !----------------------------------------------------------------------------
   !
-  USE klist,              ONLY : nkstot
+  USE klist,              ONLY : nkstot, nks
   USE symme,              ONLY : sym_rho_init
   USE wvfct,              ONLY : nbnd, et, wg, btype
   USE control_flags,      ONLY : lmd, gamma_only, smallmem, ts_vdw
@@ -33,18 +33,20 @@ SUBROUTINE init_run()
   USE esm,                ONLY : do_comp_esm, esm_init
   USE tsvdw_module,       ONLY : tsvdw_initialize
   USE Coul_cut_2D,        ONLY : do_cutoff_2D, cutoff_fact 
+  USE wavefunctions_module, ONLY : evc
   use mod_sirius
 !  USE wavefunctions_module, ONLY : evc
 !#if defined(__HDF5) && defined(__OLDXML)
 !  USE hdf5_qe, ONLY : initialize_hdf5
 !#endif
-!  use mod_sirius
-!  USE control_flags,        ONLY : io_level
-!  USE io_files,             ONLY : iunwfc, nwordwfc
-!  USE buffers,              ONLY : open_buffer
+  USE control_flags,        ONLY : io_level
+  USE io_files,             ONLY : iunwfc, nwordwfc
+  USE buffers,              ONLY : open_buffer, save_buffer
+  USE bp,                   ONLY : lelfield
   !
   IMPLICIT NONE
   logical exst_file,exst_mem
+  integer ik
   !
   CALL start_clock( 'init_run' )
   if (use_sirius) then
@@ -131,11 +133,15 @@ SUBROUTINE init_run()
   !
   CALL newd()
   !
-  !if (.not.(use_sirius.and.use_sirius_ks_solver)) then
+  if (.not.(use_sirius.and.use_sirius_ks_solver)) then
     CALL wfcinit()
-  !else
-  !  CALL open_buffer( iunwfc, 'wfc', nwordwfc, io_level, exst_mem, exst_file )
-  !endif
+  else
+    CALL open_buffer( iunwfc, 'wfc', nwordwfc, io_level, exst_mem, exst_file )
+     !do ik = 1, nks
+     !  if ( nks > 1 .or. (io_level > 1) .or. lelfield ) &
+     !      call save_buffer ( evc, nwordwfc, iunwfc, ik )
+     !enddo
+  endif
   !
   IF(use_wannier) CALL wannier_init()
   !
