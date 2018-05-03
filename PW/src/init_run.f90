@@ -41,12 +41,10 @@ SUBROUTINE init_run()
 !#endif
   USE control_flags,        ONLY : io_level
   USE io_files,             ONLY : iunwfc, nwordwfc
-  USE buffers,              ONLY : open_buffer, save_buffer
-  USE bp,                   ONLY : lelfield
+  USE buffers,              ONLY : open_buffer
   !
   IMPLICIT NONE
   logical exst_file,exst_mem
-  integer ik
   !
   CALL start_clock( 'init_run' )
   if (use_sirius) then
@@ -137,10 +135,6 @@ SUBROUTINE init_run()
     CALL wfcinit()
   else
     CALL open_buffer( iunwfc, 'wfc', nwordwfc, io_level, exst_mem, exst_file )
-     !do ik = 1, nks
-     !  if ( nks > 1 .or. (io_level > 1) .or. lelfield ) &
-     !      call save_buffer ( evc, nwordwfc, iunwfc, ik )
-     !enddo
   endif
   !
   IF(use_wannier) CALL wannier_init()

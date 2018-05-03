@@ -42,6 +42,7 @@ subroutine atomic_rho (rhoa, nspina)
   USE mp,                   ONLY : mp_sum
   USE fft_base,             ONLY : dfftp
   USE fft_interfaces,       ONLY : invfft
+  use mod_sirius
 
   !
   implicit none
@@ -69,6 +70,11 @@ subroutine atomic_rho (rhoa, nspina)
   allocate (rhocgnt( ngl))    
   rhoa(:,:) = 0.d0
   rhocg(:,:) = (0.d0,0.d0)
+
+  if (use_sirius) then
+    call sirius_generate_initial_density
+    call get_density_from_sirius
+  else
 
   do nt = 1, ntyp
      !
@@ -143,6 +149,8 @@ subroutine atomic_rho (rhoa, nspina)
         end do
      endif
   enddo
+
+  endif
 
   deallocate (rhocgnt)
   deallocate (aux)
