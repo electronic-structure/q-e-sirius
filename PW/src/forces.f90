@@ -33,12 +33,12 @@ SUBROUTINE forces()
   USE cell_base,     ONLY : at, bg, alat, omega  
   USE ions_base,     ONLY : nat, ntyp => nsp, ityp, tau, zv, amass, extfor, atm
   USE fft_base,      ONLY : dfftp
-  USE gvect,         ONLY : ngm, gstart, ngl, igtongl, g, gg, gcutm
+  USE gvect,         ONLY : ngm, gstart, ngl, igtongl, g, gg, gcutm, mill
   USE lsda_mod,      ONLY : nspin
   USE symme,         ONLY : symvector
   USE vlocal,        ONLY : strf, vloc
   USE force_mod,     ONLY : force, lforce, sumfor
-  USE scf,           ONLY : rho
+  USE scf,           ONLY : rho, vnew, rho_core, rhog_core
   USE ions_base,     ONLY : if_pos
   USE ldaU,          ONLY : lda_plus_u, U_projection
   USE extfield,      ONLY : tefield, forcefield, gate, forcegate, relaxz
@@ -57,6 +57,10 @@ SUBROUTINE forces()
   USE tsvdw_module,  ONLY : FtsvdW
   USE esm,           ONLY : do_comp_esm, esm_bc, esm_force_ew
   USE qmmm,          ONLY : qmmm_mode
+  USE wavefunctions_module, ONLY : psic  
+  USE ener,                 ONLY : etxc, vtxc
+  USE mp_bands,             ONLY : intra_bgrp_comm
+  USE fft_interfaces,       ONLY : fwfft
   use mod_sirius
   !
   IMPLICIT NONE
@@ -81,16 +85,59 @@ SUBROUTINE forces()
 !
   REAL(DP) :: sumscf, sum_mm
   REAL(DP), PARAMETER :: eps = 1.e-12_dp
-  INTEGER  :: ipol, na
+  INTEGER  :: ipol, na, ig
     ! counter on polarization
     ! counter on atoms
   !
   REAL(DP) :: latvecs(3,3)
   INTEGER :: atnum(1:nat)
   REAL(DP) :: stress_dftd3(3,3)
+  real(8), allocatable :: vxc(:, :)
+  complex(8), allocatable :: vxc_g(:)
   !
   !
   if (use_sirius) then
+    ! recalculate the exchange-correlation potential
+    allocate (vxc(dfftp%nnr, nspin))
+    !
+    call v_xc (rho, rho_core, rhog_core, etxc, vtxc, vxc)
+    !
+    psic=(0.0_DP,0.0_DP)
+    if (nspin == 1 .or. nspin == 4) then
+       psic(:) = vxc(:, 1)
+    else
+       psic(:) = (vxc(:, 1) + vxc(:, 2)) * 0.5d0
+    endif
+    deallocate(vxc)
+    call fwfft('Rho', psic, dfftp)
+    !
+    ! psic contains now Vxc(G)
+    !
+    allocate(vxc_g(ngm))
+    do ig = 1, ngm
+       vxc_g(ig) = psic(dfftp%nl(ig)) * 0.5d0 ! convert to Ha
+    enddo
+    ! set XC potential
+    call sirius_set_pw_coeffs(c_str("vxc"), vxc_g(1), ngm, mill(1, 1), intra_bgrp_comm)
+    
+    !
+    ! vnew is V_out - V_in, psic is the temp space
+    !
+    if (nspin == 1 .or. nspin == 4) then
+       psic(:) = vnew%of_r(:, 1)
+    else
+       psic(:) = (vnew%of_r(:, 1) + vnew%of_r(:, 2)) * 0.5d0
+    endif
+    call fwfft ('Rho', psic, dfftp)
+
+    do ig = 1, ngm
+       vxc_g(ig) = psic(dfftp%nl(ig)) * 0.5d0 ! convert to Ha
+    enddo
+    ! set XC potential
+    call sirius_set_pw_coeffs(c_str("dveff"), vxc_g(1), ngm, mill(1, 1), intra_bgrp_comm)
+
+    deallocate(vxc_g)
+  
     call sirius_calculate_forces(kset_id)
   endif
   CALL start_clock( 'forces' )

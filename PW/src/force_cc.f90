@@ -48,7 +48,12 @@ subroutine force_cc (forcecc)
   ! exchange-correlation potential
   ! radial fourier transform of rho core
   real(DP)  ::  arg, fact
-
+  
+  if (use_sirius) then
+    call sirius_get_forces(c_str("core"), forcecc(1, 1))
+    forcecc = forcecc * 2 ! convert to Ry
+    return
+  endif
   !
   forcecc(:,:) = 0.d0
   if ( ANY ( upf(1:ntyp)%nlcc ) ) go to 15
