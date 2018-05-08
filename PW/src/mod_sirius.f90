@@ -1343,36 +1343,38 @@ use bp, only : lelfield
 use noncollin_module, only : npol
 use wvfct, only : npwx, nbnd
 use wavefunctions_module, only : evc
+use lsda_mod, only : isk, lsda
+use mp_pools, only : inter_pool_comm
+use parallel_include
 implicit none
 integer, external :: global_kpoint_index
 integer, allocatable :: gvl(:,:)
-integer ig, ik, ik_, i, j
+integer ig, ik, ik_, i, j, ispn, rank, ierr, nksmax
 complex(8) z1
 
+! rank of communicator that distributes k-points
+call mpi_comm_rank(inter_pool_comm, rank, ierr)
+call mpi_allreduce(nks, nksmax, 1, MPI_INTEGER, MPI_MAX, inter_pool_comm, ierr)
+
 allocate(gvl(3, npwx))
-do ik = 1, nks
-  do ig = 1, ngk(ik)
-    gvl(:,ig) = mill(:, igk_k(ig, ik))
-  enddo
-  !
-  ik_ = global_kpoint_index(nkstot, ik)
-  call sirius_get_wave_functions(kset_id, ik_, ngk(ik), gvl(1, 1), evc(1, 1), npwx * npol) 
-  !write(*,*)'checking wfs for k-point ', ik_
-  !do i = 1, nbnd
-  !  do j = 1, nbnd
-  !    z1 = 0.d0
-  !    do ig = 1, ngk(ik)
-  !      z1 = z1 + conjg(evc(ig, i)) * evc(ig, j)
-  !    enddo
-  !    if (i.eq.j) z1 = z1 - 1.d0
-  !    if (abs(z1).gt.1e-10) then
-  !      write(*,*)'not orthogonal ',i,j,' diff: ',z1
-  !    endif
-  !  enddo
-  !enddo
-  !
-  IF ( nks > 1 .OR. lelfield ) &
-    CALL save_buffer ( evc, nwordwfc, iunwfc, ik )
+do ik = 1, nksmax
+  if (ik.le.nks) then
+    do ig = 1, ngk(ik)
+      gvl(:,ig) = mill(:, igk_k(ig, ik))
+    enddo
+    !
+    ik_ = global_kpoint_index(nkstot, ik)
+    ispn = isk(ik)
+    if (lsda.and.ispn.eq.2) then
+      ik_ = ik_ - nkstot / 2
+    endif
+    call sirius_get_wave_functions(kset_id, ik_, ispn, ngk(ik), gvl(1, 1), evc(1, 1), npwx, npol) 
+    if (nks > 1 .or. lelfield) then
+      call save_buffer ( evc, nwordwfc, iunwfc, ik )
+    endif
+  else
+     call sirius_get_wave_functions(kset_id, -1, -1, -1, -1, z1, -1, -1) 
+  endif
 enddo
 deallocate(gvl)
 
