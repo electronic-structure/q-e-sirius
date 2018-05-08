@@ -249,6 +249,13 @@ subroutine init_us_1
   !  compute Clebsch-Gordan coefficients
   !
   if (okvan .or. okpaw) call aainit (lmaxkb + 1)
+  if (use_sirius.and.use_sirius_ks_solver.and.use_sirius_density) then
+    deallocate (aux)
+    deallocate (aux1)
+    deallocate (ylmk0)
+    deallocate (qtot)
+    return
+  endif
   !
   !   here for the US types we compute the Fourier transform of the
   !   Q functions.
