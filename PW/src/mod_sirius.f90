@@ -1356,6 +1356,8 @@ complex(8) z1
 call mpi_comm_rank(inter_pool_comm, rank, ierr)
 call mpi_allreduce(nks, nksmax, 1, MPI_INTEGER, MPI_MAX, inter_pool_comm, ierr)
 
+!CALL open_buffer( iunwfc, 'wfc', nwordwfc, io_level, exst_mem, exst_file )
+
 allocate(gvl(3, npwx))
 do ik = 1, nksmax
   if (ik.le.nks) then
