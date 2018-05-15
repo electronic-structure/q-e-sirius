@@ -141,7 +141,7 @@ SUBROUTINE init_run()
   !
 #if defined(__MPI)
   ! Cleanup PAW arrays that are only used for init
-  IF (okpaw) CALL paw_post_init() ! only parallel!
+  !IF (okpaw) CALL paw_post_init() ! only parallel!
 #endif
   !
   IF ( lmd ) CALL allocate_dyn_vars()

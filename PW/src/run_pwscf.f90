@@ -203,7 +203,6 @@ SUBROUTINE run_pwscf ( exit_status )
         ! ... ionic step (for molecular dynamics or optimization)
         !
         CALL move_ions ( idone, ions_status )
-        write(*,*)'ions_status=',ions_status
         if (use_sirius.and.recompute_gvec.and.ions_status.eq.1) then
           lmovecell=.FALSE.
           lbfgs=.FALSE.
