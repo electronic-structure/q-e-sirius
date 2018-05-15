@@ -289,7 +289,7 @@ SUBROUTINE run_pwscf ( exit_status )
   !
   IF ( .NOT. conv_ions )  exit_status =  3
   if (use_sirius) then
-     call sirius_print_timers
+     !call sirius_print_timers
      call sirius_clear
      call sirius_finalize(call_mpi_fin=flg)
   endif
