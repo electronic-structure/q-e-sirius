@@ -59,7 +59,6 @@ SUBROUTINE c_bands( iter )
     endif
     ! set the tolerance
     call sirius_set_iterative_solver_tolerance(ethr / 2)
-    ! TODO: set the tolerance for empty states in case of daiag_full_acc=.true.
     ! solve H\spi = E\psi
     call sirius_find_eigen_states(kset_id, precompute=1)
     if (.not.use_sirius_density) then

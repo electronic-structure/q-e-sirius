@@ -48,6 +48,7 @@ SUBROUTINE init_run()
   !
   CALL start_clock( 'init_run' )
   if (use_sirius) then
+    call clear_sirius
     call sirius_start_timer(c_str("qe|init_run|setup_sirius"))
     call setup_sirius
     call sirius_stop_timer(c_str("qe|init_run|setup_sirius"))

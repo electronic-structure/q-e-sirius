@@ -271,25 +271,18 @@ SUBROUTINE run_pwscf ( exit_status )
      ! ... the first scf iteration of each ionic step (after the first)
      !
      ethr = 1.0D-6
-     !
-     if (use_sirius) then
-       call clear_sirius
-     endif
   END DO main_loop
   !
   ! ... save final data file
   !
   CALL qexsd_set_status(exit_status)
-  !if (use_sirius.and.use_sirius_ks_solver) then
-  !  call get_wave_functions_from_sirius
-  !endif
   CALL punch('all')
   !
   CALL qmmm_shutdown()
   !
   IF ( .NOT. conv_ions )  exit_status =  3
   if (use_sirius) then
-     !call sirius_print_timers
+     call sirius_print_timers
      call sirius_clear
      call sirius_finalize(call_mpi_fin=flg)
   endif
