@@ -261,7 +261,7 @@ links : bindir
 # - If the final directory does not exists it creates it
 #########################################################
 
-install :
+install : pw
 	@if test -d bin ; then mkdir -p $(PREFIX)/bin ; \
 	for x in `find * ! -path "test-suite/*" -name *.x -type f` ; do \
 		cp $$x $(PREFIX)/bin/ ; done ; \
