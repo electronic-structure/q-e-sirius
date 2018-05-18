@@ -185,8 +185,8 @@ num_ranks_k = nproc_image / npool
 i = sqrt(dble(num_ranks_k) + 1d-10)
 if (i * i .ne. num_ranks_k) then
   !stop ("not a square MPI grid")
-  dims(1) = num_ranks_k
-  dims(2) = 1
+  dims(1) = 1
+  dims(2) = num_ranks_k
 else 
   dims(1) = i
   dims(2) = i
