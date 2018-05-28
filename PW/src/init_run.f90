@@ -47,6 +47,7 @@ SUBROUTINE init_run()
   logical exst_file,exst_mem
   !
   CALL start_clock( 'init_run' )
+  call sirius_start_timer(c_str("qe|init_run"))
   if (use_sirius) then
     call clear_sirius
     call sirius_start_timer(c_str("qe|init_run|setup_sirius"))
@@ -151,6 +152,7 @@ SUBROUTINE init_run()
     call get_q_operator_from_sirius
   endif
   CALL stop_clock( 'init_run' )
+  call sirius_stop_timer(c_str("qe|init_run"))
   !
   RETURN
   !

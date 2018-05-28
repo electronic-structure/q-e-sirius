@@ -115,6 +115,7 @@ SUBROUTINE setup()
 #else
   LOGICAL :: lpara = .false.
 #endif
+  call sirius_start_timer(c_str("qe|setup"))
 
   !
   ! ... okvan/okpaw = .TRUE. : at least one pseudopotential is US/PAW
@@ -676,6 +677,7 @@ SUBROUTINE setup()
   !
   IF (lda_plus_u .or. okpaw .or. (okvan.and.dft_is_hybrid()) ) CALL d_matrix( d1, d2, d3 )
   !
+  call sirius_stop_timer(c_str("qe|setup"))
   RETURN
   !
 END SUBROUTINE setup
