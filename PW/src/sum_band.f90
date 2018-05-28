@@ -103,6 +103,13 @@ SUBROUTINE sum_band()
        call invfft ('Rho', psic, dfftp)
        rho%of_r(:,is) = psic(:)
     enddo
+    IF (lda_plus_u) THEN
+       IF(noncolin) THEN
+          CALL new_ns_nc(rho%ns_nc)
+       ELSE
+          CALL new_ns(rho%ns)
+       ENDIF
+    ENDIF
     CALL stop_clock( 'sum_band' )
     return
   endif
@@ -143,7 +150,7 @@ SUBROUTINE sum_band()
   IF ( okvan ) CALL allocate_bec_type (nkb,nbnd, becp,intra_bgrp_comm)
   IF (dft_is_meta() .OR. lxdm) ALLOCATE (kplusg(npwx))
   !
-  ! ... specialized routines are called to sum at Gamma or for each k point 
+  ! ... specialized routines are called to sum at Gamma or for each k point
   ! ... the contribution of the wavefunctions to the charge
   ! ... The band energy contribution eband is computed together with the charge
   !
@@ -207,7 +214,7 @@ SUBROUTINE sum_band()
      !
   ENDIF
   !
-  ! ... symmetrize rho(G) 
+  ! ... symmetrize rho(G)
   !
   CALL sym_rho ( nspin_mag, rho%of_g )
   !
@@ -293,7 +300,7 @@ SUBROUTINE sum_band()
 
        IF( use_tg ) THEN
           !
-          v_siz = dffts%nnr_tg 
+          v_siz = dffts%nnr_tg
           !
           ALLOCATE( tg_psi( v_siz ) )
           ALLOCATE( tg_rho( v_siz ) )
@@ -480,7 +487,7 @@ SUBROUTINE sum_band()
           !
           ! ... If we have a US pseudopotential we compute here the becsum term
           !
-          IF ( okvan ) CALL sum_bec ( ik, current_spin, ibnd_start,ibnd_end,this_bgrp_nbnd ) 
+          IF ( okvan ) CALL sum_bec ( ik, current_spin, ibnd_start,ibnd_end,this_bgrp_nbnd )
           !
        END DO k_loop
        !
@@ -618,7 +625,7 @@ SUBROUTINE sum_band()
                    !
                    ! Compute the proper factor for each band
                    !
-                   idx = fftx_tgpe(dffts) + 1 
+                   idx = fftx_tgpe(dffts) + 1
                    !
                    ! Remember
                    ! proc 0 has bands ibnd
@@ -860,7 +867,7 @@ SUBROUTINE sum_band()
            rho_loc(ir,2) = rho_loc(ir,2) + w1_loc*2.D0* &
                           (DBLE(psic_loc(ir,1))* DBLE(psic_loc(ir,2)) + &
                           AIMAG(psic_loc(ir,1))*AIMAG(psic_loc(ir,2)))
- 
+
            rho_loc(ir,3) = rho_loc(ir,3) + w1_loc*2.D0* &
                           (DBLE(psic_loc(ir,1))*AIMAG(psic_loc(ir,2)) - &
                            DBLE(psic_loc(ir,2))*AIMAG(psic_loc(ir,1)))
@@ -877,13 +884,13 @@ SUBROUTINE sum_band()
 END SUBROUTINE sum_band
 
 !----------------------------------------------------------------------------
-SUBROUTINE sum_bec ( ik, current_spin, ibnd_start, ibnd_end, this_bgrp_nbnd ) 
+SUBROUTINE sum_bec ( ik, current_spin, ibnd_start, ibnd_end, this_bgrp_nbnd )
   !----------------------------------------------------------------------------
   !
   ! This routine computes the sum over bands
   !     \sum_i <\psi_i|\beta_l>w_i<\beta_m|\psi_i>
-  ! for point "ik" and, for LSDA, spin "current_spin" 
-  ! Calls calbec to compute "becp"=<beta_m|psi_i> 
+  ! for point "ik" and, for LSDA, spin "current_spin"
+  ! Calls calbec to compute "becp"=<beta_m|psi_i>
   ! Output is accumulated (unsymmetrized) into "becsum", module "uspp"
   !
   ! Routine used in sum_band (if okvan) and in compute_becsum, called by hinit1 (if okpaw)
@@ -922,7 +929,7 @@ SUBROUTINE sum_bec ( ik, current_spin, ibnd_start, ibnd_end, this_bgrp_nbnd )
   ELSE
      if (gamma_only) then
         do ibnd = ibnd_start, ibnd_end, 2
-           call invfft_orbital_gamma(evc,ibnd,ibnd_end) 
+           call invfft_orbital_gamma(evc,ibnd,ibnd_end)
            call calbec_rs_gamma(ibnd,ibnd_end,becp%r)
         enddo
         call mp_sum(becp%r,inter_bgrp_comm)
@@ -930,7 +937,7 @@ SUBROUTINE sum_bec ( ik, current_spin, ibnd_start, ibnd_end, this_bgrp_nbnd )
         current_k = ik
         becp%k = (0.d0,0.d0)
         do ibnd = ibnd_start, ibnd_end
-           call invfft_orbital_k(evc,ibnd,ibnd_end) 
+           call invfft_orbital_k(evc,ibnd,ibnd_end)
            call calbec_rs_k(ibnd,ibnd_end)
         enddo
        call mp_sum(becp%k,inter_bgrp_comm)
@@ -962,10 +969,10 @@ SUBROUTINE sum_bec ( ik, current_spin, ibnd_start, ibnd_end, this_bgrp_nbnd )
                      auxk2( ibnd_start:ibnd_end, nh(np)*npol ) )
         END IF
         IF ( noncolin ) THEN
-           ALLOCATE ( aux_nc( nh(np)*npol,nh(np)*npol ) ) 
+           ALLOCATE ( aux_nc( nh(np)*npol,nh(np)*npol ) )
         ELSE
-           ALLOCATE ( aux_gk( nh(np),nh(np) ) ) 
-           if (tqr) ALLOCATE ( aux_egk( nh(np),nh(np) ) ) 
+           ALLOCATE ( aux_gk( nh(np),nh(np) ) )
+           if (tqr) ALLOCATE ( aux_egk( nh(np),nh(np) ) )
         END IF
         !
         !   In becp=<vkb_i|psi_j> terms corresponding to atom na of type nt
@@ -1004,12 +1011,12 @@ SUBROUTINE sum_bec ( ik, current_spin, ibnd_start, ibnd_end, this_bgrp_nbnd )
                     ikb = indv_ijkb0(na) + ih
                     DO ibnd_loc = 1, nbnd_loc
                        ibnd = ibnd_loc + becp%ibnd_begin - 1
-                       auxg(ibnd_loc,ih)= wg(ibnd,ik)*becp%r(ikb,ibnd_loc) 
+                       auxg(ibnd_loc,ih)= wg(ibnd,ik)*becp%r(ikb,ibnd_loc)
                     END DO
                  END DO
 !$omp end parallel do
                  !
-                 ! NB: band parallelizazion has not been performed in this case because 
+                 ! NB: band parallelizazion has not been performed in this case because
                  !     bands were already distributed across R&G processors.
                  !     Contribution to aux_gk is scaled by 1.d0/nbgrp so that the becsum
                  !     summation across bgrps performed outside will gives the right value.
@@ -1037,7 +1044,7 @@ SUBROUTINE sum_bec ( ik, current_spin, ibnd_start, ibnd_end, this_bgrp_nbnd )
                  DO ih = 1, nh(np)
                     ikb = indv_ijkb0(na) + ih
                     DO ibnd = ibnd_start, ibnd_end
-                       auxk1(ibnd,ih) = becp%k(ikb,ibnd) 
+                       auxk1(ibnd,ih) = becp%k(ikb,ibnd)
                        auxk2(ibnd,ih) = wg(ibnd,ik)*becp%k(ikb,ibnd)
                     END DO
                  END DO
@@ -1102,8 +1109,8 @@ SUBROUTINE sum_bec ( ik, current_spin, ibnd_start, ibnd_end, this_bgrp_nbnd )
         IF ( noncolin ) THEN
            DEALLOCATE ( aux_nc )
         ELSE
-           DEALLOCATE ( aux_gk  ) 
-           if (tqr) DEALLOCATE ( aux_egk  ) 
+           DEALLOCATE ( aux_gk  )
+           if (tqr) DEALLOCATE ( aux_egk  )
         END IF
         IF ( gamma_only ) THEN
            DEALLOCATE( auxg )
@@ -1168,7 +1175,7 @@ SUBROUTINE add_becsum_nc ( na, np, becsum_nc, becsum )
         END IF
      END DO
   END DO
-  
+
 END SUBROUTINE add_becsum_nc
 !
 !----------------------------------------------------------------------------
@@ -1187,7 +1194,7 @@ SUBROUTINE add_becsum_so( na, np, becsum_nc, becsum )
   USE spin_orb,             ONLY : fcoef, domag
   !
   IMPLICIT NONE
-  
+
   INTEGER, INTENT(IN) :: na, np
   COMPLEX(DP), INTENT(IN) :: becsum_nc(nh(np),npol,nh(np),npol)
   REAL(DP), INTENT(INOUT) :: becsum(nhm*(nhm+1)/2,nat,nspin_mag)
@@ -1196,7 +1203,7 @@ SUBROUTINE add_becsum_so( na, np, becsum_nc, becsum )
   !
   INTEGER :: ih, jh, lh, kh, ijh, is1, is2
   COMPLEX(DP) :: fac
-  
+
   DO ih = 1, nh(np)
      DO jh = 1, nh(np)
         ijh=ijtoh(ih,jh,np)
