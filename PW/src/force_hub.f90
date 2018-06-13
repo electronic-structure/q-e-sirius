@@ -38,7 +38,6 @@ SUBROUTINE force_hub(forceh)
    USE wavefunctions_module, ONLY : evc
    USE klist,                ONLY : nks, xk, ngk, igk_k
    USE io_files,             ONLY : nwordwfc, iunwfc
-   USE mod_sirius
    USE buffers,              ONLY : get_buffer
 
    IMPLICIT NONE
@@ -59,11 +58,11 @@ SUBROUTINE force_hub(forceh)
    call start_clock('force_hub')
 
    ! if (use_sirius) then
-!   call sirius_get_forces(c_str("hubbard"), forceh(1, 1))
-!      forceh = forceh * 2.0 ! convert to Ry
-     !call symvector(nat, forceh)
-     !call stop_clock('force_hub')
- !  else
+   !   call sirius_get_forces(c_str("hubbard"), forceh(1, 1))
+   !      forceh = forceh * 2.0 ! convert to Ry
+   !call symvector(nat, forceh)
+   !call stop_clock('force_hub')
+   !  else
 
       ldim= 2 * Hubbard_lmax + 1
       ALLOCATE ( dns(ldim,ldim,nspin,nat) )
@@ -84,71 +83,70 @@ SUBROUTINE force_hub(forceh)
       !
       !    we start a loop on k points
       !
-      DO ik = 1, nks
+   DO ik = 1, nks
+      !
+      IF (lsda) current_spin = isk(ik)
+      npw = ngk (ik)
+
+      IF (nks > 1) &
+         CALL get_buffer (evc, nwordwfc, iunwfc, ik)
+
+      CALL init_us_2 (npw,igk_k(1,ik),xk(1,ik),vkb)
+      CALL calbec( npw, vkb, evc, becp )
+      CALL s_psi  (npwx, npw, nbnd, evc, spsi )
+
+      ! re-calculate atomic wfc - wfcatom is used here as work space
+
+      CALL atomic_wfc (ik, wfcatom)
+      call copy_U_wfc (wfcatom)
+
+      ! wfcU contains Hubbard-U atomic wavefunctions
+      ! proj=<wfcU|S|evc> - no need to read S*wfcU from buffer
+
+      CALL calbec( npw, wfcU, spsi, proj )
+
+      ! now we need the first derivative of proj with respect to tau(alpha,ipol)
+
+      DO alpha = 1,nat  ! forces are calculated for atom alpha ...
          !
-         IF (lsda) current_spin = isk(ik)
-         npw = ngk (ik)
-
-         IF (nks > 1) &
-              CALL get_buffer (evc, nwordwfc, iunwfc, ik)
-
-         CALL init_us_2 (npw,igk_k(1,ik),xk(1,ik),vkb)
-         CALL calbec( npw, vkb, evc, becp )
-         CALL s_psi  (npwx, npw, nbnd, evc, spsi )
-
-         ! re-calculate atomic wfc - wfcatom is used here as work space
-
-         CALL atomic_wfc (ik, wfcatom)
-         call copy_U_wfc (wfcatom)
-
-         ! wfcU contains Hubbard-U atomic wavefunctions
-         ! proj=<wfcU|S|evc> - no need to read S*wfcU from buffer
-
-         CALL calbec( npw, wfcU, spsi, proj )
-
-         ! now we need the first derivative of proj with respect to tau(alpha,ipol)
-
-         DO alpha = 1,nat  ! forces are calculated for atom alpha ...
+         ijkb0 = indv_ijkb0(alpha) ! positions of beta functions for atom alpha
+         DO ipol = 1,3  ! forces are calculated for coordinate ipol ...
             !
-            ijkb0 = indv_ijkb0(alpha) ! positions of beta functions for atom alpha
-            DO ipol = 1,3  ! forces are calculated for coordinate ipol ...
-               !
-               IF ( gamma_only ) THEN
-                  CALL dndtau_gamma ( ldim, proj%r, spsi, alpha, ijkb0, ipol, ik, &
-                       nb_s, nb_e, mykey, dns )
-               ELSE
-                  CALL dndtau_k     ( ldim, proj%k, spsi, alpha, ijkb0, ipol, ik, &
-                       nb_s, nb_e, mykey, dns )
-               ENDIF
-               !!omp parallel do default(shared) private(na,nt,m1,m2,is)
-               DO na = 1,nat                 ! the Hubbard atom
-                  nt = ityp(na)
-                  IF ( is_hubbard(nt) ) THEN
-                     DO is = 1,nspin
-                        DO m2 = 1,ldim
-                           DO m1 = 1,ldim
-                              forceh(ipol,alpha) = forceh(ipol,alpha) -    &
-                                   v%ns(m2,m1,is,na) * dns(m1,m2,is,na)
-                           END DO
+            IF ( gamma_only ) THEN
+               CALL dndtau_gamma ( ldim, proj%r, spsi, alpha, ijkb0, ipol, ik, &
+                                   nb_s, nb_e, mykey, dns )
+            ELSE
+               CALL dndtau_k     ( ldim, proj%k, spsi, alpha, ijkb0, ipol, ik, &
+                                   nb_s, nb_e, mykey, dns )
+            ENDIF
+!!omp parallel do default(shared) private(na,nt,m1,m2,is)
+            DO na = 1,nat                 ! the Hubbard atom
+               nt = ityp(na)
+               IF ( is_hubbard(nt) ) THEN
+                  DO is = 1,nspin
+                     DO m2 = 1,ldim
+                        DO m1 = 1,ldim
+                           forceh(ipol,alpha) = forceh(ipol,alpha) -    &
+                              v%ns(m2,m1,is,na) * dns(m1,m2,is,na)
                         END DO
                      END DO
-                  END IF
-               END DO
-               !!omp end parallel do
+                  END DO
+               END IF
             END DO
+!!omp end parallel do
          END DO
       END DO
-      !
-      CALL mp_sum( forceh, inter_pool_comm )
-      !
-      call deallocate_bec_type (becp)
-      call deallocate_bec_type (proj)
-      DEALLOCATE( wfcatom  )
-      DEALLOCATE( spsi  )
-      DEALLOCATE( dns )
+   END DO
+   !
+   CALL mp_sum( forceh, inter_pool_comm )
+   !
+   call deallocate_bec_type (becp)
+   call deallocate_bec_type (proj)
+   DEALLOCATE( wfcatom  )
+   DEALLOCATE( spsi  )
+   DEALLOCATE( dns )
 
-      IF (nspin == 1) forceh(:,:) = 2.d0 * forceh(:,:)
-  ! ENDIF
+   IF (nspin == 1) forceh(:,:) = 2.d0 * forceh(:,:)
    !
    ! ...symmetrize...
    !

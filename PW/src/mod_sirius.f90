@@ -144,8 +144,6 @@ use lsda_mod, only : lsda, nspin, starting_magnetization
 use cell_base, only : omega
 use symm_base, only : nosym
 use spin_orb,  only : lspinorb
-use ldaU, only : lda_plus_U, Hubbard_J, Hubbard_U, Hubbard_alpha, &
-     & Hubbard_beta, is_Hubbard, lda_plus_u_kind, Hubbard_J0, U_projection, Hubbard_l
 use esm,       only : esm_local, esm_bc, do_comp_esm
 use mp_diag, only : nproc_ortho
 implicit none
@@ -157,8 +155,7 @@ real(8), allocatable :: dion(:, :), qij(:,:,:), vloc(:), wk_tmp(:), xk_tmp(:,:)
 integer, allocatable :: nk_loc(:)
 integer :: ih, jh, ijh, lmax_beta
 logical(C_BOOL) bool_var
-INTEGER,EXTERNAL           :: set_hubbard_l,set_hubbard_n
-real(8), external :: hubbard_occ
+
 !if (allocated(atom_type)) then
 !  do iat = 1, nsp
 !    if (allocated(atom_type(iat)%qpw)) deallocate(atom_type(iat)%qpw)
@@ -190,7 +187,7 @@ if (i * i .ne. num_ranks_k) then
   !stop ("not a square MPI grid")
   dims(1) = 1
   dims(2) = num_ranks_k
-else
+else 
   dims(1) = i
   dims(2) = i
 endif
@@ -222,21 +219,6 @@ else
       endif
    endif
 endif
-
-if (lda_plus_U) then
-   call sirius_set_hubbard_correction()
-   if (lda_plus_u_kind == 0) then
-      call sirius_set_hubbard_simplified_method()
-   endif
-   if (U_projection == "ortho-atomic") then
-      call sirius_set_orthogonalize_hubbard_orbitals()
-   endif
-
-   if (U_projection == "norm-atomic") then
-      call sirius_set_normalize_hubbard_orbitals()
-   endif
-endif
-
 
 if (diago_full_acc) then
   call sirius_set_empty_states_tolerance(0.d0)
@@ -282,34 +264,15 @@ do iat = 1, nsp
 
   ! set beta-projectors
   do i = 1, upf(iat)%nbeta
-     l = upf(iat)%lll(i);
-     if (upf(iat)%has_so) then
-        if (upf(iat)%jjj(i) .le. upf(iat)%lll(i)) then
-           l = - upf(iat)%lll(i)
-        endif
-     endif
-     call sirius_add_atom_type_beta_radial_function(atom_type(iat)%label, l,&
-          &upf(iat)%beta(1, i), upf(iat)%kbeta(i))
+    call sirius_add_atom_type_beta_radial_function(atom_type(iat)%label, upf(iat)%lll(i),&
+                                                  &upf(iat)%beta(1, i), upf(iat)%kbeta(i))
   enddo
 
   ! set the atomic radial functions
   do iwf = 1, upf(iat)%nwfc
-     l = upf(iat)%lchi(iwf)
-     if (upf(iat)%has_so) then
-        if (upf(iat)%jchi(iwf) < l) then
-           l = -l
-        endif
-     endif
-     call sirius_add_atom_type_ps_atomic_wf(atom_type(iat)%label, l, upf(iat)%chi(1, iwf), upf(iat)%oc(iwf), msh(iat))
+    l = upf(iat)%lchi(iwf)
+    call sirius_add_atom_type_ps_atomic_wf(atom_type(iat)%label, l, upf(iat)%chi(1, iwf), 0.d0, msh(iat))
   enddo
-
-  if (is_hubbard(iat)) then
-     call sirius_set_atom_type_hubbard(atom_type(iat)%label, Hubbard_l(iat), &
-          set_hubbard_n(upf(iat)%psd), hubbard_occ ( upf(iat)%psd ), &
-          Hubbard_U(iat), Hubbard_J(1,iat), &
-          Hubbard_alpha(iat), Hubbard_beta(iat), Hubbard_J0(iat))
-  endif
-
 
   allocate(dion(upf(iat)%nbeta, upf(iat)%nbeta))
   ! convert to hartree
@@ -342,7 +305,7 @@ do iat = 1, nsp
          &upf(iat)%paw%core_energy, upf(iat)%paw%ae_rho_atc(1),&
          &upf(iat)%mesh, upf(iat)%paw%oc(1), upf(iat)%nbeta )
   endif
-
+  
   ! TODO: pass PW coefficients of this functions
 
   ! set non-linear core correction
@@ -360,7 +323,7 @@ do iat = 1, nsp
 
   ! set total charge density of a free atom (to compute initial rho(r))
   call sirius_set_atom_type_rho_tot(atom_type(iat)%label, upf(iat)%mesh, upf(iat)%rho_at(1))
-
+  
   ! the hack is done in Modules/readpp.f90
   if (use_sirius_vloc) then
     allocate(vloc(upf(iat)%mesh))
@@ -380,7 +343,7 @@ do iat = 1, nsp
   !call test_integration(msh(iat), upf(iat)%r, upf(iat)%rab)
   !call test_integration(upf(iat)%mesh, upf(iat)%r, upf(iat)%rab)
 enddo
-
+  
 ! add atoms to the unit cell
 ! WARNING: sirius accepts only fractional coordinates;
 !          if QE stores coordinates in a different way, the conversion must be made here
@@ -415,6 +378,8 @@ call sirius_set_esm(bool_var, esm_bc)
 ! initialize global variables/indices/arrays/etc. of the simulation
 call sirius_initialize_simulation_context()
 
+call sirius_create_potential
+  
 !! get number of g-vectors of the dense fft grid
 !call sirius_get_num_gvec(num_gvec)
 !
@@ -481,10 +446,10 @@ call sirius_create_kset(num_kpoints, kpoints(1, 1), wkpoints(1), 1, kset_id)
 !deallocate(xk_tmp)
 
 ! create Density class
-! call sirius_create_density()
-
+call sirius_create_density()
+ 
 ! create Potential class
-! call sirius_create_potential()
+call sirius_create_potential()
 
 ! create ground-state class
 call sirius_create_ground_state(kset_id)
@@ -893,7 +858,7 @@ subroutine get_band_energies_from_sirius
   integer :: ik, nk, nb, nfv
 
   allocate(band_e(nbnd, nkstot))
-
+  
   ! get band energies
   if (nspin.ne.2) then
     ! non-magnetic or non-collinear case
@@ -908,14 +873,14 @@ subroutine get_band_energies_from_sirius
       call sirius_get_band_energies(kset_id, ik, 0, band_e(1, ik))
       call sirius_get_band_energies(kset_id, ik, 1, band_e(1, nk + ik))
     end do
-
+  
   endif
-
+  
   ! convert to Ry
   do ik = 1, nks
     et(:, ik) = 2.d0 * band_e(:, global_kpoint_index(nkstot, ik))
   enddo
-
+  
   deallocate(band_e)
 
 end subroutine get_band_energies_from_sirius
@@ -937,7 +902,7 @@ subroutine put_band_occupancies_to_sirius
   real(8), allocatable :: bnd_occ(:, :)
   real(8) :: maxocc
   integer :: ik, ierr, nk, nb
-
+  
   ! compute occupancies
   allocate(bnd_occ(nbnd, nkstot))
   bnd_occ = 0.d0
@@ -950,20 +915,20 @@ subroutine put_band_occupancies_to_sirius
     bnd_occ(:, global_kpoint_index(nkstot, ik)) = maxocc * wg(:, ik) / wk(ik)
   enddo
   call mpi_allreduce(MPI_IN_PLACE, bnd_occ(1, 1), nbnd * nkstot, MPI_DOUBLE, MPI_SUM, inter_pool_comm, ierr)
-
+  
   if (nspin.ne.2) then
     ! set band occupancies
     do ik = 1, nkstot
       call sirius_set_band_occupancies(kset_id, ik, 0, bnd_occ(1, ik))
     enddo
-  else
+  else 
     nk = nkstot / 2
     do ik = 1, nk
       call sirius_set_band_occupancies(kset_id, ik, 0, bnd_occ(1, ik))
       call sirius_set_band_occupancies(kset_id, ik, 1, bnd_occ(1, ik + nk))
     enddo
   endif
-
+  
   deallocate(bnd_occ)
 
 end subroutine put_band_occupancies_to_sirius
@@ -987,7 +952,7 @@ subroutine get_density_matrix_from_sirius
       if (ityp(na).eq.iat.and.allocated(rho%bec)) then
         rho%bec(:, na, :) = 0.d0
         call sirius_get_density_matrix(na, dens_mtrx(1, 1, 1), nhm)
-
+  
         ijh = 0
         do ih = 1, nh(iat)
           do jh = ih, nh(iat)
@@ -1032,10 +997,10 @@ subroutine get_density_from_sirius
   !
   integer iat, ig, ih, jh, ijh, na, ispn
   complex(8) z1, z2
-
+  
   ! get rho(G)
   call sirius_get_pw_coeffs(c_str("rho"), rho%of_g(1, 1), ngm, mill(1, 1), intra_bgrp_comm)
-
+  
   if (nspin.eq.2) then
     call sirius_get_pw_coeffs(c_str("magz"), rho%of_g(1, 2), ngm, mill(1, 1), intra_bgrp_comm)
     ! convert to rho_{up}, rho_{dn}
@@ -1265,7 +1230,7 @@ subroutine put_potential_to_sirius
     enddo
 
     do ig = 1, ngm
-      z1 = v%of_g(ig, 1)
+      z1 = v%of_g(ig, 1) 
       z2 = v%of_g(ig, 2)
       v%of_g(ig, 1) = 0.5 * (z1 + z2)
       v%of_g(ig, 2) = 0.5 * (z1 - z2)
@@ -1405,12 +1370,12 @@ do ik = 1, nksmax
     if (lsda.and.ispn.eq.2) then
       ik_ = ik_ - nkstot / 2
     endif
-    call sirius_get_wave_functions(kset_id, ik_, ispn, ngk(ik), gvl(1, 1), evc(1, 1), npwx, npol)
+    call sirius_get_wave_functions(kset_id, ik_, ispn, ngk(ik), gvl(1, 1), evc(1, 1), npwx, npol) 
     if (nks > 1 .or. lelfield) then
       call save_buffer ( evc, nwordwfc, iunwfc, ik )
     endif
   else
-     call sirius_get_wave_functions(kset_id, -1, -1, -1, -1, z1, -1, -1)
+     call sirius_get_wave_functions(kset_id, -1, -1, -1, -1, z1, -1, -1) 
   endif
 enddo
 deallocate(gvl)
@@ -1459,7 +1424,7 @@ end subroutine get_wave_functions_from_sirius
 !  use sirius
 !  !
 !  implicit none
-!
+!  
 !  etxcc = 0.0d0
 !  if (any(upf(1:ntyp)%nlcc)) then
 !    call sirius_get_pw_coeffs(c_str("rhoc"), rhog_core(1), ngm, mill(1, 1), intra_bgrp_comm)
@@ -1468,7 +1433,7 @@ end subroutine get_wave_functions_from_sirius
 !    if (gamma_only) psic(dfftp%nlm(:)) = conjg(rhog_core(:))
 !    call invfft ('Rho', psic, dfftp)
 !    rho_core(:) = psic(:)
-!  else
+!  else 
 !    rhog_core(:) = 0.0d0
 !    rho_core(:)  = 0.0d0
 !  endif
