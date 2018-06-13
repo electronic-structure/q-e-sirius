@@ -43,13 +43,14 @@ SUBROUTINE stres_hub ( sigmah )
 
    sigmah(:,:) = 0.d0
 
-   if (use_sirius) then
-      call sirius_get_stress_tensor(c_str("hubbard"), sigmah(1, 1))
-      sigmah = -sigmah * 2 ! convert to Ry
-      CALL stop_clock( 'stres_hub' )
-      !call symmatrix ( sigmaloc )
-      return
-   endif
+!   if (use_sirius) then
+!      call sirius_get_stress_tensor(c_str("hubbard"), sigmah(1, 1))
+!      sigmah = -sigmah * 2 ! convert to Ry
+!      call symmatrix ( sigmah )
+!      CALL stop_clock( 'stres_hub' )
+!      !call symmatrix ( sigmaloc )
+!      return
+!   endif
 
    ldim = 2 * Hubbard_lmax + 1
    ALLOCATE (dns(ldim,ldim,nspin,nat))

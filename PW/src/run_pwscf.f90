@@ -6,16 +6,16 @@
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
 !----------------------------------------------------------------------------
-SUBROUTINE run_pwscf ( exit_status ) 
+SUBROUTINE run_pwscf ( exit_status )
   !----------------------------------------------------------------------------
   !
   !! author: Paolo Giannozzi
-  !! license: GNU 
+  !! license: GNU
   !! summary: Run an instance of the Plane Wave Self-Consistent Field code
   !!
-  !! Run an instance of the Plane Wave Self-Consistent Field code 
-  !! MPI initialization and input data reading is performed in the 
-  !! calling code - returns in exit_status the exit code for pw.x, 
+  !! Run an instance of the Plane Wave Self-Consistent Field code
+  !! MPI initialization and input data reading is performed in the
+  !! calling code - returns in exit_status the exit code for pw.x,
   !! returned in the shell. Values are:
   !! * 0: completed successfully
   !! * 1: an error has occurred (value returned by the errore() routine)
@@ -55,7 +55,7 @@ SUBROUTINE run_pwscf ( exit_status )
   USE gvect,                  ONLY : gcutm
   USE gvecs,                  ONLY : gcutms
   USE mp_bands,               ONLY : intra_bgrp_comm, nyfft
-  USE fft_types,              ONLY : fft_type_allocate  
+  USE fft_types,              ONLY : fft_type_allocate
   USE cellmd,     ONLY : lmovecell
   USE control_flags, ONLY : lbfgs, lmd
   !
@@ -64,7 +64,7 @@ SUBROUTINE run_pwscf ( exit_status )
   !! Gives the exit status at the end
   LOGICAL, external :: matches
   !! checks if first string is contained in the second
-  INTEGER :: idone 
+  INTEGER :: idone
   LOGICAL(C_BOOL) :: flg
   !! counter of electronic + ionic steps done in this run
   INTEGER :: ions_status = 3
@@ -86,7 +86,7 @@ SUBROUTINE run_pwscf ( exit_status )
   !
   ! ... needs to come before iosys() so some input flags can be
   !     overridden without needing to write PWscf specific code.
-  ! 
+  !
   CALL qmmm_initialization()
   !
   ! ... convert to internal variables
@@ -183,6 +183,14 @@ SUBROUTINE run_pwscf ( exit_status )
      !
      ! ... force calculation
      !
+
+     if (use_sirius) then
+        call put_density_to_sirius
+        if (.not.use_sirius_density_matrix) then
+           call put_density_matrix_to_sirius
+        endif
+     ENDIF
+
      IF ( lforce ) CALL forces()
      !
      ! ... stress calculation
@@ -213,7 +221,7 @@ SUBROUTINE run_pwscf ( exit_status )
         !
         ! ... then we save restart information for the new configuration
         !
-        IF ( idone <= nstep .AND. .NOT. conv_ions ) THEN 
+        IF ( idone <= nstep .AND. .NOT. conv_ions ) THEN
             CALL qexsd_set_status(255)
             CALL punch( 'config' )
         END IF
@@ -297,7 +305,7 @@ END SUBROUTINE run_pwscf
 
 SUBROUTINE reset_gvectors ( )
   !
-  ! ... Variable-cell optimization: once convergence is achieved, 
+  ! ... Variable-cell optimization: once convergence is achieved,
   ! ... make a final calculation with G-vectors and plane waves
   ! ... calculated for the final cell (may differ from the current
   ! ... result, using G_vectors and PWs for the starting cell)
@@ -336,7 +344,7 @@ SUBROUTINE reset_gvectors ( )
   if (trim(starting_wfc) == 'file') starting_wfc = 'atomic+random'
   starting_pot='atomic'
   !
-  ! ... re-set and re-calculate FFT grid 
+  ! ... re-set and re-calculate FFT grid
   !
   dfftp%nr1=0; dfftp%nr2=0; dfftp%nr3=0
   CALL fft_type_allocate (dfftp, at, bg, gcutm, intra_bgrp_comm, nyfft=nyfft)
@@ -353,9 +361,9 @@ END SUBROUTINE reset_gvectors
 
 SUBROUTINE reset_magn ( )
   !
-  ! ... lsda optimization :  a final configuration with zero 
-  ! ... absolute magnetization has been found and we check 
-  ! ... if it is really the minimum energy structure by 
+  ! ... lsda optimization :  a final configuration with zero
+  ! ... absolute magnetization has been found and we check
+  ! ... if it is really the minimum energy structure by
   ! ... performing a new scf iteration without any "electronic" history
   !
   USE io_global,  ONLY : stdout
@@ -374,12 +382,12 @@ SUBROUTINE reset_magn ( )
            & /5X,'                   absolute magnetization has been found' )
 9020 FORMAT( /5X,'the program is checking if it is really ', &
            &     'the minimum energy structure',             &
-           & /5X,'by performing a new scf iteration ',       & 
-           &     'without any "electronic" history' )               
+           & /5X,'by performing a new scf iteration ',       &
+           &     'without any "electronic" history' )
   !
 END SUBROUTINE reset_magn
 !
-SUBROUTINE reset_starting_magnetization ( ) 
+SUBROUTINE reset_starting_magnetization ( )
   !
   ! On input,  the scf charge density is needed
   ! On output, new values for starting_magnetization, angle1, angle2

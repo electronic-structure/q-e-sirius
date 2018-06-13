@@ -415,8 +415,6 @@ call sirius_set_esm(bool_var, esm_bc)
 ! initialize global variables/indices/arrays/etc. of the simulation
 call sirius_initialize_simulation_context()
 
-call sirius_create_potential
-
 !! get number of g-vectors of the dense fft grid
 !call sirius_get_num_gvec(num_gvec)
 !
@@ -483,10 +481,10 @@ call sirius_create_kset(num_kpoints, kpoints(1, 1), wkpoints(1), 1, kset_id)
 !deallocate(xk_tmp)
 
 ! create Density class
-call sirius_create_density()
+! call sirius_create_density()
 
 ! create Potential class
-call sirius_create_potential()
+! call sirius_create_potential()
 
 ! create ground-state class
 call sirius_create_ground_state(kset_id)

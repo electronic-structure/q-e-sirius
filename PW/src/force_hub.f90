@@ -58,12 +58,12 @@ SUBROUTINE force_hub(forceh)
 
    call start_clock('force_hub')
 
-   if (use_sirius) then
-      call sirius_get_forces(c_str("hubbard"), forceh(1, 1))
-      forceh = forceh * 2 ! convert to Ry
-      !call symvector(nat, forceh)
-      !call stop_clock('force_hub')
-   else
+!  if (use_sirius) then
+!      call sirius_get_forces(c_str("hubbard"), forceh(1, 1))
+!      forceh = forceh * 2.0 ! convert to Ry
+     !call symvector(nat, forceh)
+     !call stop_clock('force_hub')
+ !  else
 
       ldim= 2 * Hubbard_lmax + 1
       ALLOCATE ( dns(ldim,ldim,nspin,nat) )
@@ -148,8 +148,8 @@ SUBROUTINE force_hub(forceh)
       DEALLOCATE( dns )
 
       IF (nspin == 1) forceh(:,:) = 2.d0 * forceh(:,:)
-   ENDIF
-      !
+  ! ENDIF
+   !
    ! ...symmetrize...
    !
    CALL symvector ( nat, forceh )
