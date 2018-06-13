@@ -58,8 +58,8 @@ SUBROUTINE force_hub(forceh)
 
    call start_clock('force_hub')
 
-!  if (use_sirius) then
-!      call sirius_get_forces(c_str("hubbard"), forceh(1, 1))
+   ! if (use_sirius) then
+!   call sirius_get_forces(c_str("hubbard"), forceh(1, 1))
 !      forceh = forceh * 2.0 ! convert to Ry
      !call symvector(nat, forceh)
      !call stop_clock('force_hub')
