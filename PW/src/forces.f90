@@ -30,7 +30,7 @@ SUBROUTINE forces()
   !
   USE kinds,         ONLY : DP
   USE io_global,     ONLY : stdout
-  USE cell_base,     ONLY : at, bg, alat, omega  
+  USE cell_base,     ONLY : at, bg, alat, omega
   USE ions_base,     ONLY : nat, ntyp => nsp, ityp, tau, zv, amass, extfor, atm
   USE fft_base,      ONLY : dfftp
   USE gvect,         ONLY : ngm, gstart, ngl, igtongl, g, gg, gcutm, mill
@@ -57,7 +57,7 @@ SUBROUTINE forces()
   USE tsvdw_module,  ONLY : FtsvdW
   USE esm,           ONLY : do_comp_esm, esm_bc, esm_force_ew
   USE qmmm,          ONLY : qmmm_mode
-  USE wavefunctions_module, ONLY : psic  
+  USE wavefunctions_module, ONLY : psic
   USE ener,                 ONLY : etxc, vtxc
   USE mp_bands,             ONLY : intra_bgrp_comm
   USE fft_interfaces,       ONLY : fwfft
@@ -97,7 +97,7 @@ SUBROUTINE forces()
   !
   !
   if (use_sirius) then
-    ! recalculate the exchange-correlation potential
+     ! recalculate the exchange-correlation potential
     allocate (vxc(dfftp%nnr, nspin))
     !
     call v_xc (rho, rho_core, rhog_core, etxc, vtxc, vxc)
@@ -119,7 +119,7 @@ SUBROUTINE forces()
     enddo
     ! set XC potential
     call sirius_set_pw_coeffs(c_str("vxc"), vxc_g(1), ngm, mill(1, 1), intra_bgrp_comm)
-    
+
     !
     ! vnew is V_out - V_in, psic is the temp space
     !
@@ -137,14 +137,12 @@ SUBROUTINE forces()
     call sirius_set_pw_coeffs(c_str("dveff"), vxc_g(1), ngm, mill(1, 1), intra_bgrp_comm)
 
     deallocate(vxc_g)
-  
-    call sirius_calculate_forces(kset_id)
   endif
   CALL start_clock( 'forces' )
   !
   ALLOCATE( forcenl( 3, nat ), forcelc( 3, nat ), forcecc( 3, nat ), &
             forceh( 3, nat ), forceion( 3, nat ), forcescc( 3, nat ) )
-  !    
+  !
   forcescc(:,:) = 0.D0
   forceh(:,:)   = 0.D0
   force (:,:)   = 0.D0
@@ -216,7 +214,7 @@ SUBROUTINE forces()
      force_disp_xdm = 0._dp
      force_disp_xdm = force_xdm(nat)
   end if
-     
+
   !
   ! ... The SCF contribution
   !
@@ -280,7 +278,7 @@ SUBROUTINE forces()
         IF ( tefield ) force(ipol,na) = force(ipol,na) + forcefield(ipol,na)
         IF ( gate ) force(ipol,na) = force(ipol,na) + forcegate(ipol,na) ! TB
         IF (lelfield)  force(ipol,na) = force(ipol,na) + forces_bp_efield(ipol,na)
-        IF (do_comp_mt)force(ipol,na) = force(ipol,na) + force_mt(ipol,na) 
+        IF (do_comp_mt)force(ipol,na) = force(ipol,na) + force_mt(ipol,na)
 
         sumfor = sumfor + force(ipol,na)
         !
@@ -303,7 +301,7 @@ SUBROUTINE forces()
         ! ... impose total force = 0 except in a QM-MM calculation
         !
         DO na = 1, nat
-           force(ipol,na) = force(ipol,na) - sumfor / DBLE( nat ) 
+           force(ipol,na) = force(ipol,na) - sumfor / DBLE( nat )
         END DO
         !
      ENDIF
@@ -461,7 +459,7 @@ SUBROUTINE forces()
   DEALLOCATE( forcenl, forcelc, forcecc, forceh, forceion, forcescc )
   IF ( llondon )  DEALLOCATE ( force_disp )
   IF ( ldftd3 ) DEALLOCATE ( force_d3 )
-  IF ( lxdm ) DEALLOCATE( force_disp_xdm ) 
+  IF ( lxdm ) DEALLOCATE( force_disp_xdm )
   IF ( lelfield ) DEALLOCATE ( forces_bp_efield )
   !
   lforce = .TRUE.

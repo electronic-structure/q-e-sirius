@@ -67,13 +67,7 @@ subroutine stress ( sigma )
      CALL infomsg('stres', 'stress with USPP and electric fields (Berry) not implemented')
      RETURN
   END IF
-  if (use_sirius) then
-    call put_density_to_sirius
-    if (.not.use_sirius_density_matrix) then
-      call put_density_matrix_to_sirius
-    endif
-    call sirius_calculate_stress_tensor(kset_id)
-  endif
+
   !
   call start_clock ('stress')
   !
@@ -111,7 +105,7 @@ subroutine stress ( sigma )
        nspin, dfftp, g, alat, omega, sigmaxc)
   call sirius_stop_timer(c_str("qe|stress|xc"))
   !
-  !  add meta-GGA contribution 
+  !  add meta-GGA contribution
   !
   call stres_mgga ( sigmaxc )
   !
@@ -274,4 +268,3 @@ subroutine stress ( sigma )
          &   5x,'dft-nl  stress (kbar)',3f10.2/2(26x,3f10.2/)/ &
          &   5x,'TS-vdW  stress (kbar)',3f10.2/2(26x,3f10.2/)/ )
 end subroutine stress
-
