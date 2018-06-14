@@ -38,6 +38,7 @@ SUBROUTINE force_hub(forceh)
    USE wavefunctions_module, ONLY : evc
    USE klist,                ONLY : nks, xk, ngk, igk_k
    USE io_files,             ONLY : nwordwfc, iunwfc
+   USE mod_sirius
    USE buffers,              ONLY : get_buffer
 
    IMPLICIT NONE

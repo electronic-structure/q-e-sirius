@@ -103,6 +103,13 @@ SUBROUTINE sum_band()
        call invfft ('Rho', psic, dfftp)
        rho%of_r(:,is) = psic(:)
     enddo
+    IF (lda_plus_u) THEN
+       IF(noncolin) THEN
+          CALL new_ns_nc(rho%ns_nc)
+       ELSE
+          CALL new_ns(rho%ns)
+       ENDIF
+    ENDIF
     CALL stop_clock( 'sum_band' )
     return
   endif

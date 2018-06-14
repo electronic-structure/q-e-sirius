@@ -183,6 +183,14 @@ SUBROUTINE run_pwscf ( exit_status )
      !
      ! ... force calculation
      !
+
+     if (use_sirius) then
+        call put_density_to_sirius
+        if (.not.use_sirius_density_matrix) then
+           call put_density_matrix_to_sirius
+        endif
+     ENDIF
+
      IF ( lforce ) CALL forces()
      !
      ! ... stress calculation
