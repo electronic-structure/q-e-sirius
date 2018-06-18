@@ -58,12 +58,11 @@ SUBROUTINE force_hub(forceh)
 
    call start_clock('force_hub')
 
-   ! if (use_sirius) then
-   !   call sirius_get_forces(c_str("hubbard"), forceh(1, 1))
-   !      forceh = forceh * 2.0 ! convert to Ry
-   !call symvector(nat, forceh)
-   !call stop_clock('force_hub')
-   !  else
+
+   if (use_sirius) then
+      call sirius_get_forces(c_str("hubbard"), forceh(1, 1))
+      forceh(:,:) = 2.0d0 * forceh(:,:);
+   else
 
       ldim= 2 * Hubbard_lmax + 1
       ALLOCATE ( dns(ldim,ldim,nspin,nat) )
@@ -84,73 +83,75 @@ SUBROUTINE force_hub(forceh)
       !
       !    we start a loop on k points
       !
-   DO ik = 1, nks
-      !
-      IF (lsda) current_spin = isk(ik)
-      npw = ngk (ik)
-
-      IF (nks > 1) &
-         CALL get_buffer (evc, nwordwfc, iunwfc, ik)
-
-      CALL init_us_2 (npw,igk_k(1,ik),xk(1,ik),vkb)
-      CALL calbec( npw, vkb, evc, becp )
-      CALL s_psi  (npwx, npw, nbnd, evc, spsi )
-
-      ! re-calculate atomic wfc - wfcatom is used here as work space
-
-      CALL atomic_wfc (ik, wfcatom)
-      call copy_U_wfc (wfcatom)
-
-      ! wfcU contains Hubbard-U atomic wavefunctions
-      ! proj=<wfcU|S|evc> - no need to read S*wfcU from buffer
-
-      CALL calbec( npw, wfcU, spsi, proj )
-
-      ! now we need the first derivative of proj with respect to tau(alpha,ipol)
-
-      DO alpha = 1,nat  ! forces are calculated for atom alpha ...
+      DO ik = 1, nks
          !
-         ijkb0 = indv_ijkb0(alpha) ! positions of beta functions for atom alpha
-         DO ipol = 1,3  ! forces are calculated for coordinate ipol ...
+         IF (lsda) current_spin = isk(ik)
+         npw = ngk (ik)
+
+         IF (nks > 1) &
+              CALL get_buffer (evc, nwordwfc, iunwfc, ik)
+
+         CALL init_us_2 (npw,igk_k(1,ik),xk(1,ik),vkb)
+         CALL calbec( npw, vkb, evc, becp )
+         CALL s_psi  (npwx, npw, nbnd, evc, spsi )
+
+         ! re-calculate atomic wfc - wfcatom is used here as work space
+
+         CALL atomic_wfc (ik, wfcatom)
+         call copy_U_wfc (wfcatom)
+
+         ! wfcU contains Hubbard-U atomic wavefunctions
+         ! proj=<wfcU|S|evc> - no need to read S*wfcU from buffer
+
+         CALL calbec( npw, wfcU, spsi, proj )
+
+         ! now we need the first derivative of proj with respect to tau(alpha,ipol)
+
+         DO alpha = 1,nat  ! forces are calculated for atom alpha ...
             !
-            IF ( gamma_only ) THEN
-               CALL dndtau_gamma ( ldim, proj%r, spsi, alpha, ijkb0, ipol, ik, &
-                                   nb_s, nb_e, mykey, dns )
-            ELSE
-               CALL dndtau_k     ( ldim, proj%k, spsi, alpha, ijkb0, ipol, ik, &
-                                   nb_s, nb_e, mykey, dns )
-            ENDIF
-!!omp parallel do default(shared) private(na,nt,m1,m2,is)
-            DO na = 1,nat                 ! the Hubbard atom
-               nt = ityp(na)
-               IF ( is_hubbard(nt) ) THEN
-                  DO is = 1,nspin
-                     DO m2 = 1,ldim
-                        DO m1 = 1,ldim
-                           forceh(ipol,alpha) = forceh(ipol,alpha) -    &
-                              v%ns(m2,m1,is,na) * dns(m1,m2,is,na)
+            ijkb0 = indv_ijkb0(alpha) ! positions of beta functions for atom alpha
+            DO ipol = 1,3  ! forces are calculated for coordinate ipol ...
+               !
+               IF ( gamma_only ) THEN
+                  CALL dndtau_gamma ( ldim, proj%r, spsi, alpha, ijkb0, ipol, ik, &
+                       nb_s, nb_e, mykey, dns )
+               ELSE
+                  CALL dndtau_k     ( ldim, proj%k, spsi, alpha, ijkb0, ipol, ik, &
+                       nb_s, nb_e, mykey, dns )
+               ENDIF
+               !!omp parallel do default(shared) private(na,nt,m1,m2,is)
+               DO na = 1,nat                 ! the Hubbard atom
+                  nt = ityp(na)
+                  IF ( is_hubbard(nt) ) THEN
+                     DO is = 1,nspin
+                        DO m2 = 1,ldim
+                           DO m1 = 1,ldim
+                              forceh(ipol,alpha) = forceh(ipol,alpha) -    &
+                                   v%ns(m2,m1,is,na) * dns(m1,m2,is,na)
+                           END DO
                         END DO
                      END DO
-                  END DO
-               END IF
+                  END IF
+               END DO
+               !!omp end parallel do
             END DO
-!!omp end parallel do
          END DO
       END DO
-   END DO
-   !
-   CALL mp_sum( forceh, inter_pool_comm )
-   !
-   call deallocate_bec_type (becp)
-   call deallocate_bec_type (proj)
-   DEALLOCATE( wfcatom  )
-   DEALLOCATE( spsi  )
-   DEALLOCATE( dns )
+      !
+      CALL mp_sum( forceh, inter_pool_comm )
+      !
+      call deallocate_bec_type (becp)
+      call deallocate_bec_type (proj)
+      DEALLOCATE( wfcatom  )
+      DEALLOCATE( spsi  )
+      DEALLOCATE( dns )
 
-   IF (nspin == 1) forceh(:,:) = 2.d0 * forceh(:,:)
-   !
-   ! ...symmetrize...
-   !
+      IF (nspin == 1) forceh(:,:) = 2.d0 * forceh(:,:)
+      !
+      ! ...symmetrize...
+      !
+   ENDIF
+
    CALL symvector ( nat, forceh )
 #if defined(__DEBUG)
    write(66,'("Hubbard contribution Begin")')
@@ -439,8 +440,8 @@ SUBROUTINE dprojdtau_k (spsi, alpha, ijkb0, ipol, ik, nb_s, nb_e, mykey, dproj)
       END DO
    END DO
 !!omp end parallel do
-   CALL calbec ( npw, dbeta, evc, dbetapsi )
-   CALL calbec ( npw, wfcU, dbeta, wfatdbeta )
+   CALL calbec ( npw, dbeta, evc, dbetapsi ) ! <d \beta| psi>
+   CALL calbec ( npw, wfcU, dbeta, wfatdbeta ) ! <phi|d \beta>
    DEALLOCATE ( dbeta )
    ! calculate \sum_j qq(i,j)*dbetapsi(j)
    ! betapsi is used here as work space
