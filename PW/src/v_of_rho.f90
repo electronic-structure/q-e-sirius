@@ -701,7 +701,7 @@ SUBROUTINE v_hubbard(ns, v_hub, eth)
   USE lsda_mod,             ONLY : nspin
   USE control_flags,        ONLY : iverbosity
   USE io_global,            ONLY : stdout
-
+  use mod_sirius
   IMPLICIT NONE
   !
   REAL(DP), INTENT(IN)  :: ns(2*Hubbard_lmax+1,2*Hubbard_lmax+1,nspin,nat) 
@@ -720,7 +720,6 @@ SUBROUTINE v_hubbard(ns, v_hub, eth)
   v_hub(:,:,:,:) = 0.d0
 
   if (lda_plus_u_kind.eq.0) then
-
     DO na = 1, nat
        nt = ityp (na)
        IF (Hubbard_U(nt).NE.0.d0 .OR. Hubbard_alpha(nt).NE.0.d0) THEN
@@ -867,9 +866,7 @@ SUBROUTINE v_hubbard(ns, v_hub, eth)
                 enddo
               ENDDO
             ENDDO
-
           ENDDO
-
        endif
     enddo
 
@@ -883,8 +880,13 @@ SUBROUTINE v_hubbard(ns, v_hub, eth)
       write(stdout,*) '-------'
     ENDIF
 !--
+  ENDIF
 
-  endif
+  if (use_sirius) then
+     call sirius_set_hubbard_occupancies(ns(1,1,1,1), 2 * hubbard_lmax + 1)
+     !call sirius_calculate_hubbard_potential()
+     call sirius_set_hubbard_potential(v_hub(1,1,1,1), 2 * hubbard_lmax + 1)
+  ENDIF
 
   DEALLOCATE (u_matrix)
   RETURN
@@ -904,7 +906,7 @@ SUBROUTINE v_hubbard_nc(ns, v_hub, eth)
   USE lsda_mod,             ONLY : nspin
   USE control_flags,        ONLY : iverbosity
   USE io_global,            ONLY : stdout
-
+  use mod_sirius
   IMPLICIT NONE
   !
   COMPLEX(DP) :: ns(2*Hubbard_lmax+1,2*Hubbard_lmax+1,nspin,nat) 
@@ -1062,6 +1064,12 @@ SUBROUTINE v_hubbard_nc(ns, v_hub, eth)
 !--
 
   DEALLOCATE (u_matrix)
+
+  if (use_sirius) then
+     call sirius_set_hubbard_occupancies_nc(v_hub(1,1,1,1), 2 * hubbard_lmax + 1)
+     call sirius_set_hubbard_potential_nc(v_hub(1,1,1,1), 2 * hubbard_lmax + 1)
+  ENDIF
+
   RETURN
 END SUBROUTINE v_hubbard_nc
 !-------------------------------------------

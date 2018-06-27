@@ -137,11 +137,12 @@ SUBROUTINE potinit()
 
      ! ... in the lda+U case set the initial value of ns
      IF (lda_plus_u) THEN
-        !
         IF (noncolin) THEN
            CALL init_ns_nc()
+           if (use_sirius) call sirius_get_hubbard_occupancies_nc(rho%ns_nc(1,1,1,1), 2 *  Hubbard_lmax + 1)
         ELSE
            CALL init_ns()
+           if(use_sirius) call sirius_get_hubbard_occupancies(rho%ns(1,1,1,1), 2 *  Hubbard_lmax + 1)
         ENDIF
         !
      ENDIF
@@ -322,4 +323,3 @@ SUBROUTINE nc_magnetization_from_lsda ( nnr, nspin, rho )
   RETURN
   !
 END SUBROUTINE nc_magnetization_from_lsda
-

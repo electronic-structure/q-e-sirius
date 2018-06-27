@@ -137,8 +137,6 @@ SUBROUTINE forces()
     call sirius_set_pw_coeffs(c_str("dveff"), vxc_g(1), ngm, mill(1, 1), intra_bgrp_comm)
 
     deallocate(vxc_g)
-  
-    call sirius_calculate_forces(kset_id)
   endif
   CALL start_clock( 'forces' )
   !
