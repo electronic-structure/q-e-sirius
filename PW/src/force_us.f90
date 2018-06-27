@@ -45,8 +45,8 @@ SUBROUTINE force_us( forcenl )
   TYPE(bec_type) :: dbecp                 ! contains <dbeta|psi>
   INTEGER    :: npw, ik, ipol, ig, jkb
   !
-  if (use_sirius.and.use_sirius_ks_solver) then
-    call sirius_get_forces(c_str("usnl"), forcenl(1, 1))
+  if (use_sirius.and.use_sirius_ks_solver.and.use_sirius_forces) then
+    call sirius_get_forces(gs_handler, string("usnl"), forcenl(1, 1))
     forcenl = forcenl * 2 ! convert to Ry
     call symvector(nat, forcenl)
     return

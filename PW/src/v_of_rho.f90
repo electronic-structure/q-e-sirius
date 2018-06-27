@@ -51,7 +51,7 @@ SUBROUTINE v_of_rho( rho, rho_core, rhog_core, &
   INTEGER :: is, ir
   !
   CALL start_clock( 'v_of_rho' )
-  call sirius_start_timer(c_str('qe|v_of_rho'))
+  call sirius_start_timer(string('qe|v_of_rho'))
   !
   ! ... calculate exchange-correlation potential
   !
@@ -100,7 +100,7 @@ SUBROUTINE v_of_rho( rho, rho_core, rhog_core, &
   if (use_sirius.and.(use_sirius_ks_solver.or.use_sirius_d_operator_matrix)) then
     call put_potential_to_sirius
   endif
-  call sirius_stop_timer(c_str('qe|v_of_rho'))
+  call sirius_stop_timer(string('qe|v_of_rho'))
   !
   RETURN
   !

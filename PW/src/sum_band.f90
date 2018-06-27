@@ -86,9 +86,9 @@ SUBROUTINE sum_band()
 
   if (use_sirius.and.use_sirius_density) then
     call put_band_occupancies_to_sirius
-    call sirius_generate_density(kset_id)
+    call sirius_generate_density(gs_handler)
     call get_density_from_sirius
-    call sirius_get_evalsum(eband)
+    call sirius_get_energy(gs_handler, string("evalsum"), eband)
     eband = eband * 2 ! convert to Ry
 
     if (okvan.and.okpaw)  then

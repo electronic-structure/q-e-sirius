@@ -118,7 +118,7 @@ SUBROUTINE forces()
        vxc_g(ig) = psic(dfftp%nl(ig)) * 0.5d0 ! convert to Ha
     enddo
     ! set XC potential
-    call sirius_set_pw_coeffs(c_str("vxc"), vxc_g(1), ngm, mill(1, 1), intra_bgrp_comm)
+    call sirius_set_pw_coeffs(gs_handler, string("vxc"), vxc_g(1), bool(.true.), ngm, mill(1, 1), intra_bgrp_comm)
     
     !
     ! vnew is V_out - V_in, psic is the temp space
@@ -134,11 +134,9 @@ SUBROUTINE forces()
        vxc_g(ig) = psic(dfftp%nl(ig)) * 0.5d0 ! convert to Ha
     enddo
     ! set XC potential
-    call sirius_set_pw_coeffs(c_str("dveff"), vxc_g(1), ngm, mill(1, 1), intra_bgrp_comm)
+    call sirius_set_pw_coeffs(gs_handler, string("dveff"), vxc_g(1), bool(.true.), ngm, mill(1, 1), intra_bgrp_comm)
 
     deallocate(vxc_g)
-  
-    call sirius_calculate_forces(kset_id)
   endif
   CALL start_clock( 'forces' )
   !
@@ -151,23 +149,23 @@ SUBROUTINE forces()
   !
   ! ... The nonlocal contribution is computed here
   !
-  call sirius_start_timer(c_str("qe|force|us"))
+  call sirius_start_timer(string("qe|force|us"))
   CALL force_us( forcenl )
-  call sirius_stop_timer(c_str("qe|force|us"))
+  call sirius_stop_timer(string("qe|force|us"))
   !
   ! ... The local contribution
   !
-  call sirius_start_timer(c_str("qe|force|local"))
+  call sirius_start_timer(string("qe|force|local"))
   CALL force_lc( nat, tau, ityp, alat, omega, ngm, ngl, igtongl, &
                  g, rho%of_r, dfftp%nl, nspin, gstart, gamma_only, vloc, &
                  forcelc )
-  call sirius_stop_timer(c_str("qe|force|local"))
+  call sirius_stop_timer(string("qe|force|local"))
   !
   ! ... The NLCC contribution
   !
-  call sirius_start_timer(c_str("qe|force|cc"))
+  call sirius_start_timer(string("qe|force|cc"))
   CALL force_cc( forcecc )
-  call sirius_stop_timer(c_str("qe|force|cc"))
+  call sirius_stop_timer(string("qe|force|cc"))
   !
   ! ... The Hubbard contribution
   !     (included by force_us if using beta as local projectors)
@@ -176,14 +174,14 @@ SUBROUTINE forces()
   !
   ! ... The ionic contribution is computed here
   !
-  call sirius_start_timer(c_str("qe|force|ewald"))
+  call sirius_start_timer(string("qe|force|ewald"))
   IF( do_comp_esm ) THEN
      CALL esm_force_ew( forceion )
   ELSE
      CALL force_ew( alat, nat, ntyp, ityp, zv, at, bg, tau, omega, g, &
                     gg, ngm, gstart, gamma_only, gcutm, strf, forceion )
   END IF
-  call sirius_stop_timer(c_str("qe|force|ewald"))
+  call sirius_stop_timer(string("qe|force|ewald"))
   !
   ! ... the semi-empirical dispersion correction
   !
@@ -220,9 +218,9 @@ SUBROUTINE forces()
   !
   ! ... The SCF contribution
   !
-  call sirius_start_timer(c_str("qe|force|scf"))
+  call sirius_start_timer(string("qe|force|scf"))
   CALL force_corr( forcescc )
-  call sirius_stop_timer(c_str("qe|force|scf"))
+  call sirius_stop_timer(string("qe|force|scf"))
   !
   IF (do_comp_mt) THEN
     !

@@ -100,8 +100,8 @@ subroutine gen_us_dy (ik, u, dvkb)
              i1 = i0 + 1
              i2 = i0 + 2
              i3 = i0 + 3
-             if (use_sirius.and.use_sirius_radial_integrals_beta.and.sirius_initialized()) then
-               call sirius_ri_beta(nb, nt, q(ig), vkb0 (ig, nb, nt) ) 
+             if (use_sirius.and.use_sirius_radial_integrals_beta.and.sirius_context_initialized(sctx)) then
+               vkb0 (ig, nb, nt) = sirius_get_radial_integral(sctx, atom_type(nt)%label, string("beta"), q(ig), nb)
                vkb0 (ig, nb, nt) = vkb0 (ig, nb, nt) * fpi / sqrt(omega)
              else
                vkb0 (ig, nb, nt) = tab (i0, nb, nt) * ux * vx * wx / 6.d0 + &

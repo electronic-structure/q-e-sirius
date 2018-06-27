@@ -52,7 +52,7 @@ subroutine init_us_2 (npw_, igk_, q_, vkb_)
   real(DP), allocatable :: xdata(:)
   integer :: iq
   integer, allocatable :: gvl(:,:)
-  real(8) vkl(3)
+  real(8) vkl(3),t1
 
   !
   if (lmaxkb.lt.0) return
@@ -63,7 +63,10 @@ subroutine init_us_2 (npw_, igk_, q_, vkb_)
     do ig = 1, npw_
       gvl(:,ig) = mill(:, igk_(ig))
     enddo
-    call sirius_get_beta_projectors_by_kp(kset_id, vkl(1), npw_, gvl(1, 1), vkb_(1, 1), npwx, nkb)
+    stop 'not implemented'
+    ! this has to be done corretly for the case when k-point on QE side and k-point
+    ! on SIIRUS side are not located on the same MPI rank
+    !call sirius_get_beta_projectors_by_kp(kset_id, vkl(1), npw_, gvl(1, 1), vkb_(1, 1), npwx, nkb)
     deallocate(gvl)
     return
   endif
@@ -119,8 +122,8 @@ subroutine init_us_2 (npw_, igk_, q_, vkb_)
                 i1 = i0 + 1
                 i2 = i0 + 2
                 i3 = i0 + 3
-                if (use_sirius.and.use_sirius_radial_integrals_beta.and.sirius_initialized()) then
-                  call sirius_ri_beta(nb, nt, qg(ig), vq(ig)) 
+                if (use_sirius.and.use_sirius_radial_integrals_beta.and.sirius_context_initialized(sctx)) then
+                  vq(ig) = sirius_get_radial_integral(sctx, atom_type(nt)%label, string("beta"), qg(ig), nb)
                   vq(ig) = vq(ig) * fpi / sqrt(omega)
                 else
                   vq (ig) = tab (i0, nb, nt) * ux * vx * wx / 6.d0 + &

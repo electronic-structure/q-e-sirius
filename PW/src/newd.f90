@@ -230,7 +230,7 @@ SUBROUTINE newd( )
   !
   !
   if (use_sirius.and.use_sirius_d_operator_matrix) then
-    call sirius_generate_d_operator_matrix
+    call sirius_generate_d_operator_matrix(gs_handler)
     call get_d_matrix_from_sirius
     call add_paw_to_deeq(deeq)
     call put_d_matrix_to_sirius

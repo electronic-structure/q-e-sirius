@@ -73,14 +73,14 @@ subroutine atomic_rho (rhoa, nspina)
   rhocg(:,:) = (0.d0,0.d0)
 
   if (.false.) then
-    call sirius_generate_initial_density
+    call sirius_generate_initial_density(gs_handler)
     call get_density_from_sirius
   else
   
   allocate(rho_g(ngm))
   do nt = 1, ntyp
     if (use_sirius.and.use_sirius_density) then
-      call sirius_get_pw_coeffs_real(atom_type(nt)%label, c_str("rho"), rho_g(1), ngm, mill(1, 1), intra_bgrp_comm)
+      call sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, string("rho"), rho_g(1), ngm, mill(1, 1), intra_bgrp_comm)
     else
       !
       ! Here we compute the G=0 term

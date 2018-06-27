@@ -47,12 +47,12 @@ SUBROUTINE init_run()
   logical exst_file,exst_mem
   !
   CALL start_clock( 'init_run' )
-  call sirius_start_timer(c_str("qe|init_run"))
+  call sirius_start_timer(string("qe|init_run"))
   if (use_sirius) then
     call clear_sirius
-    call sirius_start_timer(c_str("qe|init_run|setup_sirius"))
+    call sirius_start_timer(string("qe|init_run|setup_sirius"))
     call setup_sirius
-    call sirius_stop_timer(c_str("qe|init_run|setup_sirius"))
+    call sirius_stop_timer(string("qe|init_run|setup_sirius"))
   endif
   !
   ! ... calculate limits of some indices, used in subsequent allocations
@@ -152,7 +152,7 @@ SUBROUTINE init_run()
     call get_q_operator_from_sirius
   endif
   CALL stop_clock( 'init_run' )
-  call sirius_stop_timer(c_str("qe|init_run"))
+  call sirius_stop_timer(string("qe|init_run"))
   !
   RETURN
   !

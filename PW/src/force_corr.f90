@@ -47,8 +47,8 @@ subroutine force_corr (forcescc)
   !
   ! vnew is V_out - V_in, psic is the temp space
   !
-  if (use_sirius) then
-    call sirius_get_forces(c_str("scf_corr"), forcescc(1, 1))
+  if (use_sirius.and.use_sirius_stress) then
+    call sirius_get_forces(gs_handler, string("scf_corr"), forcescc(1, 1))
     forcescc = forcescc * 2 ! convert to Ry
     return
   endif

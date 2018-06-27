@@ -61,8 +61,8 @@ subroutine force_lc (nat, tau, ityp, alat, omega, ngm, ngl, &
   ! contribution to the force from the local part of the bare potential
   ! F_loc = Omega \Sum_G n*(G) d V_loc(G)/d R_i
   !
-  if (use_sirius) then
-    call sirius_get_forces(c_str("vloc"), forcelc(1,1))
+  if (use_sirius.and.use_sirius_forces) then
+    call sirius_get_forces(gs_handler, string("vloc"), forcelc(1,1))
     forcelc = forcelc * 2 ! convert to Ha
 
     if ( do_comp_esm .and. ( esm_bc .ne. 'pbc' ) ) then
