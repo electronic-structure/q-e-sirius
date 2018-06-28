@@ -34,12 +34,12 @@ subroutine stres_knl (sigmanlc, sigmakin)
   integer :: npw, ik, l, m, i, ibnd, is
   integer :: idx(2, 3)
 
-  if (use_sirius.and.use_sirius_ks_solver) then
-    call sirius_get_stress_tensor(c_str("kin"), sigmakin(1, 1))
+  if (use_sirius.and.use_sirius_ks_solver.and.use_sirius_stress) then
+    call sirius_get_stress_tensor(gs_handler, string("kin"), sigmakin(1, 1))
     sigmakin = -sigmakin * 2 ! convert to Ha
-    call sirius_get_stress_tensor(c_str("nonloc"), sigmanlc(1, 1))
+    call sirius_get_stress_tensor(gs_handler, string("nonloc"), sigmanlc(1, 1))
     sigmanlc = -sigmanlc * 2 ! convert to Ha
-    call sirius_get_stress_tensor(c_str("us"), tmp(1, 1))
+    call sirius_get_stress_tensor(gs_handler, string("us"), tmp(1, 1))
     sigmanlc = sigmanlc - 2 * tmp
     call symmatrix ( sigmakin )
     call symmatrix ( sigmanlc )

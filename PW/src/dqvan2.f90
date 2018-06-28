@@ -124,10 +124,13 @@ SUBROUTINE dqvan2 (ih, jh, np, ipol, ngy, g, qmod, ylmk0, dylmk0, dqg )
 #if !defined(_OPENMP)
         IF ( abs( qmod(ig) - qm1 ) > 1.0D-6 ) THEN
 #endif
-           if (use_sirius.and.use_sirius_radial_integrals_q.and.sirius_initialized()) then
-             call sirius_ri_aug(ijv, l - 1, np, tpiba * qmod(ig), work)
+           if (use_sirius.and.use_sirius_radial_integrals_q.and.sirius_context_initialized(sctx)) then
+             work = sirius_get_radial_integral(sctx, atom_type(np)%label, string("aug"), tpiba * qmod(ig),&
+                                              &ijv, l - 1)
+
              work = work * fpi / omega
-             call sirius_ri_aug_djl(ijv, l - 1, np, tpiba * qmod(ig), work1)
+             work1 = sirius_get_radial_integral(sctx, atom_type(np)%label, string("aug_dj"), tpiba * qmod(ig),&
+                                               &ijv, l - 1)
              work1 = work1 * fpi / omega
              work1 = work1 * tpiba
            else

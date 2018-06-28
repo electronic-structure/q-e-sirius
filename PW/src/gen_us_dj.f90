@@ -108,8 +108,8 @@ subroutine gen_us_dj (ik, dvkb)
              i2 = i0 + 2
              i3 = i0 + 3
              
-             if (use_sirius.and.use_sirius_radial_integrals_beta.and.sirius_initialized()) then
-               call sirius_ri_beta_djl(nb, nt, qt, djl(ig,nb,nt))
+             if (use_sirius.and.use_sirius_radial_integrals_beta.and.sirius_context_initialized(sctx)) then
+               djl(ig,nb,nt) = sirius_get_radial_integral(sctx, atom_type(nt)%label, string("beta"), qt, nb)
                djl(ig,nb,nt) = djl(ig,nb,nt)  * fpi / sqrt(omega)
              else
                djl(ig,nb,nt) = ( tab (i0, nb, nt) * (-vx*wx-ux*wx-ux*vx)/6.d0 + &

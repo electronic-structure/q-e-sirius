@@ -59,7 +59,7 @@ subroutine init_vloc()
         !
         if (use_sirius.and.use_sirius_vloc) then
           allocate(tmp(ngm))
-          call sirius_get_pw_coeffs_real(atom_type(nt)%label, c_str("vloc"), tmp(1), ngm, mill(1, 1), intra_bgrp_comm)
+          call sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, string("vloc"), tmp(1), ngm, mill(1, 1), intra_bgrp_comm)
           do i = 1, ngm
             vloc(igtongl(i), nt) = tmp(i) * 2 ! convert to Ry
           enddo

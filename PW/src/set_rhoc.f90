@@ -73,7 +73,8 @@ subroutine set_rhoc
         !     drhoc compute the radial fourier transform for each shell of g vec
         !
         if (use_sirius.and.use_sirius_rho_core) then
-          call sirius_get_pw_coeffs_real(atom_type(nt)%label, c_str("rhoc"), rho_core_g(1), ngm, mill(1, 1), intra_bgrp_comm)
+          call sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, string("rhoc"), rho_core_g(1),&
+                                        &ngm, mill(1, 1), intra_bgrp_comm)
         else 
           call drhoc (ngl, gl, omega, tpiba2, msh (nt), rgrid(nt)%r, &
                rgrid(nt)%rab, upf(nt)%rho_atc, rhocg)

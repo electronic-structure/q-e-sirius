@@ -60,7 +60,7 @@ SUBROUTINE force_hub(forceh)
 
 
    if (use_sirius) then
-      call sirius_get_forces(c_str("hubbard"), forceh(1, 1))
+      call sirius_get_forces(gs_handler, string("hubbard"), forceh(1, 1))
       forceh(:,:) = 2.0d0 * forceh(:,:);
    else
 

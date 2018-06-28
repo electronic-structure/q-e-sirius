@@ -33,7 +33,7 @@ SUBROUTINE hinit1()
   use mod_sirius
   !
   IMPLICIT NONE
-  call sirius_start_timer(c_str("qe|hinit1"))
+  call sirius_start_timer(string("qe|hinit1"))
   !
   !
   ! ... calculate the total local potential
@@ -73,7 +73,7 @@ SUBROUTINE hinit1()
   IF ( use_wannier ) CALL orthoatwfc( .true. )
   !
   call tag_wg_corr_as_obsolete
-  call sirius_stop_timer(c_str("qe|hinit1"))
+  call sirius_stop_timer(string("qe|hinit1"))
   !
   RETURN
   !

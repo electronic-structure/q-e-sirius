@@ -51,7 +51,7 @@ SUBROUTINE v_of_rho( rho, rho_core, rhog_core, &
   INTEGER :: is, ir
   !
   CALL start_clock( 'v_of_rho' )
-  call sirius_start_timer(c_str('qe|v_of_rho'))
+  call sirius_start_timer(string('qe|v_of_rho'))
   !
   ! ... calculate exchange-correlation potential
   !
@@ -100,7 +100,7 @@ SUBROUTINE v_of_rho( rho, rho_core, rhog_core, &
   if (use_sirius.and.(use_sirius_ks_solver.or.use_sirius_d_operator_matrix)) then
     call put_potential_to_sirius
   endif
-  call sirius_stop_timer(c_str('qe|v_of_rho'))
+  call sirius_stop_timer(string('qe|v_of_rho'))
   !
   RETURN
   !
@@ -704,7 +704,7 @@ SUBROUTINE v_hubbard(ns, v_hub, eth)
   use mod_sirius
   IMPLICIT NONE
   !
-  REAL(DP), INTENT(IN)  :: ns(2*Hubbard_lmax+1,2*Hubbard_lmax+1,nspin,nat) 
+  REAL(DP) :: ns(2*Hubbard_lmax+1,2*Hubbard_lmax+1,nspin,nat) 
   REAL(DP), INTENT(OUT) :: v_hub(2*Hubbard_lmax+1,2*Hubbard_lmax+1,nspin,nat) 
   REAL(DP), INTENT(OUT) :: eth
   REAL(DP) :: n_tot, n_spin, eth_dc, eth_u, mag2, effU
@@ -883,9 +883,9 @@ SUBROUTINE v_hubbard(ns, v_hub, eth)
   ENDIF
 
   if (use_sirius) then
-     call sirius_set_hubbard_occupancies(ns(1,1,1,1), 2 * hubbard_lmax + 1)
+     call sirius_access_hubbard_occupancies(gs_handler, string("set"), ns(1,1,1,1), 2 * hubbard_lmax + 1)
      !call sirius_calculate_hubbard_potential()
-     call sirius_set_hubbard_potential(v_hub(1,1,1,1), 2 * hubbard_lmax + 1)
+     call sirius_access_hubbard_potential(gs_handler, string("set"), v_hub(1,1,1,1), 2 * hubbard_lmax + 1)
   ENDIF
 
   DEALLOCATE (u_matrix)
@@ -1066,8 +1066,8 @@ SUBROUTINE v_hubbard_nc(ns, v_hub, eth)
   DEALLOCATE (u_matrix)
 
   if (use_sirius) then
-     call sirius_set_hubbard_occupancies_nc(v_hub(1,1,1,1), 2 * hubbard_lmax + 1)
-     call sirius_set_hubbard_potential_nc(v_hub(1,1,1,1), 2 * hubbard_lmax + 1)
+     call sirius_access_hubbard_occupancies(gs_handler, string("set"), ns(1,1,1,1), 2 * hubbard_lmax + 1)
+     call sirius_access_hubbard_potential(gs_handler, string("set"), v_hub(1,1,1,1), 2 * hubbard_lmax + 1)
   ENDIF
 
   RETURN

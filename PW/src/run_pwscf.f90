@@ -180,17 +180,17 @@ SUBROUTINE run_pwscf ( exit_status )
      ELSE
         CALL pw2casino( 0 )
      END IF
-     !
-     ! ... force calculation
-     !
 
      if (use_sirius) then
         call put_density_to_sirius
         if (.not.use_sirius_density_matrix) then
            call put_density_matrix_to_sirius
         endif
-     ENDIF
+     endif
 
+     !
+     ! ... force calculation
+     !
      IF ( lforce ) CALL forces()
      !
      ! ... stress calculation
@@ -291,7 +291,7 @@ SUBROUTINE run_pwscf ( exit_status )
   IF ( .NOT. conv_ions )  exit_status =  3
   if (use_sirius) then
      call sirius_print_timers
-     call sirius_clear
+     call clear_sirius
      call sirius_finalize(call_mpi_fin=flg)
   endif
   RETURN
