@@ -697,7 +697,7 @@ implicit none
 integer iat, ih, jh, ijh, i
 
 do iat = 1, nsp
-  call sirius_get_num_beta_projectors(sctx, atom_type(iat)%label, atom_type(iat)%num_beta_projectors)
+  atom_type(iat)%num_beta_projectors = sirius_get_num_beta_projectors(sctx, atom_type(iat)%label)
   if (nh(iat).ne.atom_type(iat)%num_beta_projectors) then
     stop 'wrong number of beta projectors'
   endif
@@ -728,7 +728,7 @@ integer iat, ih, jh, ijh, ia
 
 qq_nt = 0
 do iat = 1, nsp
-  call sirius_get_num_beta_projectors(sctx, atom_type(iat)%label, atom_type(iat)%num_beta_projectors)
+  atom_type(iat)%num_beta_projectors = sirius_get_num_beta_projectors(sctx, atom_type(iat)%label)
   if (nh(iat).ne.atom_type(iat)%num_beta_projectors) then
     stop 'wrong number of beta projectors'
   endif
