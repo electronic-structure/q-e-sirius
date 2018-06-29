@@ -67,7 +67,7 @@ SUBROUTINE new_ns(ns)
 
   if (use_sirius) then
      call sirius_calculate_hubbard_occupancies(gs_handler)
-     call sirius_access_hubbard_occupancies(gs_handler, string("get"), nr(1,1,1,1), ldim)
+     call sirius_get_hubbard_occupancies(gs_handler, nr(1,1,1,1), ldim)
   else
      !
      !    we start a loop on k points
@@ -331,7 +331,7 @@ SUBROUTINE new_ns_nc(ns)
   ALLOCATE( proj(nwfcU,nbnd) )
   if (use_sirius) then
      call sirius_calculate_hubbard_occupancies(gs_handler)
-     call sirius_access_hubbard_occupancies(gs_handler, string("get"), ns(1,1,1,1), ldim)
+     call sirius_get_hubbard_occupancies(gs_handler, ns(1,1,1,1), ldim)
      do na = 1, nat
         nt = ityp (na)
         if ( is_hubbard(nt) ) then

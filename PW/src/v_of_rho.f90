@@ -883,9 +883,9 @@ SUBROUTINE v_hubbard(ns, v_hub, eth)
   ENDIF
 
   if (use_sirius) then
-     call sirius_access_hubbard_occupancies(gs_handler, string("set"), ns(1,1,1,1), 2 * hubbard_lmax + 1)
+     call sirius_set_hubbard_occupancies(gs_handler, ns(1,1,1,1), 2 * hubbard_lmax + 1)
      !call sirius_calculate_hubbard_potential()
-     call sirius_access_hubbard_potential(gs_handler, string("set"), v_hub(1,1,1,1), 2 * hubbard_lmax + 1)
+     call sirius_set_hubbard_potential(gs_handler, v_hub(1,1,1,1), 2 * hubbard_lmax + 1)
   ENDIF
 
   DEALLOCATE (u_matrix)
@@ -1066,8 +1066,8 @@ SUBROUTINE v_hubbard_nc(ns, v_hub, eth)
   DEALLOCATE (u_matrix)
 
   if (use_sirius) then
-     call sirius_access_hubbard_occupancies(gs_handler, string("set"), ns(1,1,1,1), 2 * hubbard_lmax + 1)
-     call sirius_access_hubbard_potential(gs_handler, string("set"), v_hub(1,1,1,1), 2 * hubbard_lmax + 1)
+     call sirius_set_hubbard_occupancies(gs_handler, ns(1,1,1,1), 2 * hubbard_lmax + 1)
+     call sirius_set_hubbard_potential(gs_handler, v_hub(1,1,1,1), 2 * hubbard_lmax + 1)
   ENDIF
 
   RETURN

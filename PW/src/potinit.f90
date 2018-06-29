@@ -140,12 +140,12 @@ SUBROUTINE potinit()
         IF (noncolin) THEN
            CALL init_ns_nc()
            if (use_sirius) then
-             call sirius_access_hubbard_occupancies(gs_handler, string("get"), rho%ns_nc(1,1,1,1), 2 *  Hubbard_lmax + 1)
+             call sirius_get_hubbard_occupancies(gs_handler, rho%ns_nc(1,1,1,1), 2 *  Hubbard_lmax + 1)
            endif
         ELSE
            CALL init_ns()
            if(use_sirius) then
-             call sirius_access_hubbard_occupancies(gs_handler, string("get"), rho%ns(1,1,1,1), 2 *  Hubbard_lmax + 1)
+             call sirius_get_hubbard_occupancies(gs_handler, rho%ns(1,1,1,1), 2 *  Hubbard_lmax + 1)
            endif
         ENDIF
         !
