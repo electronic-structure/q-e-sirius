@@ -58,6 +58,7 @@ SUBROUTINE run_pwscf ( exit_status )
   USE fft_types,              ONLY : fft_type_allocate  
   USE cellmd,     ONLY : lmovecell
   USE control_flags, ONLY : lbfgs, lmd
+  USE mp_world, ONLY: mpime
   !
   IMPLICIT NONE
   INTEGER, INTENT(OUT) :: exit_status
@@ -278,7 +279,9 @@ SUBROUTINE run_pwscf ( exit_status )
   END DO main_loop
 
   ! write basic results to a JSON file
-  call write_json()
+  if (mpime.eq.0) then
+    call write_json()
+  endif
   !
   ! ... save final data file
   !
