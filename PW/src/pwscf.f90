@@ -93,11 +93,6 @@ PROGRAM pwscf
   !
   CALL stop_run( exit_status )
   CALL do_stop( exit_status )
-  ! finalize sirius at the very end
-  if (use_sirius) then
-     call sirius_finalize(call_mpi_fin=bool(.false.))
-     call sirius_print_timers
-  endif
   !
   STOP
   !
