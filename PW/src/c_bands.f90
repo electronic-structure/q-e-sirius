@@ -57,10 +57,8 @@ SUBROUTINE c_bands( iter )
       ! initialize subspace before calling "sirius_find_eigen_states" first time
       call sirius_initialize_subspace(gs_handler, ks_handler)
     endif
-    ! set the tolerance
-    !call sirius_set_parameters(sctx, iter_solver_tol=ethr/2)
     ! solve H\spi = E\psi
-    call sirius_find_eigen_states(gs_handler,ks_handler,bool(.true.),iter_solver_tol=ethr/2)
+    call sirius_find_eigen_states(gs_handler, ks_handler, bool(.true.), iter_solver_tol=ethr/2)
     if (.not.use_sirius_density) then
       call get_wave_functions_from_sirius
     endif
