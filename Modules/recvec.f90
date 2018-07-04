@@ -36,12 +36,12 @@
 
      !     G^2 in increasing order (in units of tpiba2=(2pi/a)^2)
      !
-     REAL(DP), ALLOCATABLE, TARGET :: gg(:) 
+     REAL(DP), ALLOCATABLE :: gg(:) 
 
      !     gl(i) = i-th shell of G^2 (in units of tpiba2)
      !     igtongl(n) = shell index for n-th G-vector
      !
-     REAL(DP), POINTER :: gl(:) 
+     REAL(DP), ALLOCATABLE :: gl(:) 
      INTEGER, ALLOCATABLE, TARGET :: igtongl(:) 
      !
      !     G-vectors cartesian components ( in units tpiba =(2pi/a)  )

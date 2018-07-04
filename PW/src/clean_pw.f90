@@ -116,9 +116,7 @@ SUBROUTINE clean_pw( lflag )
   ! ... arrays allocated in ggen.f90
   !
   IF ( ALLOCATED( ig_l2g ) )     DEALLOCATE( ig_l2g )
-  IF ( .NOT. lmovecell ) THEN
-     IF ( ASSOCIATED( gl ) )     DEALLOCATE ( gl )
-  END IF
+  IF ( ALLOCATED( gl ) )         DEALLOCATE ( gl )
   !
   CALL sym_rho_deallocate ( )
   !
