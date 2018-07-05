@@ -28,6 +28,8 @@ eliashbergcom.o \
 superconductivity.o \
 transportcom.o \
 transport.o \
+transport_iter.o \
+wigner.o \
 a2f.o \
 allocate_epwq.o \
 bcast_epw_input.o \
@@ -92,8 +94,6 @@ wannierEPW.o \
 wannierize.o \
 pw2wan90epw.o \
 wan2bloch.o \
-wigner_seitz2.o \
-wigner_seitz.o \
 io_scattering.o \
 system_mem_usage.o
 

@@ -43,7 +43,7 @@ SUBROUTINE potinit()
   USE ldaU,                 ONLY : lda_plus_u, Hubbard_lmax, eth, &
                                    niter_with_fixed_ns
   USE noncollin_module,     ONLY : noncolin, report
-  USE io_files,             ONLY : tmp_dir, prefix, input_drho, check_file_exist
+  USE io_files,             ONLY : tmp_dir, prefix, postfix, input_drho, check_file_exist
   USE spin_orb,             ONLY : domag, lforcet
   USE mp,                   ONLY : mp_sum
   USE mp_bands ,            ONLY : intra_bgrp_comm, root_bgrp
@@ -73,7 +73,7 @@ SUBROUTINE potinit()
   !
   CALL start_clock('potinit')
   !
-  dirname = TRIM(tmp_dir) // TRIM (prefix) // '.save/'
+  dirname = TRIM(tmp_dir) // TRIM (prefix) // postfix
 #if defined __HDF5
   filename = TRIM(dirname) // 'charge-density.hdf5'
 #else 
@@ -245,7 +245,7 @@ SUBROUTINE potinit()
   !
   ! ... plugin contribution to local potential
   !
-  CALL plugin_scf_potential(rho,.FALSE.,-1.d0)
+  CALL plugin_scf_potential(rho,.FALSE.,-1.d0,vltot)
   !
   ! ... compute the potential and store it in v
   !
@@ -311,7 +311,7 @@ SUBROUTINE nc_magnetization_from_lsda ( nnr, nspin, rho )
   ! On input, rho(1)=rho_up, rho(2)=rho_down
   ! Set rho(1)=rho_tot, rho(3)=rho_up-rho_down=magnetization
   ! 
-  rho(:,3) = rho(:,1)-rho(:,2)
+  rho(:,4) = rho(:,1)-rho(:,2)
   rho(:,1) = rho(:,1)+rho(:,2)
 #endif
   !
@@ -319,9 +319,10 @@ SUBROUTINE nc_magnetization_from_lsda ( nnr, nspin, rho )
   !         rho(3)=magn*sin(theta)*sin(phi)   y
   !         rho(4)=magn*cos(theta)            z
   !
-  rho(:,4) = rho(:,3)*cos(angle1(1))
-  rho(:,2) = rho(:,3)*sin(angle1(1))
+  !rho(:,4) = rho(:,3)*cos(angle1(1))
+  rho(:,2) = rho(:,4)*sin(angle1(1))
   rho(:,3) = rho(:,2)*sin(angle2(1))
+  rho(:,4) = rho(:,4)*cos(angle1(1))
   rho(:,2) = rho(:,2)*cos(angle2(1))
   !
   RETURN

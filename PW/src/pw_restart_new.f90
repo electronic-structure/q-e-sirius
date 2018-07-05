@@ -29,7 +29,7 @@ MODULE pw_restart_new
                           qexsd_input_obj, qexsd_occ_obj, qexsd_smear_obj,             &
                           qexsd_init_outputPBC, qexsd_init_gate_info  
   USE io_global, ONLY : ionode, ionode_id
-  USE io_files,  ONLY : iunpun, xmlpun_schema, prefix, tmp_dir
+  USE io_files,  ONLY : iunpun, xmlpun_schema, prefix, tmp_dir, postfix
   !
   IMPLICIT NONE
   !
@@ -173,7 +173,7 @@ MODULE pw_restart_new
       ! 
       ! XML descriptor
       ! 
-      dirname = TRIM( tmp_dir ) // TRIM( prefix ) // '.save/'
+      dirname = TRIM( tmp_dir ) // TRIM( prefix ) // postfix
       !
       CALL qexsd_init_schema( iunpun )
       !
@@ -348,9 +348,14 @@ MODULE pw_restart_new
          ELSE 
             occupations_are_fixed = .FALSE. 
             h_energy  = ef 
-         END IF 
-         CALL qexsd_init_k_points_ibz(qexsd_start_k_obj, k_points, calculation, nk1, nk2, nk3, k1, k2, k3,&
-                                      nks_start, xk_start, wk_start, alat, at(:,1), .TRUE.)
+         END IF
+         IF (nks_start == 0 .AND. nk1*nk2*nk3 > 0 ) THEN 
+            CALL qexsd_init_k_points_ibz(qexsd_start_k_obj, "automatic", calculation, &
+                 nk1, nk2, nk3, k1, k2, k3, nks_start, xk_start, wk_start, alat, at(:,1), .TRUE.)
+         ELSE
+            CALL qexsd_init_k_points_ibz(qexsd_start_k_obj, k_points, calculation, &
+                                nk1, nk2, nk3, k1, k2, k3, nks_start, xk_start, wk_start, alat, at(:,1), .TRUE.)
+         END IF
          qexsd_start_k_obj%tagname = 'starting_kpoints'
          IF ( TRIM (qexsd_input_obj%tagname) == 'input') THEN 
             qexsd_occ_obj = qexsd_input_obj%bands%occupations
@@ -541,7 +546,7 @@ MODULE pw_restart_new
       CHARACTER(LEN=256)    :: dirname
       CHARACTER(LEN=320)    :: filename
       !
-      dirname = TRIM( tmp_dir ) // TRIM( prefix ) // '.save/'
+      dirname = TRIM( tmp_dir ) // TRIM( prefix ) // postfix
       !
       ! ... write wavefunctions and k+G vectors
       !
@@ -760,8 +765,7 @@ MODULE pw_restart_new
             CALL errore ("pw_readschema_file", "could not find a free unit to open data-file-schema.xml", 1)
       CALL qexsd_init_schema( iunpun )
       !
-      filename = TRIM( tmp_dir ) // TRIM( prefix ) // '.save' &
-               & // '/' // TRIM( xmlpun_schema )
+      filename = TRIM( tmp_dir ) // TRIM( prefix ) // postfix // TRIM( xmlpun_schema )
       INQUIRE ( file=filename, exist=found )
       IF (.NOT. found ) ierr = ierr + 1
       IF ( ierr /=0 ) THEN
@@ -856,7 +860,7 @@ MODULE pw_restart_new
       !    
       !
       ierr = 0 
-      dirname = TRIM( tmp_dir ) // TRIM( prefix ) // '.save/'
+      dirname = TRIM( tmp_dir ) // TRIM( prefix ) // postfix
       !
       !
       IF ( PRESENT (input_obj) ) THEN 
@@ -1197,7 +1201,7 @@ MODULE pw_restart_new
     !! if ibrav is present, cell parameters were computed by subroutine
     !! "latgen" using ibrav and celldm parameters: recalculate celldm
     !
-    CALL lat2celldm (ibrav,alat,at(:,1),at(:,2),at(:,3),celldm)
+    CALL at2celldm (ibrav,1.0_dp,at(:,1),at(:,2),at(:,3),celldm)
     !
     tpiba = tpi/alat
     tpiba2= tpiba**2
@@ -1727,7 +1731,7 @@ MODULE pw_restart_new
        USE lsda_mod, ONLY : lsda, isk
        USE klist,    ONLY : nkstot, xk, wk
        USE start_k,  ONLY : nks_start, xk_start, wk_start, &
-                              nk1, nk2, nk3, k1, k2, k3
+                              nk1, nk2, nk3, k1, k2, k3 
        USE symm_base,ONLY : nrot, s, sname
        USE qes_types_module, ONLY : k_points_IBZ_type, occupations_type, symmetries_type, band_structure_type
        !
