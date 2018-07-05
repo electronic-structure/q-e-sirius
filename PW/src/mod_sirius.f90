@@ -174,8 +174,24 @@ call mpi_comm_rank(inter_pool_comm, rank, ierr)
 do iat = 1, nsp
 
   ! add new atom type
-  call sirius_add_atom_type(sctx, atom_type(iat)%label, zn=nint(zv(iat)+0.001d0), mass=amass(iat),&
-                            &spin_orbit=bool(upf(iat)%has_so))
+   call sirius_add_atom_type(sctx, atom_type(iat)%label, &
+        & zn=nint(zv(iat)+0.001d0), &
+        & mass=amass(iat), &
+        & spin_orbit=bool(upf(iat)%has_so))
+
+   if (is_hubbard(iat)) then
+      call sirius_set_atom_type_hubbard(sctx, &
+           & atom_type(iat)%label, &
+           & Hubbard_l(iat), &
+           & set_hubbard_n(upf(iat)%psd), &
+           & hubbard_occ ( upf(iat)%psd ), &
+           & Hubbard_U(iat), &
+           & Hubbard_J(1,iat), &
+           & Hubbard_alpha(iat), &
+           & Hubbard_beta(iat), &
+           & Hubbard_J0(iat))
+   endif
+
 
   ! set radial grid
   call sirius_set_atom_type_radial_grid(sctx, atom_type(iat)%label, upf(iat)%mesh, upf(iat)%r(1))
@@ -188,8 +204,12 @@ do iat = 1, nsp
         l = - upf(iat)%lll(i)
       endif
     endif
-    call sirius_add_atom_type_radial_function(sctx, atom_type(iat)%label, string("beta"),&
-                                             &upf(iat)%beta(1, i), upf(iat)%kbeta(i), l=l)
+    call sirius_add_atom_type_radial_function(sctx, &
+         & atom_type(iat)%label, &
+         & string("beta"), &
+         & upf(iat)%beta(1, i), &
+         & upf(iat)%kbeta(i), &
+         & l=l)
   enddo
 
   ! set the atomic radial functions
@@ -200,15 +220,14 @@ do iat = 1, nsp
         l = -l
       endif
     endif
-    call sirius_add_atom_type_radial_function(sctx, atom_type(iat)%label, string("ps_atomic_wf"),&
-                                              &upf(iat)%chi(1, iwf), msh(iat), l=l)
+    call sirius_add_atom_type_radial_function(sctx, &
+         & atom_type(iat)%label, &
+         & string("ps_atomic_wf"), &
+         & upf(iat)%chi(1, iwf), &
+         & msh(iat), &
+         & l=l, &
+         & occ=upf(iat)%oc(iwf))
   enddo
-  if (is_hubbard(iat)) then
-     call sirius_set_atom_type_hubbard(sctx, atom_type(iat)%label, Hubbard_l(iat), &
-          set_hubbard_n(upf(iat)%psd), hubbard_occ ( upf(iat)%psd ), &
-          Hubbard_U(iat), Hubbard_J(1,iat), &
-          Hubbard_alpha(iat), Hubbard_beta(iat), Hubbard_J0(iat))
-  endif
 
   allocate(dion(upf(iat)%nbeta, upf(iat)%nbeta))
   ! convert to hartree
@@ -697,9 +716,11 @@ implicit none
 integer iat, ih, jh, ijh, i
 
 do iat = 1, nsp
-  call sirius_get_num_beta_projectors(sctx, atom_type(iat)%label, atom_type(iat)%num_beta_projectors)
+   atom_type(iat)%num_beta_projectors = sirius_get_num_beta_projectors(sctx, &
+        & atom_type(iat)%label)
   if (nh(iat).ne.atom_type(iat)%num_beta_projectors) then
-    stop 'wrong number of beta projectors'
+     write(*,*) nh(iat), atom_type(iat)%num_beta_projectors
+     stop 'wrong number of beta projectors'
   endif
   if (upf(iat)%tvanp) then
     i = atom_type(iat)%num_beta_projectors
@@ -728,7 +749,10 @@ integer iat, ih, jh, ijh, ia
 
 qq_nt = 0
 do iat = 1, nsp
-  call sirius_get_num_beta_projectors(sctx, atom_type(iat)%label, atom_type(iat)%num_beta_projectors)
+   atom_type(iat)%num_beta_projectors = sirius_get_num_beta_projectors(sctx, &
+        & atom_type(iat)%label)
+
+!   call sirius_get_num_beta_projectors(sctx, atom_type(iat)%label, atom_type(iat)%num_beta_projectors)
   if (nh(iat).ne.atom_type(iat)%num_beta_projectors) then
     stop 'wrong number of beta projectors'
   endif
@@ -1296,12 +1320,12 @@ do ik = 1, nksmax
     if (lsda.and.ispn.eq.2) then
       ik_ = ik_ - nkstot / 2
     endif
-    call sirius_get_wave_functions(ks_handler, ik_, ispn, ngk(ik), gvl(1, 1), evc(1, 1), npwx, npol) 
+    call sirius_get_wave_functions(ks_handler, ik_, ispn, ngk(ik), gvl(1, 1), evc(1, 1), npwx, npol)
     if (nks > 1 .or. lelfield) then
       call save_buffer ( evc, nwordwfc, iunwfc, ik )
     endif
   else
-    call sirius_get_wave_functions(ks_handler, -1, -1, -1, -1, z1, -1, -1) 
+    call sirius_get_wave_functions(ks_handler, -1, -1, -1, -1, z1, -1, -1)
   endif
 enddo
 deallocate(gvl)
