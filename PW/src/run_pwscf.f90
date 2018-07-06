@@ -58,6 +58,7 @@ SUBROUTINE run_pwscf ( exit_status )
   USE fft_types,              ONLY : fft_type_allocate  
   USE cellmd,     ONLY : lmovecell
   USE control_flags, ONLY : lbfgs, lmd
+  USE mp_world, ONLY: mpime
   !
   IMPLICIT NONE
   INTEGER, INTENT(OUT) :: exit_status
@@ -65,7 +66,6 @@ SUBROUTINE run_pwscf ( exit_status )
   LOGICAL, external :: matches
   !! checks if first string is contained in the second
   INTEGER :: idone 
-  LOGICAL(C_BOOL) :: flg
   !! counter of electronic + ionic steps done in this run
   INTEGER :: ions_status = 3
   !!    ions_status =  3  not yet converged
@@ -73,11 +73,6 @@ SUBROUTINE run_pwscf ( exit_status )
   !!    ions_status =  1  converged, final step with current cell needed
   !!    ions_status =  0  converged, exiting
   !
-  if (use_sirius) then
-     ! initialize platform-specific stuff (libraries, environment, etc.)
-     flg = .false.
-     CALL sirius_initialize(call_mpi_init=flg)
-  endif
   exit_status = 0
   IF ( ionode ) WRITE( unit = stdout, FMT = 9010 ) ntypx, npk, lmaxx
   !
@@ -250,7 +245,9 @@ SUBROUTINE run_pwscf ( exit_status )
            !
            ! ... final scf calculation with G-vectors for final cell
            !
-           CALL reset_gvectors ( )
+           if (.not.(use_sirius.and.recompute_gvec)) then
+             CALL reset_gvectors ( )
+           endif
            !
         ELSE IF ( ions_status == 2 ) THEN
            !
@@ -280,6 +277,11 @@ SUBROUTINE run_pwscf ( exit_status )
      !
      ethr = 1.0D-6
   END DO main_loop
+
+  ! write basic results to a JSON file
+  if (mpime.eq.0) then
+    call write_json()
+  endif
   !
   ! ... save final data file
   !
@@ -289,11 +291,6 @@ SUBROUTINE run_pwscf ( exit_status )
   CALL qmmm_shutdown()
   !
   IF ( .NOT. conv_ions )  exit_status =  3
-  if (use_sirius) then
-     call sirius_print_timers
-     call clear_sirius
-     call sirius_finalize(call_mpi_fin=flg)
-  endif
   RETURN
   !
 9010 FORMAT( /,5X,'Current dimensions of program PWSCF are:', &

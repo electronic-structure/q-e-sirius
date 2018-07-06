@@ -20,7 +20,7 @@ default :
 	@echo '  neb          code for Nudged Elastic Band method'
 	@echo '  pp           postprocessing programs'
 	@echo '  pwall        same as "make pw ph pp pwcond neb"'
-	@echo '  cp           CP code: CP MD with ultrasoft pseudopotentials'
+	@echo '  cp           CP code: Car-Parrinello molecular dynamics'
 	@echo '  tddfpt       time dependent dft code'
 	@echo '  gwl          GW with Lanczos chains'
 	@echo '  ld1          utilities for pseudopotential generation'
@@ -168,7 +168,7 @@ libdavid : libs libutil libla
 libcg : libs libutil libla
 	( cd KS_Solvers/CG ; $(MAKE) TLDEPS= all || exit 1 )
 
-libla : liblapack libutil
+libla : liblapack libutil libcuda
 	( cd LAXlib ; $(MAKE) TLDEPS= all || exit 1 )
 
 libfft : 
@@ -204,6 +204,8 @@ libiotk:
 libfox: 
 	cd install ; $(MAKE) -f extlibs_makefile $@
 
+libcuda: 
+	cd install ; $(MAKE) -f extlibs_makefile $@
 # In case of trouble with iotk and compilers, add
 # FFLAGS="$(FFLAGS_NOOPT)" after $(MFLAGS)
 
@@ -261,7 +263,7 @@ links : bindir
 # - If the final directory does not exists it creates it
 #########################################################
 
-install : pw
+install : 
 	@if test -d bin ; then mkdir -p $(PREFIX)/bin ; \
 	for x in `find * ! -path "test-suite/*" -name *.x -type f` ; do \
 		cp $$x $(PREFIX)/bin/ ; done ; \
@@ -274,7 +276,7 @@ install : pw
 #     already computed once (usualy during release)
 #########################################################
 
-test-suite: pw cp
+test-suite: pw cp 
 	( cd install ; $(MAKE) -f plugins_makefile $@ || exit 1 )
 
 #########################################################
@@ -309,7 +311,6 @@ veryclean : clean
 		CPV/version.h ChangeLog* intel.pcl */intel.pcl
 	- rm -rf include/configure.h install/make_wannier90.inc
 	- cd install ; rm -fr autom4te.cache
-	- cd pseudo; ./clean_ps ; cd -
 	- cd install; ./clean.sh ; cd -
 	- cd include; ./clean.sh ; cd -
 	- rm -f espresso.tar.gz -
@@ -317,6 +318,7 @@ veryclean : clean
 	- rm -rf FoX
 # remove everything not in the original distribution
 distclean : veryclean
+	- cd pseudo; ./clean_ps ; cd -
 	( cd install ; $(MAKE) -f plugins_makefile $@ || exit 1 )
 
 tar :

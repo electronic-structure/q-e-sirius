@@ -416,11 +416,19 @@ input_description -distribution {Quantum Espresso} -package CP -program cp.x {
 
                13          Monoclinic base-centered        celldm(2)=b/a
                                                            celldm(3)=c/a,
-                                                           celldm(4)=cos(ab)
+                                                           celldm(4)=cos(gamma)
                     v1 = (  a/2,         0,                -c/2),
-                    v2 = (b*cos(gamma), b*sin(gamma), 0),
-                    v3 = (  a/2,         0,                  c/2),
-                    where gamma is the angle between axis a and b
+                    v2 = (b*cos(gamma), b*sin(gamma),       0  ),
+                    v3 = (  a/2,         0,                 c/2),
+                    where gamma=angle between axis a and b projected on xy plane
+
+              -13          Monoclinic base-centered        celldm(2)=b/a
+                           (unique axis b)                 celldm(3)=c/a,
+                                                           celldm(5)=cos(beta)
+                    v1 = (  a/2,      -b/2,             0),
+                    v2 = (  a/2,       b/2,             0),
+                    v3 = (c*cos(beta),   0,   c*sin(beta)),
+                    where beta=angle between axis a and c projected on xz plane
 
                14          Triclinic                       celldm(2)= b/a,
                                                            celldm(3)= c/a,
@@ -926,6 +934,12 @@ input_description -distribution {Quantum Espresso} -package CP -program cp.x {
                'zero'      : restart setting electronic velocities to zero
                'default'   : restart using electronic velocities of the
                            previous run
+               'change_step' : restart simulation using electronic velocities of the
+                           previous run, with rescaling due to the timestep change.
+                           specify the old step via tolp as in
+                           tolp = 'old_time_step_value' in au.
+                           Note that you may want to specify
+                            ion_velocities = 'change_step'
 	    }
 	}
 
@@ -1098,7 +1112,9 @@ input_description -distribution {Quantum Espresso} -package CP -program cp.x {
                'change_step' : restart the simulation with atomic velocities read
                                from the restart file, with rescaling due to the
                                timestep change, specify the old step via tolp
-                               as in tolp = 'old_time_step_value' in au
+                               as in tolp = 'old_time_step_value' in au.
+                               Note that you may want to specify
+                                electron_velocities = 'change_step'
                'random'      : start the simulation with random atomic velocities
                'from_input'  : restart the simulation with atomic velocities read
                                from standard input - see card 'ATOMIC_VELOCITIES'

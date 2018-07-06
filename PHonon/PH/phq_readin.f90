@@ -50,7 +50,7 @@ SUBROUTINE phq_readin()
   USE partial,       ONLY : atomo, nat_todo, nat_todo_input
   USE output,        ONLY : fildyn, fildvscf, fildrho
   USE disp,          ONLY : nq1, nq2, nq3, x_q, wq, nqs, lgamma_iq
-  USE io_files,      ONLY : tmp_dir, prefix, create_directory, check_tempdir
+  USE io_files,      ONLY : tmp_dir, prefix, postfix, create_directory, check_tempdir
   USE noncollin_module, ONLY : i_cons, noncolin
   USE ldaU,          ONLY : lda_plus_u
   USE control_flags, ONLY : iverbosity, modenum, twfcollect
@@ -66,7 +66,7 @@ SUBROUTINE phq_readin()
   USE freq_ph,       ONLY : fpol, fiu, nfs
   USE cryst_ph,      ONLY : magnetic_sym
   USE ph_restart,    ONLY : ph_readfile
-  USE el_phon,       ONLY : elph,elph_mat,elph_simple,elph_nbnd_min, elph_nbnd_max, &
+  USE el_phon,       ONLY : elph,elph_mat,elph_simple,elph_epa,elph_nbnd_min, elph_nbnd_max, &
                             el_ph_sigma, el_ph_nsigma, el_ph_ngauss,auxdvscf
   USE dfile_star,    ONLY : drho_star, dvscf_star
 
@@ -375,20 +375,29 @@ SUBROUTINE phq_readin()
      elph=.true.
      elph_mat=.false.
      elph_simple=.true. 
+     elph_epa=.false.
+  CASE( 'epa' )
+     elph=.true.
+     elph_mat=.false.
+     elph_simple=.false.
+     elph_epa=.true.
   CASE( 'Wannier' )
      elph=.true.
      elph_mat=.true.
      elph_simple=.false.
+     elph_epa=.false.
      auxdvscf=trim(fildvscf)
   CASE( 'interpolated' )
      elph=.true.
      elph_mat=.false.
      elph_simple=.false.
+     elph_epa=.false.
   ! YAMBO >
   CASE( 'yambo' )
      elph=.true.
      elph_mat=.false.
      elph_simple=.false.
+     elph_epa=.false.
      elph_yambo=.true.
      nogg=.true.
      auxdvscf=trim(fildvscf)
@@ -396,6 +405,7 @@ SUBROUTINE phq_readin()
      elph=.false.
      elph_mat=.false.
      elph_simple=.false.
+     elph_epa=.false.
      elph_yambo=.false.
      dvscf_yambo=.true.
      nogg=.true.
@@ -423,6 +433,7 @@ SUBROUTINE phq_readin()
      elph=.false.
      elph_mat=.false.
      elph_simple=.false.
+     elph_epa=.false.
   END SELECT
   ! YAMBO >
   IF (.not.elph_yambo) then
@@ -555,7 +566,7 @@ SUBROUTINE phq_readin()
   amass_input(:)= amass(:)
   !
   tmp_dir_save=tmp_dir
-  tmp_dir_ph= TRIM (tmp_dir) // '_ph' // TRIM(int_to_char(my_image_id)) //'/'
+  tmp_dir_ph= trimcheck( TRIM (tmp_dir) // '_ph' // int_to_char(my_image_id) )
   CALL check_tempdir ( tmp_dir_ph, exst, parallelfs )
   tmp_dir_phq=tmp_dir_ph
 
@@ -583,16 +594,16 @@ SUBROUTINE phq_readin()
 !   we read from there, otherwise use the information in tmp_dir.
 !
      IF (lqdir) THEN
-        tmp_dir_phq= TRIM (tmp_dir_ph) //TRIM(prefix)//&
-                          & '.q_' // TRIM(int_to_char(current_iq))//'/'
+        tmp_dir_phq= trimcheck ( TRIM(tmp_dir_ph) // TRIM(prefix) // &
+                                & '.q_' // int_to_char(current_iq) )
         CALL check_restart_recover(ext_recover, ext_restart)
         IF (.NOT.ext_recover.AND..NOT.ext_restart) tmp_dir_phq=tmp_dir_ph
      ENDIF
      !
 #if defined (__OLDXML)
-     filename=TRIM(tmp_dir_phq)//TRIM(prefix)//'.save/data-file.xml'
+     filename=TRIM(tmp_dir_phq)//TRIM(prefix)//postfix//'data-file.xml'
 #else
-     filename=TRIM(tmp_dir_phq)//TRIM(prefix)//'.save/data-file-schema.xml'
+     filename=TRIM(tmp_dir_phq)//TRIM(prefix)//postfix//'data-file-schema.xml'
 #endif
      IF (ionode) inquire (file =TRIM(filename), exist = exst)
      !
@@ -739,7 +750,7 @@ SUBROUTINE phq_readin()
   !  .xml or in the noncollinear case.
   !
   xmldyn=has_xml(fildyn)
-  IF (noncolin) xmldyn=.TRUE.
+  !IF (noncolin) xmldyn=.TRUE.
   !
   ! If a band structure calculation needs to be done do not open a file
   ! for k point

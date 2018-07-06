@@ -283,6 +283,7 @@ clean_pw.o : dynamics_module.o
 clean_pw.o : extfield.o
 clean_pw.o : exx.o
 clean_pw.o : ldaU.o
+clean_pw.o : mod_sirius.o
 clean_pw.o : paw_init.o
 clean_pw.o : pwcom.o
 clean_pw.o : realus.o
@@ -361,6 +362,7 @@ data_structure.o : ../../Modules/mp_pools.o
 data_structure.o : ../../Modules/recvec.o
 data_structure.o : ../../UtilXlib/mp.o
 data_structure.o : pwcom.o
+data_structure.o : realus.o
 deriv_drhoc.o : ../../Modules/constants.o
 deriv_drhoc.o : ../../Modules/kind.o
 deriv_drhoc.o : mod_sirius.o
@@ -625,6 +627,7 @@ force_hub.o : ../../UtilXlib/mp.o
 force_hub.o : atomic_wfc_mod.o
 force_hub.o : buffers.o
 force_hub.o : ldaU.o
+force_hub.o : mod_sirius.o
 force_hub.o : pwcom.o
 force_hub.o : scf_mod.o
 force_hub.o : symme.o
@@ -1178,6 +1181,7 @@ mod_sirius.o : ../../UtilXlib/parallel_include.o
 mod_sirius.o : bp_mod.o
 mod_sirius.o : buffers.o
 mod_sirius.o : esm.o
+mod_sirius.o : ldaU.o
 mod_sirius.o : mod_spline.o
 mod_sirius.o : pwcom.o
 mod_sirius.o : scf_mod.o
@@ -1218,6 +1222,7 @@ new_ns.o : ../../Modules/wavefunctions.o
 new_ns.o : ../../UtilXlib/mp.o
 new_ns.o : buffers.o
 new_ns.o : ldaU.o
+new_ns.o : mod_sirius.o
 new_ns.o : pwcom.o
 new_ns.o : symm_base.o
 new_occ.o : ../../Modules/constants.o
@@ -1383,6 +1388,7 @@ paw_symmetry.o : ../../Modules/uspp.o
 paw_symmetry.o : ../../UtilXlib/mp.o
 paw_symmetry.o : pwcom.o
 paw_symmetry.o : symm_base.o
+plugin_check.o : ../../Modules/plugin_flags.o
 plugin_clean.o : ../../Modules/plugin_flags.o
 plugin_clock.o : ../../Modules/io_global.o
 plugin_clock.o : ../../Modules/plugin_flags.o
@@ -1398,8 +1404,8 @@ plugin_init_ions.o : ../../Modules/fft_base.o
 plugin_init_ions.o : ../../Modules/kind.o
 plugin_init_ions.o : ../../Modules/plugin_flags.o
 plugin_init_potential.o : ../../Modules/fft_base.o
+plugin_init_potential.o : ../../Modules/kind.o
 plugin_init_potential.o : ../../Modules/plugin_flags.o
-plugin_init_potential.o : scf_mod.o
 plugin_initbase.o : ../../Modules/fft_base.o
 plugin_initbase.o : ../../Modules/mp_bands.o
 plugin_initbase.o : ../../Modules/plugin_flags.o
@@ -1414,18 +1420,14 @@ plugin_int_forces.o : ../../Modules/fft_base.o
 plugin_int_forces.o : ../../Modules/io_global.o
 plugin_int_forces.o : ../../Modules/ions_base.o
 plugin_int_forces.o : ../../Modules/kind.o
-plugin_int_forces.o : ../../Modules/mp_images.o
 plugin_int_forces.o : ../../Modules/plugin_flags.o
 plugin_int_forces.o : ../../Modules/recvec.o
-plugin_int_forces.o : ../../UtilXlib/mp.o
 plugin_int_forces.o : martyna_tuckerman.o
 plugin_int_forces.o : pwcom.o
-plugin_int_forces.o : scf_mod.o
 plugin_print_energies.o : ../../Modules/io_files.o
 plugin_print_energies.o : ../../Modules/io_global.o
 plugin_print_energies.o : ../../Modules/kind.o
 plugin_print_energies.o : ../../Modules/plugin_flags.o
-plugin_read_input.o : ../../Modules/input_parameters.o
 plugin_read_input.o : ../../Modules/plugin_flags.o
 plugin_scf_energy.o : ../../Modules/fft_base.o
 plugin_scf_energy.o : ../../Modules/io_files.o
@@ -1435,7 +1437,6 @@ plugin_scf_energy.o : ../../Modules/plugin_flags.o
 plugin_scf_energy.o : pwcom.o
 plugin_scf_energy.o : scf_mod.o
 plugin_scf_potential.o : ../../Modules/fft_base.o
-plugin_scf_potential.o : ../../Modules/io_files.o
 plugin_scf_potential.o : ../../Modules/io_global.o
 plugin_scf_potential.o : ../../Modules/kind.o
 plugin_scf_potential.o : ../../Modules/plugin_flags.o
@@ -1505,6 +1506,7 @@ punch.o : ../../Modules/io_files.o
 punch.o : ../../Modules/io_global.o
 punch.o : ../../Modules/ions_base.o
 punch.o : ../../Modules/kernel_table.o
+punch.o : ../../Modules/qexsd.o
 punch.o : ../../Modules/wavefunctions.o
 punch.o : ../../Modules/wrappers.o
 punch.o : a2fmod.o
@@ -1672,6 +1674,7 @@ pwscf.o : ../../Modules/command_line_options.o
 pwscf.o : ../../Modules/environment.o
 pwscf.o : ../../Modules/mp_global.o
 pwscf.o : ../../Modules/read_input.o
+pwscf.o : mod_sirius.o
 qvan2.o : ../../Modules/cell_base.o
 qvan2.o : ../../Modules/constants.o
 qvan2.o : ../../Modules/kind.o
@@ -2041,6 +2044,7 @@ stres_hub.o : ../../UtilXlib/mp.o
 stres_hub.o : atomic_wfc_mod.o
 stres_hub.o : buffers.o
 stres_hub.o : ldaU.o
+stres_hub.o : mod_sirius.o
 stres_hub.o : pwcom.o
 stres_hub.o : scf_mod.o
 stres_hub.o : symme.o
@@ -2138,18 +2142,6 @@ stress.o : pwcom.o
 stress.o : scf_mod.o
 stress.o : symme.o
 stress.o : xdm_dispersion.o
-stress_us1.o : ../../Modules/becmod.o
-stress_us1.o : ../../Modules/constants.o
-stress_us1.o : ../../Modules/control_flags.o
-stress_us1.o : ../../Modules/ions_base.o
-stress_us1.o : ../../Modules/kind.o
-stress_us1.o : ../../Modules/mp_bands.o
-stress_us1.o : ../../Modules/mp_pools.o
-stress_us1.o : ../../Modules/noncol.o
-stress_us1.o : ../../Modules/uspp.o
-stress_us1.o : ../../Modules/wavefunctions.o
-stress_us1.o : ../../UtilXlib/mp.o
-stress_us1.o : pwcom.o
 struct_fact.o : ../../Modules/constants.o
 struct_fact.o : ../../Modules/kind.o
 sum_band.o : ../../FFTXlib/fft_helper_subroutines.o
@@ -2453,11 +2445,12 @@ xdm_dispersion.o : ../../Modules/cell_base.o
 xdm_dispersion.o : ../../Modules/constants.o
 xdm_dispersion.o : ../../Modules/control_flags.o
 xdm_dispersion.o : ../../Modules/fft_base.o
+xdm_dispersion.o : ../../Modules/funct.o
 xdm_dispersion.o : ../../Modules/io_global.o
 xdm_dispersion.o : ../../Modules/ions_base.o
 xdm_dispersion.o : ../../Modules/kind.o
+xdm_dispersion.o : ../../Modules/mp_bands.o
 xdm_dispersion.o : ../../Modules/mp_images.o
-xdm_dispersion.o : ../../Modules/mp_pools.o
 xdm_dispersion.o : ../../Modules/paw_variables.o
 xdm_dispersion.o : ../../Modules/splinelib.o
 xdm_dispersion.o : ../../Modules/uspp.o

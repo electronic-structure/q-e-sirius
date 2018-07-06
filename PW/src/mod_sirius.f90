@@ -18,7 +18,7 @@ logical :: use_sirius_radial_integrals_q      = .true.
 ! use SIRIUS to compute beta projectors
 logical :: use_sirius_beta_projectors         = .false.
 ! use SIRIUS to compute Q-operator
-logical :: use_sirius_q_operator              = .true.
+logical :: use_sirius_q_operator              = .false.
 ! use SIRIUS to solve KS equations
 logical :: use_sirius_ks_solver               = .true.
 ! use SIRIUS to generate density
@@ -716,14 +716,14 @@ implicit none
 integer iat, ih, jh, ijh, i
 
 do iat = 1, nsp
-   atom_type(iat)%num_beta_projectors = sirius_get_num_beta_projectors(sctx, &
-        & atom_type(iat)%label)
+  atom_type(iat)%num_beta_projectors = sirius_get_num_beta_projectors(sctx, atom_type(iat)%label)
   if (nh(iat).ne.atom_type(iat)%num_beta_projectors) then
      write(*,*) nh(iat), atom_type(iat)%num_beta_projectors
      stop 'wrong number of beta projectors'
   endif
   if (upf(iat)%tvanp) then
     i = atom_type(iat)%num_beta_projectors
+    if (allocated(atom_type(iat)%qpw)) deallocate(atom_type(iat)%qpw)
     allocate(atom_type(iat)%qpw(ngm, i * (i + 1) / 2))
     ijh = 0
     do ih = 1, atom_type(iat)%num_beta_projectors
@@ -749,10 +749,7 @@ integer iat, ih, jh, ijh, ia
 
 qq_nt = 0
 do iat = 1, nsp
-   atom_type(iat)%num_beta_projectors = sirius_get_num_beta_projectors(sctx, &
-        & atom_type(iat)%label)
-
-!   call sirius_get_num_beta_projectors(sctx, atom_type(iat)%label, atom_type(iat)%num_beta_projectors)
+  atom_type(iat)%num_beta_projectors = sirius_get_num_beta_projectors(sctx, atom_type(iat)%label)
   if (nh(iat).ne.atom_type(iat)%num_beta_projectors) then
     stop 'wrong number of beta projectors'
   endif
@@ -1547,6 +1544,27 @@ implicit none
   !  end select
   !endif
 end subroutine put_xc_functional_to_sirius
+
+subroutine write_json()
+use ener
+use force_mod
+implicit none
+
+open(200, file="output.json", action="write", form="formatted")
+write(200,'("{")')
+write(200,'("  ""energy"": {")')
+write(200,'("    ""total"": ", G18.10)')etot
+write(200, '("  },")')
+write(200,'("  ""stress"": {")')
+write(200,'("    ""total"": [")')
+write(200,'("        [", G18.10, ",", G18.10, ",", G18.10, "],")') sigma(1, 1), sigma(1, 2), sigma(1, 3)
+write(200,'("        [", G18.10, ",", G18.10, ",", G18.10, "],")') sigma(2, 1), sigma(2, 2), sigma(2, 3)
+write(200,'("        [", G18.10, ",", G18.10, ",", G18.10, "]")')  sigma(3, 1), sigma(3, 2), sigma(3, 3)
+write(200, '("    ]")')
+write(200, '("}")')
+close(200)
+
+end subroutine
 
 
 

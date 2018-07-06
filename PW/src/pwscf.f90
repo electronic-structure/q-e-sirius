@@ -38,6 +38,7 @@ PROGRAM pwscf
   USE mp_global,         ONLY : mp_startup
   USE read_input,        ONLY : read_input_file
   USE command_line_options, ONLY: input_file_, command_line
+  use mod_sirius
   !
   IMPLICIT NONE
   CHARACTER(len=256) :: srvaddress
@@ -52,6 +53,10 @@ PROGRAM pwscf
   !! checks if first string is contained in the second
   !
   CALL mp_startup ( start_images=.true., diag_in_band_group = .true. )
+  ! initialize platform-specific stuff (libraries, environment, etc.)
+  if (use_sirius) then
+     CALL sirius_initialize(call_mpi_init=bool(.false.))
+  endif
   CALL environment_start ( 'PWSCF' )
   !
   ! ... Check if running standalone or in "driver" mode
