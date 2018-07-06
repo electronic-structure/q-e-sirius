@@ -81,6 +81,7 @@ subroutine atomic_rho (rhoa, nspina)
   do nt = 1, ntyp
     if (use_sirius.and.use_sirius_density) then
       call sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, string("rho"), rho_g(1), ngm, mill(1, 1), intra_bgrp_comm)
+      rho_g(:) = rho_g(:) * omega
     else
       !
       ! Here we compute the G=0 term
