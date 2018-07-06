@@ -56,6 +56,7 @@ SUBROUTINE stop_run( exit_status )
      call sirius_finalize(call_mpi_fin=bool(.false.))
      if (mpime.eq.0) then
        call sirius_print_timers
+       call sirius_serialize_timers(string("timers.json"))
      endif
   endif
   !
