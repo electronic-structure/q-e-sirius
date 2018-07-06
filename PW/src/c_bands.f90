@@ -62,6 +62,8 @@ SUBROUTINE c_bands( iter )
     if (.not.use_sirius_density) then
       call get_wave_functions_from_sirius
     endif
+    ! get band energies
+    call get_band_energies_from_sirius
     CALL stop_clock( 'c_bands' )
     return
   endif
@@ -617,6 +619,7 @@ SUBROUTINE c_bands_nscf( )
   USE mp_pools,             ONLY : npool, kunit, inter_pool_comm
   USE mp,                   ONLY : mp_sum
   USE check_stop,           ONLY : check_stop_now
+  use mod_sirius
   !
   IMPLICIT NONE
   !
@@ -630,6 +633,21 @@ SUBROUTINE c_bands_nscf( )
   REAL(DP), EXTERNAL :: get_clock
   !
   CALL start_clock( 'c_bands' )
+  if (use_sirius.and.use_sirius_ks_solver) then
+    if (.not.use_sirius_density) then
+      call put_q_operator_matrix_to_sirius
+    endif
+    ! initialize subspace before calling "sirius_find_eigen_states" first time
+    call sirius_initialize_subspace(gs_handler, ks_handler)
+    ! solve H\spi = E\psi
+    call sirius_find_eigen_states(gs_handler, ks_handler, bool(.true.), iter_solver_tol=ethr/2)
+    ! get all wave-functions
+    call get_wave_functions_from_sirius
+    ! get band energies
+    call get_band_energies_from_sirius
+    CALL stop_clock( 'c_bands' )
+    return
+  endif
   !
   ik_ = 0
   avg_iter = 0.D0

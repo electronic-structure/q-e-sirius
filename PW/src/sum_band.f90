@@ -73,11 +73,6 @@ SUBROUTINE sum_band()
   !
   ! ... calculates weights of Kohn-Sham orbitals used in calculation of rho
   !
-  if (use_sirius.and.use_sirius_ks_solver) then
-    ! get band energies
-    call get_band_energies_from_sirius
-  endif
-
   CALL weights ( )
 
   if (use_sirius.and.use_sirius_ks_solver) then
