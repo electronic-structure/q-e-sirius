@@ -179,19 +179,6 @@ do iat = 1, nsp
         & mass=amass(iat), &
         & spin_orbit=bool(upf(iat)%has_so))
 
-   if (is_hubbard(iat)) then
-      call sirius_set_atom_type_hubbard(sctx, &
-           & atom_type(iat)%label, &
-           & Hubbard_l(iat), &
-           & set_hubbard_n(upf(iat)%psd), &
-           & hubbard_occ ( upf(iat)%psd ), &
-           & Hubbard_U(iat), &
-           & Hubbard_J(1,iat), &
-           & Hubbard_alpha(iat), &
-           & Hubbard_beta(iat), &
-           & Hubbard_J0(iat))
-   endif
-
 
   ! set radial grid
   call sirius_set_atom_type_radial_grid(sctx, atom_type(iat)%label, upf(iat)%mesh, upf(iat)%r(1))
@@ -228,6 +215,19 @@ do iat = 1, nsp
          & l=l, &
          & occ=upf(iat)%oc(iwf))
   enddo
+
+  if (is_hubbard(iat)) then
+     call sirius_set_atom_type_hubbard(sctx, &
+          & atom_type(iat)%label, &
+          & Hubbard_l(iat), &
+          & set_hubbard_n(upf(iat)%psd), &
+          & hubbard_occ ( upf(iat)%psd ), &
+          & Hubbard_U(iat), &
+          & Hubbard_J(1,iat), &
+          & Hubbard_alpha(iat), &
+          & Hubbard_beta(iat), &
+          & Hubbard_J0(iat))
+  endif
 
   allocate(dion(upf(iat)%nbeta, upf(iat)%nbeta))
   ! convert to hartree
@@ -1566,6 +1566,128 @@ close(200)
 
 end subroutine
 
+function idx_m_qe(m) result(m1)
+  implicit none
+  integer :: m
+  integer :: m1
 
+  if (m .gt. 0) then
+     m1 = 2 * m - 1
+  else
+     m1 = -2 * m
+  endif
+end function idx_m_qe
 
+subroutine qe_to_sirius_real(ns, ns_sirius)
+  USE ions_base,            ONLY : nat, ityp
+  USE ldaU,                 ONLY : Hubbard_lmax, Hubbard_l, Hubbard_U, &
+       Hubbard_J, Hubbard_alpha, lda_plus_u_kind,&
+       Hubbard_J0, Hubbard_beta,  is_hubbard
+  USE lsda_mod,             ONLY : nspin
+
+  complex(8), intent(out) :: ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat)
+  REAL(8), intent(in) :: ns(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat)
+  integer :: m1, m2, mm2, mm1, is, nt, na
+  ns_sirius(:, :, :, :) = 0.0
+  do na = 1, nat
+     nt = ityp (na)
+     if (is_hubbard(nt)) then
+        do m1 = -Hubbard_l(nt), Hubbard_l(nt)
+           mm1 = idx_m_qe(m1)
+           do m2 = -Hubbard_l(nt), Hubbard_l(nt)
+              mm2 = idx_m_qe(m2)
+              DO is = 1, nspin
+                 ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, is, na) = ns(mm1 + 1, mm2 + 1, is, na)
+              enddo
+           enddo
+        enddo
+     endif
+  enddo
+end subroutine qe_to_sirius_real
+
+subroutine qe_to_sirius_complex(ns, ns_sirius)
+  USE ions_base,            ONLY : nat, ityp
+  USE ldaU,                 ONLY : Hubbard_lmax, Hubbard_l, Hubbard_U, &
+       Hubbard_J, Hubbard_alpha, lda_plus_u_kind,&
+       Hubbard_J0, Hubbard_beta,  is_hubbard
+  USE lsda_mod,             ONLY : nspin
+
+  complex(8), intent(out) :: ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat)
+  complex(8), intent(in) :: ns(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat)
+  integer :: m1, m2, mm2, mm1, is, nt, na
+
+  ns_sirius(:, :, :, :) = 0.0
+  do na = 1, nat
+     nt = ityp (na)
+     if (is_hubbard(nt)) then
+        do m1 = -Hubbard_l(nt), Hubbard_l(nt)
+           mm1 = idx_m_qe(m1)
+           do m2 = -Hubbard_l(nt), Hubbard_l(nt)
+              mm2 = idx_m_qe(m2)
+              ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, 1, na) = ns(mm1 + 1, mm2 + 1, 1, na)
+              ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, 2, na) = ns(mm1 + 1, mm2 + 1, 4, na)
+              ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, 3, na) = ns(mm1 + 1, mm2 + 1, 2, na)
+              ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, 4, na) = ns(mm1 + 1, mm2 + 1, 3, na)
+           enddo
+        enddo
+     endif
+  enddo
+end subroutine qe_to_sirius_complex
+
+subroutine sirius_to_qe_real(ns_sirius, ns)
+  USE ions_base,            ONLY : nat, ityp
+  USE ldaU,                 ONLY : Hubbard_lmax, Hubbard_l, Hubbard_U, &
+       Hubbard_J, Hubbard_alpha, lda_plus_u_kind,&
+       Hubbard_J0, Hubbard_beta,  is_hubbard
+  USE lsda_mod,             ONLY : nspin
+  integer :: m1, m2, mm2, mm1, is, nt, na
+
+  complex(8), intent(in) :: ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat)
+  real(8), intent(out) :: ns(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat)
+
+  ns(:, :, :, :) = 0.0
+  do na = 1, nat
+     nt = ityp (na)
+     if (is_hubbard(nt)) then
+        do m1 = -Hubbard_l(nt), Hubbard_l(nt)
+           mm1 = idx_m_qe(m1)
+           do m2 = -Hubbard_l(nt), Hubbard_l(nt)
+              mm2 = idx_m_qe(m2)
+              DO is = 1, nspin
+                 ns(mm1 + 1, mm2 + 1, is, na) = REAL(ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, is, na))
+              enddo
+           enddo
+        enddo
+     endif
+  enddo
+end subroutine sirius_to_qe_real
+
+subroutine sirius_to_qe_complex(ns_sirius, ns)
+  USE ions_base,            ONLY : nat, ityp
+  USE ldaU,                 ONLY : Hubbard_lmax, Hubbard_l, Hubbard_U, &
+       Hubbard_J, Hubbard_alpha, lda_plus_u_kind,&
+       Hubbard_J0, Hubbard_beta,  is_hubbard
+  USE lsda_mod,             ONLY : nspin
+
+  complex(8), intent(in) :: ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat)
+  complex(8), intent(out) :: ns(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat)
+  integer :: m1, m2, mm2, mm1, is, nt, na
+
+  ns(:, :, :, :) = 0.0
+  do na = 1, nat
+     nt = ityp (na)
+     if (is_hubbard(nt)) then
+        do m1 = -Hubbard_l(nt), Hubbard_l(nt)
+           mm1 = idx_m_qe(m1)
+           do m2 = -Hubbard_l(nt), Hubbard_l(nt)
+              mm2 = idx_m_qe(m2)
+              ns(mm1 + 1, mm2 + 1, 1, na) = ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, 1, na)
+              ns(mm1 + 1, mm2 + 1, 4, na) = ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, 2, na)
+              ns(mm1 + 1, mm2 + 1, 2, na) = ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, 3, na)
+              ns(mm1 + 1, mm2 + 1, 3, na) = ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, 4, na)
+           enddo
+        enddo
+     endif
+  enddo
+end subroutine sirius_to_qe_complex
 end module

@@ -50,6 +50,7 @@ SUBROUTINE new_ns(ns)
   ! counter on k points
   !    "    "  bands
   !    "    "  spins
+  COMPLEX(DP) , ALLOCATABLE :: nrc(:,:,:,:)
   REAL(DP) , ALLOCATABLE :: nr (:,:,:,:)
   REAL(DP) :: psum
 
@@ -66,8 +67,12 @@ SUBROUTINE new_ns(ns)
   ns (:,:,:,:) = 0.d0
 
   if (use_sirius) then
+     allocate(nrc(2*Hubbard_lmax+1,2*Hubbard_lmax+1,nspin,nat))
      call sirius_calculate_hubbard_occupancies(gs_handler)
-     call sirius_get_hubbard_occupancies(gs_handler, nr(1,1,1,1), ldim)
+     call sirius_get_hubbard_occupancies(gs_handler, nrc(1,1,1,1), ldim)
+     call sirius_to_qe_real(nrc(:, :, :, :), nr(:, :, :, :))
+     ns (:,:,:,:) = 0.d0
+     deallocate(nrc)
   else
      !
      !    we start a loop on k points
@@ -317,7 +322,7 @@ SUBROUTINE new_ns_nc(ns)
   INTEGER :: ik, ibnd, is, js, i, j, sigmay2, na, nb, nt, isym,  &
              m1, m2, m3, m4, is1, is2, is3, is4, m0, m00, ldim, npw
 
-  COMPLEX(DP) , ALLOCATABLE :: nr (:,:,:,:,:), nr1 (:,:,:,:,:), proj(:,:)
+  COMPLEX(DP) , ALLOCATABLE :: nr (:,:,:,:,:), nr1 (:,:,:,:,:), proj(:,:), nss(:,:,:,:)
 
   COMPLEX(DP) :: z, zdotc
 
@@ -330,8 +335,10 @@ SUBROUTINE new_ns_nc(ns)
   ALLOCATE( nr(ldim,ldim,npol,npol,nat), nr1(ldim,ldim,npol,npol,nat) )
   ALLOCATE( proj(nwfcU,nbnd) )
   if (use_sirius) then
+     ALLOCATE(nss(2*Hubbard_lmax+1,2*Hubbard_lmax+1,nspin,nat))
      call sirius_calculate_hubbard_occupancies(gs_handler)
-     call sirius_get_hubbard_occupancies(gs_handler, ns(1,1,1,1), ldim)
+     call sirius_get_hubbard_occupancies(gs_handler, nss(1,1,1,1), ldim)
+     call sirius_to_qe_complex(nss(:, :, :, :), ns(:, :, :, :))
      do na = 1, nat
         nt = ityp (na)
         if ( is_hubbard(nt) ) then
@@ -347,6 +354,7 @@ SUBROUTINE new_ns_nc(ns)
            ENDDO
         ENDIF
      ENDDO
+     DEALLOCATE(nss)
      ns  (:,:,:,:)   = 0.d0
   else
 
