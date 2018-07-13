@@ -335,7 +335,7 @@ SUBROUTINE new_ns_nc(ns)
   ALLOCATE( nr(ldim,ldim,npol,npol,nat), nr1(ldim,ldim,npol,npol,nat) )
   ALLOCATE( proj(nwfcU,nbnd) )
   if (use_sirius) then
-     ALLOCATE(nss(2*Hubbard_lmax+1,2*Hubbard_lmax+1,nspin,nat))
+     ALLOCATE(nss(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, 4, nat))
      call sirius_calculate_hubbard_occupancies(gs_handler)
      call sirius_get_hubbard_occupancies(gs_handler, nss(1,1,1,1), ldim)
      call sirius_to_qe_complex(nss(:, :, :, :), ns(:, :, :, :))

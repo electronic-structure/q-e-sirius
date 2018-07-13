@@ -19,7 +19,7 @@ SUBROUTINE potinit()
   ! ...    read rho from the file produced by the scf calculation
   ! ... c) the code starts a new calculation:
   ! ...    calculate rho as a sum of atomic charges
-  ! 
+  !
   ! ... In all cases the scf potential is recalculated and saved in vr
   !
   USE kinds,                ONLY : DP
@@ -68,7 +68,7 @@ SUBROUTINE potinit()
   REAL(DP)              :: etotefield       !
   REAL(DP)              :: fact
   INTEGER               :: is
-  LOGICAL               :: exst 
+  LOGICAL               :: exst
   CHARACTER(LEN=256)    :: dirname, filename
   !
   CALL start_clock('potinit')
@@ -76,7 +76,7 @@ SUBROUTINE potinit()
   dirname = TRIM(tmp_dir) // TRIM (prefix) // postfix
 #if defined __HDF5
   filename = TRIM(dirname) // 'charge-density.hdf5'
-#else 
+#else
   filename = TRIM(dirname) // 'charge-density.dat'
 #endif
   exst     =  check_file_exist( TRIM(filename) )
@@ -122,7 +122,7 @@ SUBROUTINE potinit()
      !
   ELSE
      !
-     ! ... Case c): the potential is built from a superposition 
+     ! ... Case c): the potential is built from a superposition
      ! ... of atomic charges contained in the array rho_at
      !
      IF ( starting_pot == 'file' .AND. .NOT. exst ) &
@@ -139,15 +139,12 @@ SUBROUTINE potinit()
      IF (lda_plus_u) THEN
         IF (noncolin) THEN
            CALL init_ns_nc()
-           if (use_sirius) then
-             call sirius_get_hubbard_occupancies(gs_handler, rho%ns_nc(1,1,1,1), 2 *  Hubbard_lmax + 1)
-           endif
         ELSE
            CALL init_ns()
-           if(use_sirius) then
-             call sirius_get_hubbard_occupancies(gs_handler, rho%ns(1,1,1,1), 2 *  Hubbard_lmax + 1)
-           endif
         ENDIF
+        if (use_sirius) then
+           call qe_sirius_set_hubbard_occupancy(rho)
+        endif
         !
      ENDIF
 
@@ -197,7 +194,7 @@ SUBROUTINE potinit()
         WRITE( stdout, '(/,5X,"starting charge ",F10.5, &
                          & ", renormalised to ",F10.5)') charge, nelec
         rho%of_r = rho%of_r / charge * nelec
-     ELSE 
+     ELSE
         WRITE( stdout, '(/,5X,"Starting from uniform charge")')
         IF ( nspin == 2 ) THEN
            rho%of_r(:,1:nspin) = nelec / omega / nspin
@@ -298,19 +295,19 @@ SUBROUTINE nc_magnetization_from_lsda ( nnr, nspin, rho )
   IMPLICIT NONE
   INTEGER, INTENT (in):: nnr, nspin
   REAL(dp), INTENT (inout):: rho(nnr,nspin)
-  !---  
-  !  set up noncollinear m_x,y,z from collinear m_z (AlexS) 
+  !---
+  !  set up noncollinear m_x,y,z from collinear m_z (AlexS)
   !
   WRITE(stdout,*)
   WRITE(stdout,*) '-----------'
   WRITE(stdout,'("Spin angles Theta, Phi (degree) = ",2f8.4)') &
-       angle1(1)/PI*180.d0, angle2(1)/PI*180.d0 
+       angle1(1)/PI*180.d0, angle2(1)/PI*180.d0
   WRITE(stdout,*) '-----------'
   !
 #if defined(__OLDXML)
   ! On input, rho(1)=rho_up, rho(2)=rho_down
   ! Set rho(1)=rho_tot, rho(3)=rho_up-rho_down=magnetization
-  ! 
+  !
   rho(:,4) = rho(:,1)-rho(:,2)
   rho(:,1) = rho(:,1)+rho(:,2)
 #endif

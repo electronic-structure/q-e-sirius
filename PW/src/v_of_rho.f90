@@ -79,6 +79,11 @@ SUBROUTINE v_of_rho( rho, rho_core, rhog_core, &
      else
         call v_hubbard(rho%ns,v%ns,eth)
      endif
+
+     if (use_sirius) then
+        call qe_sirius_set_hubbard_potential(v)
+        call qe_sirius_set_hubbard_occupancy(rho)
+     endif
   endif
   !
   ! ... add an electric field
@@ -716,7 +721,6 @@ SUBROUTINE v_hubbard(ns, v_hub, eth)
   REAL(DP) :: n_tot, n_spin, eth_dc, eth_u, mag2, effU
   INTEGER :: is, isop, is1, na, nt, m1, m2, m3, m4, mm1, mm2
   REAL(DP),    ALLOCATABLE :: u_matrix(:,:,:,:)
-  COMPLEX(DP), ALLOCATABLE :: tmp(:,:,:,:)
   ALLOCATE( u_matrix(2*Hubbard_lmax+1, 2*Hubbard_lmax+1, 2*Hubbard_lmax+1, 2*Hubbard_lmax+1) )
 
   eth    = 0.d0
@@ -888,15 +892,6 @@ SUBROUTINE v_hubbard(ns, v_hub, eth)
 !--
   ENDIF
   DEALLOCATE (u_matrix)
-
-  if (use_sirius) then
-     allocate(tmp(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat))
-     call qe_to_sirius_real(ns(1, 1, 1, 1), tmp(1, 1, 1, 1))
-     call sirius_set_hubbard_occupancies(gs_handler, tmp(1, 1, 1, 1), 2 * hubbard_lmax + 1)
-     call qe_to_sirius_real(v_hub(1, 1, 1, 1), tmp(1, 1, 1, 1))
-     call sirius_set_hubbard_potential(gs_handler, tmp(1, 1, 1, 1), 2 * hubbard_lmax + 1)
-     deallocate(tmp)
-  ENDIF
   RETURN
 END SUBROUTINE v_hubbard
 !-------------------------------------
@@ -923,7 +918,6 @@ SUBROUTINE v_hubbard_nc(ns, v_hub, eth)
   INTEGER :: is, is1, js, i, j, na, nt, m1, m2, m3, m4, mm1, mm2
   COMPLEX(DP) :: n_tot, n_aux
   REAL(DP),    ALLOCATABLE :: u_matrix(:,:,:,:)
-  complex(DP), ALLOCATABLE :: tmp(:,:,:,:)
 
   ALLOCATE( u_matrix(2*Hubbard_lmax+1, 2*Hubbard_lmax+1, 2*Hubbard_lmax+1, 2*Hubbard_lmax+1) )
 
@@ -1072,17 +1066,6 @@ SUBROUTINE v_hubbard_nc(ns, v_hub, eth)
 !--
 
   DEALLOCATE (u_matrix)
-
-  if (use_sirius) then
-     allocate(tmp(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat))
-     call qe_to_sirius_complex(ns(:, :, :, :), tmp(:, :, :, :))
-     call sirius_set_hubbard_occupancies(gs_handler, tmp(1,1,1,1), 2 * hubbard_lmax + 1)
-     call qe_to_sirius_complex(v_hub(:, :, :, :), tmp(:, :, :, :))
-     tmp(:,:,:,:) = 0.5 * tmp(:, :, :, :)
-     call sirius_set_hubbard_potential(gs_handler, tmp(1,1,1,1), 2 * hubbard_lmax + 1)
-     deallocate(tmp)
-  ENDIF
-
   RETURN
 END SUBROUTINE v_hubbard_nc
 !-------------------------------------------
