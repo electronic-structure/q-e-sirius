@@ -286,7 +286,9 @@ SUBROUTINE run_pwscf ( exit_status )
   ! ... save final data file
   !
   CALL qexsd_set_status(exit_status)
+  call sirius_start_timer(string("qe|punch"))
   CALL punch('all')
+  call sirius_stop_timer(string("qe|punch"))
   !
   CALL qmmm_shutdown()
   !
