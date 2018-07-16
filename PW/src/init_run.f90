@@ -136,6 +136,7 @@ SUBROUTINE init_run()
   if (.not.(use_sirius.and.use_sirius_ks_solver)) then
     CALL wfcinit()
   else
+    call sirius_initialize_subspace(gs_handler, ks_handler)
     CALL open_buffer( iunwfc, 'wfc', nwordwfc, io_level, exst_mem, exst_file )
   endif
   !

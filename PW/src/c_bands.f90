@@ -53,10 +53,11 @@ SUBROUTINE c_bands( iter )
     if (.not.use_sirius_density) then
       call put_q_operator_matrix_to_sirius
     endif
-    if (iter.eq.1) then
-      ! initialize subspace before calling "sirius_find_eigen_states" first time
-      call sirius_initialize_subspace(gs_handler, ks_handler)
-    endif
+    !if (iter.eq.1) then
+    !  ! initialize subspace before calling "sirius_find_eigen_states" first time
+    !  call sirius_initialize_subspace(gs_handler, ks_handler)
+    !  write(*,*)'iter=',iter,', calling init_subspace()'
+    !endif
     ! solve H\spi = E\psi
     call sirius_find_eigen_states(gs_handler, ks_handler, bool(.true.), iter_solver_tol=ethr/2)
     if (.not.use_sirius_density) then
