@@ -230,10 +230,12 @@ SUBROUTINE newd( )
   !
   !
   if (use_sirius.and.use_sirius_d_operator_matrix) then
+    call sirius_start_timer(string("qe|newd"))
     call sirius_generate_d_operator_matrix(gs_handler)
     call get_d_matrix_from_sirius
     call add_paw_to_deeq(deeq)
     call put_d_matrix_to_sirius
+    call sirius_stop_timer(string("qe|newd"))
     return
   endif
   IF ( .NOT. okvan ) THEN
