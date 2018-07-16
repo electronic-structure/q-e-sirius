@@ -90,7 +90,9 @@ SUBROUTINE sum_band()
       call paw_symmetrize(rho%bec)
     endif
 
+    call sirius_start_timer(string("qe|sym_rho"))
     call sym_rho(nspin_mag, rho%of_g)
+    call sirius_stop_timer(string("qe|sym_rho"))
     do is = 1, nspin_mag
        psic(:) = ( 0.d0, 0.d0 )
        psic(dfftp%nl(:)) = rho%of_g(:,is)
