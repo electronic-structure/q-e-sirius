@@ -141,7 +141,9 @@ SUBROUTINE run_pwscf ( exit_status )
      IF ( .NOT. lscf) THEN
         CALL non_scf ()
      ELSE
+        call sirius_start_timer(string("qe|electrons"))
         CALL electrons()
+        call sirius_stop_timer(string("qe|electrons"))
      END IF
      if (use_sirius.and.use_sirius_ks_solver) then
        call get_wave_functions_from_sirius

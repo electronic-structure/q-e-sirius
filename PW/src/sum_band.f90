@@ -80,6 +80,7 @@ SUBROUTINE sum_band()
   endif
 
   if (use_sirius.and.use_sirius_density) then
+    call sirius_start_timer(string("qe|sum_band"))
     call put_band_occupancies_to_sirius
     call sirius_generate_density(gs_handler)
     call get_density_from_sirius
@@ -108,6 +109,7 @@ SUBROUTINE sum_band()
        ENDIF
     ENDIF
     CALL stop_clock( 'sum_band' )
+    call sirius_stop_timer(string("qe|sum_band"))
     return
   endif
 
