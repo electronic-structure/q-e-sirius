@@ -8,6 +8,8 @@
 
 include make.inc
 
+.PHONY: install
+
 default :
 	@echo 'to install Quantum ESPRESSO, type at the shell prompt:'
 	@echo '  ./configure [--prefix=]'
