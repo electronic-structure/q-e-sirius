@@ -215,6 +215,9 @@ SUBROUTINE run_pwscf ( exit_status )
           lmd=.FALSE.
           ions_status = 0
         endif
+        if (use_sirius) then
+          call update_sirius
+        endif
         conv_ions = ( ions_status == 0 )
         !
         ! ... then we save restart information for the new configuration
@@ -264,9 +267,19 @@ SUBROUTINE run_pwscf ( exit_status )
            ! ... update the wavefunctions, charge density, potential
            ! ... update_pot initializes structure factor array as well
            !
-           if (.not.(use_sirius.and.recompute_gvec)) then
-             CALL update_pot()
+           call sirius_start_timer(string("qe|update_pot"))
+           if (.not.use_sirius) then
+             call update_pot()
            endif
+           !if (.not.(use_sirius.and.recompute_gvec)) then
+           !  call sirius_start_timer(string("qe|update_pot"))
+           !  CALL update_pot()
+           !  call sirius_stop_timer(string("qe|update_pot"))
+           !endif
+           if (use_sirius.and..not.recompute_gvec) then
+              call potinit
+           endif
+           call sirius_stop_timer(string("qe|update_pot"))
            !
            ! ... re-initialize atomic position-dependent quantities
            !

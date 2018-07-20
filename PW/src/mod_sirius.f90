@@ -40,7 +40,7 @@ logical :: use_sirius_forces                  = .true.
 ! use SIRIUS to compute stress tensor
 logical :: use_sirius_stress                  = .true.
 ! initialize G-vectors once or at each step of ionic relaxation
-logical :: recompute_gvec                     = .true.
+logical :: recompute_gvec                     = .false.
 
 ! inverse of the reciprocal lattice vectors matrix
 real(8) bg_inv(3,3)
@@ -395,6 +395,37 @@ ks_handler = sirius_create_kset(sctx, num_kpoints, kpoints(1, 1), wkpoints(1), b
 gs_handler = sirius_create_ground_state(ks_handler)
 
 end subroutine setup_sirius
+
+
+subroutine update_sirius
+use cell_base, only : alat, at, bg
+use ions_base, only : tau, nat
+implicit none
+real(8) :: a1(3), a2(3), a3(3), vlat(3, 3), vlat_inv(3, 3), v1(3), v2(3), tmp
+integer ia
+! set lattice vectors of the unit cell (length is in [a.u.])
+a1(:) = at(:, 1) * alat
+a2(:) = at(:, 2) * alat
+a3(:) = at(:, 3) * alat
+call sirius_set_lattice_vectors(sctx, a1(1), a2(1), a3(1))
+!
+vlat(:, 1) = a1(:)
+vlat(:, 2) = a2(:)
+vlat(:, 3) = a3(:)
+! get the inverse of Bravais lattice vectors
+call invert_mtrx(vlat, vlat_inv)
+! get the inverse of reciprocal lattice vectors
+call invert_mtrx(bg, bg_inv)
+
+do ia = 1, nat
+  v1(:) = tau(:, ia) * alat
+  ! fractional coordinates
+  v1(:) = matmul(vlat_inv, v1)
+  call sirius_set_atom_position(sctx, ia, v1(1))
+enddo
+call sirius_update_ground_state(gs_handler)
+
+end subroutine update_sirius
 
 
 subroutine test_integration(nr, r, rab)
