@@ -33,6 +33,8 @@ logical :: use_sirius_d_operator_matrix       = .true.
 logical :: use_sirius_vloc                    = .true.
 ! use SIRIUS to compute core charge density
 logical :: use_sirius_rho_core                = .true.
+! use SIRIUS to compute plane-wave coefficients of atomic charge density
+logical :: use_sirius_rho_atomic              = .true.
 ! use SIRIUS to compute forces
 logical :: use_sirius_forces                  = .true.
 ! use SIRIUS to compute stress tensor
@@ -93,6 +95,7 @@ use ldaU, only : lda_plus_U, Hubbard_J, Hubbard_U, Hubbard_alpha, &
      & Hubbard_beta, is_Hubbard, lda_plus_u_kind, Hubbard_J0, U_projection, Hubbard_l
 use esm,       only : esm_local, esm_bc, do_comp_esm
 use mp_diag, only : nproc_ortho
+use control_flags, only : iverbosity
 implicit none
 !
 integer :: dims(3), i, ia, iat, rank, ierr, ijv, li, lj, mb, nb, j, l,&
@@ -134,7 +137,7 @@ call sirius_set_parameters(sctx, num_bands=nbnd, num_mag_dims=nmagd, gamma_point
                           &use_symmetry=bool(.false.), so_correction=bool(lspinorb),&
                           &pw_cutoff=sqrt(ecutrho), gk_cutoff=sqrt(ecutwfc),&
                           &hubbard_correction=bool(lda_plus_U), hubbard_correction_kind=lda_plus_u_kind,&
-                          &hubbard_orbitals=string(U_projection))
+                          &hubbard_orbitals=string(U_projection), verbosity=min(1, iverbosity))
 if (do_comp_esm) then
   call sirius_set_parameters(sctx, esm_bc=esm_bc)
 endif

@@ -1836,6 +1836,7 @@ run_pwscf.o : ../../Modules/ions_base.o
 run_pwscf.o : ../../Modules/kind.o
 run_pwscf.o : ../../Modules/mp_bands.o
 run_pwscf.o : ../../Modules/mp_images.o
+run_pwscf.o : ../../Modules/mp_world.o
 run_pwscf.o : ../../Modules/noncol.o
 run_pwscf.o : ../../Modules/parameters.o
 run_pwscf.o : ../../Modules/qexsd.o
@@ -1989,6 +1990,8 @@ stop_run.o : ../../Modules/environment.o
 stop_run.o : ../../Modules/io_files.o
 stop_run.o : ../../Modules/io_global.o
 stop_run.o : ../../Modules/mp_global.o
+stop_run.o : ../../Modules/mp_world.o
+stop_run.o : mod_sirius.o
 stres_cc.o : ../../FFTXlib/fft_interfaces.o
 stres_cc.o : ../../Modules/atom.o
 stres_cc.o : ../../Modules/cell_base.o

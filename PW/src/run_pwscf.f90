@@ -141,7 +141,9 @@ SUBROUTINE run_pwscf ( exit_status )
      IF ( .NOT. lscf) THEN
         CALL non_scf ()
      ELSE
+        call sirius_start_timer(string("qe|electrons"))
         CALL electrons()
+        call sirius_stop_timer(string("qe|electrons"))
      END IF
      if (use_sirius.and.use_sirius_ks_solver) then
        call get_wave_functions_from_sirius
@@ -162,6 +164,7 @@ SUBROUTINE run_pwscf ( exit_status )
      ! ... ionic section starts here
      !
      CALL start_clock( 'ions' ); !write(*,*)' start ions' ; FLUSH(6)
+     call sirius_start_timer(string("qe|ions"))
      conv_ions = .TRUE.
      !
      ! ... recover from a previous run, if appropriate
@@ -223,6 +226,7 @@ SUBROUTINE run_pwscf ( exit_status )
         !
      END IF
      !
+     call sirius_stop_timer(string("qe|ions"))
      CALL stop_clock( 'ions' ); !write(*,*)' stop ions' ; FLUSH(6)
      !
      CALL qmmm_update_forces( force, rho%of_r, nspin, dfftp)
@@ -286,7 +290,9 @@ SUBROUTINE run_pwscf ( exit_status )
   ! ... save final data file
   !
   CALL qexsd_set_status(exit_status)
+  call sirius_start_timer(string("qe|punch"))
   CALL punch('all')
+  call sirius_stop_timer(string("qe|punch"))
   !
   CALL qmmm_shutdown()
   !

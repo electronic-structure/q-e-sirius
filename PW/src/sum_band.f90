@@ -73,11 +73,6 @@ SUBROUTINE sum_band()
   !
   ! ... calculates weights of Kohn-Sham orbitals used in calculation of rho
   !
-  if (use_sirius.and.use_sirius_ks_solver) then
-    ! get band energies
-    call get_band_energies_from_sirius
-  endif
-
   CALL weights ( )
 
   if (use_sirius.and.use_sirius_ks_solver) then
@@ -85,6 +80,7 @@ SUBROUTINE sum_band()
   endif
 
   if (use_sirius.and.use_sirius_density) then
+    call sirius_start_timer(string("qe|sum_band"))
     call put_band_occupancies_to_sirius
     call sirius_generate_density(gs_handler)
     call get_density_from_sirius
@@ -95,7 +91,9 @@ SUBROUTINE sum_band()
       call paw_symmetrize(rho%bec)
     endif
 
+    call sirius_start_timer(string("qe|sym_rho"))
     call sym_rho(nspin_mag, rho%of_g)
+    call sirius_stop_timer(string("qe|sym_rho"))
     do is = 1, nspin_mag
        psic(:) = ( 0.d0, 0.d0 )
        psic(dfftp%nl(:)) = rho%of_g(:,is)
@@ -111,6 +109,7 @@ SUBROUTINE sum_band()
        ENDIF
     ENDIF
     CALL stop_clock( 'sum_band' )
+    call sirius_stop_timer(string("qe|sum_band"))
     return
   endif
 
