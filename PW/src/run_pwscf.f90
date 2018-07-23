@@ -62,6 +62,7 @@ SUBROUTINE run_pwscf ( exit_status )
   USE cellmd,     ONLY : lmovecell
   USE control_flags, ONLY : lbfgs, lmd
   USE mp_world, ONLY: mpime
+  USE dfunct,             ONLY : newd
   !
   IMPLICIT NONE
   INTEGER, INTENT(OUT) :: exit_status
@@ -285,6 +286,8 @@ SUBROUTINE run_pwscf ( exit_status )
                  call setlocal()
                  call set_rhoc()
                  call potinit
+                 call newd
+                 call sirius_initialize_subspace(gs_handler, ks_handler)
                  call sirius_stop_timer(string("qe|update"))
               endif
            endif
