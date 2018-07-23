@@ -54,6 +54,9 @@ SUBROUTINE run_pwscf ( exit_status )
   USE cell_base,              ONLY : at, bg
   USE gvect,                  ONLY : gcutm
   USE gvecs,                  ONLY : gcutms
+  USE gvect,        ONLY : ngm, g, eigts1, eigts2, eigts3
+  USE ions_base,     ONLY : nat, nsp, ityp, tau
+  USE vlocal,       ONLY : strf
   USE mp_bands,               ONLY : intra_bgrp_comm, nyfft
   USE fft_types,              ONLY : fft_type_allocate  
   USE cellmd,     ONLY : lmovecell
@@ -263,27 +266,28 @@ SUBROUTINE run_pwscf ( exit_status )
            CALL reset_magn ( )
            !
         ELSE
-           !
-           ! ... update the wavefunctions, charge density, potential
-           ! ... update_pot initializes structure factor array as well
-           !
-           call sirius_start_timer(string("qe|update_pot"))
            if (.not.use_sirius) then
-             call update_pot()
+              !
+              ! ... update the wavefunctions, charge density, potential
+              ! ... update_pot initializes structure factor array as well
+              !
+              CALL update_pot()
+              !
+              ! ... re-initialize atomic position-dependent quantities
+              !
+              CALL hinit1()
+           else
+              if (.not.recompute_gvec) then
+                 call sirius_start_timer(string("qe|update"))
+                 if ( lmovecell ) call scale_h()
+                 call struc_fact( nat, tau, nsp, ityp, ngm, g, bg, &
+                                  dfftp%nr1, dfftp%nr2, dfftp%nr3, strf, eigts1, eigts2, eigts3 )
+                 call setlocal()
+                 call set_rhoc()
+                 call potinit
+                 call sirius_stop_timer(string("qe|update"))
+              endif
            endif
-           !if (.not.(use_sirius.and.recompute_gvec)) then
-           !  call sirius_start_timer(string("qe|update_pot"))
-           !  CALL update_pot()
-           !  call sirius_stop_timer(string("qe|update_pot"))
-           !endif
-           if (use_sirius.and..not.recompute_gvec) then
-              call potinit
-           endif
-           call sirius_stop_timer(string("qe|update_pot"))
-           !
-           ! ... re-initialize atomic position-dependent quantities
-           !
-           CALL hinit1()
            !
         END IF
         !

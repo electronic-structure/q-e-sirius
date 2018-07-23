@@ -53,13 +53,14 @@ subroutine set_rhoc
 
   etxcc = 0.0_DP
   if ( ANY( upf(1:ntyp)%nlcc ) ) goto 10
-  
+
   rhog_core(:) = 0.0_DP
   rho_core(:)  = 0.0_DP
 
   return
 
 10 continue
+  call sirius_start_timer(string("qe|set_rhoc"))
   allocate (aux( dfftp%nnr))    
   allocate (rhocg( ngl))    
   aux (:) = (0.0_DP, 0.0_DP)
@@ -150,6 +151,7 @@ subroutine set_rhoc
   !
   deallocate (rhocg)
   deallocate (aux)
+  call sirius_stop_timer(string("qe|set_rhoc"))
   !
   return
 

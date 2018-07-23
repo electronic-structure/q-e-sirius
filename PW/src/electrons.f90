@@ -1222,6 +1222,8 @@ SUBROUTINE electrons_scf ( printout, exxen )
              WRITE( stdout, 9082 ) etot, hwf_energy, dr2
           END IF
        END IF
+       WRITE(stdout,*)''
+       WRITE(stdout, 9990)eband
        !
        CALL plugin_print_energies()
        !
@@ -1251,6 +1253,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
 9061 FORMAT( '     electric field correction =',F17.8,' Ry' )
 9062 FORMAT( '     gate field correction     =',F17.8,' Ry' ) ! TB
 9065 FORMAT( '     Hubbard energy            =',F17.8,' Ry' )
+9990 FORMAT( '     Band energy sum           =',F17.8,' Ry' )
 9067 FORMAT( '     one-center paw contrib.   =',F17.8,' Ry' )
 9068 FORMAT( '      -> PAW hartree energy AE =',F17.8,' Ry' &
             /'      -> PAW hartree energy PS =',F17.8,' Ry' &

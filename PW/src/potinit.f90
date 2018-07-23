@@ -72,6 +72,7 @@ SUBROUTINE potinit()
   CHARACTER(LEN=256)    :: dirname, filename
   !
   CALL start_clock('potinit')
+  call sirius_start_timer(string("qe|potinit"))
   !
   dirname = TRIM(tmp_dir) // TRIM (prefix) // postfix
 #if defined __HDF5
@@ -131,9 +132,9 @@ SUBROUTINE potinit()
      WRITE( UNIT = stdout, &
             FMT = '(/5X,"Initial potential from superposition of free atoms")' )
      !
-     call sirius_start_timer(string("qe|init_run|potinit|atomic_rho"))
+     call sirius_start_timer(string("qe|potinit|atomic_rho"))
      CALL atomic_rho( rho%of_r, nspin )
-     call sirius_stop_timer(string("qe|init_run|potinit|atomic_rho"))
+     call sirius_stop_timer(string("qe|potinit|atomic_rho"))
 
      ! ... in the lda+U case set the initial value of ns
      IF (lda_plus_u) THEN
@@ -214,7 +215,7 @@ SUBROUTINE potinit()
   !
   ! ... bring starting rho to G-space
   !
-  call sirius_start_timer(string("qe|init_run|potinit|rho_of_g"))
+  call sirius_start_timer(string("qe|potinit|rho_of_g"))
   DO is = 1, nspin
      !
      psic(:) = rho%of_r(:,is)
@@ -224,7 +225,7 @@ SUBROUTINE potinit()
      rho%of_g(:,is) = psic(dfftp%nl(:))
      !
   END DO
-  call sirius_stop_timer(string("qe|init_run|potinit|rho_of_g"))
+  call sirius_stop_timer(string("qe|potinit|rho_of_g"))
   !
   if ( dft_is_meta()) then
      ! ... define a starting (TF) guess for rho%kin_r and rho%kin_g
@@ -249,17 +250,13 @@ SUBROUTINE potinit()
   !
   ! ... compute the potential and store it in v
   !
-  call sirius_start_timer(string("qe|init_run|potinit|v_of_rho"))
   CALL v_of_rho( rho, rho_core, rhog_core, &
                  ehart, etxc, vtxc, eth, etotefield, charge, v )
-  call sirius_stop_timer(string("qe|init_run|potinit|v_of_rho"))
   IF (okpaw) CALL PAW_potential(rho%bec, ddd_PAW, epaw)
   !
   ! ... define the total local potential (external+scf)
   !
-  call sirius_start_timer(string("qe|init_run|potinit|set_vrs"))
   CALL set_vrs( vrs, vltot, v%of_r, kedtau, v%kin_r, dfftp%nnr, nspin, doublegrid )
-  call sirius_stop_timer(string("qe|init_run|potinit|set_vrs"))
   !
   ! ... write on output the parameters used in the lda+U calculation
   !
@@ -280,6 +277,7 @@ SUBROUTINE potinit()
   IF ( report /= 0 .AND. &
        noncolin .AND. domag .AND. lscf ) CALL report_mag()
   !
+  call sirius_stop_timer(string("qe|potinit"))
   CALL stop_clock('potinit')
   !
   RETURN

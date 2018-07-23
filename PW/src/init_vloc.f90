@@ -32,6 +32,7 @@ subroutine init_vloc()
   ! counter on atomic types
   !
   call start_clock ('init_vloc')
+  call sirius_start_timer(string("qe|init_vloc"))
   vloc(:,:) = 0._dp
   do nt = 1, ntyp
      !
@@ -78,6 +79,7 @@ subroutine init_vloc()
   ! Here, this cutoff long-range part of vloc(g) is computed only once
   ! by the routine below and stored
   IF (do_cutoff_2D) call cutoff_lr_Vloc() 
+  call sirius_stop_timer(string("qe|init_vloc"))
   call stop_clock ('init_vloc')
   return
 end subroutine init_vloc

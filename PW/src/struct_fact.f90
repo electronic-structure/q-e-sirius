@@ -16,6 +16,7 @@ subroutine struc_fact (nat, tau, ntyp, ityp, ngm, g, bg, nr1, nr2, &
   !
   USE kinds
   USE constants, ONLY : tpi
+  use sirius
   implicit none
   !
   !   Here the dummy variables
@@ -59,6 +60,8 @@ subroutine struc_fact (nat, tau, ntyp, ityp, ngm, g, bg, nr1, nr2, &
   ! the argument of the exponent
   ! scalar product of bg and tau
 
+  call sirius_start_timer(string("qe|struc_fact"))
+
   strf(:,:) = (0.d0,0.d0)
   do nt = 1, ntyp
      do na = 1, nat
@@ -92,6 +95,7 @@ subroutine struc_fact (nat, tau, ntyp, ityp, ngm, g, bg, nr1, nr2, &
      enddo
   enddo
 
+  call sirius_stop_timer(string("qe|struc_fact"))
   return
 end subroutine struc_fact
 
