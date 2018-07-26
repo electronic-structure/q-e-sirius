@@ -177,8 +177,11 @@ call mpi_comm_rank(inter_pool_comm, rank, ierr)
 do iat = 1, nsp
 
   ! add new atom type
-  call sirius_add_atom_type(sctx, atom_type(iat)%label, zn=nint(zv(iat)+0.001d0), mass=amass(iat),&
-                            &spin_orbit=bool(upf(iat)%has_so))
+   call sirius_add_atom_type(sctx, atom_type(iat)%label, &
+        & zn=nint(zv(iat)+0.001d0), &
+        & mass=amass(iat), &
+        & spin_orbit=bool(upf(iat)%has_so))
+
 
   ! set radial grid
   call sirius_set_atom_type_radial_grid(sctx, atom_type(iat)%label, upf(iat)%mesh, upf(iat)%r(1))
@@ -191,8 +194,12 @@ do iat = 1, nsp
         l = - upf(iat)%lll(i)
       endif
     endif
-    call sirius_add_atom_type_radial_function(sctx, atom_type(iat)%label, string("beta"),&
-                                             &upf(iat)%beta(1, i), upf(iat)%kbeta(i), l=l)
+    call sirius_add_atom_type_radial_function(sctx, &
+         & atom_type(iat)%label, &
+         & string("beta"), &
+         & upf(iat)%beta(1, i), &
+         & upf(iat)%kbeta(i), &
+         & l=l)
   enddo
 
   ! set the atomic radial functions
@@ -203,14 +210,27 @@ do iat = 1, nsp
         l = -l
       endif
     endif
-    call sirius_add_atom_type_radial_function(sctx, atom_type(iat)%label, string("ps_atomic_wf"),&
-                                              &upf(iat)%chi(1, iwf), msh(iat), l=l)
+    call sirius_add_atom_type_radial_function(sctx, &
+         & atom_type(iat)%label, &
+         & string("ps_atomic_wf"), &
+         & upf(iat)%chi(1, iwf), &
+         & msh(iat), &
+         & l=l, &
+         & occ=upf(iat)%oc(iwf), &
+         & n=upf(iat)%nchi(iwf))
   enddo
+
   if (is_hubbard(iat)) then
-     call sirius_set_atom_type_hubbard(sctx, atom_type(iat)%label, Hubbard_l(iat), &
-          set_hubbard_n(upf(iat)%psd), hubbard_occ ( upf(iat)%psd ), &
-          Hubbard_U(iat), Hubbard_J(1,iat), &
-          Hubbard_alpha(iat), Hubbard_beta(iat), Hubbard_J0(iat))
+     call sirius_set_atom_type_hubbard(sctx, &
+          & atom_type(iat)%label, &
+          & Hubbard_l(iat), &
+          & set_hubbard_n(upf(iat)%psd), &
+          & hubbard_occ ( upf(iat)%psd ), &
+          & Hubbard_U(iat), &
+          & Hubbard_J(1,iat), &
+          & Hubbard_alpha(iat), &
+          & Hubbard_beta(iat), &
+          & Hubbard_J0(iat))
   endif
 
   allocate(dion(upf(iat)%nbeta, upf(iat)%nbeta))
@@ -733,7 +753,8 @@ integer iat, ih, jh, ijh, i
 do iat = 1, nsp
   atom_type(iat)%num_beta_projectors = sirius_get_num_beta_projectors(sctx, atom_type(iat)%label)
   if (nh(iat).ne.atom_type(iat)%num_beta_projectors) then
-    stop 'wrong number of beta projectors'
+     write(*,*) nh(iat), atom_type(iat)%num_beta_projectors
+     stop 'wrong number of beta projectors'
   endif
   if (upf(iat)%tvanp) then
     i = atom_type(iat)%num_beta_projectors
@@ -1331,12 +1352,12 @@ do ik = 1, nksmax
     if (lsda.and.ispn.eq.2) then
       ik_ = ik_ - nkstot / 2
     endif
-    call sirius_get_wave_functions(ks_handler, ik_, ispn, ngk(ik), gvl(1, 1), evc(1, 1), npwx, npol) 
+    call sirius_get_wave_functions(ks_handler, ik_, ispn, ngk(ik), gvl(1, 1), evc(1, 1), npwx, npol)
     if (nks > 1 .or. lelfield) then
       call save_buffer ( evc, nwordwfc, iunwfc, ik )
     endif
   else
-    call sirius_get_wave_functions(ks_handler, -1, -1, -1, -1, z1, -1, -1) 
+    call sirius_get_wave_functions(ks_handler, -1, -1, -1, -1, z1, -1, -1)
   endif
 enddo
 deallocate(gvl)
@@ -1580,6 +1601,237 @@ close(200)
 
 end subroutine
 
+function idx_m_qe(m) result(m1)
+  implicit none
+  integer :: m
+  integer :: m1
+
+  if (m .gt. 0) then
+     m1 = 2 * m - 1
+  else
+     m1 = -2 * m
+  endif
+end function idx_m_qe
+
+subroutine qe_to_sirius_real(ns, ns_sirius)
+  USE ions_base,            ONLY : nat, ityp
+  USE ldaU,                 ONLY : Hubbard_lmax, Hubbard_l, Hubbard_U, &
+       Hubbard_J, Hubbard_alpha, lda_plus_u_kind,&
+       Hubbard_J0, Hubbard_beta,  is_hubbard
+  USE lsda_mod,             ONLY : nspin
+
+  complex(8), intent(out) :: ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat)
+  REAL(8), intent(in) :: ns(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat)
+  integer :: m1, m2, mm2, mm1, is, nt, na
+  ns_sirius(:, :, :, :) = 0.0
+  do na = 1, nat
+     nt = ityp (na)
+     if (is_hubbard(nt)) then
+        do m1 = -Hubbard_l(nt), Hubbard_l(nt)
+           mm1 = idx_m_qe(m1)
+           do m2 = -Hubbard_l(nt), Hubbard_l(nt)
+              mm2 = idx_m_qe(m2)
+              DO is = 1, nspin
+                 ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, is, na) = ns(mm1 + 1, mm2 + 1, is, na)
+              enddo
+           enddo
+        enddo
+     endif
+  enddo
+end subroutine qe_to_sirius_real
+
+subroutine qe_to_sirius_complex(ns, ns_sirius)
+  USE ions_base,            ONLY : nat, ityp
+  USE ldaU,                 ONLY : Hubbard_lmax, Hubbard_l, Hubbard_U, &
+       Hubbard_J, Hubbard_alpha, lda_plus_u_kind,&
+       Hubbard_J0, Hubbard_beta,  is_hubbard
+  USE lsda_mod,             ONLY : nspin
+
+  complex(8), intent(out) :: ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat)
+  complex(8), intent(in) :: ns(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat)
+  integer :: m1, m2, mm2, mm1, is, nt, na
+
+  ns_sirius(:, :, :, :) = 0.0
+  do na = 1, nat
+     nt = ityp (na)
+     if (is_hubbard(nt)) then
+        do m1 = -Hubbard_l(nt), Hubbard_l(nt)
+           mm1 = idx_m_qe(m1)
+           do m2 = -Hubbard_l(nt), Hubbard_l(nt)
+              mm2 = idx_m_qe(m2)
+              ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, 1, na) = ns(mm1 + 1, mm2 + 1, 1, na)
+              ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, 2, na) = ns(mm1 + 1, mm2 + 1, 4, na)
+              ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, 3, na) = ns(mm1 + 1, mm2 + 1, 2, na)
+              ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, 4, na) = ns(mm1 + 1, mm2 + 1, 3, na)
+           enddo
+        enddo
+     endif
+  enddo
+end subroutine qe_to_sirius_complex
+
+subroutine sirius_to_qe_real(ns_sirius, ns)
+  USE ions_base,            ONLY : nat, ityp
+  USE ldaU,                 ONLY : Hubbard_lmax, Hubbard_l, Hubbard_U, &
+       Hubbard_J, Hubbard_alpha, lda_plus_u_kind,&
+       Hubbard_J0, Hubbard_beta,  is_hubbard
+  USE lsda_mod,             ONLY : nspin
+  integer :: m1, m2, mm2, mm1, is, nt, na
+
+  complex(8), intent(in) :: ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat)
+  real(8), intent(out) :: ns(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat)
+
+  ns(:, :, :, :) = 0.0
+  do na = 1, nat
+     nt = ityp (na)
+     if (is_hubbard(nt)) then
+        do m1 = -Hubbard_l(nt), Hubbard_l(nt)
+           mm1 = idx_m_qe(m1)
+           do m2 = -Hubbard_l(nt), Hubbard_l(nt)
+              mm2 = idx_m_qe(m2)
+              DO is = 1, nspin
+                 ns(mm1 + 1, mm2 + 1, is, na) = REAL(ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, is, na))
+              enddo
+           enddo
+        enddo
+     endif
+  enddo
+end subroutine sirius_to_qe_real
+
+subroutine sirius_to_qe_complex(ns_sirius, ns)
+  USE ions_base,            ONLY : nat, ityp
+  USE ldaU,                 ONLY : Hubbard_lmax, Hubbard_l, Hubbard_U, &
+       Hubbard_J, Hubbard_alpha, lda_plus_u_kind,&
+       Hubbard_J0, Hubbard_beta,  is_hubbard
+  USE lsda_mod,             ONLY : nspin
+
+  complex(8), intent(in) :: ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, 4, nat)
+  complex(8), intent(out) :: ns(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat)
+  integer :: m1, m2, mm2, mm1, is, nt, na
+
+  ns(:, :, :, :) = 0.0
+  do na = 1, nat
+     nt = ityp (na)
+     if (is_hubbard(nt)) then
+        do m1 = -Hubbard_l(nt), Hubbard_l(nt)
+           mm1 = idx_m_qe(m1)
+           do m2 = -Hubbard_l(nt), Hubbard_l(nt)
+              mm2 = idx_m_qe(m2)
+              ns(mm1 + 1, mm2 + 1, 1, na) = ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, 1, na)
+              ns(mm1 + 1, mm2 + 1, 4, na) = ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, 2, na)
+              ns(mm1 + 1, mm2 + 1, 2, na) = ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, 3, na)
+              ns(mm1 + 1, mm2 + 1, 3, na) = ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, 4, na)
+           enddo
+        enddo
+     endif
+  enddo
+end subroutine sirius_to_qe_complex
+
+subroutine qe_sirius_set_hubbard_occupancy(rho)
+  USE scf,              ONLY : scf_type
+  USE ions_base,            ONLY : nat, ityp
+  USE ldaU,                 ONLY : Hubbard_lmax, Hubbard_l, Hubbard_U, &
+       Hubbard_J, Hubbard_alpha, lda_plus_u_kind,&
+       Hubbard_J0, Hubbard_beta,  is_hubbard
+  USE noncollin_module, ONLY : noncolin, nspin_lsda
+  USE lsda_mod,             ONLY : nspin
+
+  IMPLICIT NONE
+
+  TYPE(scf_type), INTENT(IN) :: rho  ! the valence charge
+  complex(8), allocatable :: ns_sirius(:, :, :, :)
 
 
-end module
+  if (noncolin) then
+     allocate(ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, 4, nat))
+     call qe_to_sirius_complex(rho%ns_nc(1, 1, 1, 1), ns_sirius(1, 1, 1, 1))
+  else
+     allocate(ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat))
+     call qe_to_sirius_real(rho%ns(1, 1, 1, 1), ns_sirius(1, 1, 1, 1))
+  endif
+  call sirius_set_hubbard_occupancies(gs_handler, ns_sirius(1, 1, 1, 1), 2 * hubbard_lmax + 1)
+  deallocate(ns_sirius)
+end subroutine qe_sirius_set_hubbard_occupancy
+
+subroutine qe_sirius_get_hubbard_occupancy(rho)
+  USE scf,              ONLY : scf_type
+  USE ions_base,            ONLY : nat, ityp
+  USE ldaU,                 ONLY : Hubbard_lmax, Hubbard_l, Hubbard_U, &
+       Hubbard_J, Hubbard_alpha, lda_plus_u_kind,&
+       Hubbard_J0, Hubbard_beta,  is_hubbard
+  USE noncollin_module, ONLY : noncolin, nspin_lsda
+  USE lsda_mod,             ONLY : nspin
+  IMPLICIT NONE
+
+  TYPE(scf_type), INTENT(out) :: rho  ! the valence charge
+  complex(8), allocatable :: ns_sirius(:, :, :, :)
+
+
+  if (noncolin) then
+     allocate(ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, 4, nat))
+     call sirius_get_hubbard_occupancies(gs_handler, ns_sirius(1, 1, 1, 1), 2 * hubbard_lmax + 1)
+     call sirius_to_qe_complex(ns_sirius(1, 1, 1, 1), rho%ns_nc(1, 1, 1, 1))
+  else
+     allocate(ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, 2, nat))
+     call sirius_get_hubbard_occupancies(gs_handler, ns_sirius(1, 1, 1, 1), 2 * hubbard_lmax + 1)
+     call sirius_to_qe_real(ns_sirius(1, 1, 1, 1), rho%ns(1, 1, 1, 1))
+  endif
+
+  deallocate(ns_sirius)
+end subroutine qe_sirius_get_hubbard_occupancy
+
+subroutine qe_sirius_set_hubbard_potential(v)
+  USE scf,              ONLY : scf_type
+  USE ions_base,            ONLY : nat, ityp
+  USE ldaU,                 ONLY : Hubbard_lmax, Hubbard_l, Hubbard_U, &
+       Hubbard_J, Hubbard_alpha, lda_plus_u_kind,&
+       Hubbard_J0, Hubbard_beta,  is_hubbard
+  USE lsda_mod,             ONLY : nspin
+  USE noncollin_module, ONLY : noncolin, nspin_lsda
+  IMPLICIT NONE
+  TYPE(scf_type), INTENT(IN) :: v  ! the valence charge
+  complex(8), allocatable :: ns_sirius(:, :, :, :)
+
+  if (noncolin) then
+     allocate(ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, 4, nat))
+     call qe_to_sirius_complex(v%ns_nc(1, 1, 1, 1), ns_sirius(1, 1, 1, 1))
+  else
+     allocate(ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat))
+     call qe_to_sirius_real(v%ns(1, 1, 1, 1), ns_sirius(1, 1, 1, 1))
+  endif
+  ns_sirius(:,:,:,:) = 0.5 * ns_sirius(:,:,:,:)
+  call sirius_set_hubbard_potential(gs_handler, ns_sirius(1, 1, 1, 1), 2 * hubbard_lmax + 1)
+
+  deallocate(ns_sirius)
+end subroutine qe_sirius_set_hubbard_potential
+
+subroutine qe_sirius_get_hubbard_potential(v)
+  USE scf,              ONLY : scf_type
+  USE ions_base,            ONLY : nat, ityp
+  USE ldaU,                 ONLY : Hubbard_lmax, Hubbard_l, Hubbard_U, &
+       Hubbard_J, Hubbard_alpha, lda_plus_u_kind,&
+       Hubbard_J0, Hubbard_beta,  is_hubbard
+  USE lsda_mod,             ONLY : nspin
+  USE noncollin_module, ONLY : noncolin, nspin_lsda
+  IMPLICIT NONE
+
+  complex(8), allocatable :: ns_sirius(:, :, :, :)
+  TYPE(scf_type), INTENT(out) :: v  ! the valence charge
+
+  call sirius_get_hubbard_potential(gs_handler, ns_sirius(1, 1, 1, 1), 2 * hubbard_lmax + 1)
+
+  if (noncolin) then
+     allocate(ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, 4, nat))
+     ns_sirius(:,:,:,:) = 2.0 * ns_sirius(:,:,:,:)
+     call sirius_to_qe_complex(ns_sirius(1, 1, 1, 1), v%ns_nc(1, 1, 1, 1))
+
+  else
+     allocate(ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat))
+     ns_sirius(:,:,:,:) = 2.0 * ns_sirius(:,:,:,:)
+     call sirius_to_qe_real(ns_sirius(1, 1, 1, 1), v%ns(1, 1, 1, 1))
+  endif
+
+  deallocate(ns_sirius)
+end subroutine qe_sirius_get_hubbard_potential
+
+
+end module mod_sirius
