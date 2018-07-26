@@ -210,6 +210,11 @@ do iat = 1, nsp
         l = -l
       endif
     endif
+    if (associated(upf(iat)%nchi)) then
+      i = upf(iat)%nchi(iwf)
+    else
+      i = -1
+    endif
     call sirius_add_atom_type_radial_function(sctx, &
          & atom_type(iat)%label, &
          & string("ps_atomic_wf"), &
@@ -217,7 +222,7 @@ do iat = 1, nsp
          & msh(iat), &
          & l=l, &
          & occ=upf(iat)%oc(iwf), &
-         & n=upf(iat)%nchi(iwf))
+         & n=i)
   enddo
 
   if (is_hubbard(iat)) then
