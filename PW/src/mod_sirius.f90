@@ -45,7 +45,7 @@ logical :: recompute_gvec                     = .false.
 ! inverse of the reciprocal lattice vectors matrix
 real(8) bg_inv(3,3)
 ! id of the k-point set for ground state calculations
-integer kset_id
+!integer kset_id
 ! total number of k-points
 integer num_kpoints
 real(8), allocatable :: kpoints(:,:)
