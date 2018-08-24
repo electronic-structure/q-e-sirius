@@ -50,6 +50,8 @@ real(8) bg_inv(3,3)
 integer num_kpoints
 real(8), allocatable :: kpoints(:,:)
 real(8), allocatable :: wkpoints(:)
+! phase factors
+complex(8), allocatable ::eigts(:,:,:)
 
 type atom_type_t
   ! atom label
@@ -1588,7 +1590,9 @@ end subroutine put_xc_functional_to_sirius
 subroutine write_json()
 use ener
 use force_mod
+use ions_base
 implicit none
+integer i
 
 open(200, file="output.json", action="write", form="formatted")
 write(200,'("{")')
@@ -1600,8 +1604,20 @@ write(200,'("    ""total"": [")')
 write(200,'("        [", G18.10, ",", G18.10, ",", G18.10, "],")') sigma(1, 1), sigma(1, 2), sigma(1, 3)
 write(200,'("        [", G18.10, ",", G18.10, ",", G18.10, "],")') sigma(2, 1), sigma(2, 2), sigma(2, 3)
 write(200,'("        [", G18.10, ",", G18.10, ",", G18.10, "]")')  sigma(3, 1), sigma(3, 2), sigma(3, 3)
-write(200, '("    ]")')
-write(200, '("}")')
+write(200,'("    ]")')
+write(200,'("  },")')
+write(200,'("  ""force"": {")')
+write(200,'("    ""total"": [")')
+do i = 1, nat
+  if (i.eq.nat) then
+    write(200,'("        [", G18.10, ",", G18.10, ",", G18.10, "]")') force(1, i), force(2, i), force(3, i)
+  else
+    write(200,'("        [", G18.10, ",", G18.10, ",", G18.10, "],")') force(1, i), force(2, i), force(3, i)
+  endif
+enddo
+write(200,'("    ]")')
+write(200,'("  }")')
+write(200,'("}")')
 close(200)
 
 end subroutine

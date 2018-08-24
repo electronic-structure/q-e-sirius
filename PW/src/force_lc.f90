@@ -62,8 +62,8 @@ subroutine force_lc (nat, tau, ityp, alat, omega, ngm, ngl, &
   ! F_loc = Omega \Sum_G n*(G) d V_loc(G)/d R_i
   !
   if (use_sirius.and.use_sirius_forces) then
-    call sirius_get_forces(gs_handler, string("vloc"), forcelc(1,1))
-    forcelc = forcelc * 2 ! convert to Ha
+    call sirius_get_forces(gs_handler, string("vloc"), forcelc(1, 1))
+    forcelc = forcelc * 2 ! convert to Ry
 
     if ( do_comp_esm .and. ( esm_bc .ne. 'pbc' ) ) then
       allocate (aux(dfftp%nnr))

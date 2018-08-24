@@ -41,7 +41,7 @@ subroutine stres_loc (sigmaloc)
   ! counter on atomic type
   ! counter on angular momentum
   ! counter on spin components
-  if (use_sirius.and.use_sirius_vloc.and.use_sirius_density) then
+  if (use_sirius.and.use_sirius_vloc.and.use_sirius_density.and.use_sirius_stress) then
     call sirius_get_stress_tensor(gs_handler, string("vloc"), sigmaloc(1, 1))
     sigmaloc = -sigmaloc * 2 ! convert to Ry
     !call symmatrix ( sigmaloc )
