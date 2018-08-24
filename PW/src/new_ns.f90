@@ -334,10 +334,11 @@ SUBROUTINE new_ns_nc(ns)
 
   ALLOCATE( nr(ldim,ldim,npol,npol,nat), nr1(ldim,ldim,npol,npol,nat) )
   ALLOCATE( proj(nwfcU,nbnd) )
+
   if (use_sirius) then
      ALLOCATE(nss(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, 4, nat))
      call sirius_calculate_hubbard_occupancies(gs_handler)
-     call sirius_get_hubbard_occupancies(gs_handler, nss(1,1,1,1), ldim)
+     call sirius_get_hubbard_occupancies(gs_handler, nss(1, 1, 1, 1), ldim)
      call sirius_to_qe_complex(nss(:, :, :, :), ns(:, :, :, :))
      do na = 1, nat
         nt = ityp (na)
@@ -345,11 +346,10 @@ SUBROUTINE new_ns_nc(ns)
            ldim = 2 * Hubbard_l(nt) + 1
            do m1 = 1, 2 * Hubbard_l(nt) + 1
               do m2 = 1, 2 * Hubbard_l(nt) + 1
-                 do is1 = 1, npol
-                    do is2 = 1, npol
-                       nr(m1,m2,is1,is2,na) = ns(m1,m2, 2 * is1 + is2 - 2, na)
-                    ENDDO
-                 ENDDO
+                 nr(m1,m2,1,1,na) = ns(m1,m2, 1, na)
+                 nr(m1,m2,1,2,na) = ns(m1,m2, 2, na)
+                 nr(m1,m2,2,1,na) = ns(m1,m2, 3, na)
+                 nr(m1,m2,2,2,na) = ns(m1,m2, 4, na)
               ENDDO
            ENDDO
         ENDIF
@@ -357,17 +357,13 @@ SUBROUTINE new_ns_nc(ns)
      DEALLOCATE(nss)
      ns  (:,:,:,:)   = 0.d0
   else
-
-
      nr  (:,:,:,:,:) = 0.d0
-     nr1 (:,:,:,:,:) = 0.d0
      ns  (:,:,:,:)   = 0.d0
 
      !--
      !    loop on k points
      !
      DO ik = 1, nks
-
         npw = ngk (ik)
         IF (nks > 1) THEN
            CALL get_buffer  (evc, nwordwfc, iunwfc, ik)
@@ -410,12 +406,13 @@ SUBROUTINE new_ns_nc(ns)
      CALL mp_sum( nr, inter_pool_comm )
   endif
 
+  nr1 (:,:,:,:,:) = 0.d0
+
 !--  symmetrize: nr  -->  nr1
 !
   do na = 1, nat
     nt = ityp (na)
     if ( is_hubbard(nt) ) then
-
       do m1 = 1, 2 * Hubbard_l(nt) + 1
         do m2 = 1, 2 * Hubbard_l(nt) + 1
           do is1 = 1, npol
