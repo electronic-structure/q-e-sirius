@@ -25,6 +25,9 @@ subroutine gen_us_dj (ik, dvkb)
   USE m_gth,      ONLY : mk_dffnl_gth
   USE splinelib
   USE uspp_param, ONLY : upf, lmaxkb, nbetam, nh
+  USE constants,    ONLY : fpi
+  USE cell_base,    ONLY : omega
+  USE mod_sirius
   !
   implicit none
   !
@@ -104,10 +107,16 @@ subroutine gen_us_dj (ik, dvkb)
              i1 = i0 + 1
              i2 = i0 + 2
              i3 = i0 + 3
-             djl(ig,nb,nt) = ( tab (i0, nb, nt) * (-vx*wx-ux*wx-ux*vx)/6.d0 + &
-                               tab (i1, nb, nt) * (+vx*wx-px*wx-px*vx)/2.d0 - &
-                               tab (i2, nb, nt) * (+ux*wx-px*wx-px*ux)/2.d0 + &
-                               tab (i3, nb, nt) * (+ux*vx-px*vx-px*ux)/6.d0 )/dq
+             
+             if (use_sirius.and.use_sirius_radial_integrals_beta.and.sirius_context_initialized(sctx)) then
+               djl(ig,nb,nt) = sirius_get_radial_integral(sctx, atom_type(nt)%label, string("beta"), qt, nb)
+               djl(ig,nb,nt) = djl(ig,nb,nt)  * fpi / sqrt(omega)
+             else
+               djl(ig,nb,nt) = ( tab (i0, nb, nt) * (-vx*wx-ux*wx-ux*vx)/6.d0 + &
+                                 tab (i1, nb, nt) * (+vx*wx-px*wx-px*vx)/2.d0 - &
+                                 tab (i2, nb, nt) * (+ux*wx-px*wx-px*ux)/2.d0 + &
+                                 tab (i3, nb, nt) * (+ux*vx-px*vx-px*ux)/6.d0 )/dq
+             endif
            endif
         enddo
      enddo

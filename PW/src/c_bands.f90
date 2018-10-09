@@ -21,7 +21,6 @@ SUBROUTINE c_bands( iter )
   USE buffers,              ONLY : get_buffer, save_buffer, close_buffer
   USE klist,                ONLY : nkstot, nks, xk, ngk, igk_k
   USE uspp,                 ONLY : vkb, nkb
-  USE gvect,                ONLY : g
   USE wvfct,                ONLY : et, nbnd, npwx, current_k
   USE control_flags,        ONLY : ethr, isolve, restart
   USE ldaU,                 ONLY : lda_plus_u, U_projection, wfcU
@@ -31,6 +30,8 @@ SUBROUTINE c_bands( iter )
   USE mp_pools,             ONLY : npool, kunit, inter_pool_comm
   USE mp,                   ONLY : mp_sum
   USE check_stop,           ONLY : check_stop_now
+  USE noncollin_module,     ONLY : npol
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -45,9 +46,23 @@ SUBROUTINE c_bands( iter )
   ! ik_: k-point already done in a previous run
   LOGICAL :: exst
 !------------------------------------------------------------------------
-
   !
   CALL start_clock( 'c_bands' ); !write (*,*) 'start c_bands' ; FLUSH(6)
+  !
+  if (use_sirius.and.use_sirius_ks_solver) then
+    if (.not.use_sirius_density) then
+      call put_q_operator_matrix_to_sirius
+    endif
+    ! solve H\psi = E\psi
+    call sirius_find_eigen_states(gs_handler, ks_handler, bool(.true.), iter_solver_tol=ethr/2)
+    if (.not.use_sirius_density) then
+      call get_wave_functions_from_sirius
+    endif
+    ! get band energies
+    call get_band_energies_from_sirius
+    CALL stop_clock( 'c_bands' )
+    return
+  endif
   !
   ik_ = 0
   avg_iter = 0.D0
@@ -592,7 +607,6 @@ SUBROUTINE c_bands_nscf( )
   USE basis,                ONLY : starting_wfc
   USE klist,                ONLY : nkstot, nks, xk, ngk, igk_k
   USE uspp,                 ONLY : vkb, nkb
-  USE gvect,                ONLY : g
   USE wvfct,                ONLY : et, nbnd, npwx, current_k
   USE control_flags,        ONLY : ethr, restart, isolve, io_level, iverbosity
   USE ldaU,                 ONLY : lda_plus_u, U_projection, wfcU
@@ -601,6 +615,7 @@ SUBROUTINE c_bands_nscf( )
   USE mp_pools,             ONLY : npool, kunit, inter_pool_comm
   USE mp,                   ONLY : mp_sum
   USE check_stop,           ONLY : check_stop_now
+  use mod_sirius
   !
   IMPLICIT NONE
   !
@@ -614,6 +629,21 @@ SUBROUTINE c_bands_nscf( )
   REAL(DP), EXTERNAL :: get_clock
   !
   CALL start_clock( 'c_bands' )
+  if (use_sirius.and.use_sirius_ks_solver) then
+    if (.not.use_sirius_density) then
+      call put_q_operator_matrix_to_sirius
+    endif
+    ! initialize subspace before calling "sirius_find_eigen_states" first time
+    call sirius_initialize_subspace(gs_handler, ks_handler)
+    ! solve H\spi = E\psi
+    call sirius_find_eigen_states(gs_handler, ks_handler, bool(.true.), iter_solver_tol=ethr/2)
+    ! get all wave-functions
+    call get_wave_functions_from_sirius
+    ! get band energies
+    call get_band_energies_from_sirius
+    CALL stop_clock( 'c_bands' )
+    return
+  endif
   !
   ik_ = 0
   avg_iter = 0.D0
@@ -716,3 +746,88 @@ SUBROUTINE c_bands_nscf( )
 9000 FORMAT( '     total cpu time spent up to now is ',F10.1,' secs' )
   !
 END SUBROUTINE c_bands_nscf
+
+
+subroutine check_residuals(ik)
+  use wvfct,                only : nbnd, npwx, wg, et, btype
+  use lsda_mod,             only : lsda, nspin, current_spin, isk
+  use wavefunctions_module, only : evc
+  use io_files,             only : iunwfc, nwordwfc
+  use klist,                only : nks, nkstot, wk, xk, ngk, igk_k
+  use noncollin_module,     only : noncolin, npol
+  use buffers,              only : get_buffer
+  use uspp,                 only : okvan, nkb, vkb
+  use bp,                   only : lelfield, bec_evcel
+  use becmod,               only : bec_type, becp, calbec,&
+                                   allocate_bec_type, deallocate_bec_type
+  use mp_bands,             only : nproc_bgrp, intra_bgrp_comm, inter_bgrp_comm
+implicit none
+integer, intent(in) :: ik
+integer npw, i, j, ig
+complex(8), allocatable :: hpsi(:,:), spsi(:,:), ovlp(:,:)
+real(8) l2norm, l2norm_psi, max_err
+
+allocate(hpsi(npwx*npol,nbnd))
+allocate(spsi(npwx*npol,nbnd))
+allocate(ovlp(nbnd, nbnd))
+
+!  call allocate_bec_type ( nkb, nbnd, becp, intra_bgrp_comm )
+!do ik = 1, nks
+!
+!   if ( lsda ) current_spin = isk(ik)
+   npw = ngk (ik)
+!   !
+!   if ( nks > 1 ) &
+!      call get_buffer ( evc, nwordwfc, iunwfc, ik )
+!
+  !call g2_kin( ik )
+!  !
+!  ! ... more stuff needed by the hamiltonian: nonlocal projectors
+!  !
+!  if ( nkb > 0 ) call init_us_2( ngk(ik), igk_k(1,ik), xk(1,ik), vkb )
+!  call calbec(npw, vkb, evc, becp)
+   
+   call h_psi(npwx, npw, nbnd, evc, hpsi)
+   if (okvan) then
+     call s_psi(npwx, npw, nbnd, evc, spsi)
+   else
+     spsi = evc
+   endif
+
+   do j = 1, nbnd
+     l2norm = 0
+     l2norm_psi = 0
+     do ig = 1, npw
+       l2norm = l2norm + abs(hpsi(ig, j) - et(j, ik) * spsi(ig, j))**2
+       l2norm_psi = l2norm_psi + real(conjg(evc(ig, j)) * spsi(ig, j))
+     enddo
+     write(*,*)'band: ', j, ', residual l2norm: ',sqrt(l2norm), ', psi norm: ',sqrt(l2norm_psi)
+
+   enddo
+
+   ovlp = 0
+   max_err = 0
+   do i = 1, nbnd
+     do j = 1, nbnd
+       do ig = 1, npw
+         ovlp(i, j) = ovlp(i, j) + conjg(evc(ig, i)) * spsi(ig, j)
+       enddo
+       if (i.eq.j) ovlp(i, j) = ovlp(i, j) - 1.0
+       if (abs(ovlp(i, j)).gt.max_err) then
+         max_err = abs(ovlp(i, j))
+       endif
+       !if (abs(ovlp(i, j)).gt.1e-13) then
+       !  write(*,*)'bands i, j:',i,j,', overlap: ', ovlp(i, j)
+       !endif
+     enddo
+   enddo
+   write(*,*)'maximum overlap error: ',max_err
+
+
+!enddo
+!call deallocate_bec_type ( becp )
+
+deallocate(hpsi, spsi, ovlp)
+
+end subroutine check_residuals
+

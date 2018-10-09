@@ -9,7 +9,7 @@
 SUBROUTINE init_run()
   !----------------------------------------------------------------------------
   !
-  USE klist,              ONLY : nkstot
+  USE klist,              ONLY : nkstot, nks
   USE symme,              ONLY : sym_rho_init
   USE wvfct,              ONLY : nbnd, et, wg, btype
   USE control_flags,      ONLY : lmd, gamma_only, smallmem, ts_vdw
@@ -33,10 +33,27 @@ SUBROUTINE init_run()
   USE esm,                ONLY : do_comp_esm, esm_init
   USE tsvdw_module,       ONLY : tsvdw_initialize
   USE Coul_cut_2D,        ONLY : do_cutoff_2D, cutoff_fact 
+  USE wavefunctions_module, ONLY : evc
+  use mod_sirius
+!  USE wavefunctions_module, ONLY : evc
+!#if defined(__HDF5) && defined(__OLDXML)
+!  USE hdf5_qe, ONLY : initialize_hdf5
+!#endif
+  USE control_flags,        ONLY : io_level
+  USE io_files,             ONLY : iunwfc, nwordwfc
+  USE buffers,              ONLY : open_buffer
   !
   IMPLICIT NONE
+  logical exst_file,exst_mem
   !
   CALL start_clock( 'init_run' )
+  call sirius_start_timer(string("qe|init_run"))
+  if (use_sirius) then
+    call clear_sirius
+    call sirius_start_timer(string("qe|init_run|setup_sirius"))
+    call setup_sirius
+    call sirius_stop_timer(string("qe|init_run|setup_sirius"))
+  endif
   !
   ! ... calculate limits of some indices, used in subsequent allocations
   !
@@ -116,18 +133,27 @@ SUBROUTINE init_run()
   !
   CALL newd()
   !
-  CALL wfcinit()
+  if (.not.(use_sirius.and.use_sirius_ks_solver)) then
+    CALL wfcinit()
+  else
+    call sirius_initialize_subspace(gs_handler, ks_handler)
+    CALL open_buffer( iunwfc, 'wfc', nwordwfc, io_level, exst_mem, exst_file )
+  endif
   !
   IF(use_wannier) CALL wannier_init()
   !
 #if defined(__MPI)
   ! Cleanup PAW arrays that are only used for init
-  IF (okpaw) CALL paw_post_init() ! only parallel!
+  !IF (okpaw) CALL paw_post_init() ! only parallel!
 #endif
   !
   IF ( lmd ) CALL allocate_dyn_vars()
   !
+  if (use_sirius.and.use_sirius_q_operator) then
+    call get_q_operator_from_sirius
+  endif
   CALL stop_clock( 'init_run' )
+  call sirius_stop_timer(string("qe|init_run"))
   !
   RETURN
   !

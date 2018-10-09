@@ -24,6 +24,7 @@ SUBROUTINE stres_hub ( sigmah )
    USE symme,     ONLY : symmatrix
    USE io_files,  ONLY : prefix
    USE io_global, ONLY : stdout, ionode
+   USE mod_sirius
    !
    IMPLICIT NONE
    !
@@ -42,6 +43,15 @@ SUBROUTINE stres_hub ( sigmah )
 
    sigmah(:,:) = 0.d0
 
+   if (use_sirius) then
+      call sirius_get_stress_tensor(gs_handler, string("hubbard"), sigmah(1, 1))
+      sigmah = sigmah * 2.d0 ! convert to Ry
+      call symmatrix ( sigmah )
+      CALL stop_clock( 'stres_hub' )
+      !call symmatrix ( sigmaloc )
+      return
+   endif
+
    ldim = 2 * Hubbard_lmax + 1
    ALLOCATE (dns(ldim,ldim,nspin,nat))
    !
@@ -59,16 +69,16 @@ SUBROUTINE stres_hub ( sigmah )
    END DO
 #endif
 !
-!  NB: both ipol and jpol must run from 1 to 3 because this stress 
-!      contribution is not in general symmetric when computed only 
-!      from k-points in the irreducible wedge of the BZ. 
-!      It is (must be) symmetric after symmetrization but this requires 
+!  NB: both ipol and jpol must run from 1 to 3 because this stress
+!      contribution is not in general symmetric when computed only
+!      from k-points in the irreducible wedge of the BZ.
+!      It is (must be) symmetric after symmetrization but this requires
 !      the full stress tensor not only its upper triangular part.
 !
    DO ipol = 1,3
       DO jpol = 1,3
          CALL dndepsilon(ipol,jpol,ldim,dns)
-         DO na = 1,nat                 
+         DO na = 1,nat
             nt = ityp(na)
             IF ( is_hubbard(nt) ) THEN
                DO is = 1,nspin
@@ -105,7 +115,7 @@ SUBROUTINE stres_hub ( sigmah )
          sigmah(jpol,ipol) = sigmah(ipol,jpol)
       END DO
    END DO
-   
+
    DEALLOCATE (dns)
    !
    CALL stop_clock( 'stres_hub' )
@@ -123,7 +133,7 @@ SUBROUTINE dndepsilon ( ipol, jpol, ldim, dns )
    USE kinds,                ONLY : DP
    USE wavefunctions_module, ONLY : evc
    USE ions_base,            ONLY : nat, ityp
-   USE control_flags,        ONLY : gamma_only   
+   USE control_flags,        ONLY : gamma_only
    USE klist,                ONLY : nks, xk, ngk, igk_k
    USE ldaU,                 ONLY : wfcU, nwfcU, offsetU, Hubbard_l, &
                                     is_hubbard, copy_U_wfc
@@ -153,7 +163,7 @@ SUBROUTINE dndepsilon ( ipol, jpol, ldim, dns )
               ibnd,  & !    "    "  bands
               is,    & !    "    "  spins
               npw, na, nt, m1, m2, nb_s, nb_e, mykey
-   REAL(DP), ALLOCATABLE :: dns_(:,:,:,:) ! partial contribution 
+   REAL(DP), ALLOCATABLE :: dns_(:,:,:,:) ! partial contribution
    COMPLEX (DP), ALLOCATABLE :: spsi(:,:), wfcatom(:,:)
    type (bec_type) :: proj, dproj
    !
@@ -175,7 +185,7 @@ SUBROUTINE dndepsilon ( ipol, jpol, ldim, dns )
    ! D_Sl for l=1 and l=2 are already initialized, for l=0 D_S0 is 1
    !
    ! Offset of atomic wavefunctions initialized in setup and stored in offsetU
-  
+
    dns(:,:,:,:) = 0.d0
    !
    !    we start a loop on k points
@@ -190,7 +200,7 @@ SUBROUTINE dndepsilon ( ipol, jpol, ldim, dns )
       CALL init_us_2 (npw,igk_k(1,ik),xk(1,ik),vkb)
       CALL calbec( npw, vkb, evc, becp )
       CALL s_psi  (npwx, npw, nbnd, evc, spsi )
-      
+
       ! re-calculate atomic wfc - wfcatom is used here as work space
 
       CALL atomic_wfc (ik, wfcatom)
@@ -219,7 +229,7 @@ SUBROUTINE dndepsilon ( ipol, jpol, ldim, dns )
       IF ( mykey /= 0 ) GO TO 10
       DO na = 1,nat
          nt = ityp(na)
-         IF ( is_hubbard(nt) ) THEN        
+         IF ( is_hubbard(nt) ) THEN
             DO m1 = 1, 2 * Hubbard_l(nt) + 1
                DO m2 = m1, 2 * Hubbard_l(nt) + 1
                   IF ( gamma_only ) THEN
@@ -252,7 +262,7 @@ SUBROUTINE dndepsilon ( ipol, jpol, ldim, dns )
    DEALLOCATE ( dns_ )
    CALL mp_sum( dns, inter_pool_comm )
    !
-   ! In nspin.eq.1 k-point weight wg is normalized to 2 el/band 
+   ! In nspin.eq.1 k-point weight wg is normalized to 2 el/band
    ! in the whole BZ but we are interested in dns of one spin component
    !
    IF (nspin.EQ.1) dns = 0.5d0 * dns
@@ -434,7 +444,7 @@ SUBROUTINE dprojdepsilon_k ( spsi, ik, ipol, jpol, nb_s, nb_e, mykey, dproj )
             END DO
             !
             ! dproj(iwf,ibnd) = \sum_ih wfatdbeta(iwf,ih)*betapsi(ih,ibnd) +
-            !                           wfatbeta(iwf,ih)*dbetapsi(ih,ibnd) 
+            !                           wfatbeta(iwf,ih)*dbetapsi(ih,ibnd)
             !
             IF ( mykey == 0 .AND. nh(nt) > 0 ) THEN
                CALL ZGEMM('N','N',nwfcU, nb_e-nb_s+1, nh(nt), (1.0_dp,0.0_dp), &
@@ -614,7 +624,7 @@ SUBROUTINE dprojdepsilon_gamma ( spsi, ik, ipol, jpol, nb_s, nb_e, mykey, dproj 
             END DO
             !
             ! dproj(iwf,ibnd) = \sum_ih wfatdbeta(iwf,ih)*betapsi(ih,ibnd) +
-            !                           wfatbeta(iwf,ih)*dbetapsi(ih,ibnd) 
+            !                           wfatbeta(iwf,ih)*dbetapsi(ih,ibnd)
             !
             IF ( mykey == 0 .AND. nh(nt) > 0 ) THEN
                CALL DGEMM('N','N',nwfcU, nb_e-nb_s+1, nh(nt), 1.0_dp,  &

@@ -18,7 +18,7 @@ subroutine force_cc (forcecc)
   USE cell_base,            ONLY : alat, omega, tpiba, tpiba2
   USE fft_base,             ONLY : dfftp
   USE fft_interfaces,       ONLY : fwfft
-  USE gvect,                ONLY : ngm, gstart, g, gg, ngl, gl, igtongl
+  USE gvect,                ONLY : ngm, gstart, g, gg, ngl, gl, igtongl, mill
   USE ener,                 ONLY : etxc, vtxc
   USE lsda_mod,             ONLY : nspin
   USE scf,                  ONLY : rho, rho_core, rhog_core
@@ -27,6 +27,7 @@ subroutine force_cc (forcecc)
   USE wavefunctions_module, ONLY : psic
   USE mp_bands,             ONLY : intra_bgrp_comm
   USE mp,                   ONLY : mp_sum
+  use mod_sirius
   !
   implicit none
   !
@@ -43,11 +44,16 @@ subroutine force_cc (forcecc)
   ! counter on atoms
 
 
-  real(DP), allocatable :: vxc (:,:), rhocg (:)
+  real(DP), allocatable :: vxc (:,:), rhocg (:), rho_core_g(:)
   ! exchange-correlation potential
   ! radial fourier transform of rho core
   real(DP)  ::  arg, fact
-
+  
+  if (use_sirius.and.use_sirius_forces) then
+    call sirius_get_forces(gs_handler, string("core"), forcecc(1, 1))
+    forcecc = forcecc * 2 ! convert to Ry
+    return
+  endif
   !
   forcecc(:,:) = 0.d0
   if ( ANY ( upf(1:ntyp)%nlcc ) ) go to 15
@@ -82,6 +88,7 @@ subroutine force_cc (forcecc)
   ! psic contains now Vxc(G)
   !
   allocate ( rhocg(ngl) )
+  allocate(rho_core_g(ngm))
   !
   ! core correction term: sum on g of omega*ig*exp(-i*r_i*g)*n_core(g)*vxc
   ! g = 0 term gives no contribution
@@ -89,8 +96,14 @@ subroutine force_cc (forcecc)
   do nt = 1, ntyp
      if ( upf(nt)%nlcc ) then
 
-        call drhoc (ngl, gl, omega, tpiba2, msh(nt), rgrid(nt)%r,&
-             rgrid(nt)%rab, upf(nt)%rho_atc, rhocg)
+        if (use_sirius.and.use_sirius_rho_core) then
+          call sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, string("rhoc"), rho_core_g(1),&
+                                        &ngm, mill(1, 1), intra_bgrp_comm)
+        else
+          call drhoc (ngl, gl, omega, tpiba2, msh(nt), rgrid(nt)%r,&
+                      rgrid(nt)%rab, upf(nt)%rho_atc, rhocg)
+          rho_core_g(:) = rhocg(igtongl(:))
+        endif
         do na = 1, nat
            if (nt.eq.ityp (na) ) then
               do ig = gstart, ngm
@@ -98,7 +111,7 @@ subroutine force_cc (forcecc)
                       + g (3, ig) * tau (3, na) ) * tpi
                  do ipol = 1, 3
                     forcecc (ipol, na) = forcecc (ipol, na) + tpiba * omega * &
-                         rhocg (igtongl (ig) ) * CONJG(psic (dfftp%nl (ig) ) ) * &
+                         rho_core_g(ig) * CONJG(psic (dfftp%nl (ig) ) ) * &
                          CMPLX( sin (arg), cos (arg) ,kind=DP) * g (ipol, ig) * fact
                  enddo
               enddo
@@ -110,6 +123,7 @@ subroutine force_cc (forcecc)
   call mp_sum(  forcecc, intra_bgrp_comm )
   !
   deallocate (rhocg)
+  deallocate(rho_core_g)
   !
   return
 end subroutine force_cc

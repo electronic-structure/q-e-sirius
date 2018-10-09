@@ -26,11 +26,39 @@ subroutine stres_knl (sigmanlc, sigmakin)
   USE mp_pools,             ONLY: inter_pool_comm
   USE mp_bands,             ONLY: intra_bgrp_comm
   USE mp,                   ONLY: mp_sum
+  use mod_sirius
   implicit none
-  real(DP) :: sigmanlc (3, 3), sigmakin (3, 3)
+  real(DP) :: sigmanlc (3, 3), sigmakin (3, 3), tmp(3, 3)
   real(DP), allocatable :: gk (:,:), kfac (:)
-  real(DP) :: twobysqrtpi, gk2, arg
+  real(DP) :: twobysqrtpi, gk2, arg, d1
   integer :: npw, ik, l, m, i, ibnd, is
+  integer :: idx(2, 3)
+
+  if (use_sirius.and.use_sirius_ks_solver.and.use_sirius_stress) then
+    call sirius_get_stress_tensor(gs_handler, string("kin"), sigmakin(1, 1))
+    sigmakin = -sigmakin * 2 ! convert to Ha
+    call sirius_get_stress_tensor(gs_handler, string("nonloc"), sigmanlc(1, 1))
+    sigmanlc = -sigmanlc * 2 ! convert to Ha
+    call sirius_get_stress_tensor(gs_handler, string("us"), tmp(1, 1))
+    sigmanlc = sigmanlc - 2 * tmp
+    call symmatrix ( sigmakin )
+    call symmatrix ( sigmanlc )
+
+    idx = reshape((/1, 2, 1, 3, 2, 3/), (/2, 3/))
+
+    do i = 1, 3
+      d1 = 0.5 * (sigmakin(idx(1, i), idx(2, i)) + sigmakin(idx(2, i), idx(1, i)))
+      sigmakin(idx(1, i), idx(2, i)) = d1
+      sigmakin(idx(2, i), idx(1, i)) = d1
+
+      d1 = 0.5 * (sigmanlc(idx(1, i), idx(2, i)) + sigmanlc(idx(2, i), idx(1, i)))
+      sigmanlc(idx(1, i), idx(2, i)) = d1
+      sigmanlc(idx(2, i), idx(1, i)) = d1
+    enddo
+
+    return
+  endif
+
 
   allocate (gk(  3, npwx))    
   allocate (kfac(   npwx))    

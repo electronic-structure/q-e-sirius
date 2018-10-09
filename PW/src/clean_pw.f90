@@ -67,6 +67,7 @@ SUBROUTINE clean_pw( lflag )
   USE control_flags,        ONLY : ts_vdw
   USE tsvdw_module,         ONLY : tsvdw_finalize
   USE dftd3_qe,             ONLY : dftd3_clean
+  use mod_sirius
   !
   IMPLICIT NONE
   !
@@ -74,6 +75,10 @@ SUBROUTINE clean_pw( lflag )
   !
   INTEGER :: nt, nr1,nr2,nr3
   !
+  if (use_sirius) then
+    call clear_sirius
+  endif
+
   IF ( lflag ) THEN
      !
      ! ... arrays allocated at the very beginning of the calculation
@@ -111,9 +116,7 @@ SUBROUTINE clean_pw( lflag )
   ! ... arrays allocated in ggen.f90
   !
   IF ( ALLOCATED( ig_l2g ) )     DEALLOCATE( ig_l2g )
-  IF ( .NOT. lmovecell ) THEN
-     IF ( ASSOCIATED( gl ) )     DEALLOCATE ( gl )
-  END IF
+  IF ( ALLOCATED( gl ) )         DEALLOCATE ( gl )
   !
   CALL sym_rho_deallocate ( )
   !

@@ -48,6 +48,8 @@ SUBROUTINE move_ions ( idone, ions_status )
   USE fcp_variables,          ONLY : lfcpopt, lfcpdyn, fcp_mu, &
                                      fcp_relax, fcp_relax_crit
   USE klist,                  ONLY : nelec
+  USE dfunct,                 only : newd
+  use mod_sirius
   !
   IMPLICIT NONE
   !

@@ -31,7 +31,7 @@ subroutine atomic_rho (rhoa, nspina)
   USE atom,                 ONLY : rgrid, msh
   USE ions_base,            ONLY : ntyp => nsp
   USE cell_base,            ONLY : tpiba, omega
-  USE gvect,                ONLY : ngm, ngl, gstart, gl, igtongl
+  USE gvect,                ONLY : ngm, ngl, gstart, gl, igtongl, mill
   USE lsda_mod,             ONLY : starting_magnetization, lsda
   USE vlocal,               ONLY : starting_charge, strf
   USE control_flags,        ONLY : gamma_only
@@ -42,6 +42,8 @@ subroutine atomic_rho (rhoa, nspina)
   USE mp,                   ONLY : mp_sum
   USE fft_base,             ONLY : dfftp
   USE fft_interfaces,       ONLY : invfft
+  use mod_sirius
+  use mod_spline
 
   !
   implicit none
@@ -54,7 +56,7 @@ subroutine atomic_rho (rhoa, nspina)
   ! local variables
   !
   real(DP) :: rhoneg, rhoima, rhoscale, gx
-  real(DP), allocatable :: rhocgnt (:), aux (:)
+  real(DP), allocatable :: rhocgnt (:), aux (:), rho_g(:)
   complex(DP), allocatable :: rhocg (:,:)
   integer :: ir, is, ig, igl, nt, ndm
   !
@@ -70,31 +72,51 @@ subroutine atomic_rho (rhoa, nspina)
   rhoa(:,:) = 0.d0
   rhocg(:,:) = (0.d0,0.d0)
 
+  if (.false.) then
+    call sirius_generate_initial_density(gs_handler)
+    call get_density_from_sirius
+  else
+
+  allocate(rho_g(ngm))
   do nt = 1, ntyp
-     !
-     ! Here we compute the G=0 term
-     !
-     if (gstart == 2) then
-        do ir = 1, msh (nt)
-           aux (ir) = upf(nt)%rho_at (ir)
-        enddo
-        call simpson (msh (nt), aux, rgrid(nt)%rab, rhocgnt (1) )
-     endif
-     !
-     ! Here we compute the G<>0 term
-     !
-     do igl = gstart, ngl
-        gx = sqrt (gl (igl) ) * tpiba
-        do ir = 1, msh (nt)
-           if (rgrid(nt)%r(ir) < 1.0d-8) then
-              aux(ir) = upf(nt)%rho_at(ir)
-           else
-              aux(ir) = upf(nt)%rho_at(ir) * &
-                        sin(gx*rgrid(nt)%r(ir)) / (rgrid(nt)%r(ir)*gx)
-           endif
-        enddo
-        call simpson (msh (nt), aux, rgrid(nt)%rab, rhocgnt (igl) )
-     enddo
+    if (use_sirius.and.use_sirius_rho_atomic) then
+      call sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, string("rho"), rho_g(1), ngm, mill(1, 1), intra_bgrp_comm)
+      rho_g(:) = rho_g(:) * omega
+    else
+      !
+      ! Here we compute the G=0 term
+      !
+      if (gstart == 2) then
+         do ir = 1, msh (nt)
+            aux (ir) = upf(nt)%rho_at (ir)
+         enddo
+         if (use_spline) then
+           call integrate(msh(nt), aux, rgrid(nt)%r, rhocgnt(1))
+         else
+           call simpson (msh (nt), aux, rgrid(nt)%rab, rhocgnt (1) )
+         endif
+      endif
+      !
+      ! Here we compute the G<>0 term
+      !
+      do igl = gstart, ngl
+         gx = sqrt (gl (igl) ) * tpiba
+         do ir = 1, msh (nt)
+            if (rgrid(nt)%r(ir) < 1.0d-8) then
+               aux(ir) = upf(nt)%rho_at(ir)
+            else
+               aux(ir) = upf(nt)%rho_at(ir) * &
+                         sin(gx*rgrid(nt)%r(ir)) / (rgrid(nt)%r(ir)*gx)
+            endif
+         enddo
+         if (use_spline) then
+           call integrate(msh(nt), aux, rgrid(nt)%r, rhocgnt(igl))
+         else
+           call simpson (msh (nt), aux, rgrid(nt)%rab, rhocgnt (igl) )
+         endif
+      enddo
+      rho_g(:) = rhocgnt(igtongl(:))
+    endif
      !
      ! we compute the 3D atomic charge in reciprocal space
      !
@@ -107,16 +129,16 @@ subroutine atomic_rho (rhoa, nspina)
      if (nspina == 1) then
         do ig = 1, ngm
            rhocg(ig,1) = rhocg(ig,1) + &
-                         strf(ig,nt) * rhoscale * rhocgnt(igtongl(ig)) / omega
+                         strf(ig,nt) * rhoscale * rho_g(ig) / omega
         enddo
      else if (nspina == 2) then
         do ig = 1, ngm
            rhocg(ig,1) = rhocg(ig,1) + &
                          0.5d0 * ( 1.d0 + starting_magnetization(nt) ) * &
-                         strf(ig,nt) * rhoscale * rhocgnt(igtongl(ig)) / omega
+                         strf(ig,nt) * rhoscale * rho_g(ig) / omega
            rhocg(ig,2) = rhocg(ig,2) + &
                          0.5d0 * ( 1.d0 - starting_magnetization(nt) ) * &
-                         strf(ig,nt) * rhoscale * rhocgnt(igtongl(ig)) / omega
+                         strf(ig,nt) * rhoscale * rho_g(ig) / omega
         enddo
      else
 !
@@ -124,26 +146,29 @@ subroutine atomic_rho (rhoa, nspina)
 !
         do ig = 1,ngm
            rhocg(ig,1) = rhocg(ig,1) + &
-                strf(ig,nt)*rhoscale*rhocgnt(igtongl(ig))/omega
+                strf(ig,nt)*rhoscale*rho_g(ig)/omega
 
            ! Now, the rotated value for the magnetization
 
            rhocg(ig,2) = rhocg(ig,2) + &
                 starting_magnetization(nt)* &
                 sin(angle1(nt))*cos(angle2(nt))* &
-                strf(ig,nt)*rhoscale*rhocgnt(igtongl(ig))/omega
+                strf(ig,nt)*rhoscale*rho_g(ig)/omega
            rhocg(ig,3) = rhocg(ig,3) + &
                 starting_magnetization(nt)* &
                 sin(angle1(nt))*sin(angle2(nt))* &
-                strf(ig,nt)*rhoscale*rhocgnt(igtongl(ig))/omega
+                strf(ig,nt)*rhoscale*rho_g(ig)/omega
            rhocg(ig,4) = rhocg(ig,4) + &
                 starting_magnetization(nt)* &
                 cos(angle1(nt))* &
-                strf(ig,nt)*rhoscale*rhocgnt(igtongl(ig))/omega
+                strf(ig,nt)*rhoscale*rho_g(ig)/omega
         end do
      endif
   enddo
 
+  endif
+
+  deallocate(rho_g)
   deallocate (rhocgnt)
   deallocate (aux)
 

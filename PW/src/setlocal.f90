@@ -34,7 +34,8 @@ SUBROUTINE setlocal
   USE martyna_tuckerman, ONLY : wg_corr_loc, do_comp_mt
   USE esm,       ONLY : esm_local, esm_bc, do_comp_esm
   USE qmmm,      ONLY : qmmm_add_esf
-  USE Coul_cut_2D, ONLY : do_cutoff_2D, cutoff_local 
+  USE Coul_cut_2D, ONLY : do_cutoff_2D, cutoff_local
+  use sirius
   !
   IMPLICIT NONE
   COMPLEX(DP), ALLOCATABLE :: aux (:), v_corr(:)
@@ -43,6 +44,7 @@ SUBROUTINE setlocal
   ! counter on atom types
   ! counter on g vectors
   !
+  call sirius_start_timer(string("qe|setlocal"))
   ALLOCATE (aux( dfftp%nnr))
   aux(:)=(0.d0,0.d0)
   !
@@ -113,6 +115,7 @@ SUBROUTINE setlocal
   !
   DEALLOCATE(aux)
   !
+  call sirius_stop_timer(string("qe|setlocal"))
   RETURN
 END SUBROUTINE setlocal
 

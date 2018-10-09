@@ -19,7 +19,7 @@ SUBROUTINE potinit()
   ! ...    read rho from the file produced by the scf calculation
   ! ... c) the code starts a new calculation:
   ! ...    calculate rho as a sum of atomic charges
-  ! 
+  !
   ! ... In all cases the scf potential is recalculated and saved in vr
   !
   USE kinds,                ONLY : DP
@@ -60,6 +60,7 @@ SUBROUTINE potinit()
   USE paw_variables,        ONLY : okpaw, ddd_PAW
   USE paw_init,             ONLY : PAW_atomic_becsum
   USE paw_onecenter,        ONLY : PAW_potential
+  use mod_sirius
   !
   IMPLICIT NONE
   !
@@ -67,15 +68,16 @@ SUBROUTINE potinit()
   REAL(DP)              :: etotefield       !
   REAL(DP)              :: fact
   INTEGER               :: is
-  LOGICAL               :: exst 
+  LOGICAL               :: exst
   CHARACTER(LEN=256)    :: dirname, filename
   !
   CALL start_clock('potinit')
+  call sirius_start_timer(string("qe|potinit"))
   !
   dirname = TRIM(tmp_dir) // TRIM (prefix) // postfix
 #if defined __HDF5
   filename = TRIM(dirname) // 'charge-density.hdf5'
-#else 
+#else
   filename = TRIM(dirname) // 'charge-density.dat'
 #endif
   exst     =  check_file_exist( TRIM(filename) )
@@ -121,7 +123,7 @@ SUBROUTINE potinit()
      !
   ELSE
      !
-     ! ... Case c): the potential is built from a superposition 
+     ! ... Case c): the potential is built from a superposition
      ! ... of atomic charges contained in the array rho_at
      !
      IF ( starting_pot == 'file' .AND. .NOT. exst ) &
@@ -130,16 +132,20 @@ SUBROUTINE potinit()
      WRITE( UNIT = stdout, &
             FMT = '(/5X,"Initial potential from superposition of free atoms")' )
      !
+     call sirius_start_timer(string("qe|potinit|atomic_rho"))
      CALL atomic_rho( rho%of_r, nspin )
+     call sirius_stop_timer(string("qe|potinit|atomic_rho"))
 
      ! ... in the lda+U case set the initial value of ns
      IF (lda_plus_u) THEN
-        !
         IF (noncolin) THEN
            CALL init_ns_nc()
         ELSE
            CALL init_ns()
         ENDIF
+        if (use_sirius) then
+           call qe_sirius_set_hubbard_occupancy(rho)
+        endif
         !
      ENDIF
 
@@ -189,7 +195,7 @@ SUBROUTINE potinit()
         WRITE( stdout, '(/,5X,"starting charge ",F10.5, &
                          & ", renormalised to ",F10.5)') charge, nelec
         rho%of_r = rho%of_r / charge * nelec
-     ELSE 
+     ELSE
         WRITE( stdout, '(/,5X,"Starting from uniform charge")')
         IF ( nspin == 2 ) THEN
            rho%of_r(:,1:nspin) = nelec / omega / nspin
@@ -206,6 +212,7 @@ SUBROUTINE potinit()
   !
   ! ... bring starting rho to G-space
   !
+  call sirius_start_timer(string("qe|potinit|rho_of_g"))
   DO is = 1, nspin
      !
      psic(:) = rho%of_r(:,is)
@@ -215,6 +222,7 @@ SUBROUTINE potinit()
      rho%of_g(:,is) = psic(dfftp%nl(:))
      !
   END DO
+  call sirius_stop_timer(string("qe|potinit|rho_of_g"))
   !
   if ( dft_is_meta()) then
      ! ... define a starting (TF) guess for rho%kin_r and rho%kin_g
@@ -266,6 +274,7 @@ SUBROUTINE potinit()
   IF ( report /= 0 .AND. &
        noncolin .AND. domag .AND. lscf ) CALL report_mag()
   !
+  call sirius_stop_timer(string("qe|potinit"))
   CALL stop_clock('potinit')
   !
   RETURN
@@ -284,19 +293,19 @@ SUBROUTINE nc_magnetization_from_lsda ( nnr, nspin, rho )
   IMPLICIT NONE
   INTEGER, INTENT (in):: nnr, nspin
   REAL(dp), INTENT (inout):: rho(nnr,nspin)
-  !---  
-  !  set up noncollinear m_x,y,z from collinear m_z (AlexS) 
+  !---
+  !  set up noncollinear m_x,y,z from collinear m_z (AlexS)
   !
   WRITE(stdout,*)
   WRITE(stdout,*) '-----------'
   WRITE(stdout,'("Spin angles Theta, Phi (degree) = ",2f8.4)') &
-       angle1(1)/PI*180.d0, angle2(1)/PI*180.d0 
+       angle1(1)/PI*180.d0, angle2(1)/PI*180.d0
   WRITE(stdout,*) '-----------'
   !
 #if defined(__OLDXML)
   ! On input, rho(1)=rho_up, rho(2)=rho_down
   ! Set rho(1)=rho_tot, rho(3)=rho_up-rho_down=magnetization
-  ! 
+  !
   rho(:,4) = rho(:,1)-rho(:,2)
   rho(:,1) = rho(:,1)+rho(:,2)
 #endif
@@ -314,4 +323,3 @@ SUBROUTINE nc_magnetization_from_lsda ( nnr, nspin, rho )
   RETURN
   !
 END SUBROUTINE nc_magnetization_from_lsda
-

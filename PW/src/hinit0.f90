@@ -28,6 +28,7 @@ SUBROUTINE hinit0()
   use ldaU,         ONLY : lda_plus_U, U_projection
   USE control_flags,ONLY : tqr, tq_smoothing, tbeta_smoothing
   USE io_global,    ONLY : stdout
+  use mod_sirius
   !
   IMPLICIT NONE
   !
@@ -44,11 +45,17 @@ SUBROUTINE hinit0()
   !
   if (tbeta_smoothing) CALL init_us_b0()
   if (tq_smoothing) CALL init_us_0()
+  call sirius_start_timer(string("qe|init_run|hinit0|init_us_1"))
   CALL init_us_1()
+  call sirius_stop_timer(string("qe|init_run|hinit0|init_us_1"))
   IF ( lda_plus_U .AND. ( U_projection == 'pseudo' ) ) CALL init_q_aeps()
+  call sirius_start_timer(string("qe|init_run|hinit0|init_at_1"))
   CALL init_at_1()
+  call sirius_stop_timer(string("qe|init_run|hinit0|init_at_1"))
   !
+  call sirius_start_timer(string("qe|init_run|hinit0|init_igk"))
   CALL init_igk ( npwx, ngm, g, gcutw )
+  call sirius_stop_timer(string("qe|init_run|hinit0|init_igk"))
   !
   IF ( lmovecell .AND. startingconfig == 'file' ) THEN
      !

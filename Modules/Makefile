@@ -18,7 +18,6 @@ bspline.o \
 bz_form.o \
 cell_base.o  \
 check_stop.o  \
-command_line_options.o \
 compute_dipole.o \
 constants.o \
 constraints_module.o \
@@ -38,6 +37,7 @@ gth.o \
 gradutils.o \
 gvecw.o \
 input_parameters.o \
+command_line_options.o \
 invmat.o \
 io_files.o \
 io_global.o  \

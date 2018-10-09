@@ -38,13 +38,14 @@ SUBROUTINE force_hub(forceh)
    USE wavefunctions_module, ONLY : evc
    USE klist,                ONLY : nks, xk, ngk, igk_k
    USE io_files,             ONLY : nwordwfc, iunwfc
+   USE mod_sirius
    USE buffers,              ONLY : get_buffer
 
    IMPLICIT NONE
    REAL (DP) :: forceh(3,nat)  ! output: the Hubbard forces
 
    type (bec_type) :: proj     ! proj(nwfcU,nbnd)
-   COMPLEX (DP), ALLOCATABLE :: spsi(:,:), wfcatom(:,:) 
+   COMPLEX (DP), ALLOCATABLE :: spsi(:,:), wfcatom(:,:)
    REAL (DP), ALLOCATABLE :: dns(:,:,:,:)
    !       dns(ldim,ldim,nspin,nat) ! the derivative of the atomic occupations
    INTEGER :: npw, alpha, na, nt, is, m1, m2, ipol, ldim, ik, ijkb0
@@ -56,92 +57,101 @@ SUBROUTINE force_hub(forceh)
                    " forces in full LDA+U scheme are not yet implemented",1)
 
    call start_clock('force_hub')
-   ldim= 2 * Hubbard_lmax + 1
-   ALLOCATE ( dns(ldim,ldim,nspin,nat) )
-   ALLOCATE ( spsi(npwx,nbnd) ) 
-   ALLOCATE ( wfcatom (npwx,natomwfc) ) 
-   call allocate_bec_type ( nkb, nbnd, becp) 
-   call allocate_bec_type ( nwfcU, nbnd, proj )
-   !
-   ! poor-man parallelization over bands
-   ! - if nproc_pool=1   : nb_s=1, nb_e=nbnd, mykey=0
-   ! - if nproc_pool<=nbnd:each processor calculates band nb_s to nb_e; mykey=0
-   ! - if nproc_pool>nbnd :each processor takes care of band na_s=nb_e;
-   !   mykey labels how many times each band appears (mykey=0 first time etc.)
-   !
-   CALL block_distribute( nbnd, me_pool, nproc_pool, nb_s, nb_e, mykey )
-   !
-   forceh(:,:) = 0.d0
-   !
-   !    we start a loop on k points
-   !
-   DO ik = 1, nks
+
+
+   if (use_sirius) then
+      call sirius_get_forces(gs_handler, string("hubbard"), forceh(1, 1))
+      forceh(:,:) = 2.0d0 * forceh(:,:);
+   else
+
+      ldim= 2 * Hubbard_lmax + 1
+      ALLOCATE ( dns(ldim,ldim,nspin,nat) )
+      ALLOCATE ( spsi(npwx,nbnd) )
+      ALLOCATE ( wfcatom (npwx,natomwfc) )
+      call allocate_bec_type ( nkb, nbnd, becp)
+      call allocate_bec_type ( nwfcU, nbnd, proj )
       !
-      IF (lsda) current_spin = isk(ik)
-      npw = ngk (ik)
-
-      IF (nks > 1) &
-         CALL get_buffer (evc, nwordwfc, iunwfc, ik)
-
-      CALL init_us_2 (npw,igk_k(1,ik),xk(1,ik),vkb)
-      CALL calbec( npw, vkb, evc, becp )
-      CALL s_psi  (npwx, npw, nbnd, evc, spsi )
-
-      ! re-calculate atomic wfc - wfcatom is used here as work space
-
-      CALL atomic_wfc (ik, wfcatom)
-      call copy_U_wfc (wfcatom)
-
-      ! wfcU contains Hubbard-U atomic wavefunctions
-      ! proj=<wfcU|S|evc> - no need to read S*wfcU from buffer
-
-      CALL calbec( npw, wfcU, spsi, proj )
-
-      ! now we need the first derivative of proj with respect to tau(alpha,ipol)
-
-      DO alpha = 1,nat  ! forces are calculated for atom alpha ...
+      ! poor-man parallelization over bands
+      ! - if nproc_pool=1   : nb_s=1, nb_e=nbnd, mykey=0
+      ! - if nproc_pool<=nbnd:each processor calculates band nb_s to nb_e; mykey=0
+      ! - if nproc_pool>nbnd :each processor takes care of band na_s=nb_e;
+      !   mykey labels how many times each band appears (mykey=0 first time etc.)
+      !
+      CALL block_distribute( nbnd, me_pool, nproc_pool, nb_s, nb_e, mykey )
+      !
+      forceh(:,:) = 0.d0
+      !
+      !    we start a loop on k points
+      !
+      DO ik = 1, nks
          !
-         ijkb0 = indv_ijkb0(alpha) ! positions of beta functions for atom alpha
-         DO ipol = 1,3  ! forces are calculated for coordinate ipol ...
+         IF (lsda) current_spin = isk(ik)
+         npw = ngk (ik)
+
+         IF (nks > 1) &
+              CALL get_buffer (evc, nwordwfc, iunwfc, ik)
+
+         CALL init_us_2 (npw,igk_k(1,ik),xk(1,ik),vkb)
+         CALL calbec( npw, vkb, evc, becp )
+         CALL s_psi  (npwx, npw, nbnd, evc, spsi )
+
+         ! re-calculate atomic wfc - wfcatom is used here as work space
+
+         CALL atomic_wfc (ik, wfcatom)
+         call copy_U_wfc (wfcatom)
+
+         ! wfcU contains Hubbard-U atomic wavefunctions
+         ! proj=<wfcU|S|evc> - no need to read S*wfcU from buffer
+
+         CALL calbec( npw, wfcU, spsi, proj )
+
+         ! now we need the first derivative of proj with respect to tau(alpha,ipol)
+
+         DO alpha = 1,nat  ! forces are calculated for atom alpha ...
             !
-            IF ( gamma_only ) THEN
-               CALL dndtau_gamma ( ldim, proj%r, spsi, alpha, ijkb0, ipol, ik, &
-                                   nb_s, nb_e, mykey, dns )
-            ELSE
-               CALL dndtau_k     ( ldim, proj%k, spsi, alpha, ijkb0, ipol, ik, &
-                                   nb_s, nb_e, mykey, dns )
-            ENDIF
-!!omp parallel do default(shared) private(na,nt,m1,m2,is)
-            DO na = 1,nat                 ! the Hubbard atom
-               nt = ityp(na)
-               IF ( is_hubbard(nt) ) THEN
-                  DO is = 1,nspin
-                     DO m2 = 1,ldim
-                        DO m1 = 1,ldim
-                           forceh(ipol,alpha) = forceh(ipol,alpha) -    &
-                              v%ns(m2,m1,is,na) * dns(m1,m2,is,na)
+            ijkb0 = indv_ijkb0(alpha) ! positions of beta functions for atom alpha
+            DO ipol = 1,3  ! forces are calculated for coordinate ipol ...
+               !
+               IF ( gamma_only ) THEN
+                  CALL dndtau_gamma ( ldim, proj%r, spsi, alpha, ijkb0, ipol, ik, &
+                       nb_s, nb_e, mykey, dns )
+               ELSE
+                  CALL dndtau_k     ( ldim, proj%k, spsi, alpha, ijkb0, ipol, ik, &
+                       nb_s, nb_e, mykey, dns )
+               ENDIF
+               !!omp parallel do default(shared) private(na,nt,m1,m2,is)
+               DO na = 1,nat                 ! the Hubbard atom
+                  nt = ityp(na)
+                  IF ( is_hubbard(nt) ) THEN
+                     DO is = 1,nspin
+                        DO m2 = 1,ldim
+                           DO m1 = 1,ldim
+                              forceh(ipol,alpha) = forceh(ipol,alpha) -    &
+                                   v%ns(m2,m1,is,na) * dns(m1,m2,is,na)
+                           END DO
                         END DO
                      END DO
-                  END DO
-               END IF
+                  END IF
+               END DO
+               !!omp end parallel do
             END DO
-!!omp end parallel do
          END DO
       END DO
-   END DO
-   !
-   CALL mp_sum( forceh, inter_pool_comm )
-   !
-   call deallocate_bec_type (becp)
-   call deallocate_bec_type (proj)
-   DEALLOCATE( wfcatom  ) 
-   DEALLOCATE( spsi  ) 
-   DEALLOCATE( dns ) 
-   
-   IF (nspin == 1) forceh(:,:) = 2.d0 * forceh(:,:)
-   !
-   ! ...symmetrize...
-   !
+      !
+      CALL mp_sum( forceh, inter_pool_comm )
+      !
+      call deallocate_bec_type (becp)
+      call deallocate_bec_type (proj)
+      DEALLOCATE( wfcatom  )
+      DEALLOCATE( spsi  )
+      DEALLOCATE( dns )
+
+      IF (nspin == 1) forceh(:,:) = 2.d0 * forceh(:,:)
+      !
+      ! ...symmetrize...
+      !
+   ENDIF
+
    CALL symvector ( nat, forceh )
 #if defined(__DEBUG)
    write(66,'("Hubbard contribution Begin")')
@@ -170,7 +180,7 @@ SUBROUTINE dndtau_k &
    USE wvfct,                ONLY : nbnd, npwx, wg
    USE mp_pools,             ONLY : intra_pool_comm, me_pool, nproc_pool
    USE mp,                   ONLY : mp_sum
-   
+
    IMPLICIT NONE
 
    INTEGER, INTENT(IN) :: alpha, jkb0, ipol, ik, ldim
@@ -213,11 +223,11 @@ SUBROUTINE dndtau_k &
       END IF
    END DO
 !!omp end parallel do
-10   DEALLOCATE ( dproj ) 
+10   DEALLOCATE ( dproj )
    !
    CALL mp_sum(dns, intra_pool_comm)
    !
-   ! In nspin.eq.1 k-point weight wg is normalized to 2 el/band 
+   ! In nspin.eq.1 k-point weight wg is normalized to 2 el/band
    ! in the whole BZ but we are interested in dns of one spin component
    !
    IF (nspin == 1) dns = 0.5d0 * dns
@@ -300,11 +310,11 @@ SUBROUTINE dndtau_gamma &
       END IF
    END DO
 !!omp end parallel do
-10   DEALLOCATE ( dproj ) 
+10   DEALLOCATE ( dproj )
    !
    CALL mp_sum(dns, intra_pool_comm)
    !
-   ! In nspin.eq.1 k-point weight wg is normalized to 2 el/band 
+   ! In nspin.eq.1 k-point weight wg is normalized to 2 el/band
    ! in the whole BZ but we are interested in dns of one spin component
    !
    IF (nspin == 1) dns = 0.5d0 * dns
@@ -349,7 +359,7 @@ SUBROUTINE dprojdtau_k (spsi, alpha, ijkb0, ipol, ik, nb_s, nb_e, mykey, dproj)
    USE becmod,               ONLY : bec_type, becp, calbec
    USE mp_bands,             ONLY : intra_bgrp_comm
    USE mp,                   ONLY : mp_sum
-   
+
    IMPLICIT NONE
    INTEGER, INTENT (IN) :: ik,      &! k-point index
                            alpha,   &! the displaced atom
@@ -391,7 +401,7 @@ SUBROUTINE dprojdtau_k (spsi, alpha, ijkb0, ipol, ik, nb_s, nb_e, mykey, dproj)
          ! in the expression of dwfc we don't need (k+G) but just G; k always
          ! multiplies the underived quantity and gives an opposite contribution
          ! in c.c. term because the sign of the imaginary unit.
-   
+
          DO m1 = 1, ldim
             dwfc(ig,m1) = (0.d0,-1.d0) * gvec * wfcU(ig,offsetU(alpha)+m1)
          END DO
@@ -402,15 +412,15 @@ SUBROUTINE dprojdtau_k (spsi, alpha, ijkb0, ipol, ik, nb_s, nb_e, mykey, dproj)
                   dwfc, npwx, spsi, npwx, (0.d0,0.d0), &
                   dproj0, ldim)
 
-      DEALLOCATE ( dwfc ) 
+      DEALLOCATE ( dwfc )
       CALL mp_sum( dproj0, intra_bgrp_comm )
       ! copy to dproj results for the bands treated by this processor
       dproj( offsetU(alpha)+1:offsetU(alpha)+ldim, :) = dproj0(:, nb_s:nb_e)
-      DEALLOCATE ( dproj0 ) 
+      DEALLOCATE ( dproj0 )
       !
    END IF
    !
-   ALLOCATE (dbetapsi(nh(nt),nbnd) ) 
+   ALLOCATE (dbetapsi(nh(nt),nbnd) )
    ALLOCATE (wfatdbeta(nwfcU,nh(nt)) )
    ALLOCATE ( wfatbeta(nwfcU,nh(nt)) )
    ALLOCATE ( dbeta(npwx,nh(nt)) )
@@ -421,7 +431,7 @@ SUBROUTINE dprojdtau_k (spsi, alpha, ijkb0, ipol, ik, nb_s, nb_e, mykey, dproj)
       END DO
    END DO
 !!omp end parallel do
-   CALL calbec ( npw, wfcU, dbeta, wfatbeta ) 
+   CALL calbec ( npw, wfcU, dbeta, wfatbeta )
 !!omp parallel do default(shared) private(ig,ih)
    DO ih=1,nh(nt)
       DO ig = 1, npw
@@ -430,12 +440,12 @@ SUBROUTINE dprojdtau_k (spsi, alpha, ijkb0, ipol, ik, nb_s, nb_e, mykey, dproj)
       END DO
    END DO
 !!omp end parallel do
-   CALL calbec ( npw, dbeta, evc, dbetapsi ) 
-   CALL calbec ( npw, wfcU, dbeta, wfatdbeta ) 
+   CALL calbec ( npw, dbeta, evc, dbetapsi ) ! <d \beta| psi>
+   CALL calbec ( npw, wfcU, dbeta, wfatdbeta ) ! <phi|d \beta>
    DEALLOCATE ( dbeta )
    ! calculate \sum_j qq(i,j)*dbetapsi(j)
-   ! betapsi is used here as work space 
-   ALLOCATE ( betapsi(nh(nt), nbnd) ) 
+   ! betapsi is used here as work space
+   ALLOCATE ( betapsi(nh(nt), nbnd) )
    betapsi(:,:) = (0.0_dp, 0.0_dp)
    ! here starts band parallelization
 !!omp parallel do default(shared) private(ih,ibnd,jh)
@@ -463,7 +473,7 @@ SUBROUTINE dprojdtau_k (spsi, alpha, ijkb0, ipol, ik, nb_s, nb_e, mykey, dproj)
 !!omp end parallel do
    !
    ! dproj(iwf,ibnd) = \sum_ih wfatdbeta(iwf,ih)*betapsi(ih,ibnd) +
-   !                           wfatbeta(iwf,ih)*dbetapsi(ih,ibnd) 
+   !                           wfatbeta(iwf,ih)*dbetapsi(ih,ibnd)
    !
    IF ( mykey == 0 .AND. nh(nt) > 0 ) THEN
       CALL ZGEMM('N','N',nwfcU, nb_e-nb_s+1, nh(nt), (1.0_dp,0.0_dp), &
@@ -475,7 +485,7 @@ SUBROUTINE dprojdtau_k (spsi, alpha, ijkb0, ipol, ik, nb_s, nb_e, mykey, dproj)
    END IF
    ! end band parallelization - only dproj(1,nb_s:nb_e) are calculated
    DEALLOCATE ( betapsi )
-   DEALLOCATE ( wfatbeta ) 
+   DEALLOCATE ( wfatbeta )
    DEALLOCATE (wfatdbeta )
    DEALLOCATE (dbetapsi )
    !
@@ -507,7 +517,7 @@ SUBROUTINE dprojdtau_gamma (spsi, alpha, ijkb0, ipol, ik, nb_s, nb_e, mykey, dpr
    USE mp_bands,             ONLY : intra_bgrp_comm
    USE mp_pools,             ONLY : intra_pool_comm, me_pool, nproc_pool
    USE mp,                   ONLY : mp_sum
-   
+
    IMPLICIT NONE
 
    INTEGER, INTENT (IN) :: ik,      &! k-point index
@@ -548,7 +558,7 @@ SUBROUTINE dprojdtau_gamma (spsi, alpha, ijkb0, ipol, ik, nb_s, nb_e, mykey, dpr
          ! in the expression of dwfc we don't need (k+G) but just G; k always
          ! multiplies the underived quantity and gives an opposite contribution
          ! in c.c. term because the sign of the imaginary unit.
-         DO m1 = 1, ldim   
+         DO m1 = 1, ldim
             dwfc(ig,m1) = (0.d0,-1.d0) * gvec * wfcU(ig,offsetU(alpha)+m1)
          END DO
       END DO
@@ -557,15 +567,15 @@ SUBROUTINE dprojdtau_gamma (spsi, alpha, ijkb0, ipol, ik, nb_s, nb_e, mykey, dpr
       CALL DGEMM('T','N',ldim, nbnd, 2*npw, 2.0_dp,  &
                   dwfc, 2*npwx, spsi, 2*npwx, 0.0_dp,&
                   dproj0, ldim)
-      DEALLOCATE ( dwfc ) 
+      DEALLOCATE ( dwfc )
       CALL mp_sum( dproj0, intra_bgrp_comm )
       ! copy to dproj results for the bands treated by this processor
       dproj( offsetU(alpha)+1:offsetU(alpha)+ldim, :) = dproj0(:, nb_s:nb_e)
-      DEALLOCATE ( dproj0 ) 
+      DEALLOCATE ( dproj0 )
       !
    END IF
    !
-   ALLOCATE (dbetapsi(nh(nt),nbnd) ) 
+   ALLOCATE (dbetapsi(nh(nt),nbnd) )
    ALLOCATE (wfatdbeta(nwfcU,nh(nt)) )
    ALLOCATE ( wfatbeta(nwfcU,nh(nt)) )
    ALLOCATE ( dbeta(npwx,nh(nt)) )
@@ -576,7 +586,7 @@ SUBROUTINE dprojdtau_gamma (spsi, alpha, ijkb0, ipol, ik, nb_s, nb_e, mykey, dpr
       END DO
    END DO
 !!omp end parallel do
-   CALL calbec ( npw, wfcU, dbeta, wfatbeta ) 
+   CALL calbec ( npw, wfcU, dbeta, wfatbeta )
 !!omp parallel do default(shared) private(ih,ig,gvec)
    DO ih=1,nh(nt)
       DO ig = 1, npw
@@ -585,13 +595,13 @@ SUBROUTINE dprojdtau_gamma (spsi, alpha, ijkb0, ipol, ik, nb_s, nb_e, mykey, dpr
       END DO
    END DO
 !!omp end parallel do
-   CALL calbec ( npw, dbeta, evc, dbetapsi ) 
-   CALL calbec ( npw, wfcU, dbeta, wfatdbeta ) 
+   CALL calbec ( npw, dbeta, evc, dbetapsi )
+   CALL calbec ( npw, wfcU, dbeta, wfatdbeta )
    DEALLOCATE ( dbeta )
    !
    ! calculate \sum_j qq(i,j)*dbetapsi(j)
-   ! betapsi is used here as work space 
-   ALLOCATE ( betapsi(nh(nt), nbnd) ) 
+   ! betapsi is used here as work space
+   ALLOCATE ( betapsi(nh(nt), nbnd) )
    betapsi(:,:) = (0.0_dp, 0.0_dp)
    ! here starts band parallelization
 !!omp parallel do default(shared) private(ih,ibnd,jh)
@@ -619,7 +629,7 @@ SUBROUTINE dprojdtau_gamma (spsi, alpha, ijkb0, ipol, ik, nb_s, nb_e, mykey, dpr
 !!omp end parallel do
    !
    ! dproj(iwf,ibnd) = \sum_ih wfatdbeta(iwf,ih)*betapsi(ih,ibnd) +
-   !                           wfatbeta(iwf,ih)*dbetapsi(ih,ibnd) 
+   !                           wfatbeta(iwf,ih)*dbetapsi(ih,ibnd)
    !
    IF ( mykey == 0 .AND. nh(nt) > 0 ) THEN
       CALL DGEMM('N','N',nwfcU, nb_e-nb_s+1, nh(nt), 1.0_dp,  &
@@ -631,7 +641,7 @@ SUBROUTINE dprojdtau_gamma (spsi, alpha, ijkb0, ipol, ik, nb_s, nb_e, mykey, dpr
    END IF
    ! end band parallelization - only dproj(1,nb_s:nb_e) are calculated
    DEALLOCATE ( betapsi )
-   DEALLOCATE ( wfatbeta ) 
+   DEALLOCATE ( wfatbeta )
    DEALLOCATE (wfatdbeta )
    DEALLOCATE (dbetapsi )
    !

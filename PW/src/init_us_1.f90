@@ -43,6 +43,8 @@ subroutine init_us_1
   USE paw_variables,ONLY : okpaw
   USE mp_bands,     ONLY : intra_bgrp_comm
   USE mp,           ONLY : mp_sum
+  use mod_sirius
+  use mod_spline
   !
   implicit none
   !
@@ -247,6 +249,13 @@ subroutine init_us_1
   !  compute Clebsch-Gordan coefficients
   !
   if (okvan .or. okpaw) call aainit (lmaxkb + 1)
+  if (use_sirius.and.use_sirius_ks_solver.and.use_sirius_density) then
+    deallocate (aux)
+    deallocate (aux1)
+    deallocate (ylmk0)
+    deallocate (qtot)
+    return
+  endif
   !
   !   here for the US types we compute the Fourier transform of the
   !   Q functions.
@@ -294,8 +303,18 @@ subroutine init_us_1
                        do ir = 1, upf(nt)%kkbeta
                           aux1 (ir) = aux (ir) * qtot (ir, ijv)
                        enddo
-                       call simpson ( upf(nt)%kkbeta, aux1, rgrid(nt)%rab, &
-                                     qrad(iq,ijv,l + 1, nt) )
+                       if (use_sirius.and.use_sirius_radial_integration_q) then
+                         call sirius_integrate(0, upf(nt)%kkbeta, rgrid(nt)%r(1), aux1(1),&
+                                               qrad(iq,ijv,l + 1, nt))
+                       else
+                         if (use_spline) then
+                           call integrate(upf(nt)%kkbeta, aux1, rgrid(nt)%r,&
+                                          qrad(iq,ijv,l + 1, nt))
+                         else
+                           call simpson ( upf(nt)%kkbeta, aux1, rgrid(nt)%rab, &
+                                         qrad(iq,ijv,l + 1, nt) )
+                         endif
+                       endif
                     endif
                  enddo
               enddo
@@ -393,7 +412,15 @@ subroutine init_us_1
            do ir = 1, upf(nt)%kkbeta
               aux (ir) = upf(nt)%beta (ir, nb) * besr (ir) * rgrid(nt)%r(ir)
            enddo
-           call simpson (upf(nt)%kkbeta, aux, rgrid(nt)%rab, vqint)
+           if (use_sirius.and.use_sirius_radial_integration_beta) then
+             call sirius_integrate(0, upf(nt)%kkbeta, rgrid(nt)%r(1), aux(1), vqint)
+           else 
+             if (use_spline) then
+               call integrate(upf(nt)%kkbeta, aux, rgrid(nt)%r, vqint)
+             else
+               call simpson (upf(nt)%kkbeta, aux, rgrid(nt)%rab, vqint)
+             endif
+           endif
            tab (iq, nb, nt) = vqint * pref
         enddo
      enddo

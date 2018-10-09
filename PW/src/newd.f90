@@ -33,6 +33,7 @@ SUBROUTINE newq(vr,deeq,skip_vltot)
   USE mp_bands,             ONLY : intra_bgrp_comm
   USE mp_pools,             ONLY : inter_pool_comm
   USE mp,                   ONLY : mp_sum
+  use mod_sirius
   !
   IMPLICIT NONE
   !
@@ -52,6 +53,7 @@ SUBROUTINE newq(vr,deeq,skip_vltot)
   REAL(DP), ALLOCATABLE :: ylmk0(:,:), qmod(:), deeaux(:,:)
     ! spherical harmonics, modulus of G
   REAL(DP) :: fact
+  logical flg
   !
   IF ( gamma_only ) THEN
      fact = 2.0_dp
@@ -121,7 +123,18 @@ SUBROUTINE newq(vr,deeq,skip_vltot)
         DO ih = 1, nh(nt)
            DO jh = ih, nh(nt)
               ijh = ijh + 1
-              CALL qvan2 ( ngm_l, ih, jh, nt, qmod, qgm(1,ijh), ylmk0 )
+              flg = .true.
+              if (use_sirius.and.use_sirius_q_operator.and.allocated(atom_type)) then
+                if (allocated(atom_type(nt)%qpw)) then
+                  do ig=1,ngm_l
+                    qgm(ig, ijh) = atom_type(nt)%qpw(ig+ngm_s-1, ijh)
+                  enddo
+                  flg = .false.
+                endif
+              endif
+              if (flg) then
+                CALL qvan2 ( ngm_l, ih, jh, nt, qmod, qgm(1,ijh), ylmk0 )
+              endif
            END DO
         END DO
         !
@@ -207,6 +220,7 @@ SUBROUTINE newd( )
   USE realus,        ONLY : newq_r
   USE control_flags, ONLY : tqr
   USE ldaU,          ONLY : lda_plus_U, U_projection
+  use mod_sirius
   !
   IMPLICIT NONE
   !
@@ -215,6 +229,15 @@ SUBROUTINE newd( )
   !   atoms, spin, aux, aux, beta func x2 (again)
   !
   !
+  if (use_sirius.and.use_sirius_d_operator_matrix) then
+    call sirius_start_timer(string("qe|newd"))
+    call sirius_generate_d_operator_matrix(gs_handler)
+    call get_d_matrix_from_sirius
+    call add_paw_to_deeq(deeq)
+    call put_d_matrix_to_sirius
+    call sirius_stop_timer(string("qe|newd"))
+    return
+  endif
   IF ( .NOT. okvan ) THEN
      !
      ! ... no ultrasoft potentials: use bare coefficients for projectors
@@ -246,6 +269,9 @@ SUBROUTINE newd( )
         END IF
         !
      END DO
+     if (use_sirius.and..not.use_sirius_d_operator_matrix) then
+       call put_d_matrix_to_sirius
+     endif
      !
      ! ... early return
      !
@@ -303,6 +329,9 @@ SUBROUTINE newd( )
   !
   CALL stop_clock( 'newd' )
   !
+  if (use_sirius.and..not.use_sirius_d_operator_matrix) then
+    call put_d_matrix_to_sirius
+  endif
   RETURN
   !
   CONTAINS

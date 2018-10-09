@@ -19,6 +19,7 @@ subroutine force_lc (nat, tau, ityp, alat, omega, ngm, ngl, &
   USE fft_interfaces, ONLY : fwfft
   USE esm,       ONLY : esm_force_lc, do_comp_esm, esm_bc
   USE Coul_cut_2D, ONLY : do_cutoff_2D, cutoff_force_lc
+  use mod_sirius
   implicit none
   !
   !   first the dummy variables
@@ -55,10 +56,32 @@ subroutine force_lc (nat, tau, ityp, alat, omega, ngm, ngl, &
   complex(DP), allocatable :: aux (:)
   ! auxiliary space for FFT
   real(DP) :: arg, fact
+  real(DP) force_tmp(3, nat)
   !
   ! contribution to the force from the local part of the bare potential
   ! F_loc = Omega \Sum_G n*(G) d V_loc(G)/d R_i
   !
+  if (use_sirius.and.use_sirius_forces) then
+    call sirius_get_forces(gs_handler, string("vloc"), forcelc(1, 1))
+    forcelc = forcelc * 2 ! convert to Ry
+
+    if ( do_comp_esm .and. ( esm_bc .ne. 'pbc' ) ) then
+      allocate (aux(dfftp%nnr))
+      if ( nspin == 2) then
+        aux(:) = CMPLX( rho(:,1)+rho(:,2), 0.0_dp, kind=dp )
+      else
+        aux(:) = CMPLX( rho(:,1), 0.0_dp, kind=dp )
+      end if
+      CALL fwfft ('Rho', aux, dfftp)
+      force_tmp = 0.d0
+      call esm_force_lc ( aux, force_tmp )
+      call mp_sum( force_tmp, intra_bgrp_comm )
+      forcelc = forcelc + force_tmp
+      deallocate(aux)
+    endif
+    return
+  endif
+
   allocate (aux(dfftp%nnr))
   if ( nspin == 2) then
       aux(:) = CMPLX( rho(:,1)+rho(:,2), 0.0_dp, kind=dp )

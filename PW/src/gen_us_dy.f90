@@ -25,6 +25,9 @@ subroutine gen_us_dy (ik, u, dvkb)
   USE us,         ONLY : nqx, tab, tab_d2y, dq, spline_ps
   USE splinelib
   USE uspp_param, ONLY : upf, lmaxkb, nbetam, nh
+  USE constants,    ONLY : fpi
+  USE cell_base,    ONLY : omega
+  use mod_sirius
   !
   implicit none
   !
@@ -97,10 +100,15 @@ subroutine gen_us_dy (ik, u, dvkb)
              i1 = i0 + 1
              i2 = i0 + 2
              i3 = i0 + 3
-             vkb0 (ig, nb, nt) = tab (i0, nb, nt) * ux * vx * wx / 6.d0 + &
-                                 tab (i1, nb, nt) * px * vx * wx / 2.d0 - &
-                                 tab (i2, nb, nt) * px * ux * wx / 2.d0 + &
-                                 tab (i3, nb, nt) * px * ux * vx / 6.d0
+             if (use_sirius.and.use_sirius_radial_integrals_beta.and.sirius_context_initialized(sctx)) then
+               vkb0 (ig, nb, nt) = sirius_get_radial_integral(sctx, atom_type(nt)%label, string("beta"), q(ig), nb)
+               vkb0 (ig, nb, nt) = vkb0 (ig, nb, nt) * fpi / sqrt(omega)
+             else
+               vkb0 (ig, nb, nt) = tab (i0, nb, nt) * ux * vx * wx / 6.d0 + &
+                                   tab (i1, nb, nt) * px * vx * wx / 2.d0 - &
+                                   tab (i2, nb, nt) * px * ux * wx / 2.d0 + &
+                                   tab (i3, nb, nt) * px * ux * vx / 6.d0
+             endif
            endif
         enddo
      enddo

@@ -1508,6 +1508,9 @@ MODULE input_parameters
       LOGICAL :: xmloutput = .false.
       ! if .true. PW produce an xml output
 
+      LOGICAL  :: use_sirius = .FALSE.
+      CHARACTER(len=256) :: sirius_cfg
+
 CONTAINS
 !
 !----------------------------------------------------------------------------

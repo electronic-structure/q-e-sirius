@@ -22,13 +22,14 @@ subroutine set_rhoc
   USE ener,      ONLY : etxcc
   USE fft_base,  ONLY : dfftp
   USE fft_interfaces,ONLY : invfft
-  USE gvect,     ONLY : ngm, ngl, gl, igtongl
+  USE gvect,     ONLY : ngm, ngl, gl, igtongl, mill
   USE scf,       ONLY : rho_core, rhog_core, scf_type
   USE lsda_mod,  ONLY : nspin
   USE vlocal,    ONLY : strf
   USE control_flags, ONLY : gamma_only
   USE mp_bands,  ONLY : intra_bgrp_comm
   USE mp,        ONLY : mp_sum
+  use mod_sirius
   !
   implicit none
   !
@@ -37,7 +38,7 @@ subroutine set_rhoc
   complex(DP) , allocatable :: aux (:)
   ! used for the fft of the core charge
 
-  real(DP) , allocatable ::  rhocg(:)
+  real(DP) , allocatable ::  rhocg(:), rho_core_g(:)
   ! the radial fourier transform
   real(DP) ::  rhoima, rhoneg, rhorea
   ! used to check the core charge
@@ -52,34 +53,43 @@ subroutine set_rhoc
 
   etxcc = 0.0_DP
   if ( ANY( upf(1:ntyp)%nlcc ) ) goto 10
-  
+
   rhog_core(:) = 0.0_DP
   rho_core(:)  = 0.0_DP
 
   return
 
 10 continue
+  call sirius_start_timer(string("qe|set_rhoc"))
   allocate (aux( dfftp%nnr))    
   allocate (rhocg( ngl))    
   aux (:) = (0.0_DP, 0.0_DP)
   !
   !    the sum is on atom types
   !
+  allocate(rho_core_g(ngm))
   do nt = 1, ntyp
      if ( upf(nt)%nlcc ) then
         !
         !     drhoc compute the radial fourier transform for each shell of g vec
         !
-        call drhoc (ngl, gl, omega, tpiba2, msh (nt), rgrid(nt)%r, &
-             rgrid(nt)%rab, upf(nt)%rho_atc, rhocg)
+        if (use_sirius.and.use_sirius_rho_core) then
+          call sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, string("rhoc"), rho_core_g(1),&
+                                        &ngm, mill(1, 1), intra_bgrp_comm)
+        else 
+          call drhoc (ngl, gl, omega, tpiba2, msh (nt), rgrid(nt)%r, &
+               rgrid(nt)%rab, upf(nt)%rho_atc, rhocg)
+          rho_core_g(:) = rhocg(igtongl(:))
+        endif
         !
         !     multiply by the structure factor and sum
         !
         do ng = 1, ngm
-           aux(dfftp%nl(ng)) = aux(dfftp%nl(ng)) + strf(ng,nt) * rhocg(igtongl(ng))
+           aux(dfftp%nl(ng)) = aux(dfftp%nl(ng)) + strf(ng,nt) * rho_core_g(ng)
         enddo
      endif
   enddo
+  deallocate(rho_core_g)
   if (gamma_only) then
      do ng = 1, ngm
         aux(dfftp%nlm(ng)) = CONJG(aux(dfftp%nl (ng)))
@@ -141,6 +151,7 @@ subroutine set_rhoc
   !
   deallocate (rhocg)
   deallocate (aux)
+  call sirius_stop_timer(string("qe|set_rhoc"))
   !
   return
 

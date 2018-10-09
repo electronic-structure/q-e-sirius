@@ -16,6 +16,8 @@ subroutine struc_fact (nat, tau, ntyp, ityp, ngm, g, bg, nr1, nr2, &
   !
   USE kinds
   USE constants, ONLY : tpi
+  USE gvect,     ONLY : mill
+  use mod_sirius
   implicit none
   !
   !   Here the dummy variables
@@ -46,7 +48,7 @@ subroutine struc_fact (nat, tau, ntyp, ityp, ngm, g, bg, nr1, nr2, &
   !
   !    here the local variables
   !
-  integer :: nt, na, ng, n1, n2, n3, ipol
+  integer :: nt, na, ng, n1, n2, n3, ipol, nmax, i
   ! counter over atom type
   ! counter over atoms
   ! counter over G vectors
@@ -56,8 +58,59 @@ subroutine struc_fact (nat, tau, ntyp, ityp, ngm, g, bg, nr1, nr2, &
   ! counter over polarizations
 
   real(DP) :: arg, bgtau (3)
+  complex(DP) :: z
   ! the argument of the exponent
   ! scalar product of bg and tau
+
+  call sirius_start_timer(string("qe|struc_fact"))
+  if (.true.) then
+    if (allocated(eigts)) deallocate(eigts)
+    nmax = max(nr1, max(nr2, nr3))
+    allocate(eigts(-nmax:nmax, 3, nat))
+!$omp parallel do schedule(static) default(none) &
+!$omp private(ipol,arg,i) &
+!$omp shared(nr1,nr2,nr3,nat,eigts,eigts1,eigts2,eigts3,bg,tau,nmax)
+    do na = 1, nat
+      do ipol = 1, 3
+        arg = bg (1, ipol) * tau (1, na) + &
+              bg (2, ipol) * tau (2, na) + &
+              bg (3, ipol) * tau (3, na)
+        do i = -nmax, nmax
+          eigts(i, ipol, na) = CMPLX(cos(tpi * arg * i), -sin(tpi * arg * i) ,kind=DP)
+        enddo
+      enddo !ipol
+      do i = -nr1, nr1
+         eigts1(i, na) = eigts(i, 1, na)
+      enddo
+      do i = -nr2, nr2
+         eigts2(i, na) = eigts(i, 2, na)
+      enddo
+      do i = -nr3, nr3
+         eigts3(i, na) = eigts(i, 3, na)
+      enddo
+    enddo !na
+!$omp end parallel do
+
+    strf(:,:) = (0.d0,0.d0)
+    do nt = 1, ntyp
+!$omp parallel do schedule(static) default(none) &
+!$omp private(na, z) &
+!$omp shared(ngm, nat, nt, ityp, strf, eigts, mill)
+      do ng = 1, ngm
+        z = (0.d0, 0.d0)
+        do na = 1, nat
+          if (ityp(na).eq.nt) then
+            z = z + eigts(mill(1, ng), 1, na) * &
+                    eigts(mill(2, ng), 2, na) * &
+                    eigts(mill(3, ng), 3, na)
+          endif
+        enddo
+        strf (ng, nt) = z
+      enddo
+!$omp end parallel do
+    enddo
+
+  else
 
   strf(:,:) = (0.d0,0.d0)
   do nt = 1, ntyp
@@ -92,6 +145,8 @@ subroutine struc_fact (nat, tau, ntyp, ityp, ngm, g, bg, nr1, nr2, &
      enddo
   enddo
 
+  endif
+  call sirius_stop_timer(string("qe|struc_fact"))
   return
 end subroutine struc_fact
 

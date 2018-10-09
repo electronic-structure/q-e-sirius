@@ -23,6 +23,9 @@ subroutine qvan2 (ngy, ih, jh, np, qmod, qg, ylmk0)
   USE us, ONLY: dq, qrad
   USE uspp_param, ONLY: lmaxq, nbetam
   USE uspp, ONLY: nlx, lpl, lpx, ap, indv, nhtolm
+  use mod_sirius
+  USE constants,    ONLY : fpi
+  USE cell_base,    ONLY : omega, tpiba
   implicit none
   !
   ! Input variables
@@ -132,22 +135,28 @@ subroutine qvan2 (ngy, ih, jh, np, qmod, qg, ylmk0)
 #if ! defined _OPENMP
         IF ( ABS( qmod(ig) - qm1 ) > 1.0D-6 ) THEN
 #endif
-           !
-           qm = qmod (ig) * dqi
-           px = qm - int (qm)
-           ux = 1.d0 - px
-           vx = 2.d0 - px
-           wx = 3.d0 - px
-           i0 = INT( qm ) + 1
-           i1 = i0 + 1
-           i2 = i0 + 2
-           i3 = i0 + 3
-           uvx = ux * vx * sixth
-           pwx = px * wx * 0.5d0
-           work = qrad (i0, ijv, l, np) * uvx * wx + &
-                  qrad (i1, ijv, l, np) * pwx * vx - &
-                  qrad (i2, ijv, l, np) * pwx * ux + &
-                  qrad (i3, ijv, l, np) * px * uvx
+           if (use_sirius.and.use_sirius_radial_integrals_q.and.sirius_context_initialized(sctx)) then
+             work = sirius_get_radial_integral(sctx, atom_type(np)%label, string("aug"), tpiba * qmod(ig),&
+                                              &ijv, l - 1)
+             work = work * fpi / omega
+           else
+             !
+             qm = qmod (ig) * dqi
+             px = qm - int (qm)
+             ux = 1.d0 - px
+             vx = 2.d0 - px
+             wx = 3.d0 - px
+             i0 = INT( qm ) + 1
+             i1 = i0 + 1
+             i2 = i0 + 2
+             i3 = i0 + 3
+             uvx = ux * vx * sixth
+             pwx = px * wx * 0.5d0
+             work = qrad (i0, ijv, l, np) * uvx * wx + &
+                    qrad (i1, ijv, l, np) * pwx * vx - &
+                    qrad (i2, ijv, l, np) * pwx * ux + &
+                    qrad (i3, ijv, l, np) * px * uvx
+           endif
 #if ! defined _OPENMP
            qm1 = qmod(ig)
         END IF

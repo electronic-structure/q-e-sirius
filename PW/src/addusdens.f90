@@ -52,6 +52,7 @@ SUBROUTINE addusdens_g(rho)
   USE control_flags,        ONLY : gamma_only
   USE mp_pools,             ONLY : inter_pool_comm
   USE mp,                   ONLY : mp_sum
+  use mod_sirius
   !
   IMPLICIT NONE
   !
@@ -72,6 +73,7 @@ SUBROUTINE addusdens_g(rho)
   ! structure factors, US contribution to rho
   COMPLEX(DP), ALLOCATABLE ::  aux (:,:), qgm(:)
   ! work space for rho(G,nspin), Fourier transform of q
+  logical flg
 
   IF (.not.okvan) RETURN
 
@@ -138,7 +140,18 @@ SUBROUTINE addusdens_g(rho)
            DO ih = 1, nh (nt)
               DO jh = ih, nh (nt)
                  ijh = ijh + 1
-                 CALL qvan2 (ngm_l, ih, jh, nt, qmod, qgm, ylmk0)
+                 flg = .true.
+                 if (use_sirius.and.use_sirius_q_operator.and.allocated(atom_type)) then
+                   if (allocated(atom_type(nt)%qpw)) then
+                     do ig=1,ngm_l
+                       qgm(ig) = atom_type(nt)%qpw(ig+ngm_s-1, ijh)
+                     enddo
+                     flg = .false.
+                   endif
+                 endif
+                 if (flg) then
+                   CALL qvan2 (ngm_l, ih, jh, nt, qmod, qgm, ylmk0)
+                 endif
 !$omp parallel do default(shared) private(ig)
                  DO ig = 1, ngm_l
                     aux(ngm_s+ig-1,is) = aux(ngm_s+ig-1,is)+aux2(ig,ijh)*qgm(ig)

@@ -341,9 +341,10 @@ SUBROUTINE gshells ( vc )
       ! in case of a variable cell run each G vector has its shell
       !
       ngl = ngm
-      gl => gg
+      allocate(gl(ngm))
       DO ng = 1, ngm
          igtongl (ng) = ng
+         gl(ng) = gg(ng)
       ENDDO
    ELSE
       !

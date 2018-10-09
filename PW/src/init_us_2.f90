@@ -29,6 +29,9 @@ subroutine init_us_2 (npw_, igk_, q_, vkb_)
   USE splinelib
   USE uspp,       ONLY : nkb, nhtol, nhtolm, indv
   USE uspp_param, ONLY : upf, lmaxkb, nhm, nh
+  USE constants,    ONLY : fpi
+  USE cell_base,    ONLY : omega, bg
+  USE mod_sirius
   !
   implicit none
   !
@@ -48,12 +51,29 @@ subroutine init_us_2 (npw_, igk_, q_, vkb_)
 
   real(DP), allocatable :: xdata(:)
   integer :: iq
+  integer, allocatable :: gvl(:,:)
+  real(8) vkl(3),t1
 
   ! cache blocking parameters
   INTEGER, PARAMETER :: blocksize = 256
   INTEGER :: iblock, numblock, realblocksize
   !
   if (lmaxkb.lt.0) return
+  if (use_sirius.and.use_sirius_beta_projectors) then
+    call invert_mtrx(bg, bg_inv)
+    vkl = matmul(bg_inv, q_)
+    allocate(gvl(3, npw_))
+    do ig = 1, npw_
+      gvl(:,ig) = mill(:, igk_(ig))
+    enddo
+    stop 'not implemented'
+    ! this has to be done corretly for the case when k-point on QE side and k-point
+    ! on SIIRUS side are not located on the same MPI rank
+    !call sirius_get_beta_projectors_by_kp(kset_id, vkl(1), npw_, gvl(1, 1), vkb_(1, 1), npwx, nkb)
+    deallocate(gvl)
+    return
+  endif
+
   call start_clock ('init_us_2')
 
 !   write(*,'(3i4,i5,3f10.5)') size(tab,1), size(tab,2), size(tab,3), size(vq), q_
@@ -120,10 +140,15 @@ subroutine init_us_2 (npw_, igk_, q_, vkb_)
                     i1 = i0 + 1
                     i2 = i0 + 2
                     i3 = i0 + 3
-                    vq (ig) = tab (i0, nb, nt) * ux * vx * wx / 6.d0 + &
-                              tab (i1, nb, nt) * px * vx * wx / 2.d0 - &
-                              tab (i2, nb, nt) * px * ux * wx / 2.d0 + &
-                              tab (i3, nb, nt) * px * ux * vx / 6.d0
+                    if (use_sirius.and.use_sirius_radial_integrals_beta.and.sirius_context_initialized(sctx)) then
+                      vq(ig) = sirius_get_radial_integral(sctx, atom_type(nt)%label, string("beta"), qg(ig), nb)
+                      vq(ig) = vq(ig) * fpi / sqrt(omega)
+                    else
+                      vq (ig) = tab (i0, nb, nt) * ux * vx * wx / 6.d0 + &
+                                tab (i1, nb, nt) * px * vx * wx / 2.d0 - &
+                                tab (i2, nb, nt) * px * ux * wx / 2.d0 + &
+                                tab (i3, nb, nt) * px * ux * vx / 6.d0
+                    endif
                  endif
               enddo
            endif

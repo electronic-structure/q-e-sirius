@@ -18,6 +18,7 @@ subroutine stres_ewa (alat, nat, ntyp, ityp, zv, at, bg, tau, &
   USE mp_bands,  ONLY : intra_bgrp_comm
   USE mp,        ONLY : mp_sum
   USE Coul_cut_2D, ONLY: do_cutoff_2D, cutoff_stres_sigmaewa
+  use mod_sirius
 
   implicit none
   !
@@ -77,6 +78,11 @@ subroutine stres_ewa (alat, nat, ntyp, ityp, zv, at, bg, tau, &
   real(DP), external :: qe_erfc
   ! the erfc function
   !
+  if (use_sirius.and.use_sirius_stress) then
+    call sirius_get_stress_tensor(gs_handler, string("ewald"), sigmaewa(1, 1))
+    sigmaewa = -sigmaewa * 2 ! convert to Ry
+    return
+  endif
   tpiba2 = (tpi / alat) **2
   sigmaewa(:,:) = 0.d0
   charge = 0.d0

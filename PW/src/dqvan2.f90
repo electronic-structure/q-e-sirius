@@ -22,6 +22,9 @@ SUBROUTINE dqvan2 (ih, jh, np, ipol, ngy, g, qmod, ylmk0, dylmk0, dqg )
   USE us, ONLY: dq, qrad
   USE uspp_param, ONLY: lmaxq, nbetam
   USE uspp, ONLY: nlx, lpl, lpx, ap, indv, nhtol, nhtolm
+  use mod_sirius
+  USE constants,    ONLY : fpi
+  USE cell_base,    ONLY : omega, tpiba
   !
   IMPLICIT NONE
   INTEGER, INTENT(IN) :: ngy, ih, jh, np, ipol
@@ -121,29 +124,40 @@ SUBROUTINE dqvan2 (ih, jh, np, ipol, ngy, g, qmod, ylmk0, dylmk0, dqg )
 #if !defined(_OPENMP)
         IF ( abs( qmod(ig) - qm1 ) > 1.0D-6 ) THEN
 #endif
-           qm = qmod (ig) * dqi
-           px = qm - int (qm)
-           ux = 1.d0 - px
-           vx = 2.d0 - px
-           wx = 3.d0 - px
-           i0 = qm + 1
-           i1 = qm + 2
-           i2 = qm + 3
-           i3 = qm + 4
-           uvx = ux * vx * sixth
+           if (use_sirius.and.use_sirius_radial_integrals_q.and.sirius_context_initialized(sctx)) then
+             work = sirius_get_radial_integral(sctx, atom_type(np)%label, string("aug"), tpiba * qmod(ig),&
+                                              &ijv, l - 1)
 
-           pwx = px * wx * 0.5d0
+             work = work * fpi / omega
+             work1 = sirius_get_radial_integral(sctx, atom_type(np)%label, string("aug_dj"), tpiba * qmod(ig),&
+                                               &ijv, l - 1)
+             work1 = work1 * fpi / omega
+             work1 = work1 * tpiba
+           else
+             qm = qmod (ig) * dqi
+             px = qm - int (qm)
+             ux = 1.d0 - px
+             vx = 2.d0 - px
+             wx = 3.d0 - px
+             i0 = qm + 1
+             i1 = qm + 2
+             i2 = qm + 3
+             i3 = qm + 4
+             uvx = ux * vx * sixth
 
-           work = qrad (i0, ijv, l, np) * uvx * wx + &
-                  qrad (i1, ijv, l, np) * pwx * vx - &
-                  qrad (i2, ijv, l, np) * pwx * ux + &
-                  qrad (i3, ijv, l, np) * px * uvx
-           work1 = - qrad(i0, ijv, l, np) * (ux*vx + vx*wx + ux*wx) * sixth &
-                   + qrad(i1, ijv, l, np) * (wx*vx - px*wx - px*vx) * 0.5d0 &
-                   - qrad(i2, ijv, l, np) * (wx*ux - px*wx - px*ux) * 0.5d0 &
-                   + qrad(i3, ijv, l, np) * (ux*vx - px*ux - px*vx) * sixth
+             pwx = px * wx * 0.5d0
 
-           work1 = work1 * dqi
+             work = qrad (i0, ijv, l, np) * uvx * wx + &
+                    qrad (i1, ijv, l, np) * pwx * vx - &
+                    qrad (i2, ijv, l, np) * pwx * ux + &
+                    qrad (i3, ijv, l, np) * px * uvx
+             work1 = - qrad(i0, ijv, l, np) * (ux*vx + vx*wx + ux*wx) * sixth &
+                     + qrad(i1, ijv, l, np) * (wx*vx - px*wx - px*vx) * 0.5d0 &
+                     - qrad(i2, ijv, l, np) * (wx*ux - px*wx - px*ux) * 0.5d0 &
+                     + qrad(i3, ijv, l, np) * (ux*vx - px*ux - px*vx) * sixth
+
+             work1 = work1 * dqi
+           endif
 
 #if !defined(_OPENMP)
            qm1 = qmod(ig)

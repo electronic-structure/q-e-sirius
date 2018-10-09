@@ -44,6 +44,7 @@ SUBROUTINE sum_band()
   USE paw_variables,        ONLY : okpaw
   USE becmod,               ONLY : allocate_bec_type, deallocate_bec_type, &
                                    becp
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -73,6 +74,45 @@ SUBROUTINE sum_band()
   ! ... calculates weights of Kohn-Sham orbitals used in calculation of rho
   !
   CALL weights ( )
+
+  if (use_sirius.and.use_sirius_ks_solver) then
+    call put_band_occupancies_to_sirius
+  endif
+
+  if (use_sirius.and.use_sirius_density) then
+    call sirius_start_timer(string("qe|sum_band"))
+    call put_band_occupancies_to_sirius
+    call sirius_generate_density(gs_handler)
+    call get_density_from_sirius
+    call sirius_get_energy(gs_handler, string("evalsum"), eband)
+    eband = eband * 2 ! convert to Ry
+
+    if (okvan.and.okpaw)  then
+      call paw_symmetrize(rho%bec)
+    endif
+
+    call sirius_start_timer(string("qe|sym_rho"))
+    call sym_rho(nspin_mag, rho%of_g)
+    call sirius_stop_timer(string("qe|sym_rho"))
+    do is = 1, nspin_mag
+       psic(:) = ( 0.d0, 0.d0 )
+       psic(dfftp%nl(:)) = rho%of_g(:,is)
+       if ( gamma_only ) psic(dfftp%nlm(:)) = conjg( rho%of_g(:,is) )
+       call invfft ('Rho', psic, dfftp)
+       rho%of_r(:,is) = psic(:)
+    enddo
+    IF (lda_plus_u) THEN
+       IF(noncolin) THEN
+          CALL new_ns_nc(rho%ns_nc)
+       ELSE
+          CALL new_ns(rho%ns)
+       ENDIF
+    ENDIF
+    CALL stop_clock( 'sum_band' )
+    call sirius_stop_timer(string("qe|sum_band"))
+    return
+  endif
+
   !
   IF (one_atom_occupations) CALL new_evc()
   !
@@ -213,6 +253,10 @@ SUBROUTINE sum_band()
      END DO
      !
   END IF
+  !
+  if (use_sirius.and.use_sirius_ks_solver.and..not.use_sirius_density_matrix) then
+    call put_density_matrix_to_sirius
+  endif
   !
   CALL stop_clock( 'sum_band' )
   !
@@ -735,7 +779,9 @@ SUBROUTINE sum_band()
           !
           ! ... If we have a US pseudopotential we compute here the becsum term
           !
-          IF ( okvan ) CALL sum_bec ( ik, current_spin, ibnd_start,ibnd_end,this_bgrp_nbnd ) 
+          IF ( okvan ) CALL sum_bec ( ik, current_spin, ibnd_start,ibnd_end,this_bgrp_nbnd )
+          !CALL calbec( npw, vkb, evc, becp )
+          !call check_residuals(ik)
           !
        END DO k_loop
        !

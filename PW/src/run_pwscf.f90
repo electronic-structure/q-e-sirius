@@ -49,6 +49,20 @@ SUBROUTINE run_pwscf ( exit_status )
   USE qmmm,             ONLY : qmmm_initialization, qmmm_shutdown, &
                                qmmm_update_positions, qmmm_update_forces
   USE qexsd_module,     ONLY:   qexsd_set_status
+  use mod_sirius
+  USE fft_base,               ONLY : dfftp, dffts
+  USE cell_base,              ONLY : at, bg
+  USE gvect,                  ONLY : gcutm
+  USE gvecs,                  ONLY : gcutms
+  USE gvect,        ONLY : ngm, g, eigts1, eigts2, eigts3
+  USE ions_base,     ONLY : nat, nsp, ityp, tau
+  USE vlocal,       ONLY : strf
+  USE mp_bands,               ONLY : intra_bgrp_comm, nyfft
+  USE fft_types,              ONLY : fft_type_allocate  
+  USE cellmd,     ONLY : lmovecell
+  USE control_flags, ONLY : lbfgs, lmd
+  USE mp_world, ONLY: mpime
+  USE dfunct,             ONLY : newd
   !
   IMPLICIT NONE
   INTEGER, INTENT(OUT) :: exit_status
@@ -99,9 +113,6 @@ SUBROUTINE run_pwscf ( exit_status )
   !
   CALL qmmm_update_positions()
   !
-  ! ... dry run: code will stop here if called with exit file present
-  ! ... useful for a quick and automated way to check input data
-  !
   IF ( check_stop_now() ) THEN
      CALL pre_init()
      CALL data_structure( gamma_only )
@@ -112,8 +123,10 @@ SUBROUTINE run_pwscf ( exit_status )
      exit_status = 255
      RETURN
   ENDIF
-  !
   CALL init_run()
+  !
+  ! ... dry run: code will stop here if called with exit file present
+  ! ... useful for a quick and automated way to check input data
   !
   IF ( check_stop_now() ) THEN
      CALL qexsd_set_status(255)
@@ -123,14 +136,22 @@ SUBROUTINE run_pwscf ( exit_status )
   ENDIF
   !
   main_loop: DO idone = 1, nstep
+     if (use_sirius.and.recompute_gvec.and.idone.gt.1) then
+        call reset_gvectors()
+     endif
      !
      ! ... electronic self-consistency or band structure calculation
      !
      IF ( .NOT. lscf) THEN
         CALL non_scf ()
      ELSE
+        call sirius_start_timer(string("qe|electrons"))
         CALL electrons()
+        call sirius_stop_timer(string("qe|electrons"))
      END IF
+     if (use_sirius.and.use_sirius_ks_solver) then
+       call get_wave_functions_from_sirius
+     endif
      !
      ! ... code stopped by user or not converged
      !
@@ -147,6 +168,7 @@ SUBROUTINE run_pwscf ( exit_status )
      ! ... ionic section starts here
      !
      CALL start_clock( 'ions' ); !write(*,*)' start ions' ; FLUSH(6)
+     call sirius_start_timer(string("qe|ions"))
      conv_ions = .TRUE.
      !
      ! ... recover from a previous run, if appropriate
@@ -160,6 +182,14 @@ SUBROUTINE run_pwscf ( exit_status )
      ELSE
         CALL pw2casino( 0 )
      END IF
+
+     if (use_sirius) then
+        call put_density_to_sirius
+        if (.not.use_sirius_density_matrix) then
+           call put_density_matrix_to_sirius
+        endif
+     endif
+
      !
      ! ... force calculation
      !
@@ -183,6 +213,15 @@ SUBROUTINE run_pwscf ( exit_status )
         ! ... ionic step (for molecular dynamics or optimization)
         !
         CALL move_ions ( idone, ions_status )
+        if (use_sirius.and.recompute_gvec.and.ions_status.eq.1) then
+          lmovecell=.FALSE.
+          lbfgs=.FALSE.
+          lmd=.FALSE.
+          ions_status = 0
+        endif
+        if (use_sirius) then
+          call update_sirius
+        endif
         conv_ions = ( ions_status == 0 )
         !
         ! ... then we save restart information for the new configuration
@@ -194,6 +233,7 @@ SUBROUTINE run_pwscf ( exit_status )
         !
      END IF
      !
+     call sirius_stop_timer(string("qe|ions"))
      CALL stop_clock( 'ions' ); !write(*,*)' stop ions' ; FLUSH(6)
      !
      CALL qmmm_update_forces( force, rho%of_r, nspin, dfftp)
@@ -216,7 +256,9 @@ SUBROUTINE run_pwscf ( exit_status )
            !
            ! ... final scf calculation with G-vectors for final cell
            !
-           CALL reset_gvectors ( )
+           if (.not.(use_sirius.and.recompute_gvec)) then
+             CALL reset_gvectors ( )
+           endif
            !
         ELSE IF ( ions_status == 2 ) THEN
            !
@@ -225,15 +267,30 @@ SUBROUTINE run_pwscf ( exit_status )
            CALL reset_magn ( )
            !
         ELSE
-           !
-           ! ... update the wavefunctions, charge density, potential
-           ! ... update_pot initializes structure factor array as well
-           !
-           CALL update_pot()
-           !
-           ! ... re-initialize atomic position-dependent quantities
-           !
-           CALL hinit1()
+           if (.not.use_sirius) then
+              !
+              ! ... update the wavefunctions, charge density, potential
+              ! ... update_pot initializes structure factor array as well
+              !
+              CALL update_pot()
+              !
+              ! ... re-initialize atomic position-dependent quantities
+              !
+              CALL hinit1()
+           else
+              if (.not.recompute_gvec) then
+                 call sirius_start_timer(string("qe|update"))
+                 if ( lmovecell ) call scale_h()
+                 call struc_fact( nat, tau, nsp, ityp, ngm, g, bg, &
+                                  dfftp%nr1, dfftp%nr2, dfftp%nr3, strf, eigts1, eigts2, eigts3 )
+                 call setlocal()
+                 call set_rhoc()
+                 call potinit
+                 call newd
+                 call sirius_initialize_subspace(gs_handler, ks_handler)
+                 call sirius_stop_timer(string("qe|update"))
+              endif
+           endif
            !
         END IF
         !
@@ -243,13 +300,19 @@ SUBROUTINE run_pwscf ( exit_status )
      ! ... the first scf iteration of each ionic step (after the first)
      !
      ethr = 1.0D-6
-     !
   END DO main_loop
+
+  ! write basic results to a JSON file
+  if (mpime.eq.0) then
+    call write_json()
+  endif
   !
   ! ... save final data file
   !
   CALL qexsd_set_status(exit_status)
+  call sirius_start_timer(string("qe|punch"))
   CALL punch('all')
+  call sirius_stop_timer(string("qe|punch"))
   !
   CALL qmmm_shutdown()
   !
@@ -281,6 +344,7 @@ SUBROUTINE reset_gvectors ( )
   USE gvecs,      ONLY : gcutms
   USE mp_bands,   ONLY : intra_bgrp_comm, nyfft
   USE control_flags, ONLY : lbfgs, lmd
+  use mod_sirius
   IMPLICIT NONE
   !
   WRITE( UNIT = stdout, FMT = 9110 )
@@ -295,9 +359,11 @@ SUBROUTINE reset_gvectors ( )
   !
   CALL clean_pw( .FALSE. )
   CALL close_files(.TRUE.)
-  lmovecell=.FALSE.
-  lbfgs=.FALSE.
-  lmd=.FALSE.
+  if (.not.(use_sirius.and.recompute_gvec)) then
+    lmovecell=.FALSE.
+    lbfgs=.FALSE.
+    lmd=.FALSE.
+  endif
   if (trim(starting_wfc) == 'file') starting_wfc = 'atomic+random'
   starting_pot='atomic'
   !

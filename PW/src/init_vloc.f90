@@ -20,15 +20,19 @@ subroutine init_vloc()
   USE ions_base,  ONLY : ntyp => nsp
   USE cell_base,  ONLY : omega, tpiba2
   USE vlocal,     ONLY : vloc
-  USE gvect,      ONLY : ngl, gl
+  USE gvect,      ONLY : ngl, gl, ngm, mill, igtongl
   USE Coul_cut_2D, ONLY : do_cutoff_2D, cutoff_lr_Vloc
+  use mp_bands, only : intra_bgrp_comm
+  use mod_sirius
   !
   implicit none
   !
-  integer :: nt
+  integer :: nt, i
+  real(8), allocatable :: tmp(:)
   ! counter on atomic types
   !
   call start_clock ('init_vloc')
+  call sirius_start_timer(string("qe|init_vloc"))
   vloc(:,:) = 0._dp
   do nt = 1, ntyp
      !
@@ -54,8 +58,17 @@ subroutine init_vloc()
         !
         ! normal case
         !
-        call vloc_of_g (rgrid(nt)%mesh, msh (nt), rgrid(nt)%rab, rgrid(nt)%r, &
-            upf(nt)%vloc(1), upf(nt)%zp, tpiba2, ngl, gl, omega, vloc (1, nt) )
+        if (use_sirius.and.use_sirius_vloc) then
+          allocate(tmp(ngm))
+          call sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, string("vloc"), tmp(1), ngm, mill(1, 1), intra_bgrp_comm)
+          do i = 1, ngm
+            vloc(igtongl(i), nt) = tmp(i) * 2 ! convert to Ry
+          enddo
+          deallocate(tmp)
+        else
+          call vloc_of_g (rgrid(nt)%mesh, msh (nt), rgrid(nt)%rab, rgrid(nt)%r, &
+              upf(nt)%vloc(1), upf(nt)%zp, tpiba2, ngl, gl, omega, vloc (1, nt) )
+        endif
         !
      END IF
   enddo
@@ -66,6 +79,7 @@ subroutine init_vloc()
   ! Here, this cutoff long-range part of vloc(g) is computed only once
   ! by the routine below and stored
   IF (do_cutoff_2D) call cutoff_lr_Vloc() 
+  call sirius_stop_timer(string("qe|init_vloc"))
   call stop_clock ('init_vloc')
   return
 end subroutine init_vloc
