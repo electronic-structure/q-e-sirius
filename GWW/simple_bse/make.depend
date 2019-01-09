@@ -49,15 +49,6 @@ lanczos.o : ../../UtilXlib/mp.o
 lanczos.o : derived_object.o
 lanczos.o : input_simple_exc.o
 lanczos.o : simple_object.o
-lanczos.ultimo.o : ../../Modules/constants.o
-lanczos.ultimo.o : ../../Modules/io_files.o
-lanczos.ultimo.o : ../../Modules/io_global.o
-lanczos.ultimo.o : ../../Modules/kind.o
-lanczos.ultimo.o : ../../Modules/mp_world.o
-lanczos.ultimo.o : ../../UtilXlib/mp.o
-lanczos.ultimo.o : derived_object.o
-lanczos.ultimo.o : input_simple_exc.o
-lanczos.ultimo.o : simple_object.o
 simple_bse.o : ../../GWW/gww/start_end.o
 simple_bse.o : input_simple_exc.o
 simple_eigen.o : ../../Modules/io_global.o

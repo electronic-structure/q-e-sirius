@@ -88,7 +88,7 @@ libfox:
 	if test ! -d ../FoX; then \
         mkdir ../FoX; \
 	(gzip -dc ../archive/fox.tgz | (cd ../FoX; tar -xvf -)); \
-	cd ../FoX/fox/; export FC=$(F90); export FCFLAGS="$(FOX_FLAGS)"; \
+	cd ../FoX/fox/; export FC=mpif90; export FCFLAGS="$(FOX_FLAGS)"; \
 	./configure --prefix=$(TOPDIR)/FoX ;\
 	$(MAKE) install; cd ../; rm -fr fox;fi
 # ELPA

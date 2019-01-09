@@ -1176,7 +1176,7 @@ subroutine put_potential_to_sirius
   use mp_bands,             only : intra_bgrp_comm
   use lsda_mod,             only : nspin
   use noncollin_module,     only : nspin_mag
-  USE wavefunctions_module,  ONLY: psic
+  USE wavefunctions,        ONLY : psic
 
   use fft_base,             only : dfftp
   USE fft_interfaces,       ONLY : fwfft
@@ -1331,7 +1331,7 @@ use io_files, only : iunwfc, nwordwfc
 use bp, only : lelfield
 use noncollin_module, only : npol
 use wvfct, only : npwx, nbnd
-use wavefunctions_module, only : evc
+use wavefunctions, only : evc
 use lsda_mod, only : isk, lsda
 use mp_pools, only : inter_pool_comm
 use parallel_include

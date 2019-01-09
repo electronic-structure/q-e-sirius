@@ -59,12 +59,6 @@
        sigmar_all(:,:),        &!  To store sigmar, sigmai and zi globally
        sigmai_all(:,:),        &!
        sigmai_mode(:,:,:),     &! 
-       Fi_all(:,:,:,:),        &! 
-       F_current(:,:,:,:),     &! 
-       F_SERTA(:,:,:,:),       &! 
-       Fi_allcb(:,:,:,:),      &! 
-       F_currentcb(:,:,:,:),   &! 
-       F_SERTAcb(:,:,:,:),     &! 
        zi_all(:,:),            &!
        esigmar_all(:,:,:),     &!
        esigmai_all(:,:,:),     &!   
@@ -100,8 +94,8 @@
        igkq(:),                &!  Index for k+q+G vector
        igk_k_all(:,:),         &!  Global index (in case of parallel)
        ngk_all(:),             &!  Global number of plane wave for each global k-point
-       s_BZtoIBZ(:,:,:),       &!  Save the symmetry operation that brings BZ k into IBZ
-       BZtoIBZ(:)               !  Map between the full uniform k-grid and the IBZ  
+       map_rebal(:),           &!  Map between the k-point and their load rebalanced one
+       map_rebal_inv(:)         !  Map between the k-point and their load rebalanced one
   INTEGER, allocatable ::      &
        shift (:),              &!  for every k+q, index of the G0 which folds k+q into k+q+G0 of the first BZ
        gmap(:)                  !  the map G -> G-G_0 in the large (density) G vectors set, for every G_0

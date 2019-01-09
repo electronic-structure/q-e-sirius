@@ -57,7 +57,7 @@ SUBROUTINE forces()
   USE tsvdw_module,  ONLY : FtsvdW
   USE esm,           ONLY : do_comp_esm, esm_bc, esm_force_ew
   USE qmmm,          ONLY : qmmm_mode
-  USE wavefunctions_module, ONLY : psic  
+  USE wavefunctions,        ONLY : psic  
   USE ener,                 ONLY : etxc, vtxc
   USE mp_bands,             ONLY : intra_bgrp_comm
   USE fft_interfaces,       ONLY : fwfft

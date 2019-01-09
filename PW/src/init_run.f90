@@ -33,9 +33,7 @@ SUBROUTINE init_run()
   USE esm,                ONLY : do_comp_esm, esm_init
   USE tsvdw_module,       ONLY : tsvdw_initialize
   USE Coul_cut_2D,        ONLY : do_cutoff_2D, cutoff_fact 
-  USE wavefunctions_module, ONLY : evc
   use mod_sirius
-!  USE wavefunctions_module, ONLY : evc
 !#if defined(__HDF5) && defined(__OLDXML)
 !  USE hdf5_qe, ONLY : initialize_hdf5
 !#endif
@@ -84,7 +82,7 @@ SUBROUTINE init_run()
   CALL ggens( dffts, gamma_only, at, g, gg, mill, gcutms, ngms )
   if (gamma_only) THEN
      ! ... Solvers need to know gstart
-     call export_gstart_2_cg(gstart); call export_gstart_2_davidson(gstart)
+     call export_gstart_2_solvers(gstart)
   END IF
   !
   IF (do_comp_esm) CALL esm_init()
@@ -121,8 +119,8 @@ SUBROUTINE init_run()
   btype(:,:) = 1
   !
   IF (ts_vdw) THEN
-    CALL tsvdw_initialize()
-    CALL set_h_ainv()
+     CALL tsvdw_initialize()
+     CALL set_h_ainv()
   END IF
   !
   CALL openfil()

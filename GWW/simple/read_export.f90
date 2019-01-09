@@ -2,9 +2,6 @@
 subroutine read_export (pp_file,kunit,uspp_spsi, ascii, single_file, raw)
   !-----------------------------------------------------------------------
   !
-  use iotk_module
-
-
   use kinds,          ONLY : DP 
   use pwcom  
   use control_flags,  ONLY : gamma_only  
@@ -15,7 +12,7 @@ subroutine read_export (pp_file,kunit,uspp_spsi, ascii, single_file, raw)
 !  use char,           ONLY : sname
 ! sname is in symme which is now outside pwcom
   use  uspp,          ONLY : nkb, vkb
-  use wavefunctions_module,  ONLY : evc
+  use wavefunctions,  ONLY : evc
   use io_files,       ONLY : nd_nmbr, prefix, iunwfc, nwordwfc, iunsat, nwordatwfc
   use io_files,       ONLY : pseudo_dir, psfile
   use io_global,      ONLY : ionode, stdout
@@ -57,7 +54,6 @@ subroutine read_export (pp_file,kunit,uspp_spsi, ascii, single_file, raw)
 
   real(DP) :: wfc_scal 
   logical :: twf0, twfm
-  character(iotk_attlenx) :: attr
   complex(DP), allocatable :: sevc (:,:)
 
   CHARACTER(LEN=256) :: outdir

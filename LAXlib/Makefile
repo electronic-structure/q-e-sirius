@@ -14,6 +14,8 @@ transto.o \
 distools.o \
 zhpev_drv.o \
 mp_diag.o \
+set_mpi_comm_4_solvers.o \
+export_gstart_2_solvers.o \
 la_param.o
 
 
@@ -25,7 +27,7 @@ libqela.a:  $(LAX)
 	$(RANLIB) $@    
 
 la_test.x : test.o libqela.a 
-	$(LD) $(LDFLAGS) -o la_test.x test.o libqela.a $(LIBS)
+	$(LD) $(LDFLAGS) -o la_test.x test.o libqela.a $(QELIBS)
 
 TEST : la_test.x
 

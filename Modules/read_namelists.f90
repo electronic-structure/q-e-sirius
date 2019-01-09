@@ -380,6 +380,7 @@ MODULE read_namelists_module
        diagonalization = 'david'
        diago_thr_init = 0.0_DP
        diago_cg_maxiter = 20
+       diago_ppcg_maxiter = 20
        diago_david_ndim = 4
        diago_full_acc = .FALSE.
        !
@@ -572,6 +573,7 @@ MODULE read_namelists_module
        cell_nstepe = 1
        cell_damping = 0.1_DP
        press_conv_thr = 0.5_DP
+       treinit_gvecs = .FALSE.
        !
        RETURN
        !
@@ -977,6 +979,7 @@ MODULE read_namelists_module
        CALL mp_bcast( diagonalization,      ionode_id, intra_image_comm )
        CALL mp_bcast( diago_thr_init,       ionode_id, intra_image_comm )
        CALL mp_bcast( diago_cg_maxiter,     ionode_id, intra_image_comm )
+       CALL mp_bcast( diago_ppcg_maxiter,   ionode_id, intra_image_comm )
        CALL mp_bcast( diago_david_ndim,     ionode_id, intra_image_comm )
        CALL mp_bcast( diago_full_acc,       ionode_id, intra_image_comm )
        CALL mp_bcast( sic,                  ionode_id, intra_image_comm )
@@ -1129,6 +1132,7 @@ MODULE read_namelists_module
        CALL mp_bcast( cell_nstepe,      ionode_id, intra_image_comm )
        CALL mp_bcast( cell_damping,     ionode_id, intra_image_comm )
        CALL mp_bcast( press_conv_thr,   ionode_id, intra_image_comm )
+       CALL mp_bcast( treinit_gvecs,    ionode_id, intra_image_comm )
        !
        RETURN
        !

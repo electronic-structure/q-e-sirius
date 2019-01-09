@@ -28,11 +28,12 @@
   USE gvecw,                ONLY : ecutwfc
   USE gvect,                ONLY : eigts1, eigts2, eigts3, g, ngm
   USE atom,                 ONLY : msh, rgrid
-  USE wavefunctions_module, ONLY : evc
+  USE wavefunctions, ONLY : evc
   USE kinds,                ONLY : DP
   USE noncollin_module,     ONLY : noncolin, npol
   USE uspp_param,           ONLY : upf
-  USE phcom,                ONLY : lrwfc, iuwfc, vlocq
+  USE units_lr,             ONLY : lrwfc, iuwfc
+  USE phcom,                ONLY : vlocq
   USE qpoint,               ONLY : xq, eigqts, npwq
   USE nlcc_ph,              ONLY : drc                           
   USE uspp,                 ONLY : nlcc_any
