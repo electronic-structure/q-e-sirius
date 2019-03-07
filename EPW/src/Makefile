@@ -11,7 +11,7 @@ MODFLAGS= $(BASEMOD_FLAGS) \
           $(MOD_FLAG)../../PW/src \
           $(MOD_FLAG)../../PHonon/PH \
           $(MOD_FLAG)../../LR_Modules \
-          $(MOD_FLAG)../../wannier90-2.1.0/src/obj \
+          $(MOD_FLAG)../../wannier90-3.0.0/src/obj \
           $(MOD_FLAG)../../dft-d3
 
 #
@@ -37,6 +37,7 @@ transport.o \
 transport_iter.o \
 wigner.o \
 a2f.o \
+adddvscf2.o \
 allocate_epwq.o \
 bcast_epw_input.o \
 bloch2wan.o \
@@ -67,6 +68,7 @@ loadqmesh.o \
 loadumat.o \
 load_rebal.o \
 nesting_fn.o \
+newdq2.o \
 openfilepw.o \
 rgd_blk_epw_fine_mem.o \
 plot_band.o \
@@ -104,7 +106,7 @@ system_mem_usage.o
 
 PHOBJS = ../../PHonon/PH/libph.a
 PWOBJS = ../../PW/src/libpw.a
-W90LIB = ../../wannier90-2.1.0/libwannier.a 
+W90LIB = ../../wannier90-3.0.0/libwannier.a 
 LRMODS = ../../LR_Modules/liblrmod.a
 PWOBJS = ../../PW/src/libpw.a 
 QEMODS = ../../Modules/libqemod.a ../../KS_Solvers/libks_solvers.a \
@@ -113,8 +115,6 @@ LIBOBJS =../../LAXlib/libqela.a ../../UtilXlib/libutil.a ../../clib/clib.a ../..
 
 TLDEPS= pw ph
 
-#all :   pw ph wannier wcorr pp ld1 upf libepw.a epw.x 
-#all :   pw ph wannier pp ld1 upf libepw.a epw.x 
 all :   pw ph wannier pp upf libepw.a epw.x 
 
 libepw.a : $(EPWOBJS)
@@ -126,11 +126,6 @@ epw.x : epw.o libepw.a $(PHOBJS) $(LRMODS) $(PWOBJS) $(W90LIB) $(QEMODS) $(LIBOB
 	epw.o  libepw.a	$(PHOBJS) $(LRMODS) $(W90LIB) $(PWOBJS) $(QEMODS) $(LIBOBJS) $(QELIBS) 
 	- ( cd ../bin ; ln -fs ../src/epw.x . )
 
-# SP: Here to correct bugs in wannier 2.0.1
-
-wcorr : 
-	sed -i "s/allocate(fermi_energy_list(nfermi),stat=ierr)/if (.not. allocated(fermi_energy_list) ) allocate(fermi_energy_list(nfermi))/g" ../../wannier90-2.0.1/src/parameters.F90 ; sed -i "s/allocate(kubo_freq_list(kubo_nfreq),stat=ierr)/if (.not. allocated(kubo_freq_list) ) allocate(kubo_freq_list(kubo_nfreq)) /g" ../../wannier90-2.0.1/src/parameters.F90 ; cp wannier_lib.f90 wannier_lib.F90 ; cp wannier_lib.F90 ../../wannier90-2.0.1/src/ 
-
 pw : 
 	cd ../../ ; make pw
 
@@ -138,7 +133,7 @@ ph :
 	cd ../../ ; make ph
 
 wannier :
-	cd ../../ ; make w90 ; cd wannier90-2.1.0/ ; make lib
+	cd ../../ ; make w90 ; cd wannier90-3.0.0/ ; make lib
 
 pp : 
 	cd ../../ ; make pp

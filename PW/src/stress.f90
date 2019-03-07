@@ -37,7 +37,6 @@ subroutine stress ( sigma )
   USE ener,          ONLY : etot ! for ESM stress
   USE esm,           ONLY : do_comp_esm, esm_bc ! for ESM stress
   USE esm,           ONLY : esm_stres_har, esm_stres_ewa, esm_stres_loclong ! for ESM stress
-  use mod_sirius
   !
   IMPLICIT NONE
   !
@@ -72,23 +71,11 @@ subroutine stress ( sigma )
   !
   !   contribution from local  potential
   !
-  call sirius_start_timer(string("qe|stress|local"))
   call stres_loc(sigmaloc) ! In ESM, sigmaloc has only short term.
-  IF ( do_comp_esm .and. ( esm_bc .ne. 'pbc' ) ) THEN ! for ESM stress
-     call esm_stres_loclong( sigmaloclong, rho%of_g ) ! long range part
-     sigmaloc(:,:) = sigmaloc(:,:) + sigmaloclong(:,:)
-  END IF
-  call sirius_stop_timer(string("qe|stress|local"))
   !
   !  hartree contribution
   !
-  call sirius_start_timer(string("qe|stress|har"))
-  IF ( do_comp_esm .and. ( esm_bc .ne. 'pbc' ) ) THEN ! for ESM stress
-     call esm_stres_har( sigmahar, rho%of_g )
-  ELSE
-     call stres_har (sigmahar)
-  END IF
-  call sirius_stop_timer(string("qe|stress|har"))
+  IF (.not.( do_comp_esm .and. ( esm_bc .ne. 'pbc' ) )) call stres_har(sigmahar)
   !
   !  xc contribution (diagonal)
   !
@@ -99,31 +86,34 @@ subroutine stress ( sigma )
   !
   !  xc contribution: add gradient corrections (non diagonal)
   !
-  call sirius_start_timer(string("qe|stress|xc"))
   call stres_gradcorr ( rho%of_r, rho%of_g, rho_core, rhog_core, rho%kin_r, &
        nspin, dfftp, g, alat, omega, sigmaxc)
-  call sirius_stop_timer(string("qe|stress|xc"))
+  !
+  ! core correction contribution
+  !
+  call stres_cc (sigmaxcc)
+  !
+  IF ( do_comp_esm .and. ( esm_bc .ne. 'pbc' ) ) THEN  ! for ESM stress
+     call esm_stres_loclong( sigmaloclong, rho%of_g(:,1) ) ! long range part
+     sigmaloc(:,:) = sigmaloc(:,:) + sigmaloclong(:,:)
+  END IF
+  !
+  !  hartree contribution - for ESM stress
+  !
+  IF ( do_comp_esm .and. ( esm_bc .ne. 'pbc' ) )  call esm_stres_har( sigmahar, rho%of_g(:,1) )
   !
   !  add meta-GGA contribution 
   !
   call stres_mgga ( sigmaxc )
   !
-  ! core correction contribution
-  !
-  call sirius_start_timer(string("qe|stress|cc"))
-  call stres_cc (sigmaxcc)
-  call sirius_stop_timer(string("qe|stress|cc"))
-  !
   !  ewald contribution
   !
-  call sirius_start_timer(string("qe|stress|ewald"))
   IF ( do_comp_esm .and. ( esm_bc .ne. 'pbc' ) ) THEN ! for ESM stress
      call esm_stres_ewa( sigmaewa )
   ELSE
      call stres_ewa (alat, nat, ntyp, ityp, zv, at, bg, tau, omega, g, &
           gg, ngm, gstart, gamma_only, gcutm, sigmaewa)
   END IF
-  call sirius_stop_timer(string("qe|stress|ewald"))
   !
   !  semi-empirical dispersion contribution
   !
@@ -155,9 +145,7 @@ subroutine stress ( sigma )
   !
   !  kinetic + nonlocal contribuition
   !
-  call sirius_start_timer(string("qe|stress|knl"))
   call stres_knl (sigmanlc, sigmakin)
-  call sirius_stop_timer(string("qe|stress|knl"))
   !
   do l = 1, 3
      do m = 1, 3
@@ -185,7 +173,7 @@ subroutine stress ( sigma )
   !   DFT-non_local contribution
   !
   sigma_nonloc_dft (:,:) = 0.d0
-  call stres_nonloc_dft(rho%of_r, rho_core, nspin, sigma_nonloc_dft)
+  call stres_nonloc_dft(rho%of_r(:,1), rho_core, nspin, sigma_nonloc_dft)  
   !
   ! SUM
   !
@@ -267,3 +255,4 @@ subroutine stress ( sigma )
          &   5x,'dft-nl  stress (kbar)',3f10.2/2(26x,3f10.2/)/ &
          &   5x,'TS-vdW  stress (kbar)',3f10.2/2(26x,3f10.2/)/ )
 end subroutine stress
+

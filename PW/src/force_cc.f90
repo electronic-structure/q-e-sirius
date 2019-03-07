@@ -36,7 +36,7 @@ subroutine force_cc (forcecc)
   real(DP) :: forcecc (3, nat)
   ! output: the local forces on atoms
 
-  integer :: ipol, ig, ir, nt, na
+  integer :: ig, ir, nt, na
   ! counter on polarizations
   ! counter on G vectors
   ! counter on FFT grid points
@@ -104,19 +104,19 @@ subroutine force_cc (forcecc)
                       rgrid(nt)%rab, upf(nt)%rho_atc, rhocg)
           rho_core_g(:) = rhocg(igtongl(:))
         endif
+!$omp parallel do private(arg)
         do na = 1, nat
            if (nt.eq.ityp (na) ) then
               do ig = gstart, ngm
                  arg = (g (1, ig) * tau (1, na) + g (2, ig) * tau (2, na) &
                       + g (3, ig) * tau (3, na) ) * tpi
-                 do ipol = 1, 3
-                    forcecc (ipol, na) = forcecc (ipol, na) + tpiba * omega * &
-                         rho_core_g(ig) * CONJG(psic (dfftp%nl (ig) ) ) * &
-                         CMPLX( sin (arg), cos (arg) ,kind=DP) * g (ipol, ig) * fact
-                 enddo
+                 forcecc (1:3, na) = forcecc (1:3, na) + tpiba * omega * &
+                      rho_core_g(ig) * CONJG(psic (dfftp%nl (ig) ) ) * &
+                      CMPLX( sin (arg), cos (arg) ,kind=DP) * g (1:3, ig) * fact
               enddo
            endif
         enddo
+!$omp end parallel do
      endif
   enddo
   !

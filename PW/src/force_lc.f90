@@ -8,7 +8,7 @@
 !
 !----------------------------------------------------------------------
 subroutine force_lc (nat, tau, ityp, alat, omega, ngm, ngl, &
-     igtongl, g, rho, nl, nspin, gstart, gamma_only, vloc, forcelc)
+     igtongl, g, rho, nl, gstart, gamma_only, vloc, forcelc)
   !----------------------------------------------------------------------
   !
   USE kinds
@@ -24,11 +24,10 @@ subroutine force_lc (nat, tau, ityp, alat, omega, ngm, ngl, &
   !
   !   first the dummy variables
   !
-  integer, intent(in) :: nat, ngm, nspin, ngl, gstart, &
+  integer, intent(in) :: nat, ngm, ngl, gstart, &
                          igtongl (ngm), nl (ngm), ityp (nat)
   ! nat:    number of atoms in the cell
   ! ngm:    number of G vectors
-  ! nspin:  number of spin polarizations
   ! ngl:    number of shells
   ! igtongl correspondence G <-> shell of G
   ! nl:     correspondence fft mesh <-> G vec
@@ -37,7 +36,7 @@ subroutine force_lc (nat, tau, ityp, alat, omega, ngm, ngl, &
   logical, intent(in) :: gamma_only
 
   real(DP), intent(in) :: tau (3, nat), g (3, ngm), vloc (ngl, * ), &
-       rho (dfftp%nnr, nspin), alat, omega
+       rho (dfftp%nnr), alat, omega
   ! tau:  coordinates of the atoms
   ! g:    coordinates of G vectors
   ! vloc: local potential
@@ -48,7 +47,7 @@ subroutine force_lc (nat, tau, ityp, alat, omega, ngm, ngl, &
   real(DP), intent(out) :: forcelc (3, nat)
   ! the local-potential contribution to forces on atoms
 
-  integer :: ipol, ig, na
+  integer :: ig, na
   ! counter on polarizations
   ! counter on G vectors
   ! counter on atoms
@@ -61,33 +60,28 @@ subroutine force_lc (nat, tau, ityp, alat, omega, ngm, ngl, &
   ! contribution to the force from the local part of the bare potential
   ! F_loc = Omega \Sum_G n*(G) d V_loc(G)/d R_i
   !
-  if (use_sirius.and.use_sirius_forces) then
-    call sirius_get_forces(gs_handler, string("vloc"), forcelc(1, 1))
+  IF (use_sirius.AND.use_sirius_forces) THEN
+    CALL sirius_get_forces(gs_handler, string("vloc"), forcelc(1, 1))
     forcelc = forcelc * 2 ! convert to Ry
 
-    if ( do_comp_esm .and. ( esm_bc .ne. 'pbc' ) ) then
-      allocate (aux(dfftp%nnr))
-      if ( nspin == 2) then
-        aux(:) = CMPLX( rho(:,1)+rho(:,2), 0.0_dp, kind=dp )
-      else
-        aux(:) = CMPLX( rho(:,1), 0.0_dp, kind=dp )
-      end if
+    IF ( do_comp_esm .AND. ( esm_bc .NE. 'pbc' ) ) then
+      ALLOCATE(aux(dfftp%nnr))
+      aux(:) = CMPLX( rho(:), 0.0_dp, kind=dp )
+      !
       CALL fwfft ('Rho', aux, dfftp)
       force_tmp = 0.d0
-      call esm_force_lc ( aux, force_tmp )
-      call mp_sum( force_tmp, intra_bgrp_comm )
+      CALL esm_force_lc ( aux, force_tmp )
+      CALL mp_sum( force_tmp, intra_bgrp_comm )
       forcelc = forcelc + force_tmp
-      deallocate(aux)
+      DEALLOCATE(aux)
     endif
     return
   endif
 
   allocate (aux(dfftp%nnr))
-  if ( nspin == 2) then
-      aux(:) = CMPLX( rho(:,1)+rho(:,2), 0.0_dp, kind=dp )
-  else
-      aux(:) = CMPLX( rho(:,1), 0.0_dp, kind=dp )
-  end if
+  !
+  aux(:) = CMPLX( rho(:), 0.0_dp, kind=dp )
+  !
   CALL fwfft ('Rho', aux, dfftp)
   !
   !    aux contains now  n(G)
@@ -97,24 +91,22 @@ subroutine force_lc (nat, tau, ityp, alat, omega, ngm, ngl, &
   else
      fact = 1.d0
   end if
+!$omp parallel do private(arg)
   do na = 1, nat
-     do ipol = 1, 3
-        forcelc (ipol, na) = 0.d0
-     enddo
+     !
+     forcelc (1:3, na) = 0.d0
      ! contribution from G=0 is zero
      do ig = gstart, ngm
         arg = (g (1, ig) * tau (1, na) + g (2, ig) * tau (2, na) + &
                g (3, ig) * tau (3, na) ) * tpi
-        do ipol = 1, 3
-           forcelc (ipol, na) = forcelc (ipol, na) + &
-                g (ipol, ig) * vloc (igtongl (ig), ityp (na) ) * &
+        forcelc (1:3, na) = forcelc (1:3, na) + &
+                g (1:3, ig) * vloc (igtongl (ig), ityp (na) ) * &
                 (sin(arg)*DBLE(aux(nl(ig))) + cos(arg)*AIMAG(aux(nl(ig))) )
-        enddo
      enddo
-     do ipol = 1, 3
-        forcelc (ipol, na) = fact * forcelc (ipol, na) * omega * tpi / alat
-     enddo
+     !
+     forcelc (1:3, na) = fact * forcelc (1:3, na) * omega * tpi / alat
   enddo
+!$omp end parallel do
   IF ( do_comp_esm .and. ( esm_bc .ne. 'pbc' ) ) THEN
      !
      ! ... Perform corrections for ESM method (add long-range part)

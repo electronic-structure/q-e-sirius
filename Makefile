@@ -80,19 +80,19 @@ cp : bindir libs mods
 
 ph : phlibs
 	if test -d PHonon; then \
-	( cd PHonon; $(MAKE) all || exit 1) ; fi
+	( cd PHonon; $(MAKE) TLDEPS= all || exit 1) ; fi
 
 hp : hplibs
 	if test -d HP; then \
-	( cd HP; $(MAKE) all || exit 1) ; fi
+	( cd HP; $(MAKE) TLDEPS= all || exit 1) ; fi
 
 neb : pwlibs
 	if test -d NEB; then \
-	( cd NEB; $(MAKE) all || exit 1) ; fi
+	( cd NEB; $(MAKE) TLDEPS= all || exit 1) ; fi
 
 tddfpt : phlibs
 	if test -d TDDFPT; then \
-	( cd TDDFPT; $(MAKE) all || exit 1) ; fi
+	( cd TDDFPT; $(MAKE) TLDEPS= all || exit 1) ; fi
 
 pp : pwlibs
 	if test -d PP ; then \
@@ -128,10 +128,6 @@ upf : libs mods
 	if test -d upftools ; then \
 	( cd upftools ; $(MAKE) TLDEPS= all || exit 1 ) ; fi
 
-pw_export : pwlibs
-	if test -d PP ; then \
-	( cd PP ; $(MAKE) TLDEPS= pw_export.x || exit 1 ) ; fi
-
 xspectra : pwlibs
 	if test -d XSpectra ; then \
 	( cd XSpectra ; $(MAKE) TLDEPS= all || exit 1 ) ; fi
@@ -150,8 +146,21 @@ travis : pwall epw
 	( cd test-suite ; make run-travis || exit 1 ) ; fi
 
 gui :
-	@echo 'Check "GUI/README" how to access the Graphical User Interface'
-#@echo 'Check "PWgui-X.Y/README" how to access the Graphical User Interface'
+	@if test -d GUI/PWgui ; then \
+	    cd GUI/PWgui ; \
+	    $(MAKE) TLDEPS= init; \
+	    echo ; \
+	    echo "  PWgui has been built in ./GUI/PWgui/. You may try it either as:  "; \
+	    echo "         ./GUI/PWgui/pwgui" ; \
+	    echo "     or"; \
+	    echo "         cd ./GUI/PWgui";\
+	    echo "         ./pwgui" ; \
+	    echo ; \
+	else \
+	    echo ; \
+	    echo "  Sorry, gui works only for git sources !!!" ; \
+	    echo ; \
+	fi
 
 examples :
 	( cd install ; $(MAKE) -f plugins_makefile $@ || exit 1 )
@@ -257,7 +266,7 @@ plumed:
 west: pw
 	( cd install ; $(MAKE) -f plugins_makefile $@ || exit 1 )
 
-SternheimerGW: pw lrmods 
+SternheimerGW: lrmods 
 	( cd install ; $(MAKE) -f plugins_makefile $@ || exit 1 )
 
 #########################################################
@@ -312,7 +321,7 @@ clean :
 		CPV LAXlib FFTXlib UtilXlib Modules PP PW EPW KS_Solvers \
 		NEB ACFDT COUPLE GWW XSpectra PWCOND dft-d3 \
 		atomic clib LR_Modules pwtools upftools \
-		dev-tools extlibs Environ TDDFPT PHonon HP GWW \
+		dev-tools extlibs Environ TDDFPT PHonon HP GWW Doc GUI \
 	; do \
 	    if test -d $$dir ; then \
 		( cd $$dir ; \
@@ -328,8 +337,7 @@ veryclean : clean
 	- @(cd install ; $(MAKE) -f plugins_makefile veryclean)
 	- @(cd install ; $(MAKE) -f extlibs_makefile veryclean)
 	- rm -rf install/patch-plumed
-	- cd install ; rm -f config.log configure.msg config.status \
-		CPV/version.h ChangeLog* intel.pcl */intel.pcl
+	- cd install ; rm -f config.log configure.msg config.status
 	- rm -rf include/configure.h install/make_wannier90.inc
 	- cd install ; rm -fr autom4te.cache
 	- cd install; ./clean.sh ; cd -
@@ -356,11 +364,11 @@ tar :
 tar-gui :
 	@if test -d GUI/PWgui ; then \
 	    cd GUI/PWgui ; \
-	    $(MAKE) TLDEPS= clean svninit pwgui-source; \
+	    $(MAKE) TLDEPS= clean init pwgui-source; \
 	    mv PWgui-*.tgz ../.. ; \
 	else \
 	    echo ; \
-	    echo "  Sorry, tar-gui works only for svn sources !!!" ; \
+	    echo "  Sorry, tar-gui works only for git sources !!!" ; \
 	    echo ; \
 	fi
 
@@ -371,7 +379,7 @@ tar-qe-modes :
 	    mv QE-modes-*.tar.gz ../.. ; \
 	else \
 	    echo ; \
-	    echo "  Sorry, tar-qe-modes works only for svn sources !!!" ; \
+	    echo "  Sorry, tar-qe-modes works only for git sources !!!" ; \
 	    echo ; \
 	fi
 
@@ -382,10 +390,10 @@ tar-qe-modes :
 # "latex2html" and "convert" (from Image-Magick) are needed.
 doc : 
 	if test -d Doc ; then \
-	( cd Doc ; $(MAKE) TLDEPS= all ) ; fi
+	( cd Doc ; $(MAKE) VERSION=6.4 TLDEPS= all ) ; fi
 	for dir in */Doc; do \
 	( if test -f $$dir/Makefile ; then \
-	( cd $$dir; $(MAKE) TLDEPS= all ) ; fi ) ;  done
+	( cd $$dir; $(MAKE) VERSION=6.4 TLDEPS= all ) ; fi ) ;  done
 
 doc_clean :
 	if test -d Doc ; then \

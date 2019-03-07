@@ -6,7 +6,7 @@
 # of the License. See the file `License' in the root directory
 # of the present distribution.
 
-AC_INIT(ESPRESSO, 6.3, , espresso)
+AC_INIT(ESPRESSO, 6.4, , espresso)
 
 AC_PREREQ(2.64)
 AC_CONFIG_MACRO_DIR([m4/])
@@ -75,6 +75,9 @@ X_AC_QE_LAPACK()
 
 # Checking for FFT...
 X_AC_QE_FFT()
+
+# Setting libxc...
+ACX_LIBXC()
 
 # Checking for IBM MASS library...
 X_AC_QE_MASS()

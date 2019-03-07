@@ -19,14 +19,14 @@ SUBROUTINE sum_band()
   USE cell_base,            ONLY : at, bg, omega, tpiba
   USE ions_base,            ONLY : nat, ntyp => nsp, ityp
   USE fft_base,             ONLY : dfftp, dffts
-  USE fft_interfaces,       ONLY : fwfft, invfft, fft_interpolate
+  USE fft_interfaces,       ONLY : fwfft, invfft
   USE gvect,                ONLY : ngm, g
   USE gvecs,                ONLY : doublegrid
   USE klist,                ONLY : nks, nkstot, wk, xk, ngk, igk_k
   USE fixed_occ,            ONLY : one_atom_occupations
   USE ldaU,                 ONLY : lda_plus_U
   USE lsda_mod,             ONLY : lsda, nspin, current_spin, isk
-  USE scf,                  ONLY : rho
+  USE scf,                  ONLY : rho, rhoz_or_updw
   USE symme,                ONLY : sym_rho
   USE io_files,             ONLY : iunwfc, nwordwfc
   USE buffers,              ONLY : get_buffer
@@ -256,6 +256,10 @@ SUBROUTINE sum_band()
   if (use_sirius.and.use_sirius_ks_solver.and..not.use_sirius_density_matrix) then
     call put_density_matrix_to_sirius
   endif
+  ! ... if LSDA rho%of_r and rho%of_g are converted from (up,dw) to
+  ! ... (up+dw,up-dw) format.
+  !
+  IF ( nspin == 2 ) CALL rhoz_or_updw( rho, 'r_and_g', '->rhoz' )
   !
   CALL stop_clock( 'sum_band' )
   !
