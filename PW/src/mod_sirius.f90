@@ -991,13 +991,13 @@ subroutine get_density_from_sirius
   call sirius_get_pw_coeffs(gs_handler, string("rho"), rho%of_g(1, 1), ngm, mill(1, 1), intra_bgrp_comm)
   if (nspin.eq.2) then
     call sirius_get_pw_coeffs(gs_handler, string("magz"), rho%of_g(1, 2), ngm, mill(1, 1), intra_bgrp_comm)
-    ! convert to rho_{up}, rho_{dn}
-    do ig = 1, ngm
-      z1 = rho%of_g(ig, 1)
-      z2 = rho%of_g(ig, 2)
-      rho%of_g(ig, 1) = 0.5 * (z1 + z2)
-      rho%of_g(ig, 2) = 0.5 * (z1 - z2)
-    enddo
+    !! convert to rho_{up}, rho_{dn}
+    !do ig = 1, ngm
+    !  z1 = rho%of_g(ig, 1)
+    !  z2 = rho%of_g(ig, 2)
+    !  rho%of_g(ig, 1) = 0.5 * (z1 + z2)
+    !  rho%of_g(ig, 2) = 0.5 * (z1 - z2)
+    !enddo
   endif
   if (nspin.eq.4) then
     call sirius_get_pw_coeffs(gs_handler, string("magx"), rho%of_g(1, 2), ngm, mill(1, 1), intra_bgrp_comm)
@@ -1024,22 +1024,23 @@ subroutine put_density_to_sirius
   integer iat, ig, ih, jh, ijh, na, ispn
   real(8) :: fact
   !
-  if (nspin.eq.1.or.nspin.eq.4) then
+  !if (nspin.eq.1.or.nspin.eq.4) then
     call sirius_set_pw_coeffs(gs_handler, string("rho"), rho%of_g(1, 1), bool(.true.),&
                              &ngm, mill(1, 1), intra_bgrp_comm)
-  endif
+  !endif
 
   if (nspin.eq.2) then
-    allocate(rho_tot(ngm))
-    allocate(mag(ngm))
-    do ig = 1, ngm
-      rho_tot(ig) = rho%of_g(ig, 1) + rho%of_g(ig, 2)
-      mag(ig) = rho%of_g(ig, 1) - rho%of_g(ig, 2)
-    enddo
-    call sirius_set_pw_coeffs(gs_handler, string("rho"), rho_tot(1), bool(.true.), ngm, mill(1, 1), intra_bgrp_comm)
-    call sirius_set_pw_coeffs(gs_handler, string("magz"), mag(1), bool(.true.), ngm, mill(1, 1), intra_bgrp_comm)
-    deallocate(rho_tot)
-    deallocate(mag)
+    !allocate(rho_tot(ngm))
+    !allocate(mag(ngm))
+    !do ig = 1, ngm
+    !  rho_tot(ig) = rho%of_g(ig, 1) + rho%of_g(ig, 2)
+    !  mag(ig) = rho%of_g(ig, 1) - rho%of_g(ig, 2)
+    !enddo
+    !call sirius_set_pw_coeffs(gs_handler, string("rho"), rho_tot(1), bool(.true.), ngm, mill(1, 1), intra_bgrp_comm)
+    !call sirius_set_pw_coeffs(gs_handler, string("magz"), mag(1), bool(.true.), ngm, mill(1, 1), intra_bgrp_comm)
+    !deallocate(rho_tot)
+    !deallocate(mag)
+    call sirius_set_pw_coeffs(gs_handler, string("magz"), rho%of_g(1, 2), bool(.true.), ngm, mill(1, 1), intra_bgrp_comm)
   endif
 
   if (nspin.eq.4) then
