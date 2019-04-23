@@ -37,7 +37,7 @@
                             fsthick, eptemp, ngaussw, degaussw, &
                             eps_acustic, efermi_read, fermi_energy,&
                             restart, restart_freq
-  USE pwcom,         ONLY : ef !, nelec, isk
+  USE pwcom,         ONLY : ef
   USE elph2,         ONLY : etf, ibndmin, ibndmax, nkqf, xqf, &
                             nkf, epf17, wf, wqf, xkf, nkqtotf, &
                             sigmar_all, sigmai_all, sigmai_mode, zi_all, efnew
@@ -168,9 +168,6 @@
   ELSE
     !
     ef0 = efnew
-    !ef0 = efermig(etf,nbndsub,nkqf,nelec,wkf,degaussw,ngaussw,0,isk)
-    ! if some bands are skipped (nbndskip.neq.0), nelec has already been recalculated 
-    ! in ephwann_shuffle
     !
   ENDIF
   !
@@ -413,11 +410,11 @@
     IF (mpime.eq.ionode_id) THEN
       ! Write to file
       OPEN(unit=linewidth_elself,file='linewidth.elself')
-      WRITE(linewidth_elself, '(a)') '# Electron lifetime (meV)'
+      WRITE(linewidth_elself, '(a)') '# Electron linewidth = 2*Im(Sigma) (meV)'
       IF ( iverbosity == 3 ) THEN
-        WRITE(linewidth_elself, '(a)') '#      ik       ibnd                 E(ibnd)      imode          Im(Sgima)(meV)'
+        WRITE(linewidth_elself, '(a)') '#      ik       ibnd                 E(ibnd)      imode          Im(Sigma)(meV)'
       ELSE
-        WRITE(linewidth_elself, '(a)') '#      ik       ibnd                 E(ibnd)      Im(Sgima)(meV)'
+        WRITE(linewidth_elself, '(a)') '#      ik       ibnd                 E(ibnd)      Im(Sigma)(meV)'
       ENDIF
       ! 
       DO ik = 1, nksqtotf

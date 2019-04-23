@@ -1481,7 +1481,8 @@
     USE io_global, ONLY : stdout
     USE epwcom,    ONLY : nbndsub, fsthick, ngaussw, degaussw, & 
                           efermi_read, fermi_energy, mp_mesh_k
-    USE pwcom,     ONLY : nelec, ef, isk
+    USE pwcom,     ONLY : nelec, ef
+    USE klist_epw, ONLY : isk_dummy
     USE elph2,     ONLY : etf, nkqf, wkf, nkf, nkqtotf
     USE constants_epw, ONLY : two
     USE mp,        ONLY : mp_barrier, mp_sum
@@ -1512,16 +1513,16 @@
     !
     REAL(DP), EXTERNAL :: efermig, dos_ef
     ! 
-    IF (iq.eq.1) THEN
+    IF (iq == 1) THEN
        ! 
        ! Fermi level and corresponding DOS
        !  
        ! since wkf(:,ikq) = 0 these bands do not bring any contribution to ef0 or dosef
        !
-       IF ( efermi_read ) THEN
+       IF (efermi_read) THEN
           ef0 = fermi_energy 
        ELSE
-          ef0 = efermig(etf, nbndsub, nkqf, nelec, wkf, degaussw, ngaussw, 0, isk)
+          ef0 = efermig(etf, nbndsub, nkqf, nelec, wkf, degaussw, ngaussw, 0, isk_dummy)
        ENDIF  
        !     
        dosef = dos_ef(ngaussw, degaussw, ef0, etf, wkf, nkqf, nbndsub)
@@ -1531,7 +1532,7 @@
        ! fermicount = nr of k-points within the Fermi shell per pool
        !
        fermicount = 0
-       DO ik = 1, nkf
+       DO ik=1, nkf
           !
           ikk = 2 * ik - 1
           ikq = ikk + 1
@@ -2074,8 +2075,8 @@
     USE io_epw,        ONLY : iufilgap
     USE io_files,      ONLY : prefix
     USE epwcom,        ONLY : fsthick
-    USE eliashbergcom, ONLY : estemp, Agap, nkfs, nbndfs, ef0, ekfs
-    USE constants_epw, ONLY : kelvin2eV, zero
+    USE eliashbergcom, ONLY : estemp, Agap, nkfs, nbndfs, ef0, ekfs, w0g
+    USE constants_epw, ONLY : kelvin2eV, zero, eps5
     !
     IMPLICIT NONE
     !
@@ -2099,8 +2100,6 @@
     !! Step size in nbin
     REAL(DP) :: delta_max
     !! Max value of superconducting gap
-    REAL(DP) :: sigma
-    !! Variable for smearing
     REAL(DP) :: weight
     !! Variable for weight
     REAL(DP), ALLOCATABLE :: delta_k_bin(:)
@@ -2110,8 +2109,8 @@
     !
     temp = estemp(itemp) / kelvin2eV
     !
-    delta_max = 1.25d0 * maxval(Agap(:,:,itemp))
-    nbin = int(delta_max/(0.005d0/1000.d0))
+    delta_max = 1.1d0 * maxval(Agap(:,:,itemp))
+    nbin = NINT(delta_max / eps5) + 1
     dbin = delta_max / dble(nbin)
     IF ( .not. ALLOCATED(delta_k_bin) ) ALLOCATE( delta_k_bin(nbin) )
     delta_k_bin(:) = zero
@@ -2119,11 +2118,9 @@
     DO ik = 1, nkfs
        DO ibnd = 1, nbndfs
           IF ( abs( ekfs(ibnd,ik) - ef0 ) .lt. fsthick ) THEN
-             DO ibin = 1, nbin
-                sigma = 1.d0 * dbin
-                weight = w0gauss( ( Agap(ibnd,ik,itemp) - dble(ibin) * dbin) / sigma, 0 ) / sigma
-                delta_k_bin(ibin) = delta_k_bin(ibin) + weight
-             ENDDO
+            ibin = nint( Agap(ibnd,ik,itemp) / dbin ) + 1
+            weight = w0g(ibnd,ik)
+            delta_k_bin(ibin) = delta_k_bin(ibin) + weight
           ENDIF
        ENDDO
     ENDDO

@@ -22,7 +22,8 @@
   !-----------------------------------------------------------------------
   !
   USE kinds,         ONLY : DP, i4b
-  USE pwcom,         ONLY : nbnd, nks, nkstot, isk, et, xk, ef,  nelec
+  USE pwcom,         ONLY : nbnd, nks, nkstot, ef,  nelec
+  USE klist_epw,     ONLY : et_loc, xk_loc, isk_dummy
   USE cell_base,     ONLY : at, bg, omega, alat
   USE start_k,       ONLY : nk1, nk2, nk3
   USE ions_base,     ONLY : nat, amass, ityp, tau
@@ -311,9 +312,9 @@
     IF(ALLOCATED(w2))   DEALLOCATE( w2 )
     ! 
     ! We need some crystal info
-    IF (mpime.eq.ionode_id) THEN
+    IF (mpime == ionode_id) THEN
       !
-      OPEN(unit=crystal,file='crystal.fmt',status='old',iostat=ios)
+      OPEN (UNIT = crystal, FILE = 'crystal.fmt', STATUS = 'old', IOSTAT = ios)
       READ (crystal,*) nat
       READ (crystal,*) nmodes
       READ (crystal,*) nelec
@@ -321,54 +322,39 @@
       READ (crystal,*) bg
       READ (crystal,*) omega
       READ (crystal,*) alat
-      ALLOCATE( tau( 3, nat ) )
+      ALLOCATE (tau(3, nat))
       READ (crystal,*) tau
       READ (crystal,*) amass
-      ALLOCATE( ityp( nat ) )
+      ALLOCATE (ityp(nat))
       READ (crystal,*) ityp
-      READ (crystal,*) isk
       READ (crystal,*) noncolin
       READ (crystal,*) w_centers
       ! 
     ENDIF
-    CALL mp_bcast (nat     , ionode_id, inter_pool_comm)
-    CALL mp_bcast (nat     , root_pool, intra_pool_comm)  
+    CALL mp_bcast (nat      , ionode_id, world_comm)
     IF (mpime /= ionode_id) ALLOCATE( ityp( nat ) )
-    CALL mp_bcast (nmodes  , ionode_id, inter_pool_comm)
-    CALL mp_bcast (nmodes  , root_pool, intra_pool_comm)  
-    CALL mp_bcast (nelec   , ionode_id, inter_pool_comm)
-    CALL mp_bcast (nelec   , root_pool, intra_pool_comm)  
-    CALL mp_bcast (at      , ionode_id, inter_pool_comm)
-    CALL mp_bcast (at      , root_pool, intra_pool_comm)  
-    CALL mp_bcast (bg      , ionode_id, inter_pool_comm)
-    CALL mp_bcast (bg      , root_pool, intra_pool_comm)  
-    CALL mp_bcast (omega   , ionode_id, inter_pool_comm)
-    CALL mp_bcast (omega   , root_pool, intra_pool_comm)  
-    CALL mp_bcast (alat    , ionode_id, inter_pool_comm)
-    CALL mp_bcast (alat    , root_pool, intra_pool_comm)  
+    CALL mp_bcast (nmodes   , ionode_id, world_comm)
+    CALL mp_bcast (nelec    , ionode_id, world_comm)
+    CALL mp_bcast (at       , ionode_id, world_comm)
+    CALL mp_bcast (bg       , ionode_id, world_comm)
+    CALL mp_bcast (omega    , ionode_id, world_comm)
+    CALL mp_bcast (alat     , ionode_id, world_comm)
     IF (mpime /= ionode_id) ALLOCATE( tau( 3, nat ) )
-    CALL mp_bcast (tau     , ionode_id, inter_pool_comm)
-    CALL mp_bcast (tau     , root_pool, intra_pool_comm)  
-    CALL mp_bcast (amass   , ionode_id, inter_pool_comm)
-    CALL mp_bcast (amass   , root_pool, intra_pool_comm)  
-    CALL mp_bcast (ityp    , ionode_id, inter_pool_comm)
-    CALL mp_bcast (ityp    , root_pool, intra_pool_comm)  
-    CALL mp_bcast (isk     , ionode_id, inter_pool_comm)
-    CALL mp_bcast (isk     , root_pool, intra_pool_comm)  
-    CALL mp_bcast (noncolin, ionode_id, inter_pool_comm)
-    CALL mp_bcast (noncolin, root_pool, intra_pool_comm)  
-    CALL mp_bcast (w_centers, ionode_id, inter_pool_comm)
-    CALL mp_bcast (w_centers, root_pool, intra_pool_comm)
-    IF (mpime.eq.ionode_id) THEN
+    CALL mp_bcast (tau      , ionode_id, world_comm)
+    CALL mp_bcast (amass    , ionode_id, world_comm)
+    CALL mp_bcast (ityp     , ionode_id, world_comm)
+    CALL mp_bcast (noncolin , ionode_id, world_comm)
+    CALL mp_bcast (w_centers, ionode_id, world_comm)
+    IF (mpime == ionode_id) THEN
       CLOSE(crystal)
     ENDIF
     CALL mp_barrier(inter_pool_comm)
     ! 
   ELSE
-    continue
+    CONTINUE
   ENDIF
   !
-  ALLOCATE( w2( 3*nat) )
+  ALLOCATE (w2(3 * nat))
   ! 
   IF (lpolar) THEN
     WRITE(stdout, '(/,5x,a)' ) 'Computes the analytic long-range interaction for polar materials [lpolar]'
@@ -380,7 +366,7 @@
   ! 
   ! For this we need the Wannier centers
   ! w_centers is allocated inside loadumat
-  IF (.not. epwread) THEN
+  IF (.NOT. epwread) THEN
     xxq = 0.d0
     CALL loadumat( nbnd, nbndsub, nks, nkstot, xxq, cu, cuq, lwin, lwinq, exband, w_centers )
   ENDIF
@@ -474,35 +460,35 @@
      ! 
      ! SP : Let the user chose. If false use files on disk
      IF (etf_mem == 0) THEN
-       ALLOCATE(epmatwe ( nbndsub, nbndsub, nrr_k, nmodes, nqc))
+       ALLOCATE (epmatwe ( nbndsub, nbndsub, nrr_k, nmodes, nqc))
        ALLOCATE (epmatwp ( nbndsub, nbndsub, nrr_k, nmodes, nrr_g))
      ELSE
-       ALLOCATE(epmatwe_mem ( nbndsub, nbndsub, nrr_k, nmodes))
+       ALLOCATE (epmatwe_mem ( nbndsub, nbndsub, nrr_k, nmodes))
        epmatwe_mem(:,:,:,:) = czero
      ENDIF
      !
      ! Hamiltonian
      !
      CALL hambloch2wan &
-          ( nbnd, nbndsub, nks, nkstot, et, xk, cu, lwin, exband, nrr_k, irvec_k, wslen_k, chw )
+          ( nbnd, nbndsub, nks, nkstot, et_loc, xk_loc, cu, lwin, exband, nrr_k, irvec_k, wslen_k, chw )
      !
      ! Kohn-Sham eigenvalues
      !
      IF (eig_read) THEN
        WRITE (stdout,'(5x,a)') "Interpolating MB and KS eigenvalues"
        CALL hambloch2wan &
-            ( nbnd, nbndsub, nks, nkstot, et_ks, xk, cu, lwin, exband, nrr_k, irvec_k, wslen_k, chw_ks )
+            ( nbnd, nbndsub, nks, nkstot, et_ks, xk_loc, cu, lwin, exband, nrr_k, irvec_k, wslen_k, chw_ks )
      ENDIF
      !
      IF (vme) THEN 
        ! Transform of position matrix elements
        ! PRB 74 195118  (2006)
        CALL vmebloch2wan &
-            ( nbnd, nbndsub, nks, nkstot, xk, cu, nrr_k, irvec_k, wslen_k, lwin, exband )
+            ( nbnd, nbndsub, nks, nkstot, xk_loc, cu, nrr_k, irvec_k, wslen_k, lwin, exband )
      ELSE
        ! Dipole
        CALL dmebloch2wan &
-            ( nbnd, nbndsub, nks, nkstot, dmec, xk, cu, nrr_k, irvec_k, wslen_k, lwin, exband )
+            ( nbnd, nbndsub, nks, nkstot, dmec, xk_loc, cu, nrr_k, irvec_k, wslen_k, lwin, exband )
      ENDIF
      !
      ! Dynamical Matrix
@@ -525,11 +511,11 @@
          !
          IF (etf_mem == 0) THEN 
            CALL ephbloch2wane &
-             ( nbnd, nbndsub, nks, nkstot, xk, cu, cuq, &
+             ( nbnd, nbndsub, nks, nkstot, xk_loc, cu, cuq, &
              epmatq(:,:,:,imode,iq), nrr_k, irvec_k, wslen_k, epmatwe(:,:,:,imode,iq) )
          ELSE
            CALL ephbloch2wane &
-             ( nbnd, nbndsub, nks, nkstot, xk, cu, cuq, &
+             ( nbnd, nbndsub, nks, nkstot, xk_loc, cu, cuq, &
              epmatq(:,:,:,imode,iq), nrr_k, irvec_k, wslen_k, epmatwe_mem(:,:,:,imode) )
            !
          ENDIF
@@ -602,20 +588,22 @@
   CALL loadqmesh_serial
   CALL loadkmesh_para
   !
-  ALLOCATE ( epmatwef( nbndsub, nbndsub, nrr_k, nmodes), &
-             wf( nmodes,  nqf ),                         &
-             etf( nbndsub, nkqf),                        &
-             etf_ks( nbndsub, nkqf),                     &
-             epmatf( nbndsub, nbndsub, nmodes),          &
-             cufkk( nbndsub, nbndsub),                   &
-             cufkq( nbndsub, nbndsub),                   & 
-             uf( nmodes, nmodes),                        &
-             bmatf( nbndsub, nbndsub),                   & 
-             eps_rpa( nmodes) )
+  ALLOCATE (epmatwef(nbndsub, nbndsub, nrr_k, nmodes))
+  ALLOCATE (wf(nmodes, nqf))
+  ALLOCATE (etf(nbndsub, nkqf))
+  ALLOCATE (etf_ks(nbndsub, nkqf)) 
+  ALLOCATE (epmatf(nbndsub, nbndsub, nmodes))
+  ALLOCATE (cufkk(nbndsub, nbndsub))
+  ALLOCATE (cufkq(nbndsub, nbndsub))
+  ALLOCATE (uf(nmodes, nmodes))
+  ALLOCATE (bmatf(nbndsub, nbndsub))
+  ALLOCATE (eps_rpa(nmodes))
+  ALLOCATE (isk_dummy(nkqf))
   !
   ! Need to be initialized
-  etf_ks(:,:) = zero
+  etf_ks(:,:)   = zero
   epmatf(:,:,:) = czero
+  isk_dummy(:)  = 0  ! Isk dummy variable 
   !
   ! allocate velocity and dipole matrix elements after getting grid size
   !
@@ -754,7 +742,7 @@
      !  
      ! since wkf(:,ikq) = 0 these bands do not bring any contribution to Fermi level
      !  
-     efnew = efermig(etf, nbndsub, nkqf, nelec, wkf, degaussw, ngaussw, 0, isk)
+     efnew = efermig(etf, nbndsub, nkqf, nelec, wkf, degaussw, ngaussw, 0, isk_dummy)
      !
      WRITE(stdout, '(/5x,a,f10.6,a)') &
          'Fermi energy is calculated from the fine k-mesh: Ef = ', efnew * ryd2ev, ' eV'
@@ -1472,6 +1460,13 @@
           !
       ENDDO
       CLOSE(lambda_phself)
+      ! 
+      ! SP - 03/2019 
+      ! \Gamma = 1/\tau = phonon lifetime 
+      ! \Gamma = - 2 * Im \Pi^R where \Pi^R is the retarted phonon self-energy. 
+      ! Im \Pi^R = pi*k-point weight*[f(E_k+q) - f(E_k)]*delta[E_k+q - E_k - w_q]
+      ! Since gamma_all = pi*k-point weight*[f(E_k) - f(E_k+q)]*delta[E_k+q - E_k - w_q] we have
+      ! \Gamma = 2 * gamma_all
       OPEN(unit=linewidth_phself,file='linewidth.phself')
       WRITE(linewidth_phself, '(a)') '# Phonon frequency and phonon lifetime in meV '
       WRITE(linewidth_phself,'(a)') '# Q-point  Mode   Phonon freq (meV)   Phonon linewidth (meV)'
@@ -1479,7 +1474,7 @@
         !
         DO imode=1, nmodes
           WRITE(linewidth_phself,'(i9,i6,E20.8,E22.10)') iqq,imode,&
-                                 ryd2mev*wf(imode,iqq),ryd2mev*REAL(gamma_all(imode,iqq,1))
+                                 ryd2mev*wf(imode,iqq), 2.0d0 * ryd2mev * REAL(gamma_all(imode,iqq,1))
         ENDDO
         !
       ENDDO
@@ -1650,7 +1645,7 @@
   !
   USE kinds,     ONLY : DP
   USE epwcom,    ONLY : nbndsub, vme, eig_read, etf_mem
-  USE pwcom,     ONLY : ef, nelec, isk
+  USE pwcom,     ONLY : ef, nelec
   USE elph2,     ONLY : chw, rdw, cdmew, cvmew, chw_ks, &
                         zstar, epsi, epmatwp
   USE ions_base, ONLY : amass, ityp, nat, tau
@@ -1712,7 +1707,6 @@
     WRITE (crystal,*) tau
     WRITE (crystal,*) amass
     WRITE (crystal,*) ityp
-    WRITE (crystal,*) isk
     WRITE (crystal,*) noncolin
     WRITE (crystal,*) w_centers
     !
@@ -2138,14 +2132,14 @@
   ! counter on the band energy
   !
   sumkg_seq = 0.d0
-  DO ik = 1, nks
+  DO ik=1, nks
     sum1 = 0.d0
-    if (is /= 0) then
-       if (isk(ik).ne.is) cycle
-    end if
-    do ibnd = 1, nbnd
-       sum1 = sum1 + wgauss ( (e-et (ibnd, ik) ) / degauss, ngauss)
-    enddo
+    IF (is /= 0) THEN
+       IF (isk(ik) /= is) CYCLE
+    ENDIF
+    DO ibnd=1, nbnd
+       sum1 = sum1 + wgauss((e - et (ibnd, ik)) / degauss, ngauss)
+    ENDDO
     sumkg_seq = sumkg_seq + wk (ik) * sum1
   ENDDO
   RETURN

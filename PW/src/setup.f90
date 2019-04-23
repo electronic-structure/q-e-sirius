@@ -127,6 +127,8 @@ SUBROUTINE setup()
   END IF
 
   IF ( dft_is_hybrid() ) THEN
+     IF ( lberry ) CALL errore( 'setup ', &
+                         'hybrid XC not allowed in Berry-phase calculations',1 )
      IF ( allfrac ) CALL errore( 'setup ', &
                          'option use_all_frac incompatible with hybrid XC', 1 )
      IF (.NOT. lscf) CALL errore( 'setup ', &
@@ -137,7 +139,7 @@ SUBROUTINE setup()
         IF (ecutfock /= 4*ecutwfc) CALL infomsg &
            ('setup','Warning: US/PAW use ecutfock=4*ecutwfc, ecutfock ignored')
         IF ( lmd .OR. lbfgs ) CALL errore &
-           ('setup','forces for hybrid functionals + US/PAW not implemented')
+           ('setup','forces for hybrid functionals + US/PAW not implemented',1)
         IF ( noncolin ) CALL errore &
            ('setup','Noncolinear hybrid XC for USPP not implemented',1)
      END IF
@@ -519,7 +521,10 @@ SUBROUTINE setup()
   !
   ! ... nosym: do not use any point-group symmetry (s(:,:,1) is the identity)
   !
-  IF ( nosym ) nsym = 1
+  IF ( nosym ) THEN
+     nsym = 1
+     invsym = .FALSE.
+  END IF
   !
   IF ( nsym > 1 .AND. ibrav == 0 ) CALL infomsg('setup', &
        'DEPRECATED: symmetry with ibrav=0, use correct ibrav instead')

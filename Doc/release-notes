@@ -1,15 +1,32 @@
+Problems fixed in development branch :
+  * PPACF wasn't working any longer in v.6.4 and 6.4.1 for nspin=2 and
+    for hybrid functionals (fixed by Yang Jiao, Chalmers)
+  * option "write_unkg" of pw2wannier90.f90 wasn't working as expected
+  * The input parameters (for restarting DFPT+U calculations) read_dns_bare 
+    and d2ns_type were missing in the PH input namelist, and moreover they 
+    were not broadcasted.
+
+Incompatible changes in development branch :
+  * fractional translations "ftau" in FFT grid units no longer existing as
+    global variables: replaced by "ft", in crystal axis, computed locally
+    where needed (in real-space symmetrization only)
+
 New in 6.4.1 branch :
-  * A warning is issued if the lattice parameter seems to be a conversion factor instead
-    of a true lattice parameter. Conversion should be achieved with the appropriate options,
-    not with dirty tricks. In the future this will no longer be allowed
-  * A warning is issued if ibrav=0 is used for systems having symmetry. Symmetry information
-    should be used in input if available. In the future symmetries will be disabled for ibrav=0
+  * A warning is issued if the lattice parameter seems to be a conversion
+    factor instead of a true lattice parameter. Conversion should be achieved
+    with the appropriate options, not with dirty tricks. In the future this
+    will no longer be allowed
+  * A warning is issued if ibrav=0 is used for systems having symmetry. If not
+    properly done this may lead to strange problems with symmetry detection
+    and symmetrization. Lattice information should be used if available.
 
 Problems fixed in 6.4.1 branch :
   * Two bugs fixed in HP: 1) the code was not working correctly when fractional
-    translations were present, 2) there was a bug in the case when either there is only
-    one k point, or when k pools are used and some of the pools have only one k point.
-  * Restart of ph.x with 2D boundary conditions has been fixed (see gitlab issue #102)
+    translations were present, 2) there was a bug in the case when either there
+    is only one k point, or when k pools are used and some of the pools have
+    only one k point.
+  * Restart of ph.x with 2D boundary conditions has been fixed (see gitlab
+    issue #102)
   * XML file correctly written if tetrahedra are used (see gitlab issue #103)
 
 New in version 6.4:

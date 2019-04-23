@@ -113,8 +113,10 @@
     USE control_lr,        ONLY : nbnd_occ
     USE becmod,            ONLY : becp, deallocate_bec_type
     USE elph2,             ONLY : el_ph_mat, epf17, epsi, etf,&
-                                  etq, et_all, wf, wkf, wqf, &
-                                  xkq, xk_all, zstar, xkf, xqf, epmatwp, eps_rpa
+                                  etq, wf, wkf, wqf, &
+                                  xkq, zstar, xkf, xqf, epmatwp, eps_rpa
+    USE klist_epw,         ONLY : xk_all, xk_loc, xk_cryst, et_all, et_loc, & 
+                                  isk_loc, isk_all
     USE epwcom,            ONLY : epbread, epwread
     USE modes,             ONLY : npert, u, name_rap_mode, num_rap_mode
     USE qpoint,            ONLY : eigqts, igkq 
@@ -141,10 +143,8 @@
       IF(ALLOCATED(wkf))       DEALLOCATE (wkf)
       IF(ALLOCATED(xqf))       DEALLOCATE (xqf)
       IF(ALLOCATED(wqf))       DEALLOCATE (wqf)
-      IF(ALLOCATED(xk_all))    DEALLOCATE (xk_all)
       IF(ALLOCATED(et_all))    DEALLOCATE (et_all)
       IF(ALLOCATED(eps_rpa))   DEALLOCATE (eps_rpa)
-      IF(ALLOCATED(eps_rpa))   DEALLOCATE (eps_rpa) 
       ! 
     ELSE
       !   
@@ -212,8 +212,13 @@
       IF(ALLOCATED(wkf))       DEALLOCATE (wkf)    
       IF(ALLOCATED(xqf))       DEALLOCATE (xqf)    
       IF(ALLOCATED(wqf))       DEALLOCATE (wqf)    
-      IF(ALLOCATED(xk_all))    DEALLOCATE (xk_all)    
+      IF(ALLOCATED(xk_all))    DEALLOCATE (xk_all)
+      IF(ALLOCATED(xk_loc))    DEALLOCATE (xk_loc)
+      IF(ALLOCATED(xk_cryst))  DEALLOCATE (xk_cryst)
       IF(ALLOCATED(et_all))    DEALLOCATE (et_all)    
+      IF(ALLOCATED(et_loc))    DEALLOCATE (et_loc)    
+      IF(ALLOCATED(isk_loc))   DEALLOCATE (isk_loc)    
+      IF(ALLOCATED(isk_all))   DEALLOCATE (isk_all)    
       IF(ALLOCATED(eps_rpa))   DEALLOCATE (eps_rpa)
     ENDIF ! epwread .and. .not. epbread 
     !

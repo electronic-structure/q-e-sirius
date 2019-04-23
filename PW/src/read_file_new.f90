@@ -53,6 +53,8 @@ SUBROUTINE read_file()
   ! ... have been written to tmp_dir, not to a different directory!
   ! ... io_level = 1 so that a real file is opened
   !
+  CALL allocate_wfc()
+  !
   wfc_dir = tmp_dir
   nwordwfc = nbnd*npwx*npol
   io_level = 1
@@ -105,7 +107,8 @@ SUBROUTINE read_xml_file ( wfc_is_collected )
                                    set_h_ainv
   USE force_mod,            ONLY : force
   USE klist,                ONLY : nkstot, nks, xk, wk
-  USE lsda_mod,             ONLY : lsda, nspin, current_spin, isk
+  USE lsda_mod,             ONLY : nspin, isk
+  USE noncollin_module,     ONLY : noncolin
   USE wvfct,                ONLY : nbnd, nbndx, et, wg
   USE symm_base,            ONLY : irt, d1, d2, d3, checkallsym, nsym
   USE extfield,             ONLY : forcefield, tefield, gate, forcegate
@@ -118,14 +121,13 @@ SUBROUTINE read_xml_file ( wfc_is_collected )
                                    eigts1, eigts2, eigts3, gstart, gshells
   USE fft_base,             ONLY : dfftp, dffts
   USE gvecs,                ONLY : ngms, gcutms 
-  USE spin_orb,             ONLY : lspinorb, domag
+  USE spin_orb,             ONLY : lspinorb
   USE scf,                  ONLY : rho, rho_core, rhog_core, v
-  USE wavefunctions, ONLY : psic
   USE vlocal,               ONLY : strf
   USE io_files,             ONLY : tmp_dir, prefix, iunpun, nwordwfc, iunwfc
-  USE noncollin_module,     ONLY : noncolin, npol, nspin_lsda, nspin_mag, nspin_gga
   USE pw_restart_new,       ONLY : pw_readschema_file, init_vars_from_schema 
-  USE qes_types_module,     ONLY : output_type, parallel_info_type, general_info_type, input_type
+  USE qes_types_module,     ONLY : output_type, parallel_info_type, &
+       general_info_type, input_type
   USE qes_libs_module,      ONLY : qes_reset
   USE io_rho_xml,           ONLY : read_scf
   USE fft_rho,              ONLY : rho_g2r
@@ -175,76 +177,58 @@ SUBROUTINE read_xml_file ( wfc_is_collected )
   IF ( ierr /= 0 ) CALL errore ( 'read_schema', 'unable to read xml file', ierr ) 
 #endif
   wfc_is_collected = output_obj%band_structure%wf_collected
-  ! ... first we get the version of the qexml file
-  !     if not already read
   !
   ! ... here we read the variables that dimension the system
   !
-  CALL init_vars_from_schema( 'dim',   ierr , output_obj, parinfo_obj, geninfo_obj )
+  CALL init_vars_from_schema( 'dim', ierr, output_obj, parinfo_obj, geninfo_obj )
   CALL errore( 'read_xml_file ', 'problem reading file ' // &
              & TRIM( tmp_dir ) // TRIM( prefix ) // '.save', ierr )
   !
-  CALL init_vars_from_schema( 'boundary_conditions',   ierr , output_obj, parinfo_obj, geninfo_obj )
-  CALL errore( 'read_xml_file ', 'problem reading file ' // &
-             & TRIM( tmp_dir ) // TRIM( prefix ) // '.save', ierr )
-  ! ... allocate space for atomic positions, symmetries, forces
+  ! ... allocate space for arrays to be read in init_vars_from_schema
+  !
+  ! ... atomic positions, forces, symmetries
   !
   IF ( nat < 0 ) CALL errore( 'read_xml_file', 'wrong number of atoms', 1 )
-  !
-  ! ... allocation
-  !
   ALLOCATE( ityp( nat ) )
-  ALLOCATE( tau(    3, nat ) )
-  ALLOCATE( force(  3, nat ) )
-  ALLOCATE( extfor(  3, nat ) )
-  !
+  ALLOCATE( tau( 3, nat ) )
+  ALLOCATE( force ( 3, nat ) )
+  ALLOCATE( extfor( 3, nat ) )
   IF ( tefield ) ALLOCATE( forcefield( 3, nat ) )
-  IF ( gate ) ALLOCATE( forcegate( 3, nat ) ) ! TB
-  !
+  IF ( gate ) ALLOCATE( forcegate( 3, nat ) )
   ALLOCATE( irt( 48, nat ) )
   !
-  CALL set_dimensions()
+  ! ... FFT-related arrays (FIXME: is this needed here?)
+  !
+  CALL set_gcut()
   CALL fft_type_allocate ( dfftp, at, bg, gcutm, intra_bgrp_comm, nyfft=nyfft )
   CALL fft_type_allocate ( dffts, at, bg, gcutms, intra_bgrp_comm, nyfft=nyfft )
   !
-  ! ... check whether LSDA
+  if (cell_factor == 0.d0) cell_factor = 1.D0   ! FIXME: is this needed here?
   !
-  IF ( lsda ) THEN
-     !
-     nspin = 2
-     npol  = 1
-     !
-  ELSE IF ( noncolin ) THEN
-     !
-     nspin        = 4
-     npol         = 2
-     current_spin = 1
-     !
-  ELSE
-     !
-     nspin        = 1
-     npol         = 1
-     current_spin = 1
-     !
-  END IF
-  !
-  if (cell_factor == 0.d0) cell_factor = 1.D0
-  !
-  ! ... allocate memory for eigenvalues and weights (read from file)
+  ! ... eigenvalues, weights
   !
   nbndx = nbnd
   ALLOCATE( et( nbnd, nkstot ) , wg( nbnd, nkstot ) )
   !
   ! ... here we read all the variables defining the system
   !
-  CALL init_vars_from_schema ( 'nowave', ierr, output_obj, parinfo_obj, geninfo_obj, input_obj )
+  CALL init_vars_from_schema ( 'all', ierr, output_obj, parinfo_obj, &
+          geninfo_obj, input_obj )
+  !
+  ! ... xml data no longer needed, can be discarded
+  !
+  CALL qes_reset  ( output_obj )
+  CALL qes_reset  ( geninfo_obj )
+  CALL qes_reset  ( parinfo_obj )
+  IF ( TRIM(input_obj%tagname) == "input") CALL qes_reset ( input_obj) 
+  !
+  ! END OF READING VARIABLES FROM XML DATA FILE
   !
   ! ... distribute across pools k-points and related variables.
   ! ... nks is defined by the following routine as the number 
   ! ... of k-points in the current pool
   !
   CALL divide_et_impera( nkstot, xk, wk, isk, nks )
-  !
   CALL poolscatter( nbnd, nkstot, et, nks, et )
   CALL poolscatter( nbnd, nkstot, wg, nks, wg )
   !
@@ -252,26 +236,13 @@ SUBROUTINE read_xml_file ( wfc_is_collected )
   !
   IF (nat > 0) CALL checkallsym( nat, tau, ityp)
   !
-  !  Set the different spin indices
+  ! ... set various spin-related variables
   !
-  nspin_mag  = nspin
-  nspin_lsda = nspin
-  nspin_gga  = nspin
-  IF (nspin==4) THEN
-     nspin_lsda=1
-     IF (domag) THEN
-        nspin_gga=2
-     ELSE
-        nspin_gga=1
-        nspin_mag=1
-     ENDIF
-  ENDIF
+  CALL set_spin_vars ( )
   !
-  ! ... read pseudopotentials
+  ! ... read pseudopotentials (does not set dft from PP files)
   !
-  CALL init_vars_from_schema ( 'pseudo', ierr, output_obj, parinfo_obj, geninfo_obj ) 
-  !
-  dft_name = get_dft_name () ! already set, should not be set again
+  dft_name = get_dft_name ()
   CALL readpp ( dft_name )
   !
   ! ... read the vdw kernel table if needed
@@ -294,7 +265,6 @@ SUBROUTINE read_xml_file ( wfc_is_collected )
        g, gg, mill, ig_l2g, gstart ) 
   CALL ggens( dffts, gamma_only, at, g, gg, mill, gcutms, ngms ) 
   IF (do_comp_esm) THEN
-     CALL init_vars_from_schema ( 'esm', ierr, output_obj, parinfo_obj, geninfo_obj ) 
      CALL esm_init()
   END IF
   CALL gshells ( lmovecell ) 
@@ -314,37 +284,25 @@ SUBROUTINE read_xml_file ( wfc_is_collected )
      CALL init_at_1()
   ENDIF
   !
-  CALL allocate_wfc()
-  !
-  ! ... read the charge density
+  ! ... read the charge density in G-space
   !
   CALL read_scf( rho, nspin, gamma_only )
-  ! FIXME: for compatibility. rho was previously read and written in real space
-  ! FIXME: now it is in G space - to be removed together with old format
+  !
+  ! ... bring the charge density to real space
+  !
   CALL rho_g2r ( dfftp, rho%of_g, rho%of_r )
   !
-  ! ... re-calculate the local part of the pseudopotential vltot
-  ! ... and the core correction charge (if any) - This is done here
-  ! ... for compatibility with the previous version of read_file
+  ! ... re-compute the local part of the pseudopotential vltot and
+  ! ... the core correction charge (if any). For 2D calculations
+  ! ... re-initialize cutoff_fact before calculating potentials
   !
-  !2D calculations: re-initialize cutoff fact before calculating potentials
-  IF(do_cutoff_2D) CALL cutoff_fact()
+  IF (do_cutoff_2D) CALL cutoff_fact()
   !
   CALL init_vloc()
-  CALL struc_fact( nat, tau, nsp, ityp, ngm, g, bg, dfftp%nr1, dfftp%nr2, &
+  CALL struc_fact( nat, tau, nsp, ityp, ngm, g, bg, dfftp%nr1, dfftp%nr2,&
                    dfftp%nr3, strf, eigts1, eigts2, eigts3 )
   CALL setlocal()
   CALL set_rhoc()
-  !
-  ! ... bring rho to G-space
-  !
-  DO is = 1, nspin
-     !
-     psic(:) = rho%of_r(:,is)
-     CALL fwfft ('Rho', psic, dfftp)
-     rho%of_g(:,is) = psic(dfftp%nl(:))
-     !
-  END DO
   !
   ! ... recalculate the potential
   !
@@ -357,18 +315,12 @@ SUBROUTINE read_xml_file ( wfc_is_collected )
   !
   CALL v_of_rho( rho, rho_core, rhog_core, &
                  ehart, etxc, vtxc, eth, etotefield, charge, v )
-  !
-  CALL qes_reset  ( output_obj )
-  CALL qes_reset  ( geninfo_obj )
-  CALL qes_reset  ( parinfo_obj )
-  IF ( TRIM(input_obj%tagname) == "input") CALL qes_reset ( input_obj) 
-  ! 
   RETURN
   !
   CONTAINS
     !
     !------------------------------------------------------------------------
-    SUBROUTINE set_dimensions()
+    SUBROUTINE set_gcut()
       !------------------------------------------------------------------------
       !
       USE constants, ONLY : pi, eps8
@@ -396,6 +348,33 @@ SUBROUTINE read_xml_file ( wfc_is_collected )
          gcutms = gcutm
       END IF
       !
-    END SUBROUTINE set_dimensions
+    END SUBROUTINE set_gcut
+    !
+    !------------------------------------------------------------------------
+    SUBROUTINE set_spin_vars( )
+      !------------------------------------------------------------------------
+      !
+      !  Set various spin-related variables
+      !
+      USE noncollin_module, ONLY : nspin_lsda, nspin_mag, nspin_gga
+      USE spin_orb,  ONLY : domag
+      USE lsda_mod, ONLY : nspin, current_spin
+      !
+      IF (nspin /= 2) current_spin = 1
+      !
+      nspin_mag  = nspin
+      nspin_lsda = nspin
+      nspin_gga  = nspin
+      IF (nspin==4) THEN
+        nspin_lsda=1
+        IF (domag) THEN
+           nspin_gga=2
+        ELSE
+           nspin_gga=1
+           nspin_mag=1
+        ENDIF
+      ENDIF
+      !
+    END SUBROUTINE set_spin_vars
     !
   END SUBROUTINE read_xml_file

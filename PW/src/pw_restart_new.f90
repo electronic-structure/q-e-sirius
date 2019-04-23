@@ -17,7 +17,6 @@ MODULE pw_restart_new
   !
   USE KINDS,        ONLY: DP
   USE qes_types_module
-  !USE qes_libs_module, ONLY: qes_write, qes_reset, qes_init
   USE qes_write_module, ONLY: qes_write
   USE qes_reset_module, ONLY: qes_reset 
   USE qes_init_module, ONLY: qes_init
@@ -148,7 +147,7 @@ MODULE pw_restart_new
       INTEGER               :: i, ig, ngg, ipol
       INTEGER               :: npwx_g, ispin, inlc
       INTEGER,  ALLOCATABLE :: ngk_g(:)
-      LOGICAL               :: lwfc, lrho, lxsd, occupations_are_fixed
+      LOGICAL               :: occupations_are_fixed
       INTEGER                  :: iclass, isym, ielem
       CHARACTER(LEN=15)        :: symop_2_class(48)
       LOGICAL                  :: opt_conv_ispresent, dft_is_vdw, empirical_vdw
@@ -915,7 +914,7 @@ MODULE pw_restart_new
       USE qes_read_module,      ONLY : qes_read
       IMPLICIT NONE 
       ! 
-      INTEGER                                            :: ierr, io_err  
+      INTEGER                                            :: ierr
       TYPE( output_type ),OPTIONAL,        INTENT(OUT)   :: restart_output
       TYPE(parallel_info_type),OPTIONAL,   INTENT(OUT)   :: restart_parallel_info
       TYPE(general_info_type ),OPTIONAL,   INTENT(OUT)   :: restart_general_info
@@ -929,19 +928,21 @@ MODULE pw_restart_new
       INTEGER,EXTERNAL        :: find_free_unit
       !  
       ! 
-      ierr = 0 
-      io_err = 0 
+      ierr = 0
       ! 
       iunpun = find_free_unit()
-      IF (iunpun .LT. 0 ) &
-            CALL errore ("pw_readschema_file", "could not find a free unit to open data-file-schema.xml", 1)
+      IF (iunpun < 0 ) THEN
+         ierr = 1
+         errmsg='internal error: no free unit to open data-file-schema.xml'
+         GOTO 100
+      END IF
       CALL qexsd_init_schema( iunpun )
       !
-      filename = TRIM( tmp_dir ) // TRIM( prefix ) // postfix // TRIM( xmlpun_schema )
+      filename = TRIM(tmp_dir) // TRIM(prefix) // postfix // TRIM(xmlpun_schema)
       INQUIRE ( file=filename, exist=found )
-      IF (.NOT. found ) ierr = ierr + 1
-      IF ( ierr /=0 ) THEN
-         errmsg='xml data file not found'
+      IF (.NOT. found ) THEN
+         ierr = 1
+         errmsg='xml data file ' // TRIM(filename) // ' not found'
          GOTO 100
       END IF
       !
@@ -951,7 +952,7 @@ MODULE pw_restart_new
          nodePointer => item ( getElementsByTagname(root, "general_info"),0)
          CALL qes_read( nodePointer, restart_general_info, ierr)
          IF ( ierr /=0 ) THEN
-            errmsg='error header of xml data file'
+            errmsg='error reading header of xml data file'
             GOTO 100
          END IF
          ! CALL qes_write_general_info( 82, restart_general_info) 
@@ -986,11 +987,11 @@ MODULE pw_restart_new
          ELSE 
             ierr = 5
          END IF
-         IF (ierr /= 0 ) THEN
+         IF ( ierr /= 0 ) THEN
              CALL infomsg ('pw_readschema_file',& 
                             'failed retrieving input info from xml file, please check it')
              IF ( TRIM(prev_input%tagname) == 'input' )  CALL qes_reset (prev_input) 
-             ierr = 0 
+             ierr = 0
          END IF
       END IF
       ! 
@@ -1004,9 +1005,6 @@ MODULE pw_restart_new
     SUBROUTINE init_vars_from_schema( what, ierr, output_obj, par_info, gen_info, input_obj )
       !------------------------------------------------------------------------
       !
-      USE io_rho_xml,           ONLY : read_scf
-      USE scf,                  ONLY : rho
-      USE lsda_mod,             ONLY : nspin
       USE qes_types_module,     ONLY : input_type, output_type, &
                                        general_info_type, parallel_info_type    
       !
@@ -1021,12 +1019,11 @@ MODULE pw_restart_new
       !
       CHARACTER(LEN=256) :: dirname
       LOGICAL            :: lcell, lpw, lions, lspin, linit_mag, &
-                            lxc, locc, lbz, lbs, lwfc, lheader,          &
-                            lsymm, lrho, lefield, ldim, &
-                            lef, lexx, lesm, lpbc, lvalid_input, lalgo, lsymflags 
+                            lxc, locc, lbz, lbs,                 &
+                            lsymm, lefield, ldim, lvalid_input,  &
+                            lef, lexx, lesm, lpbc, lalgo
       !
-      LOGICAL            :: found, electric_field_ispresent
-      INTEGER            :: tmp
+      LOGICAL            :: found
       
       !    
       !
@@ -1051,54 +1048,31 @@ MODULE pw_restart_new
       locc    = .FALSE.
       lbz     = .FALSE.
       lbs     = .FALSE.
-      lwfc    = .FALSE.
       lsymm   = .FALSE.
-      lrho    = .FALSE.
       lefield = .FALSE.
       lef     = .FALSE.
       lexx    = .FALSE.
       lesm    = .FALSE.
-      lheader = .FALSE.
       lpbc    = .FALSE.  
       lalgo   = .FALSE. 
-      lsymflags =.FALSE. 
       !
-     
-         
+      !
       SELECT CASE( what )
-      CASE( 'header' )
-         !
-         lheader = .TRUE.
-         !
       CASE( 'dim' )
          !
          ldim =       .TRUE.
-         !
-      CASE( 'pseudo' )
-         !
-         lions = .TRUE.
          !
       CASE( 'config' )
          !
          lcell = .TRUE.
          lions = .TRUE.
          !
-      CASE( 'rho' )
-         !
-         lrho  = .TRUE.
-         !
-      CASE( 'wave' )
-         !
-         lpw   = .TRUE.
-         lwfc  = .TRUE.
-         !
-      CASE( 'nowave' )
+      CASE( 'all' )
          !
          lcell   = .TRUE.
          lpw     = .TRUE.
          lions   = .TRUE.
          lspin   = .TRUE.
-         linit_mag   = .TRUE.
          lxc     = .TRUE.
          lexx    = .TRUE.
          locc    = .TRUE.
@@ -1107,55 +1081,26 @@ MODULE pw_restart_new
          lsymm   = .TRUE.
          lefield = .TRUE.
          lalgo   = .TRUE.
-         lsymflags = .TRUE.
-         !
-      CASE( 'all' )
-         !
-         lcell   = .TRUE.
-         lpw     = .TRUE.
-         lions   = .TRUE.
-         lspin   = .TRUE.
-         linit_mag  = .TRUE.
-         lxc     = .TRUE.
-         lexx    =.TRUE.
-         locc    = .TRUE.
-         lbz     = .TRUE.
-         lbs     = .TRUE.
-         lwfc    = .TRUE.
-         lsymm   = .TRUE.
-         lefield = .TRUE.
-         lrho    = .TRUE.
          lpbc    = .TRUE.
-         lalgo   = .TRUE. 
-         lsymflags = .TRUE. 
+         lesm    = .TRUE.
+         linit_mag = .TRUE.
          !
       CASE( 'ef' )
          !
          lef        = .TRUE.
          !
-      CASE( 'exx' )
+      CASE DEFAULT
          !
-         lexx       = .TRUE.
+         CALL errore('init_vars_from_schema','unknown what="' &
+              & // TRIM(what) // '" option', 1)
          !
-      CASE( 'esm' )
-         !
-         lesm       = .TRUE.
-         !
-      CASE( 'boundary_conditions' )  
-         !
-         lpbc       = .TRUE.
       END SELECT
       !
-      !
-      IF ( lheader ) THEN 
-         CALL readschema_header( gen_info )
-      END IF 
       IF ( ldim ) THEN
          ! 
          CALL readschema_dim(par_info, output_obj%atomic_species, &
               output_obj%atomic_structure, output_obj%symmetries, &
               output_obj%basis_set, output_obj%band_structure ) 
-         CALL readschema_kdim(output_obj%symmetries, output_obj%band_structure )
          !
       ENDIF
       !
@@ -1189,39 +1134,33 @@ MODULE pw_restart_new
       IF ( lbs ) THEN
          CALL readschema_band_structure( output_obj%band_structure )
       END IF
-      IF ( lwfc ) THEN
-         !
-         IF (output_obj%band_structure%wf_collected)  CALL read_collected_to_evc(dirname ) 
-      END IF
       IF ( lsymm ) THEN
-         IF ( lvalid_input .and. lsymflags ) THEN 
+         IF ( lvalid_input ) THEN 
             CALL readschema_symmetry (  output_obj%symmetries, output_obj%basis_set, input_obj%symmetry_flags )
          ELSE 
             CALL readschema_symmetry( output_obj%symmetries,output_obj%basis_set) 
          ENDIF
       ENDIF
-      !
-      IF ( lrho ) THEN
-         !
-         ! ... to read the charge-density we use the routine from io_rho_xml 
-         ! ... it also reads ns for ldaU and becsum for PAW
-         !
-         CALL read_scf( rho, nspin )
-         !
-      END IF
-      IF ( lef ) THEN
-               CALL readschema_ef ( output_obj%band_structure) 
-         !
-      END IF
       ! 
       IF ( lpbc ) THEN
          CALL readschema_outputPBC ( output_obj%boundary_conditions)
       END IF
       !
-      IF ( lefield .AND. lvalid_input ) CALL readschema_efield ( input_obj%electric_field ) 
+      IF ( lef ) THEN
+         CALL readschema_ef ( output_obj%band_structure) 
+      END IF
       !
-      IF ( lexx .AND. output_obj%dft%hybrid_ispresent  ) CALL readschema_exx ( output_obj%dft%hybrid )
-      IF ( lalgo ) CALL readschema_algo(output_obj%algorithmic_info ) 
+      IF ( lefield .AND. lvalid_input ) THEN
+         CALL readschema_efield ( input_obj%electric_field )
+      END IF
+      !
+      IF ( lexx .AND. output_obj%dft%hybrid_ispresent  ) THEN
+         CALL readschema_exx ( output_obj%dft%hybrid )
+      END IF
+      !
+      IF ( lalgo ) THEN
+         CALL readschema_algo(output_obj%algorithmic_info )
+      END IF
       !
       RETURN
       !
@@ -1249,7 +1188,7 @@ MODULE pw_restart_new
       !
     USE constants,        ONLY : e2
     USE ions_base,        ONLY : nat, nsp
-    USE symm_base,        ONLY : nsym
+    USE symm_base,        ONLY : nsym, nrot
     USE gvect,            ONLY : ngm_g, ecutrho
     USE fft_base,         ONLY : dfftp
     USE gvecs,            ONLY : ngms_g, dual
@@ -1276,6 +1215,8 @@ MODULE pw_restart_new
     TYPE ( band_structure_type ),INTENT(IN)    :: band_structure 
     ! 
     INTEGER                                    :: npwx_
+    !
+    !
     CALL readschema_cell ( atomic_structure ) 
     ! 
     !---------------------------------------------------------------------
@@ -1294,6 +1235,7 @@ MODULE pw_restart_new
     nat = atomic_structure%nat 
     !                                         SIMMETRIES 
     nsym = symmetries%nsym
+    nrot = symmetries%nrot
     !-----------------------------------------------------------------------------
     !                                          BASIS SET 
     !-----------------------------------------------------------------------------
@@ -1329,7 +1271,8 @@ MODULE pw_restart_new
        nkstot = nkstot * 2 
        nbnd   = nbnd / 2
     END IF
-    END SUBROUTINE readschema_dim
+
+  END SUBROUTINE readschema_dim
     !
     !-----------------------------------------------------------------------
     SUBROUTINE readschema_cell(atomic_structure )
@@ -1430,7 +1373,7 @@ MODULE pw_restart_new
     SUBROUTINE readschema_symmetry ( symms_obj, basis_obj, flags_obj  ) 
     !------------------------------------------------------------------------
       ! 
-      USE symm_base,       ONLY : nrot, nsym, invsym, s, ft,ftau, irt, t_rev, &
+      USE symm_base,       ONLY : nrot, nsym, invsym, s, ft, irt, t_rev, &
                                  sname, sr, invs, inverse_s, s_axis_to_cart, &
                                  time_reversal, no_t_rev, nosym
       USE control_flags,   ONLY : noinv  
@@ -1462,9 +1405,6 @@ MODULE pw_restart_new
         IF ( (TRIM(sname(isym)) == "inversion") .AND. (isym .LE. nsym) ) invsym = .TRUE.
         IF ( symms_obj%symmetry(isym)%fractional_translation_ispresent .AND. (isym .LE. nsym) ) THEN
            ft(1:3,isym)  =  symms_obj%symmetry(isym)%fractional_translation(1:3) 
-           ftau(1,isym) = NINT( ft(1,isym)*DBLE( basis_obj%fft_grid%nr1 ) )
-           ftau(2,isym) = NINT( ft(2,isym)*DBLE( basis_obj%fft_grid%nr2 ) )
-           ftau(3,isym) = NINT( ft(3,isym)*DBLE( basis_obj%fft_grid%nr3 ) )
         END IF
         IF ( symms_obj%symmetry(isym)%info%time_reversal_ispresent ) THEN  
            IF (symms_obj%symmetry(isym)%info%time_reversal) THEN 
@@ -1855,28 +1795,6 @@ MODULE pw_restart_new
       !         
     END SUBROUTINE readschema_xc
     !  
-    !-----------------------------------------------------------------------------------------------------
-    SUBROUTINE readschema_kdim( symmetries_obj, band_struct_obj )
-    !-----------------------------------------------------------------------------------------------------
-       !
-       USE lsda_mod,         ONLY : lsda
-       USE klist,            ONLY : nkstot
-       USE symm_base,        ONLY : nrot 
-       USE qes_types_module, ONLY : symmetries_type, band_structure_type
-       !
-       IMPLICIT NONE
-       !
-       TYPE ( symmetries_type )    ,INTENT(IN)    :: symmetries_obj 
-       TYPE ( band_structure_type ),INTENT(IN)    :: band_struct_obj 
-       INTEGER                                    :: nks_
-       ! 
-       nks_ = band_struct_obj%nks
-       nkstot = nks_
-       IF ( band_struct_obj%lsda ) nkstot = nkstot * 2  
-       !
-       nrot = symmetries_obj%nrot
-       !
-    END SUBROUTINE readschema_kdim    
     !
     ! --------- For 2D cutoff: to read the fact that 2D cutoff was used in scf from new xml----------------
     !-----------------------------------------------------------------------------------------------------

@@ -37,8 +37,6 @@
     eps_rpa(:)               !  screening
   REAL(KIND=DP), ALLOCATABLE ::&
     a_all(:,:),             &!  electronic spectral function du to electron-phonon interaction
-    xk_all(:,:),            &!  full k point grid, coarse (3, nkstot)
-    et_all(:,:),            &!  full eigenvalue list, coarse (nbnd, nkstot)
     et_ks(:,:),             &!  lda eigenvalues
     et_mb(:,:),             &!  gw eigenvalues
     xkq(:,:),               &!  local k+q grid, coarse (3, nks)
@@ -65,8 +63,6 @@
     zi_all(:,:),            &!
     esigmar_all(:,:,:),     &!
     esigmai_all(:,:,:),     &!   
-    gammar_all(:,:,:),      &!  Real part of the Phonon self-energy (freq. dependent for spectral function) 
-    gammai_all(:,:,:),      &!  Imaginary part of the Phonon self-energy (freq. dependent for spectral function)
     jdos(:),                &!
     spectra(:,:,:,:,:,:),   &!  dipole absorption spectra, polarizations, nomega, nsmear, dme/vme, absorption/emission
     sumr(:,:,:,:),          &!  to apply the ASR correction to every xq
