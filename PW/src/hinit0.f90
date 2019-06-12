@@ -18,12 +18,9 @@ SUBROUTINE hinit0()
   USE basis,        ONLY : startingconfig
   USE cell_base,    ONLY : at, bg, omega, tpiba2
   USE cellmd,       ONLY : omega_old, at_old, lmovecell
-  USE klist,        ONLY : init_igk
-  USE wvfct,        ONLY : npwx
   USE fft_base,     ONLY : dfftp
   USE gvect,        ONLY : ngm, g, eigts1, eigts2, eigts3
   USE vlocal,       ONLY : strf
-  USE gvecw,        ONLY : gcutw
   USE realus,       ONLY : generate_qpointlist,betapointlist,init_realspace_vars,real_space
   use ldaU,         ONLY : lda_plus_U, U_projection
   USE control_flags,ONLY : tqr, tq_smoothing, tbeta_smoothing
@@ -43,8 +40,8 @@ SUBROUTINE hinit0()
   !
   ! ... k-point independent parameters of non-local pseudopotentials
   !
-  if (tbeta_smoothing) CALL init_us_b0()
-  if (tq_smoothing) CALL init_us_0()
+  IF (tbeta_smoothing) CALL init_us_b0()
+  IF (tq_smoothing) CALL init_us_0()
   call sirius_start_timer(string("qe|init_run|hinit0|init_us_1"))
   CALL init_us_1()
   call sirius_stop_timer(string("qe|init_run|hinit0|init_us_1"))
@@ -52,10 +49,6 @@ SUBROUTINE hinit0()
   call sirius_start_timer(string("qe|init_run|hinit0|init_at_1"))
   CALL init_at_1()
   call sirius_stop_timer(string("qe|init_run|hinit0|init_at_1"))
-  !
-  call sirius_start_timer(string("qe|init_run|hinit0|init_igk"))
-  CALL init_igk ( npwx, ngm, g, gcutw )
-  call sirius_stop_timer(string("qe|init_run|hinit0|init_igk"))
   !
   IF ( lmovecell .AND. startingconfig == 'file' ) THEN
      !
@@ -80,7 +73,7 @@ SUBROUTINE hinit0()
   ! ... initialize the structure factor
   !
   CALL struc_fact( nat, tau, nsp, ityp, ngm, g, bg, &
-                   dfftp%nr1, dfftp%nr2, dfftp%nr3, strf, eigts1, eigts2, eigts3 )
+       dfftp%nr1, dfftp%nr2, dfftp%nr3, strf, eigts1, eigts2, eigts3 )
   !
   ! these routines can be used to patch quantities that are dependent
   ! on the ions and cell parameters
@@ -98,11 +91,11 @@ SUBROUTINE hinit0()
   !
   IF ( tqr ) CALL generate_qpointlist()
   
-  IF (real_space ) then
-   call betapointlist()
-   call init_realspace_vars()
-   write(stdout,'(5X,"Real space initialisation completed")')    
-  endif
+  IF (real_space ) THEN
+     CALL betapointlist()
+     CALL init_realspace_vars()
+     WRITE(stdout,'(5X,"Real space initialisation completed")')    
+  END IF
   !
   CALL stop_clock( 'hinit0' )
   !

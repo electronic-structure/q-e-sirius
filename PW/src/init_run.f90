@@ -105,7 +105,6 @@ SUBROUTINE init_run()
      CALL paw_init_onecenter()
   ENDIF
   CALL allocate_locpot()
-  CALL allocate_wfc()
   CALL allocate_bp_efield()
   CALL bp_global_map()
   !
@@ -123,6 +122,7 @@ SUBROUTINE init_run()
      CALL set_h_ainv()
   END IF
   !
+  CALL allocate_wfc_k()
   CALL openfil()
   !
   CALL hinit0()

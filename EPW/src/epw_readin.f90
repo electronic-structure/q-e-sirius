@@ -34,7 +34,7 @@
                             num_iter, dis_froz_max, fsthick, dis_froz_min, &
                             vme, degaussw, epexst, eig_read, kmaps, &
                             epwwrite, epbread, phonselfen, elecselfen, &
-                            a2f, plselfen, specfun_pl, nest_fn, & 
+                            a2f, plselfen, specfun_pl, nest_fn, filukk, & 
                             rand_nk, rand_k, rand_nq, rand_q,  &
                             nkf1, nkf2, nkf3, nqf1, nqf2, nqf3, &
                             eps_acustic, nw, wmax, wmin, &
@@ -51,7 +51,7 @@
                             cumulant, bnd_cum, proj, write_wfn, iswitch, ntempxx, &
                             liso, lacon, lpade, etf_mem, epbwrite, &
                             nsiter, conv_thr_racon, specfun_el, specfun_ph, &
-                            pwc, nswc, nswfc, nswi, filukq, filukk, &
+                            pwc, nswc, nswfc, nswi, &
                             nbndsub, nbndskip, system_2d, delta_approx, &
                             title, int_mob, scissor, iterative_bte, scattering, &
                             ncarrier, carrier, scattering_serta, restart, restart_freq, &
@@ -66,12 +66,15 @@
   USE io_files,      ONLY : tmp_dir, prefix
   USE control_flags, ONLY : iverbosity, modenum, gamma_only
   USE ions_base,     ONLY : amass
-  USE mp_world,      ONLY : world_comm
+  USE mp_world,      ONLY : world_comm, mpime
   USE partial,       ONLY : atomo, nat_todo
   USE constants,     ONLY : AMU_RY
   USE mp_global,     ONLY : my_pool_id, me_pool
   USE io_global,     ONLY : meta_ionode, meta_ionode_id, ionode_id
   USE io_epw,        ONLY : iunkf, iunqf
+  USE noncollin_module, ONLY : npol
+  USE wavefunctions, ONLY : evc
+  USE wvfct,         ONLY : npwx
 #if defined(__NAG)
   USE F90_UNIX_ENV,  ONLY : iargc, getarg
 #endif
@@ -104,7 +107,7 @@
   namelist / inputepw / &
        amass, outdir, prefix, iverbosity, fildvscf,                            &
        elph, nq1, nq2, nq3, nk1, nk2, nk3, nbndskip,  nbndsub,                 &
-       filukk, filukq, epbread, epbwrite, epwread, epwwrite, etf_mem, kmaps,   &
+       epbread, epbwrite, epwread, epwwrite, etf_mem, kmaps,                   &
        eig_read, wepexst, epexst, vme,                                         &
        degaussw, fsthick, eptemp,  nsmear, delta_smear,                        &
        dvscf_dir, ngaussw, epmatkqread, selecqread,                            &
@@ -146,7 +149,6 @@
   ! filqf    : file with fine q kmesh for interpolation
   ! filkf    : file with fine kmesh for interpolation
   ! filukk   : file with rotation matrix U(k) for interpolation
-  ! filukq   : file with rotation matrix U(k+q) for interpolation
   ! tphases  : if true set absolute unitary gauge for eigenvectors
   ! epstrict : if true use strict selection rule for phonon linewidht calculation
   ! fsthick  : the thickness of the Fermi shell for averaging the e-ph matrix elements (units of eV)
@@ -381,7 +383,6 @@
   filkf        = ' '
   fildrho      = ' '
   fildvscf     = ' '
-  filukk       = ' '
   rand_q       = .false.
   delta_approx = .false.
   rand_nq      = 1
@@ -507,20 +508,23 @@
   !
   !     Check all namelist variables
   !
-  IF (filukk.eq.' ') filukk=trim(prefix)//'.ukk'
-  IF (nsmear .lt. 1) CALL errore ('epw_readin', &
+  ! file with rotation matrix U(k) for interpolation  
+  filukk=TRIM(prefix)//'.ukk'
+  IF (nsmear < 1) CALL errore ('epw_readin', &
        & 'Wrong number of nsmears',1)
   IF (iverbosity.ne.0 .and. iverbosity.ne.1 .and. iverbosity.ne.2 .and. iverbosity.ne.3) & 
      CALL errore ('epw_readin', ' Wrong  iverbosity ', 1)
-!  IF (tphases .and. fildvscf0.eq.' ') CALL errore ('epw_readin', &
+!  IF (tphases .and. fildvscf0 == ' ') CALL errore ('epw_readin', &
 !       &' tphases requires fildvscf0', 1)
   IF (epbread .and. epbwrite) CALL errore ('epw_readin', &
        &' epbread cannot be used with epbwrite', 1)
+  IF (epbread .and. epwread) CALL errore ('epw_readin', &
+       &' epbread cannot be used with epwread', 1)
   IF (degaussw*4.d0 > fsthick) CALL errore ('epw_readin', &
        &' degaussw too close to fsthick', 1)
-  IF ( nbndskip .lt. 0) CALL errore('epw_readin', &
+  IF ( nbndskip < 0) CALL errore('epw_readin', &
        &' nbndskip must not be less than 0', 1)
-  IF ((nw.lt.1) .or. (nw.gt.1000)) CALL errore ('epw_readin', &
+  IF ((nw < 1) .or. (nw > 1000)) CALL errore ('epw_readin', &
        &' unreasonable nw', 1)
   IF (elecselfen .and. plselfen) CALL errore('epw_readin', &
        &'Electron-plasmon self-energy cannot be computed with electron-phonon',1)
@@ -538,33 +542,33 @@
        &'Electron-plasmon spectral function cannot be computed with el-ph spectral function',1)
   IF (specfun_ph .and. specfun_pl) CALL errore('epw_readin', &
        &'Electron-plasmon spectral function cannot be computed with el-ph spectral function',1)
-  IF (a2f .AND. .not.phonselfen) CALL errore('epw_readin', &
+  IF (a2f .AND.  .NOT. phonselfen) CALL errore('epw_readin', &
        &'a2f requires phonoselfen',1)
-  IF (elph .AND. .not.ep_coupling ) CALL errore('epw_readin', &
+  IF (elph .AND.  .NOT. ep_coupling ) CALL errore('epw_readin', &
       &'elph requires ep_coupling=.true.',1)
   IF ( (elph .AND. wannierize) .AND. (epwread) ) CALL errore('epw_readin', &
        & 'must use same w90 rotation matrix for entire run', 1)
-  IF (wannierize .AND. .not.ep_coupling ) CALL errore('epw_readin', &
+  IF (wannierize .AND.  .NOT. ep_coupling ) CALL errore('epw_readin', &
       &'wannierize requires ep_coupling=.true.',1)
   IF ((wmin > wmax)) &
        CALL errore ('epw_readin', ' check wmin, wmax ', 1)
-  IF ((wmin_specfun.gt.wmax_specfun)) &
+  IF ((wmin_specfun > wmax_specfun)) &
        CALL errore ('epw_readin', ' check wmin_specfun, wmax_specfun ', 1)
-  IF ((nw_specfun.lt.2)) CALL errore ('epw_readin', &
+  IF ((nw_specfun < 2)) CALL errore ('epw_readin', &
        &' nw_specfun must be at least 2', 1)
-  IF ((nqstep.lt.2)) CALL errore ('epw_readin', &
+  IF ((nqstep < 2)) CALL errore ('epw_readin', &
        &' nqstep must be at least 2', 1)
   IF ((nbndsub > 200)) CALL errore ('epw_readin', & 
        ' too many wannier functions increase size of projx', 1)
   IF (( phonselfen .OR. elecselfen .or. specfun_el .or. specfun_ph ) .and. ( mp_mesh_k .or. mp_mesh_q )) & 
      CALL errore('epw_readin', 'can only work with full uniform mesh',1)
-  IF (ephwrite .AND. .NOT. ep_coupling .and. .not.elph ) CALL errore('epw_readin', &
+  IF (ephwrite .AND. .NOT. ep_coupling .and.  .NOT. elph ) CALL errore('epw_readin', &
       &'ephwrite requires ep_coupling=.true., elph=.true.',1)
   IF (ephwrite .AND. (rand_k .OR. rand_q ) ) &
      CALL errore('epw_readin', 'ephwrite requires a uniform grid',1) 
   IF (ephwrite .AND. (mod(nkf1,nqf1) .ne. 0 .OR. mod(nkf2,nqf2) .ne. 0 .OR. mod(nkf3,nqf3) .ne. 0 ) ) &
      CALL errore('epw_readin', 'ephwrite requires nkf1,nkf2,nkf3 to be multiple of nqf1,nqf2,nqf3',1)
-  IF (band_plot .AND. filkf .eq. ' ' .and. filqf .eq. ' ') CALL errore('epw_readin', &
+  IF (band_plot .AND. filkf == ' ' .and. filqf == ' ') CALL errore('epw_readin', &
       &'plot band structure and phonon dispersion requires k- and q-points read from filkf and filqf files',1)
   IF (band_plot .AND. filkf .ne. ' ' .and. (nkf1 > 0 .or. nkf2 > 0 .or. nkf3 > 0) ) CALL errore('epw_readin', &
                 &'You should define either filkf or nkf when band_plot = .true.',1)
@@ -578,23 +582,17 @@
        CALL errore('epw_readin', 'define either (tempsmin and tempsmax) or temps(:)',1)
   IF ( scattering .AND. tempsmax < tempsmin ) &
        CALL errore('epw_readin', 'tempsmax should be greater than tempsmin',1)
-!  IF ( int_mob .AND. efermi_read)  CALL errore('epw_init', &
-!       'Fermi level can not be set (efermi_read) when computing intrinsic mobilities',1)
-!  IF ( int_mob .AND. (ABS(ncarrier) > 1E+5) )  CALL errore('epw_init', &
-!       'You cannot compute intrinsic mobilities and doped mobilities at the same time',1)
   IF ( (ABS(ncarrier) > 1E+5) .AND. .NOT. carrier ) CALL errore('epw_readin', &
        'carrier must be .true. if you specify ncarrier.',1)
   IF ( carrier .AND. (ABS(ncarrier) < 1E+5) )  CALL errore('epw_readin', &
        'The absolute value of the doping carrier concentration must be larger than 1E5 cm^-3',1)
-!  IF ( (iterative_bte .AND. scattering_serta) .OR. (iterative_bte .AND.scattering_0rta)  ) CALL errore('epw_init', &
-!       'You should first do a run in the SRTA to get the initial scattering_rate files.',1)
   IF ( (longrange .OR. shortrange) .AND. (.NOT. lpolar)) CALL errore('epw_readin',&
        &'Error: longrange or shortrange can only be true if lpolar is true as well.',1)
-  IF ( longrange .AND. shortrange) CALL errore('epw_init',&
+  IF ( longrange .AND. shortrange) CALL errore('epw_readin',&
        &'Error: longrange and shortrange cannot be both true.',1)
   IF ( epwread .AND. .NOT. kmaps .AND. .NOT. epbread) CALL errore('epw_readin',&
        &'Error: kmaps has to be true for a restart run. ',1)
-  IF ( .not. epwread .AND. .NOT. epwwrite) CALL errore('epw_readin',&
+  IF ( .NOT. epwread .AND. .NOT. epwwrite) CALL errore('epw_readin',&
        &'Error: Either epwread or epwwrite needs to be true. ',1)
   IF ( lscreen .AND. etf_mem == 2) CALL errore('epw_readin',&
        &'Error: lscreen not implemented with etf_mem=2 ',1)
@@ -609,10 +607,6 @@
 101 CALL errore('epw_readin','opening file '//filqf,abs(ios))
     CLOSE(iunqf)
   ENDIF  
-
-!#ifndef __MPI
-!  IF ( etf_mem == 2 ) CALL errore('epw_init','Error: etf_mem == 2 only works with MPI.',1)
-!#endif
   !
   ! thickness and smearing width of the Fermi surface  
   ! from eV to Ryd
@@ -636,7 +630,7 @@
   ! Out-of bound issue with GCC compiler. Multiple Fermi temp is not used anyway.
   eptemp = eptemp * kelvin2eV / ryd2ev
   !DO i = 1, ntempxx
-  !   IF (eptemp(i) .gt. 0.d0) THEN
+  !   IF (eptemp(i) > 0.d0) THEN
   !      ! 1 K in eV = 8.6173423e-5
   !      ! from K to Ryd
   !      eptemp(i) = eptemp(i) * kelvin2eV / ryd2ev
@@ -666,7 +660,7 @@
   
   IF ( scattering ) THEN
     DO i = 1, ntempxx
-      IF (temps(i) .gt. 0.d0) THEN
+      IF (temps(i) > 0.d0) THEN
         nstemp = i
       ENDIF
     ENDDO
@@ -695,7 +689,13 @@
   IF (epwread .AND. .NOT. epbread) THEN
     CONTINUE
   ELSE
+    ! In read_file, the call to allocate_wfc allocate evc with dimension ALLOCATE (evc(npwx*npol, nbnd))
     CALL read_file()
+    ! 
+    !IF (mpime /= ionode_id) THEN
+    !  ALLOCATE (evc(npwx*npol, nbnd))
+    !ENDIF
+    !CALL mp_bcast(evc, ionode_id, world_comm) 
     ! 
     ! We define the global list of coarse grid k-points (cart and cryst)
     ALLOCATE (xk_all(3, nkstot))
