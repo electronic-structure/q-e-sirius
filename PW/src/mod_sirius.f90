@@ -158,7 +158,7 @@ call sirius_set_mpi_grid_dims(sctx, 2, dims(1))
 if (diago_full_acc) then
   call sirius_set_parameters(sctx, iter_solver_tol_empty=0.d0)
 else
-  call sirius_set_parameters(sctx, iter_solver_tol_empty=1e-5)
+  call sirius_set_parameters(sctx, iter_solver_tol_empty=1d-5)
 endif
 
 ! set lattice vectors of the unit cell (length is in [a.u.])
