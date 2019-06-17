@@ -40,10 +40,10 @@ MODULE pw_restart_new
   PRIVATE
   PUBLIC :: pw_write_schema, pw_write_binaries, pw_read_schema, &
        read_collected_to_evc
-  PUBLIC :: readschema_ef, readschema_cell, readschema_ions, readschema_dim, &
+  PUBLIC :: readschema_ef, &
        readschema_planewaves, readschema_spin, readschema_magnetization, &
        readschema_xc, readschema_occupations, readschema_brillouin_zone, &
-       readschema_band_structure, readschema_symmetry, readschema_efield, &
+       readschema_band_structure, readschema_efield, &
        readschema_outputPBC, readschema_exx, readschema_algo
   !
   CONTAINS
@@ -706,7 +706,7 @@ MODULE pw_restart_new
       USE gvect,                ONLY : ngm, ngm_g, g, mill
       USE fft_base,             ONLY : dfftp
       USE basis,                ONLY : natomwfc
-      USE gvecs,                ONLY : ngms_g, dual
+      USE gvecs,                ONLY : ngms_g
       USE wvfct,                ONLY : npwx, et, wg, nbnd
       USE lsda_mod,             ONLY : nspin, isk, lsda
       USE mp_pools,             ONLY : intra_pool_comm, inter_pool_comm
@@ -1007,232 +1007,6 @@ MODULE pw_restart_new
       !
     END SUBROUTINE pw_read_schema
     !  
-    !--------------------------------------------------------------------------
-    SUBROUTINE readschema_dim(atomic_species, atomic_structure, &
-         symmetries, basis_set, band_structure ) 
-      !
-    USE constants,        ONLY : e2
-    USE ions_base,        ONLY : nat, nsp
-    USE symm_base,        ONLY : nsym, nrot
-    USE gvect,            ONLY : ngm_g, ecutrho
-    USE fft_base,         ONLY : dfftp
-    USE gvecs,            ONLY : ngms_g, dual
-    USE fft_base,         ONLY : dffts
-    USE lsda_mod,         ONLY : lsda
-    USE noncollin_module, ONLY : noncolin
-    USE klist,            ONLY : nkstot, nelec
-    USE wvfct,            ONLY : nbnd, npwx
-    USE gvecw,            ONLY : ecutwfc
-    USE control_flags,    ONLY : gamma_only
-    USE mp_global,        ONLY : nproc_file, nproc_pool_file, &
-                                 nproc_image_file, ntask_groups_file, &
-                                 nproc_bgrp_file, nproc_ortho_file
-    !
-    USE qes_types_module, ONLY : atomic_species_type, atomic_structure_type, &
-                                 symmetries_type, basis_set_type, band_structure_type, input_type  
-    IMPLICIT NONE 
-    !
-    TYPE ( atomic_species_type ),INTENT(IN)    :: atomic_species
-    TYPE ( atomic_structure_type ),INTENT(IN)  :: atomic_structure
-    TYPE ( symmetries_type ),INTENT(IN)        :: symmetries
-    TYPE ( basis_set_type ),INTENT(IN)         :: basis_set
-    TYPE ( band_structure_type ),INTENT(IN)    :: band_structure 
-    ! 
-    INTEGER                                    :: npwx_
-    !
-    !---------------------------------------------------------------------------
-    !                                      ATOMS AND SPECIES 
-    !--------------------------------------------------------------------------
-    nsp = atomic_species%ntyp
-    nat = atomic_structure%nat 
-    !                                         SIMMETRIES 
-    nsym = symmetries%nsym
-    nrot = symmetries%nrot
-    !-----------------------------------------------------------------------------
-    !                                          BASIS SET 
-    !-----------------------------------------------------------------------------
-    ecutwfc = basis_set%ecutwfc*e2
-    ecutrho = basis_set%ecutrho*e2
-    dual = ecutrho/ecutwfc
-    npwx_ = basis_set%npwx
-    gamma_only= basis_set%gamma_only
-    dfftp%nr1 = basis_set%fft_grid%nr1
-    dfftp%nr2 = basis_set%fft_grid%nr2          
-    dfftp%nr3 = basis_set%fft_grid%nr3
-    dffts%nr1 = basis_set%fft_smooth%nr1
-    dffts%nr2 = basis_set%fft_smooth%nr2
-    dffts%nr3 = basis_set%fft_smooth%nr3
-    ngm_g     = basis_set%ngm
-    ngms_g    = basis_set%ngms
-    !-------------------------------------------------------------------------
-    !                                    BAND STRUCTURE  
-    !-------------------------------------------------------------------------
-    lsda  =    band_structure%lsda
-    noncolin = band_structure%noncolin
-    nelec =    band_structure%nelec
-    nkstot =   band_structure%nks  
-    IF (band_structure%nbnd_ispresent) THEN
-       nbnd = band_structure%nbnd
-    ELSE IF ( band_structure%nbnd_up_ispresent .AND. band_structure%nbnd_dw_ispresent) THEN
-       nbnd = ( band_structure%nbnd_up + band_structure%nbnd_dw )
-    ELSE 
-       CALL errore('init_vars_from_schema: check xml file !!', &
-                   'nbnd or nbnd_up+nbnd_dw are missing in band_structure element', 1)
-    END IF     
-    IF ( lsda ) THEN
-       nkstot = nkstot * 2 
-       nbnd   = nbnd / 2
-    END IF
-
-  END SUBROUTINE readschema_dim
-    !
-    !-----------------------------------------------------------------------
-    SUBROUTINE readschema_cell(atomic_structure )
-    !-----------------------------------------------------------------------
-    !
-    USE constants,         ONLY : pi,tpi
-    USE cell_base,         ONLY : ibrav, alat, at, bg, celldm
-    USE cell_base,         ONLY : tpiba, tpiba2, omega
-    USE qes_types_module,  ONLY : atomic_structure_type
-    !
-    IMPLICIT NONE 
-    ! 
-    TYPE ( atomic_structure_type ),INTENT(IN) :: atomic_structure 
-    !
-    alat = atomic_structure%alat 
-    IF ( atomic_structure%bravais_index_ispresent ) THEN 
-       ibrav = atomic_structure%bravais_index 
-    ELSE 
-       ibrav = 0
-    END IF
-    at(:,1) =  atomic_structure%cell%a1
-    at(:,2) =  atomic_structure%cell%a2
-    at(:,3) =  atomic_structure%cell%a3
-    !! crystal axis are brought into "alat" units
-    at = at / alat
-    !
-    !! if ibrav is present, cell parameters were computed by subroutine
-    !! "latgen" using ibrav and celldm parameters: recalculate celldm
-    !
-    CALL at2celldm (ibrav,alat,at(:,1),at(:,2),at(:,3),celldm)
-    !
-    tpiba = tpi/alat
-    tpiba2= tpiba**2
-    CALL volume (alat,at(:,1),at(:,2),at(:,3),omega)
-    CALL recips( at(1,1), at(1,2), at(1,3), bg(1,1), bg(1,2), bg(1,3) )
-
-    END SUBROUTINE readschema_cell
-    ! 
-    !------------------------------------------------------------------------
-    SUBROUTINE readschema_ions( atomic_structure, atomic_species, dirname ) 
-    !------------------------------------------------------------------------
-    ! 
-    USE ions_base, ONLY : nat, nsp, ityp, amass, atm, tau
-    USE cell_base, ONLY : alat
-    USE io_files,  ONLY : psfile, pseudo_dir, pseudo_dir_cur
-    USE qes_types_module, ONLY: atomic_structure_type, atomic_species_type, input_type 
-    ! 
-    IMPLICIT NONE 
-    ! 
-    TYPE ( atomic_structure_type ),INTENT(IN) :: atomic_structure
-    TYPE ( atomic_species_type ),INTENT(IN)   :: atomic_species  
-    CHARACTER(LEN=*), INTENT(IN)              :: dirname
-    ! 
-    INTEGER                                   :: iat, isp, idx
-    CHARACTER(LEN = 3 ),ALLOCATABLE           :: symbols(:) 
-    ! 
-    nat = atomic_structure%nat
-    nsp = atomic_species%ntyp
-    ALLOCATE ( symbols(nat) ) 
-    DO isp = 1, nsp 
-       amass(isp) = 0.d0 
-       IF (atomic_species%species(isp)%mass_ispresent) amass(isp) = atomic_species%species(isp)%mass
-       atm(isp) = TRIM ( atomic_species%species(isp)%name )
-       psfile(isp) = TRIM ( atomic_species%species(isp)%pseudo_file) 
-    END DO 
-    !
-    loop_on_atoms:DO iat = 1, nat
-       idx = atomic_structure%atomic_positions%atom(iat)%index
-       tau(:,idx) = atomic_structure%atomic_positions%atom(iat)%atom 
-       symbols(idx)  = TRIM ( atomic_structure%atomic_positions%atom(idx)%name ) 
-       loop_on_species:DO isp = 1, nsp
-          IF ( TRIM(symbols(idx)) == TRIM (atm(isp))) THEN 
-             ityp(iat) = isp 
-             exit loop_on_species
-          END IF 
-       END  DO loop_on_species
-    END DO loop_on_atoms
-    
-    DEALLOCATE ( symbols ) 
-    IF ( atomic_structure%alat_ispresent ) alat = atomic_structure%alat 
-    tau(:,1:nat) = tau(:,1:nat)/alat  
-    ! 
-    ! ... this is where PP files used in the calculation were stored
-    !
-    pseudo_dir_cur = TRIM(dirname)
-    ! 
-    ! ... this is where PP files were originally found (if available)
-    !
-    IF ( atomic_species%pseudo_dir_ispresent) THEN 
-       pseudo_dir = TRIM(atomic_species%pseudo_dir)
-    ELSE 
-       pseudo_dir = pseudo_dir_cur
-    END IF
-    ! 
-    END SUBROUTINE readschema_ions
-    !  
-    !------------------------------------------------------------------------
-    SUBROUTINE readschema_symmetry ( symms_obj, basis_obj, flags_obj  ) 
-    !------------------------------------------------------------------------
-      ! 
-      USE symm_base,       ONLY : nrot, nsym, invsym, s, ft, irt, t_rev, &
-                                 sname, sr, invs, inverse_s, s_axis_to_cart, &
-                                 time_reversal, no_t_rev, nosym
-      USE control_flags,   ONLY : noinv  
-      USE fft_base,        ONLY : dfftp
-      USE qes_types_module,ONLY : symmetries_type, symmetry_type, basis_type
-      ! 
-      IMPLICIT NONE   
-      ! 
-      TYPE ( symmetries_type )               :: symms_obj 
-      TYPE ( basis_set_type )                :: basis_obj
-      TYPE ( symmetry_flags_type),OPTIONAL   :: flags_obj
-      INTEGER                                :: isym 
-      ! 
-      IF ( PRESENT(flags_obj) ) THEN 
-         noinv = flags_obj%noinv
-         nosym = flags_obj%nosym
-         no_t_rev = flags_obj%no_t_rev
-         time_reversal = time_reversal .AND. .NOT. noinv 
-      ENDIF
-      !
-      nrot = symms_obj%nrot 
-      nsym = symms_obj%nsym
-      ! 
-      !  
-      invsym = .FALSE. 
-      DO isym = 1, nrot
-        s(:,:,isym) = reshape(symms_obj%symmetry(isym)%rotation%matrix, [3,3]) 
-        sname(isym) = TRIM ( symms_obj%symmetry(isym)%info%name )  
-        IF ( (TRIM(sname(isym)) == "inversion") .AND. (isym .LE. nsym) ) invsym = .TRUE.
-        IF ( symms_obj%symmetry(isym)%fractional_translation_ispresent .AND. (isym .LE. nsym) ) THEN
-           ft(1:3,isym)  =  symms_obj%symmetry(isym)%fractional_translation(1:3) 
-        END IF
-        IF ( symms_obj%symmetry(isym)%info%time_reversal_ispresent ) THEN  
-           IF (symms_obj%symmetry(isym)%info%time_reversal) THEN 
-              t_rev( isym ) = 1
-           ELSE
-              t_rev( isym ) = 0 
-           END IF 
-        END IF
-        IF ( symms_obj%symmetry(isym)%equivalent_atoms_ispresent .AND. (isym .LE. nsym) )   &
-             irt(isym,:) = symms_obj%symmetry(isym)%equivalent_atoms%equivalent_atoms(:)
-      END DO
-      CALL inverse_s()
-      CALL s_axis_to_cart() 
-      !
-    END SUBROUTINE readschema_symmetry 
-    !
     !---------------------------------------------------------------------------
     SUBROUTINE readschema_efield( efield_obj  ) 
     !---------------------------------------------------------------------------

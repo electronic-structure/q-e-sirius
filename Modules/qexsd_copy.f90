@@ -19,8 +19,9 @@ MODULE qexsd_copy
   PRIVATE
   SAVE
   !
-  PUBLIC:: qexsd_copy_geninfo, qexsd_copy_parallel_info, &
+  PUBLIC:: qexsd_copy_geninfo, qexsd_copy_parallel_info, qexsd_copy_dim, &
        qexsd_copy_atomic_species, qexsd_copy_atomic_structure, &
+       qexsd_copy_symmetry, &
        qexsd_copy_basis_set, qexsd_copy_dft, qexsd_copy_band_structure
   !
 CONTAINS
@@ -64,9 +65,42 @@ CONTAINS
     nproc_bgrp_file = nproc_image_file / parinfo_obj%npool / parinfo_obj%nbgrp 
     nproc_ortho_file = parinfo_obj%ndiag
     !
-  END SUBROUTINE qexsd_copy_parallel_info  
+  END SUBROUTINE qexsd_copy_parallel_info
+  !
   !--------------------------------------------------------------------------
-  SUBROUTINE qexsd_copy_atomic_species (atomic_species, nsp, atm, psfile, amass)
+  SUBROUTINE qexsd_copy_dim (atomic_structure, band_structure, &
+         nat, nkstot, nbnd ) 
+      !
+    USE qes_types_module, ONLY : atomic_structure_type, band_structure_type
+    IMPLICIT NONE 
+    !
+    TYPE ( atomic_structure_type ),INTENT(IN)  :: atomic_structure
+    TYPE ( band_structure_type ),INTENT(IN)    :: band_structure 
+    INTEGER, INTENT(OUT) :: nat, nkstot, nbnd
+    !
+    LOGICAL :: lsda
+    !
+    nat = atomic_structure%nat 
+    nkstot =   band_structure%nks  
+    IF (band_structure%nbnd_ispresent) THEN
+       nbnd = band_structure%nbnd
+    ELSE IF ( band_structure%nbnd_up_ispresent .AND. band_structure%nbnd_dw_ispresent) THEN
+       nbnd = ( band_structure%nbnd_up + band_structure%nbnd_dw )
+    ELSE 
+       CALL errore('init_vars_from_schema: check xml file !!', &
+                   'nbnd or nbnd_up+nbnd_dw are missing in band_structure element', 1)
+    END IF     
+    lsda  =    band_structure%lsda
+    IF ( lsda ) THEN
+       nkstot = nkstot * 2 
+       nbnd   = nbnd / 2
+    END IF
+
+  END SUBROUTINE qexsd_copy_dim
+  !
+  !--------------------------------------------------------------------------
+  SUBROUTINE qexsd_copy_atomic_species (atomic_species, nsp, atm, amass, &
+       psfile, pseudo_dir)
     !---------------------------------------------------------------------------    !
     USE qes_types_module, ONLY : atomic_species_type
     !
@@ -74,7 +108,8 @@ CONTAINS
     !
     TYPE ( atomic_species_type ),INTENT(IN)    :: atomic_species
     INTEGER, INTENT(out) :: nsp
-    CHARACTER(LEN=*), INTENT(out) :: atm(:), psfile(:)
+    CHARACTER(LEN=*), INTENT(out) :: atm(:)
+    CHARACTER(LEN=*), OPTIONAL, INTENT(out) :: psfile(:), pseudo_dir
     REAL(dp), INTENT(out) :: amass(:)
     !
     INTEGER :: isp
@@ -85,8 +120,20 @@ CONTAINS
        IF (atomic_species%species(isp)%mass_ispresent) &
             amass(isp) = atomic_species%species(isp)%mass
        atm(isp) = TRIM ( atomic_species%species(isp)%name )
-       psfile(isp) = TRIM ( atomic_species%species(isp)%pseudo_file) 
+       IF ( PRESENT (psfile) ) THEN
+          psfile(isp) = TRIM ( atomic_species%species(isp)%pseudo_file) 
+       END IF
     END DO
+    ! 
+    ! ... this is where PP files were originally found (if available)
+    !
+    IF ( PRESENT (pseudo_dir) ) THEN
+       IF ( atomic_species%pseudo_dir_ispresent) THEN 
+          pseudo_dir = TRIM(atomic_species%pseudo_dir)
+       ELSE 
+          pseudo_dir = ' '
+       END IF
+    END IF
     !
   END SUBROUTINE qexsd_copy_atomic_species
 
@@ -136,6 +183,66 @@ CONTAINS
     a3(:) = atomic_structure%cell%a3
 
   END SUBROUTINE qexsd_copy_atomic_structure
+  !
+  !------------------------------------------------------------------------
+  SUBROUTINE qexsd_copy_symmetry ( symms_obj, &
+       nsym, nrot, s, ft, sname, t_rev, invsym, irt, &
+       noinv, nosym, no_t_rev, flags_obj )
+    !------------------------------------------------------------------------
+    ! 
+    USE qes_types_module,ONLY : symmetries_type, symmetry_flags_type
+    ! 
+    IMPLICIT NONE   
+    ! 
+    TYPE ( symmetries_type )             :: symms_obj 
+    TYPE (symmetry_flags_type), OPTIONAL :: flags_obj
+    INTEGER, INTENT(OUT) :: nrot
+    INTEGER, INTENT(OUT) :: nsym
+    INTEGER, INTENT(OUT) :: s(:,:,:)
+    LOGICAL, INTENT(OUT) :: invsym
+    REAL(dp), INTENT(OUT):: ft(:,:)
+    INTEGER, INTENT(OUT) :: irt(:,:)
+    INTEGER, INTENT(OUT) :: t_rev(:)
+    CHARACTER(len=45) ::  sname(:)
+    !
+    LOGICAL, INTENT(OUT) :: noinv, nosym, no_t_rev
+    !
+    INTEGER :: isym 
+    ! 
+    IF ( PRESENT(flags_obj) ) THEN 
+       noinv = flags_obj%noinv
+       nosym = flags_obj%nosym
+       no_t_rev = flags_obj%no_t_rev
+    ELSE
+       noinv = .FALSE.
+       nosym = .FALSE.
+       no_t_rev=.FALSE.
+    ENDIF
+    !
+    nrot = symms_obj%nrot 
+    nsym = symms_obj%nsym
+    !  
+    invsym = .FALSE. 
+    DO isym = 1, nrot
+       s(:,:,isym) = reshape(symms_obj%symmetry(isym)%rotation%matrix, [3,3]) 
+       sname(isym) = TRIM ( symms_obj%symmetry(isym)%info%name )  
+       IF ( (TRIM(sname(isym)) == "inversion") .AND. (isym .LE. nsym) ) invsym = .TRUE.
+       IF ( symms_obj%symmetry(isym)%fractional_translation_ispresent .AND. (isym .LE. nsym) ) THEN
+          ft(1:3,isym)  =  symms_obj%symmetry(isym)%fractional_translation(1:3) 
+       END IF
+       IF ( symms_obj%symmetry(isym)%info%time_reversal_ispresent ) THEN  
+          IF (symms_obj%symmetry(isym)%info%time_reversal) THEN 
+             t_rev( isym ) = 1
+          ELSE
+             t_rev( isym ) = 0 
+          END IF
+       END IF
+       IF ( symms_obj%symmetry(isym)%equivalent_atoms_ispresent .AND. (isym .LE. nsym) )   &
+            irt(isym,:) = symms_obj%symmetry(isym)%equivalent_atoms%equivalent_atoms(:)
+    END DO
+    !
+  END SUBROUTINE qexsd_copy_symmetry
+  !
 
   !--------------------------------------------------------------------------
   SUBROUTINE qexsd_copy_basis_set ( basis_set, gamma_only, ecutwfc, ecutrho, &

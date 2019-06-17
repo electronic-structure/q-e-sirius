@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2016 Quantum ESPRESSO group
+! Copyright (C) 2016-2019 Quantum ESPRESSO group
 ! This file is distributed under the terms of the
 ! GNU General Public License. See the file `License'
 ! in the root directory of the present distribution,
@@ -89,38 +89,47 @@ SUBROUTINE read_xml_file ( wfc_is_collected )
   ! ... All quantities that are initialized in subroutine "setup" when
   ! ... starting from scratch should be initialized here when restarting
   !
-  USE io_global,            ONLY : stdout, ionode, ionode_id
-  USE mp_global,            ONLY : nproc_file, nproc_pool_file, &
-                                   nproc_image_file, ntask_groups_file, &
-                                   nproc_bgrp_file, nproc_ortho_file
-  USE ions_base,            ONLY : nat, ityp, tau, extfor
-  USE force_mod,            ONLY : force
-  USE klist,                ONLY : nks, nkstot
-  USE wvfct,                ONLY : nbnd, et, wg
-  USE symm_base,            ONLY : irt
-  USE extfield,             ONLY : forcefield, tefield, gate, forcegate
-  USE io_files,             ONLY : tmp_dir, prefix, postfix
-  USE pw_restart_new,       ONLY : pw_read_schema, readschema_dim, &
-       readschema_cell, readschema_ions, readschema_planewaves, &
+  USE io_global,       ONLY : stdout, ionode, ionode_id
+  USE io_files,        ONLY : psfile, pseudo_dir, pseudo_dir_cur
+  USE mp_global,       ONLY : nproc_file, nproc_pool_file, &
+                              nproc_image_file, ntask_groups_file, &
+                              nproc_bgrp_file, nproc_ortho_file
+  USE ions_base,       ONLY : nat, nsp, ityp, amass, atm, tau, extfor
+  USE cell_base,       ONLY : alat, at, bg, ibrav, celldm, omega
+  USE force_mod,       ONLY : force
+  USE klist,           ONLY : nks, nkstot
+  USE wvfct,           ONLY : nbnd, et, wg
+  USE extfield,        ONLY : forcefield, tefield, gate, forcegate
+  USE io_files,        ONLY : tmp_dir, prefix, postfix
+  USE symm_base,       ONLY : nrot, nsym, invsym, s, ft, irt, t_rev, &
+                              sname, inverse_s, s_axis_to_cart, &
+                              time_reversal, no_t_rev, nosym, checkallsym
+  USE control_flags,   ONLY : noinv
+  USE noncollin_module,ONLY : noncolin
+  USE spin_orb,        ONLY : domag
+  !
+  USE pw_restart_new,  ONLY : pw_read_schema, &
+       readschema_planewaves, &
        readschema_spin, readschema_magnetization, readschema_xc, &
        readschema_occupations, readschema_brillouin_zone, &
-       readschema_band_structure, readschema_symmetry, readschema_efield, &
+       readschema_band_structure, readschema_efield, &
        readschema_outputPBC, readschema_exx, readschema_algo
-  USE qes_types_module,     ONLY : output_type, parallel_info_type, &
+  USE qes_types_module,ONLY : output_type, parallel_info_type, &
        general_info_type, input_type
-  USE qes_libs_module,      ONLY : qes_reset
-  USE qexsd_copy,           ONLY : qexsd_copy_parallel_info
+  USE qes_libs_module, ONLY : qes_reset
+  USE qexsd_copy,      ONLY : qexsd_copy_parallel_info, &
+       qexsd_copy_dim, qexsd_copy_atomic_species, &
+       qexsd_copy_atomic_structure, qexsd_copy_symmetry
 #if defined(__BEOWULF)
-  USE qes_bcast_module,     ONLY : qes_bcast
-  USE mp_images,            ONLY : intra_image_comm
-  USE mp,                   ONLY : mp_bcast
+  USE qes_bcast_module,ONLY : qes_bcast
+  USE mp_images,       ONLY : intra_image_comm
+  USE mp,              ONLY : mp_bcast
 #endif
   !
   IMPLICIT NONE
   LOGICAL, INTENT(OUT) :: wfc_is_collected
 
   INTEGER  :: i, is, ik, ibnd, nb, nt, ios, isym, ierr
-  CHARACTER(LEN=256) :: dirname
   LOGICAL            :: lvalid_input
   TYPE ( output_type)                   :: output_obj 
   TYPE (parallel_info_type)             :: parinfo_obj
@@ -149,10 +158,8 @@ SUBROUTINE read_xml_file ( wfc_is_collected )
   CALL qexsd_copy_parallel_info (parinfo_obj, nproc_file, &
        nproc_pool_file, nproc_image_file, ntask_groups_file, &
        nproc_bgrp_file, nproc_ortho_file)
-  CALL readschema_cell( output_obj%atomic_structure ) 
-  CALL readschema_dim ( output_obj%atomic_species, &
-       output_obj%atomic_structure, output_obj%symmetries, &
-       output_obj%basis_set, output_obj%band_structure ) 
+  CALL qexsd_copy_dim ( output_obj%atomic_structure, &
+        output_obj%band_structure, nat, nkstot, nbnd ) 
   !
   ! ... until pools are activated, the local number of k-points nks
   ! ... should be equal to the global number nkstot - k-points are replicated
@@ -180,8 +187,24 @@ SUBROUTINE read_xml_file ( wfc_is_collected )
   !
   lvalid_input = (TRIM(input_obj%tagname) == "input")
   !
-  dirname = TRIM( tmp_dir ) // TRIM( prefix ) // postfix ! FIXME
-  CALL readschema_ions( output_obj%atomic_structure, output_obj%atomic_species, dirname)
+  pseudo_dir_cur = TRIM( tmp_dir ) // TRIM( prefix ) // postfix
+  CALL qexsd_copy_atomic_species ( output_obj%atomic_species, &
+       nsp, atm, amass, psfile, pseudo_dir ) 
+  IF ( pseudo_dir == ' ' ) pseudo_dir=pseudo_dir_cur
+  !! Atomic structure section
+  CALL qexsd_copy_atomic_structure (output_obj%atomic_structure, nsp, &
+       atm, nat, tau, ityp, alat, at(:,1), at(:,2), at(:,3), ibrav )
+  !
+  !! More initializations needed for atomic structure:
+  !! bring atomic positions and crystal axis into "alat" units;
+  !! recalculate celldm; compute cell volume, reciprocal lattice vectors
+  !
+  at = at / alat
+  tau(:,1:nat) = tau(:,1:nat)/alat  
+  CALL at2celldm (ibrav,alat,at(:,1),at(:,2),at(:,3),celldm)
+  CALL volume (alat,at(:,1),at(:,2),at(:,3),omega)
+  CALL recips( at(1,1), at(1,2), at(1,3), bg(1,1), bg(1,2), bg(1,3) )
+  !
   CALL readschema_planewaves( output_obj%basis_set) 
   CALL readschema_spin( output_obj%magnetization )
   CALL readschema_magnetization (  output_obj%band_structure,  &
@@ -190,12 +213,24 @@ SUBROUTINE read_xml_file ( wfc_is_collected )
   CALL readschema_occupations( output_obj%band_structure )
   CALL readschema_brillouin_zone( output_obj%symmetries,  output_obj%band_structure )
   CALL readschema_band_structure( output_obj%band_structure )
+  !! Symmetry section
   IF ( lvalid_input ) THEN 
-     CALL readschema_symmetry (  output_obj%symmetries, output_obj%basis_set, input_obj%symmetry_flags )
+     CALL qexsd_copy_symmetry ( output_obj%symmetries, &
+          nsym, nrot, s, ft, sname, t_rev, invsym, irt, &
+          noinv, nosym, no_t_rev, input_obj%symmetry_flags )
      CALL readschema_efield ( input_obj%electric_field )
   ELSE 
-     CALL readschema_symmetry( output_obj%symmetries,output_obj%basis_set) 
+     CALL qexsd_copy_symmetry ( output_obj%symmetries, &
+          nsym, nrot, s, ft, sname, t_rev, invsym, irt, &
+          noinv, nosym, no_t_rev )
   ENDIF
+  !! More initialization needed for symmetry
+  time_reversal = noncolin .AND. domag .AND. (.NOT.noinv) 
+  CALL inverse_s()
+  CALL s_axis_to_cart()
+  !! symmetry check - FIXME: is this needed?
+  IF (nat > 0) CALL checkallsym( nat, tau, ityp)
+  !
   CALL readschema_outputPBC ( output_obj%boundary_conditions)
   IF ( output_obj%dft%hybrid_ispresent  ) THEN
      CALL readschema_exx ( output_obj%dft%hybrid )
@@ -252,7 +287,7 @@ SUBROUTINE post_xml_init (  )
   USE wvfct,                ONLY : nbnd, nbndx, et, wg
   USE lsda_mod,             ONLY : nspin
   USE cell_base,            ONLY : at, bg, set_h_ainv
-  USE symm_base,            ONLY : d1, d2, d3, checkallsym
+  USE symm_base,            ONLY : d1, d2, d3
   USE realus,               ONLY : betapointlist, generate_qpointlist, &
                                    init_realspace_vars,real_space
   !
@@ -261,10 +296,6 @@ SUBROUTINE post_xml_init (  )
   INTEGER  :: inlc
   REAL(DP) :: ehart, etxc, vtxc, etotefield, charge
   CHARACTER(LEN=20) :: dft_name
-  !
-  ! ... check on symmetry (FIXME: is this needed?)
-  !
-  IF (nat > 0) CALL checkallsym( nat, tau, ityp)
   !
   ! ... set spin variables, G cutoffs, cell factor (FIXME: from setup.f90?)
   !
