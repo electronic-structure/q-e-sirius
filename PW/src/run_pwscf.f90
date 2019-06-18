@@ -133,9 +133,9 @@ SUBROUTINE run_pwscf ( exit_status )
   ENDIF
   !
   main_loop: DO idone = 1, nstep
-     if (use_sirius.and.recompute_gvec.and.idone.gt.1) then
-        call reset_gvectors()
-     endif
+     !if (use_sirius.and.recompute_gvec.and.idone.gt.1) then
+     !   call reset_gvectors()
+     !endif
      !
      ! ... electronic self-consistency or band structure calculation
      !
@@ -206,12 +206,12 @@ SUBROUTINE run_pwscf ( exit_status )
         ! ... ionic step (for molecular dynamics or optimization)
         !
         CALL move_ions ( idone, ions_status )
-        if (use_sirius.and.recompute_gvec.and.ions_status.eq.1) then
-          lmovecell=.FALSE.
-          lbfgs=.FALSE.
-          lmd=.FALSE.
-          ions_status = 0
-        endif
+        !if (use_sirius.and.recompute_gvec.and.ions_status.eq.1) then
+        !  lmovecell=.FALSE.
+        !  lbfgs=.FALSE.
+        !  lmd=.FALSE.
+        !  ions_status = 0
+        !endif
         if (use_sirius) then
           call update_sirius
         endif
@@ -277,29 +277,28 @@ SUBROUTINE run_pwscf ( exit_status )
               CALL reset_gvectors ( )
               !
            ELSE
-              !
-              ! ... update the wavefunctions, charge density, potential
-              ! ... update_pot initializes structure factor array as well
-              !
-              CALL update_pot()
-              !
-              ! ... re-initialize atomic position-dependent quantities
-              !
-              CALL hinit1()
-           !else
-           !   if (.not.recompute_gvec) then
-           !      call sirius_start_timer(string("qe|update"))
-           !      if ( lmovecell ) call scale_h()
-           !      call struc_fact( nat, tau, nsp, ityp, ngm, g, bg, &
-           !                       dfftp%nr1, dfftp%nr2, dfftp%nr3, strf, eigts1, eigts2, eigts3 )
-           !      call setlocal()
-           !      call set_rhoc()
-           !      call potinit
-           !      call newd
-           !      call sirius_initialize_subspace(gs_handler, ks_handler)
-           !      call sirius_stop_timer(string("qe|update"))
-           !   endif
-           !endif
+              IF (use_sirius) THEN
+                 CALL sirius_start_timer(string("qe|update"))
+                 if ( lmovecell ) CALL scale_h()
+                 CALL struc_fact( nat, tau, nsp, ityp, ngm, g, bg, &
+                                  dfftp%nr1, dfftp%nr2, dfftp%nr3, strf, eigts1, eigts2, eigts3 )
+                 CALL setlocal()
+                 CALL set_rhoc()
+                 CALL potinit
+                 CALL newd
+                 CALL sirius_initialize_subspace(gs_handler, ks_handler)
+                 CALL sirius_stop_timer(string("qe|update"))
+              ELSE
+                 !
+                 ! ... update the wavefunctions, charge density, potential
+                 ! ... update_pot initializes structure factor array as well
+                 !
+                 CALL update_pot()
+                 !
+                 ! ... re-initialize atomic position-dependent quantities
+                 !
+                 CALL hinit1()
+              END IF
               !
            END IF
            !

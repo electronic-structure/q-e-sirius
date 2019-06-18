@@ -40,7 +40,7 @@ logical :: use_sirius_forces                  = .true.
 ! use SIRIUS to compute stress tensor
 logical :: use_sirius_stress                  = .true.
 ! initialize G-vectors once or at each step of ionic relaxation
-logical :: recompute_gvec                     = .false.
+!logical :: recompute_gvec                     = .false.
 
 ! inverse of the reciprocal lattice vectors matrix
 real(8) bg_inv(3,3)
