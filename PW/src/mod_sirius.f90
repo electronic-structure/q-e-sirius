@@ -120,6 +120,8 @@ sctx = sirius_create_context(intra_image_comm)
 ! set type of caclulation
 call sirius_import_parameters(sctx, string('{"parameters" : {"electronic_structure_method" : &
                                              "pseudopotential"}}'))
+! set default verbosity
+call sirius_set_parameters(sctx, verbosity=min(1, iverbosity))
 ! import config file
 call sirius_import_parameters(sctx, string(trim(adjustl(sirius_cfg))))
 
@@ -139,7 +141,7 @@ call sirius_set_parameters(sctx, num_bands=nbnd, num_mag_dims=nmagd, gamma_point
                           &use_symmetry=bool(.false.), so_correction=bool(lspinorb),&
                           &pw_cutoff=sqrt(ecutrho), gk_cutoff=sqrt(ecutwfc),&
                           &hubbard_correction=bool(lda_plus_U), hubbard_correction_kind=lda_plus_u_kind,&
-                          &hubbard_orbitals=string(U_projection), verbosity=min(1, iverbosity))
+                          &hubbard_orbitals=string(U_projection))
 if (do_comp_esm) then
   call sirius_set_parameters(sctx, esm_bc=esm_bc)
 endif
