@@ -16,8 +16,8 @@ SUBROUTINE iosys()
   !
   USE kinds,         ONLY : DP
   USE funct,         ONLY : dft_is_hybrid, dft_has_finite_size_correction, &
-                            set_finite_size_volume, get_inlc, get_dft_short, is_libxc
-  USE funct,         ONLY: set_exx_fraction, set_screening_parameter, get_igcx
+                            set_finite_size_volume, get_inlc, get_dft_short
+  USE funct,         ONLY: set_exx_fraction, set_screening_parameter
   USE control_flags, ONLY: adapt_thr, tr2_init, tr2_multi  
   USE constants,     ONLY : autoev, eV_to_kelvin, pi, rytoev, &
                             ry_kbar, amu_ry, bohr_radius_angs, eps8
@@ -317,11 +317,6 @@ SUBROUTINE iosys()
   !
   USE vlocal,        ONLY : starting_charge_ => starting_charge
   !
-#if defined(__LIBXC)
-  USE xc_f90_types_m
-  USE xc_f90_lib_m
-#endif
-  !
   IMPLICIT NONE
   !
   INTERFACE  
@@ -340,10 +335,6 @@ SUBROUTINE iosys()
   INTEGER  :: ia, nt, inlc, ibrav_sg, ierr
   LOGICAL  :: exst, parallelfs
   REAL(DP) :: theta, phi, ecutwfc_pp, ecutrho_pp
-#if defined(__LIBXC)
-  INTEGER :: igcx, family
-  TYPE(xc_f90_pointer_t) :: xc_func, xc_info
-#endif
   !
   ! ... various initializations of control variables
   !
@@ -558,72 +549,11 @@ SUBROUTINE iosys()
   !
   smallmem = ( TRIM( memory ) == 'small' )
   !
-  ! ... Set Values for electron and bands
+  ! ... Set occupancies
   !
-  tfixed_occ = .false.
-  ltetra     = .false.
-  lgauss     = .false.
-  ngauss     = 0
-  !
-  SELECT CASE( trim( occupations ) )
-  CASE( 'fixed' )
-     !
-     IF ( degauss /= 0.D0 ) THEN
-        CALL errore( ' iosys ', &
-                   & ' fixed occupations, gauss. broadening ignored', -1 )
-        degauss = 0.D0
-     ENDIF
-     !
-  CASE( 'smearing' )
-     !
-     lgauss = ( degauss > 0.0_dp ) 
-     IF ( .NOT. lgauss ) &
-        CALL errore( ' iosys ', &
-                   & ' smearing requires gaussian broadening', 1 )
-     !
-     SELECT CASE ( trim( smearing ) )
-     CASE ( 'gaussian', 'gauss', 'Gaussian', 'Gauss' )
-        ngauss = 0
-        smearing_ = 'gaussian'
-     CASE ( 'methfessel-paxton', 'm-p', 'mp', 'Methfessel-Paxton', 'M-P', 'MP' )
-        ngauss = 1
-        smearing_ = 'Methfessel-Paxton'
-     CASE ( 'marzari-vanderbilt', 'cold', 'm-v', 'mv', 'Marzari-Vanderbilt', 'M-V', 'MV')
-        ngauss = -1
-        smearing_ = 'Marzari-Vanderbilt'
-     CASE ( 'fermi-dirac', 'f-d', 'fd', 'Fermi-Dirac', 'F-D', 'FD')
-        ngauss = -99
-        smearing_ = 'Fermi-Dirac'
-     CASE DEFAULT
-        CALL errore( ' iosys ', ' smearing '//trim(smearing)//' unknown', 1 )
-     END SELECT
-     !
-  CASE( 'tetrahedra' )
-     !
-     ltetra = .true.
-     tetra_type = 0
-     !
-  CASE( 'tetrahedra_lin', 'tetrahedra-lin')
-     !
-     ltetra = .true.
-     tetra_type = 1
-     !
-  CASE('tetrahedra_opt', 'tetrahedra-opt')
-     !
-     ltetra = .true.
-     tetra_type = 2
-     !
-  CASE( 'from_input' )
-     !
-     ngauss     = 0
-     tfixed_occ = .true.
-     !
-  CASE DEFAULT
-     !
-     CALL errore( 'iosys','occupations ' // trim( occupations ) // &
-                & ' not implemented', 1 )
-     !
-  END SELECT
+  CALL set_occupations( occupations, smearing, degauss, &
+       tfixed_occ, ltetra, tetra_type, lgauss, ngauss ) 
+  smearing_ = smearing
   !
   IF( ltetra ) THEN
      IF( lforce ) CALL infomsg( 'iosys', &
@@ -631,6 +561,7 @@ SUBROUTINE iosys()
      IF( lstres ) CALL infomsg( 'iosys', &
        'BEWARE: stress calculation with tetrahedra (not recommanded)')
   END IF
+  !
   IF( nbnd < 1 ) &
      CALL errore( 'iosys', 'nbnd less than 1', nbnd )
   !
@@ -1259,53 +1190,13 @@ SUBROUTINE iosys()
   !
   !  ... initialize variables for vdW (dispersions) corrections
   !
-  SELECT CASE( TRIM( vdw_corr ) )
-    !
-    CASE( 'grimme-d2', 'Grimme-D2', 'DFT-D', 'dft-d' )
-      !
-      llondon= .TRUE.
-      ldftd3 = .FALSE.
-      ts_vdw_= .FALSE.
-      lxdm   = .FALSE.
-      !
-    CASE( 'grimme-d3', 'Grimme-D3', 'DFT-D3', 'dft-d3' )
-      !
-      ldftd3 = .TRUE.
-      llondon= .FALSE.
-      ts_vdw_= .FALSE.
-      lxdm   = .FALSE.
-      !
-
-    CASE( 'TS', 'ts', 'ts-vdw', 'ts-vdW', 'tkatchenko-scheffler' )
-      !
-      llondon= .FALSE.
-      ldftd3 = .FALSE.
-      ts_vdw_= .TRUE.
-      lxdm   = .FALSE.
-      !
-    CASE( 'XDM', 'xdm' )
-       !
-      llondon= .FALSE.
-      ldftd3 = .FALSE.
-      ts_vdw_= .FALSE.
-      lxdm   = .TRUE.
-      !
-    CASE DEFAULT
-      !
-      llondon= .FALSE.
-      ldftd3 = .FALSE.
-      ts_vdw_= .FALSE.
-      lxdm   = .FALSE.
-      !
-  END SELECT
+  CALL set_vdw_corr ( vdw_corr, llondon, ldftd3, ts_vdw_, lxdm)
+  !
   IF ( london ) THEN
      CALL infomsg("iosys","london is obsolete, use ""vdw_corr='grimme-d2'"" instead")
      vdw_corr='grimme-d2'
      llondon = .TRUE.
   END IF
-  IF ( ldftd3 ) THEN
-     vdw_corr='grimme-d3'
-  ENDIF
   IF ( xdm ) THEN
      CALL infomsg("iosys","xdm is obsolete, use ""vdw_corr='xdm'"" instead")
      vdw_corr='xdm'
@@ -1496,13 +1387,12 @@ SUBROUTINE iosys()
   !
   ! ... Read atomic positions and unit cell from data file, if needed,
   ! ... overwriting what has just been read before from input
+  ! ... read_config_from_file returns 0 if structure successfully read
   !
   ierr = 1
   IF ( startingconfig == 'file' .AND. .NOT. lforcet ) &
-     ierr = read_config_from_file(nat, at_old, omega_old, lmovecell, &
-                                       at, bg, omega, tau)
+     ierr = read_config_from_file( lmovecell, at_old, omega_old)
   !
-  ! ... read_config_from_file returns 0 if structure successfully read
   ! ... Atomic positions (tau) must be converted to internal units
   ! ... only if they were read from input, not from file
   !
@@ -1634,15 +1524,6 @@ SUBROUTINE iosys()
   ! ... must be done AFTER dft is read from PP files and initialized
   ! ... or else the two following parameters will be overwritten
   !
-#if defined(__LIBXC)
-  IF ( is_libxc(3) ) THEN
-    igcx = get_igcx()
-    CALL xc_f90_func_init( xc_func, xc_info, igcx, 1 )  
-    family = xc_f90_info_family( xc_info )
-    IF (family == XC_FAMILY_HYB_GGA) CALL xc_f90_hyb_exx_coef( xc_func, exx_fraction )
-    CALL xc_f90_func_end( xc_func )
-  ENDIF
-#endif
   IF (exx_fraction >= 0.0_DP) CALL set_exx_fraction (exx_fraction)
   !
   IF (screening_parameter >= 0.0_DP) &

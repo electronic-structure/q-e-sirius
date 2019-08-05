@@ -88,6 +88,7 @@ recvec_subs.o \
 run_info.o \
 space_group.o \
 set_signal.o \
+set_vdw_corr.o \
 setqf.o \
 splinelib.o \
 timestep.o\
@@ -110,6 +111,7 @@ xc_vdW_DF.o \
 xc_rVV10.o \
 xc_lda_lsda_drivers.o \
 xc_gga_drivers.o \
+xc_mgga_drivers.o \
 io_base.o \
 qes_types_module.o \
 qes_libs_module.o  \
