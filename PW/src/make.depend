@@ -191,7 +191,7 @@ bp_c_phase.o : ../../Modules/kind.o
 bp_c_phase.o : ../../Modules/mp_bands.o
 bp_c_phase.o : ../../Modules/noncol.o
 bp_c_phase.o : ../../Modules/qes_libs_module.o
-bp_c_phase.o : ../../Modules/qexsd.o
+bp_c_phase.o : ../../Modules/qexsd_init.o
 bp_c_phase.o : ../../Modules/recvec.o
 bp_c_phase.o : ../../Modules/uspp.o
 bp_c_phase.o : ../../Modules/wavefunctions.o
@@ -451,6 +451,7 @@ electrons.o : io_rho_xml.o
 electrons.o : ldaU.o
 electrons.o : loc_scdm.o
 electrons.o : loc_scdm_k.o
+electrons.o : mod_sirius.o
 electrons.o : newd.o
 electrons.o : paw_onecenter.o
 electrons.o : paw_symmetry.o
@@ -1001,7 +1002,7 @@ input.o : ../../Modules/mm_dispersion.o
 input.o : ../../Modules/mp_pools.o
 input.o : ../../Modules/noncol.o
 input.o : ../../Modules/qes_types_module.o
-input.o : ../../Modules/qexsd.o
+input.o : ../../Modules/qexsd_input.o
 input.o : ../../Modules/qmmm.o
 input.o : ../../Modules/read_namelists.o
 input.o : ../../Modules/read_pseudo.o
@@ -1529,6 +1530,7 @@ punch.o : io_rho_xml.o
 punch.o : pw_restart_new.o
 punch.o : pwcom.o
 punch.o : scf_mod.o
+punch.o : xdm_dispersion.o
 pw2blip.o : ../../FFTXlib/fft_scalar.o
 pw2blip.o : ../../FFTXlib/fft_support.o
 pw2blip.o : ../../Modules/cell_base.o
@@ -1581,7 +1583,7 @@ pw_init_qexsd_input.o : ../../Modules/kind.o
 pw_init_qexsd_input.o : ../../Modules/parameters.o
 pw_init_qexsd_input.o : ../../Modules/qes_libs_module.o
 pw_init_qexsd_input.o : ../../Modules/qes_types_module.o
-pw_init_qexsd_input.o : ../../Modules/qexsd.o
+pw_init_qexsd_input.o : ../../Modules/qexsd_init.o
 pw_init_qexsd_input.o : ../../Modules/qexsd_input.o
 pw_init_qexsd_input.o : ../../Modules/uspp.o
 pw_init_qexsd_input.o : pwcom.o
@@ -1604,14 +1606,14 @@ pw_restart_new.o : ../../Modules/mp_bands.o
 pw_restart_new.o : ../../Modules/mp_pools.o
 pw_restart_new.o : ../../Modules/noncol.o
 pw_restart_new.o : ../../Modules/paw_variables.o
-pw_restart_new.o : ../../Modules/qes_init_module.o
-pw_restart_new.o : ../../Modules/qes_read_module.o
 pw_restart_new.o : ../../Modules/qes_reset_module.o
 pw_restart_new.o : ../../Modules/qes_types_module.o
 pw_restart_new.o : ../../Modules/qes_write_module.o
 pw_restart_new.o : ../../Modules/qexsd.o
+pw_restart_new.o : ../../Modules/qexsd_init.o
 pw_restart_new.o : ../../Modules/qexsd_input.o
 pw_restart_new.o : ../../Modules/recvec.o
+pw_restart_new.o : ../../Modules/run_info.o
 pw_restart_new.o : ../../Modules/tsvdw.o
 pw_restart_new.o : ../../Modules/uspp.o
 pw_restart_new.o : ../../Modules/version.o
@@ -1661,8 +1663,8 @@ read_conf_from_file.o : ../../Modules/ions_base.o
 read_conf_from_file.o : ../../Modules/kind.o
 read_conf_from_file.o : ../../Modules/qes_libs_module.o
 read_conf_from_file.o : ../../Modules/qes_types_module.o
+read_conf_from_file.o : ../../Modules/qexsd.o
 read_conf_from_file.o : ../../Modules/qexsd_copy.o
-read_conf_from_file.o : pw_restart_new.o
 read_file_new.o : ../../Modules/cell_base.o
 read_file_new.o : ../../Modules/constants.o
 read_file_new.o : ../../Modules/control_flags.o
@@ -1684,6 +1686,7 @@ read_file_new.o : ../../Modules/paw_variables.o
 read_file_new.o : ../../Modules/qes_bcast_module.o
 read_file_new.o : ../../Modules/qes_libs_module.o
 read_file_new.o : ../../Modules/qes_types_module.o
+read_file_new.o : ../../Modules/qexsd.o
 read_file_new.o : ../../Modules/qexsd_copy.o
 read_file_new.o : ../../Modules/read_pseudo.o
 read_file_new.o : ../../Modules/recvec.o
@@ -1880,6 +1883,7 @@ set_vrs.o : ../../FFTXlib/fft_interfaces.o
 set_vrs.o : ../../Modules/fft_base.o
 set_vrs.o : ../../Modules/funct.o
 set_vrs.o : ../../Modules/kind.o
+set_vrs.o : mod_sirius.o
 setlocal.o : ../../FFTXlib/fft_interfaces.o
 setlocal.o : ../../Modules/cell_base.o
 setlocal.o : ../../Modules/constants.o
@@ -1896,6 +1900,7 @@ setlocal.o : Coul_cut_2D.o
 setlocal.o : esm.o
 setlocal.o : extfield.o
 setlocal.o : martyna_tuckerman.o
+setlocal.o : mod_sirius.o
 setlocal.o : pwcom.o
 setlocal.o : scf_mod.o
 setup.o : ../../LAXlib/mp_diag.o
@@ -1917,6 +1922,7 @@ setup.o : ../../Modules/parameters.o
 setup.o : ../../Modules/paw_variables.o
 setup.o : ../../Modules/qes_libs_module.o
 setup.o : ../../Modules/qes_types_module.o
+setup.o : ../../Modules/qexsd.o
 setup.o : ../../Modules/qexsd_copy.o
 setup.o : ../../Modules/recvec.o
 setup.o : ../../Modules/uspp.o
@@ -1927,7 +1933,6 @@ setup.o : exx.o
 setup.o : exx_base.o
 setup.o : ldaU.o
 setup.o : mod_sirius.o
-setup.o : pw_restart_new.o
 setup.o : pwcom.o
 setup.o : start_k.o
 setup.o : symm_base.o
@@ -2091,7 +2096,6 @@ stress.o : bp_mod.o
 stress.o : esm.o
 stress.o : exx.o
 stress.o : ldaU.o
-stress.o : mod_sirius.o
 stress.o : pwcom.o
 stress.o : scf_mod.o
 stress.o : symme.o
@@ -2380,6 +2384,7 @@ wfcinit.o : ../../Modules/mp_bands.o
 wfcinit.o : ../../Modules/noncol.o
 wfcinit.o : ../../Modules/qes_libs_module.o
 wfcinit.o : ../../Modules/qes_types_module.o
+wfcinit.o : ../../Modules/qexsd.o
 wfcinit.o : ../../Modules/random_numbers.o
 wfcinit.o : ../../Modules/recvec.o
 wfcinit.o : ../../Modules/uspp.o
@@ -2407,6 +2412,7 @@ xdm_dispersion.o : ../../Modules/constants.o
 xdm_dispersion.o : ../../Modules/control_flags.o
 xdm_dispersion.o : ../../Modules/fft_base.o
 xdm_dispersion.o : ../../Modules/funct.o
+xdm_dispersion.o : ../../Modules/io_files.o
 xdm_dispersion.o : ../../Modules/io_global.o
 xdm_dispersion.o : ../../Modules/ions_base.o
 xdm_dispersion.o : ../../Modules/kind.o

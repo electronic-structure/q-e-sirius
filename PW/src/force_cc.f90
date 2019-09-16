@@ -7,8 +7,9 @@
 !
 !
 !-----------------------------------------------------------------------
-subroutine force_cc (forcecc)
+SUBROUTINE force_cc( forcecc )
   !----------------------------------------------------------------------
+  !! Calculates the NLCC contribution to the force.
   !
   USE kinds,                ONLY : DP
   USE constants,            ONLY : tpi
@@ -24,106 +25,109 @@ subroutine force_cc (forcecc)
   USE scf,                  ONLY : rho, rho_core, rhog_core
   USE control_flags,        ONLY : gamma_only
   USE noncollin_module,     ONLY : noncolin
-  USE wavefunctions, ONLY : psic
+  USE wavefunctions,        ONLY : psic
   USE mp_bands,             ONLY : intra_bgrp_comm
   USE mp,                   ONLY : mp_sum
   use mod_sirius
   !
-  implicit none
+  IMPLICIT NONE
   !
-  !   first the dummy variable
+  REAL(DP) :: forcecc(3,nat)
+  !! output: the NLCC forces on atoms
   !
-  real(DP) :: forcecc (3, nat)
-  ! output: the local forces on atoms
-
-  integer :: ig, ir, nt, na
+  ! ... local variables
+  !
+  INTEGER :: ig, ir, nt, na
   ! counter on polarizations
   ! counter on G vectors
   ! counter on FFT grid points
   ! counter on types of atoms
   ! counter on atoms
-
-
-  real(DP), allocatable :: vxc (:,:), rhocg (:), rho_core_g(:)
+  REAL(DP), ALLOCATABLE :: vxc(:,:), rhocg(:)
+  REAL(DP), ALLOCATABLE :: rho_core_g(:)
   ! exchange-correlation potential
   ! radial fourier transform of rho core
-  real(DP)  ::  arg, fact
-  
-  if (use_sirius.and.use_sirius_forces) then
-    call sirius_get_forces(gs_handler, string("core"), forcecc(1, 1))
+  REAL(DP) ::  arg, fact
+  !
+  IF (use_sirius.AND.use_sirius_forces) THEN
+    CALL sirius_get_forces(gs_handler, string("core"), forcecc(1, 1))
     forcecc = forcecc * 2 ! convert to Ry
-    return
-  endif
+    RETURN
+  ENDIF
   !
   forcecc(:,:) = 0.d0
-  if ( ANY ( upf(1:ntyp)%nlcc ) ) go to 15
-  return
   !
-15 continue
-  if (gamma_only) then
+  IF ( ANY( upf(1:ntyp)%nlcc ) ) GOTO 15
+  RETURN
+  !
+15 CONTINUE
+  IF (gamma_only) THEN
      fact = 2.d0
-  else
+  ELSE
      fact = 1.d0
-  end if
+  ENDIF
   !
-  ! recalculate the exchange-correlation potential
+  ! ... recalculate the exchange-correlation potential
   !
-  allocate ( vxc(dfftp%nnr,nspin) )
+  ALLOCATE( vxc(dfftp%nnr,nspin) )
   !
-  call v_xc (rho, rho_core, rhog_core, etxc, vtxc, vxc)
+  CALL v_xc( rho, rho_core, rhog_core, etxc, vtxc, vxc )
   !
-  psic=(0.0_DP,0.0_DP)
-  if (nspin == 1 .or. nspin == 4) then
-     do ir = 1, dfftp%nnr
-        psic (ir) = vxc (ir, 1)
-     enddo
-  else
-     do ir = 1, dfftp%nnr
+  psic = (0.0_DP,0.0_DP)
+  IF (nspin == 1 .OR. nspin == 4) THEN
+     DO ir = 1, dfftp%nnr
+        psic(ir) = vxc (ir,1)
+     ENDDO
+  ELSE
+     DO ir = 1, dfftp%nnr
         psic (ir) = 0.5d0 * (vxc (ir, 1) + vxc (ir, 2) )
-     enddo
-  endif
-  deallocate (vxc)
-  CALL fwfft ('Rho', psic, dfftp)
+     ENDDO
+  ENDIF
   !
-  ! psic contains now Vxc(G)
+  DEALLOCATE( vxc )
   !
-  allocate ( rhocg(ngl) )
-  allocate(rho_core_g(ngm))
+  CALL fwfft( 'Rho', psic, dfftp )
   !
-  ! core correction term: sum on g of omega*ig*exp(-i*r_i*g)*n_core(g)*vxc
+  ! ... psic contains now Vxc(G)
+  !
+  ALLOCATE( rhocg(ngl) )
+  ALLOCATE( rho_core_g(ngm) )
+  !
+  ! ... core correction term: sum on g of omega*ig*exp(-i*r_i*g)*n_core(g)*vxc
   ! g = 0 term gives no contribution
   !
-  do nt = 1, ntyp
-     if ( upf(nt)%nlcc ) then
-
-        if (use_sirius.and.use_sirius_rho_core) then
-          call sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, string("rhoc"), rho_core_g(1),&
+  DO nt = 1, ntyp
+     IF ( upf(nt)%nlcc ) THEN
+        !
+        IF (use_sirius.AND.use_sirius_rho_core) THEN
+          CALL sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, string("rhoc"), rho_core_g(1),&
                                         &ngm, mill(1, 1), intra_bgrp_comm)
-        else
-          call drhoc (ngl, gl, omega, tpiba2, msh(nt), rgrid(nt)%r,&
-                      rgrid(nt)%rab, upf(nt)%rho_atc, rhocg)
+        ELSE
+          CALL drhoc( ngl, gl, omega, tpiba2, msh(nt), rgrid(nt)%r, &
+                      rgrid(nt)%rab, upf(nt)%rho_atc, rhocg )
           rho_core_g(:) = rhocg(igtongl(:))
-        endif
+        ENDIF
 !$omp parallel do private(arg)
-        do na = 1, nat
-           if (nt.eq.ityp (na) ) then
-              do ig = gstart, ngm
-                 arg = (g (1, ig) * tau (1, na) + g (2, ig) * tau (2, na) &
-                      + g (3, ig) * tau (3, na) ) * tpi
-                 forcecc (1:3, na) = forcecc (1:3, na) + tpiba * omega * &
-                      rho_core_g(ig) * CONJG(psic (dfftp%nl (ig) ) ) * &
-                      CMPLX( sin (arg), cos (arg) ,kind=DP) * g (1:3, ig) * fact
-              enddo
-           endif
-        enddo
+        DO na = 1, nat
+           IF (nt == ityp (na) ) THEN
+              DO ig = gstart, ngm
+                 arg = (g(1,ig) * tau(1,na) + g (2, ig) * tau (2, na) &
+                      + g(3,ig) * tau(3,na) ) * tpi
+                 forcecc (1:3, na) = forcecc(1:3, na) + tpiba * omega * &
+                         rho_core_g(ig) * CONJG(psic(dfftp%nl(ig) ) ) * &
+                         CMPLX( SIN(arg), COS(arg), KIND=DP) * g(1:3,ig) * fact
+              ENDDO
+           ENDIF
+        ENDDO
 !$omp end parallel do
-     endif
-  enddo
+     ENDIF
+  ENDDO
   !
-  call mp_sum(  forcecc, intra_bgrp_comm )
+  CALL mp_sum( forcecc, intra_bgrp_comm )
   !
-  deallocate (rhocg)
-  deallocate(rho_core_g)
+  DEALLOCATE( rhocg )
+  DEALLOCATE( rho_core_g )
   !
-  return
-end subroutine force_cc
+  RETURN
+  !
+END SUBROUTINE force_cc
