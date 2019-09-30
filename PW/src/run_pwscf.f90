@@ -51,6 +51,12 @@ SUBROUTINE run_pwscf( exit_status )
                                    qmmm_update_positions, qmmm_update_forces
   USE qexsd_module,         ONLY : qexsd_set_status
   USE funct,                ONLY : dft_is_hybrid, stop_exx 
+  USE cell_base,            ONLY : at, bg
+  USE gvect,                ONLY : ngm, g, eigts1, eigts2, eigts3
+  USE ions_base,            ONLY : nat, nsp, ityp, tau
+  USE vlocal,               ONLY : strf
+  USE mp_world,             ONLY : mpime
+  USE dfunct,               ONLY : newd
   USE mod_sirius
   !
   IMPLICIT NONE
