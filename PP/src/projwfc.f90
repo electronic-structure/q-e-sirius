@@ -770,10 +770,10 @@ SUBROUTINE sym_proj_so (domag, proj0, proj_out  )
   COMPLEX(DP), INTENT(IN) :: proj0 (natomwfc, nbnd)
   REAL   (DP), INTENT(OUT):: proj_out(natomwfc, nbnd)
   !
-  INTEGER :: na, nb, n, l, m, m1, ind, ind0, jj, isym, nwfc, nwfc1, ibnd
+  INTEGER :: na, nb, n, l, m, m1, ind, ind0, isym, nwfc, nwfc1, ibnd
+  REAL(DP) :: jj
   COMPLEX(DP), ALLOCATABLE ::  work1(:)
-  COMPLEX(DP) :: d12(2, 2, 48), d32(4, 4, 48), d52(6, 6, 48), &
-                 d72(8, 8, 48)
+  COMPLEX(DP) :: d12(2, 2, 48), d32(4, 4, 48), d52(6, 6, 48), d72(8, 8, 48)
   !
   ! initialize D_Sj for j=1/2, j=3/2, j=5/2 and j=7/2
   !
@@ -975,6 +975,7 @@ SUBROUTINE write_proj ( lmax_wfc, filproj, proj )
   REAL(DP), ALLOCATABLE :: proj1 (:)
   REAL(DP), ALLOCATABLE :: charges(:,:,:), charges_lm(:,:,:,:)
   REAL (DP), EXTERNAL :: compute_mj
+  CHARACTER (len=1) :: plus
   !
   INTERFACE 
      SUBROUTINE write_lowdin ( filproj, nat, lmax_wfc, nspin, charges, charges_lm )
@@ -994,17 +995,19 @@ SUBROUTINE write_proj ( lmax_wfc, filproj, proj )
           nwfc, nlmchi(nwfc)%na, atm(ityp(nlmchi(nwfc)%na)), &
           nlmchi(nwfc)%n, nlmchi(nwfc)%l
      IF ( lspinorb ) THEN
-        WRITE(stdout,1001) compute_mj(nlmchi(nwfc)%jj,nlmchi(nwfc)%l,nlmchi(nwfc)%m)
+        WRITE(stdout,1001) nlmchi(nwfc)%jj, &
+             compute_mj(nlmchi(nwfc)%jj,nlmchi(nwfc)%l,nlmchi(nwfc)%m)
      ELSE IF ( noncolin ) THEN
-        WRITE(stdout,1002) 0.5d0-int(nlmchi(nwfc)%ind/(2*nlmchi(nwfc)%l+2))
+        WRITE(stdout,1002) nlmchi(nwfc)%m, &
+             0.5d0-int(nlmchi(nwfc)%ind/(2*nlmchi(nwfc)%l+2))
      ELSE
         WRITE(stdout,1003) nlmchi(nwfc)%m
      END IF
   ENDDO
 1000 FORMAT (5x,"state #",i4,": atom ",i3," (",a3,"), wfc ",i2, &
           " (l=",i1)
-1001 FORMAT (" m_j=",f4.1,")")
-1002 FORMAT (" s_z=",f4.1,")")
+1001 FORMAT (" j=",f3.1," m_j=",f4.1,")")
+1002 FORMAT (" m=",i2," s_z=",f4.1,")")
 1003 FORMAT (" m=",i2,")")
   !
   ALLOCATE(idx(natomwfc), proj1 (natomwfc) )
@@ -1036,12 +1039,18 @@ SUBROUTINE write_proj ( lmax_wfc, filproj, proj )
         !
         ! fancy (?!?) formatting
         !
-        WRITE( stdout, '(5x,"psi = ",5(f5.3,"*[#",i4,"]+"))') &
-             (proj1 (i), idx(i), i = 1, min(5,nwfc))
-        DO j = 1, (nwfc-1)/5
-           WRITE( stdout, '(10x,"+",5(f5.3,"*[#",i4,"]+"))') &
-                (proj1 (i), idx(i), i = 5*j+1, min(5*(j+1),nwfc))
+        plus='+'
+        DO i = 1, nwfc
+           IF ( i == 1 ) THEN
+              WRITE( stdout,'(5X,"psi = ",f5.3,"*[#",i4,"]")',advance='no') &
+                 proj1 (i), idx(i)
+           ELSE
+              IF ( MOD(i,5) == 0 ) WRITE( stdout,'(/,10X)', advance='no' )
+              WRITE( stdout,'(A,f5.3,"*[#",i4,"]")',advance='no') &
+                 plus, proj1 (i), idx(i)
+           END IF
         ENDDO
+        WRITE( stdout, * )
         psum = SUM ( proj(1:natomwfc, ibnd, ik) )
         WRITE( stdout, '(4x,"|psi|^2 = ",f5.3)') psum
         !
@@ -1149,7 +1158,6 @@ SUBROUTINE projwave_nc(filproj, lsym, lwrite_ovp, lbinary, ef_0 )
   !
   IF (.not.noncolin) CALL errore('projwave_nc','called in the wrong case',1)
   IF (gamma_only) CALL errore('projwave_nc','gamma_only not yet implemented',1)
-  WRITE( stdout, '(/5x,"Calling projwave .... ")')
   IF ( natomwfc <= 0 ) CALL errore &
        ('projwave_nc', 'Cannot project on zero atomic wavefunctions!', 1)
   !
@@ -2273,18 +2281,18 @@ CONTAINS
               !  this proc sends his block
               !
               CALL mp_bcast( ovr, root, intra_pool_comm )
-              CALL ZGEMM( 'N', 'N', npw, nc, nr, (1.0_dp,1.0_dp), &
+              CALL ZGEMM( 'N', 'N', npw, nc, nr, (1.0_dp,0.0_dp), &
                           swfc(1,ir), npwx, ovr, nx, beta, wfc(1,ic), npwx )
            ELSE
               !
               !  all other procs receive
               !
               CALL mp_bcast( vtmp, root, intra_pool_comm )
-              CALL ZGEMM( 'N', 'N', npw, nc, nr, (1.0_dp,1.0_dp), &
+              CALL ZGEMM( 'N', 'N', npw, nc, nr, (1.0_dp,0.0_dp), &
                        swfc(1,ir), npwx, vtmp, nx, beta, wfc(1,ic), npwx )
            ENDIF
            !
-           beta = (1.0_dp,1.0_dp)
+           beta = (1.0_dp,0.0_dp)
 
         ENDDO
         !
