@@ -56,17 +56,44 @@ SUBROUTINE atomic_rho_g (rhocg, nspina)
   !
   CALL sirius_start_timer(string("qe|atomic_rho_g"))
   !
-  !IF (use_sirius.AND.use_sirius_rho_atomic) THEN
-  !    hocg(:,:) = (0.0_dp,0.0_dp)
-  !    ALLOCATE(rho_g(ngm))
-  !    DO nt = 1, ntyp
-  !      CALL sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, string("rho"), rho_g(1), ngm, mill(1, 1), intra_bgrp_comm)
-  !      rho_g(:) = rho_g(:) * omega
-  !    ENDDO
-
-  !ELSE
-
-  !ENDIF
+  IF (use_sirius.AND.use_sirius_rho_atomic) THEN
+     rhocg(:,:) = (0.0_dp,0.0_dp)
+     ALLOCATE(rho_g(ngm))
+     DO nt = 1, ntyp
+        CALL sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, string("rho"), rho_g(1), ngm, mill(1, 1), intra_bgrp_comm)
+        !rho_g(:) = rho_g(:) * omega
+        IF (upf(nt)%zp > eps8) THEN
+           rhoscale = MAX(0.0_dp, upf(nt)%zp - starting_charge(nt)) / upf(nt)%zp
+        ELSE
+           rhoscale = 1.0_dp
+        ENDIF
+!$OMP PARALLEL DO
+        DO ig = 1, ngm
+           rhocg(ig,1) = rhocg(ig,1) + strf(ig,nt) * rhoscale * rho_g(ig)
+        ENDDO
+!$OMP END PARALLEL DO
+        IF ( nspina >= 2 ) THEN
+           !
+           angular(1) = 1._dp
+           IF ( nspina == 4 ) THEN
+              angular(1) = sin(angle1(nt))*cos(angle2(nt))
+              angular(2) = sin(angle1(nt))*sin(angle2(nt))
+              angular(3) = cos(angle1(nt))
+           ENDIF
+           !
+           DO is = 2, nspina
+!$OMP PARALLEL DO
+              DO ig = 1, ngm
+                 rhocg(ig,is) = rhocg(ig,is) + &
+                               starting_magnetization(nt) * angular(is-1) * &
+                               strf(ig,nt) * rhoscale * rho_g(ig)
+              ENDDO
+!$OMP END PARALLEL DO
+           ENDDO
+        ENDIF ! nspina
+     ENDDO !nt
+     RETURN
+  ENDIF
 
   !
   ! allocate work space 
