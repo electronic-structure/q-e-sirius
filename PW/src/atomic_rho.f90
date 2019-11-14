@@ -93,6 +93,8 @@ SUBROUTINE atomic_rho_g (rhocg, nspina)
            ENDDO
         ENDIF ! nspina
      ENDDO !nt
+     DEALLOCATE(rho_g)
+     CALL sirius_stop_timer(string("qe|atomic_rho_g"))
      RETURN
   ENDIF
 
