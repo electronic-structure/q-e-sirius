@@ -39,8 +39,9 @@ SUBROUTINE atomic_rho_g (rhocg, nspina)
   USE noncollin_module,     ONLY : angle1, angle2
   USE uspp_param,           ONLY : upf
   USE mp_bands,             ONLY : intra_bgrp_comm
-  use mod_sirius
-  use mod_spline
+  USE mod_sirius
+  USE mod_spline
+  USE gvect,                ONLY : ngm, mill
   !
   IMPLICIT NONE
   !
