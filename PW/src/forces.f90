@@ -16,15 +16,15 @@ SUBROUTINE forces()
   !! This routine is a driver routine which computes the forces
   !! acting on the atoms. The complete expression of the forces
   !! contains four parts which are computed by different routines:
-  !!
-  !!  a)  force_lc,     local contribution to the forces
-  !!  b)  force_cc,     contribution due to NLCC
-  !!  c)  force_ew,     contribution due to the electrostatic ewald term
-  !!  d)  force_us,     contribution due to the non-local potential
-  !!  e)  force_corr,   correction term for incomplete self-consistency
-  !!  f)  force_hub,    contribution due to the Hubbard term
-  !!  g)  force_london, semi-empirical correction for dispersion forces
-  !!  h)  force_d3,     Grimme-D3 (DFT-D3) correction to dispersion forces
+  !
+  !! a) force_lc: local contribution to the forces;  
+  !! b) force_cc: contribution due to NLCC;  
+  !! c) force_ew: contribution due to the electrostatic ewald term;  
+  !! d) force_us: contribution due to the non-local potential;  
+  !! e) force_corr: correction term for incomplete self-consistency;  
+  !! f) force_hub: contribution due to the Hubbard term;  
+  !! g) force_london: semi-empirical correction for dispersion forces;  
+  !! h) force_d3: Grimme-D3 (DFT-D3) correction to dispersion forces.
   !
   USE kinds,             ONLY : DP
   USE io_global,         ONLY : stdout
@@ -46,10 +46,11 @@ SUBROUTINE forces()
   USE bp,                ONLY : lelfield, gdir, l3dstring, efield_cart, &
                                 efield_cry,efield
   USE uspp,              ONLY : okvan
-  USE martyna_tuckerman, ONLY: do_comp_mt, wg_corr_force
+  USE martyna_tuckerman, ONLY : do_comp_mt, wg_corr_force
   USE london_module,     ONLY : force_london
   USE dftd3_api,         ONLY : get_atomic_number, dftd3_calc
-  USE dftd3_qe,          ONLY: dftd3_pbc_gdisp, dftd3
+  USE dftd3_qe,          ONLY : dftd3_pbc_gdisp, dftd3
+
   USE xdm_module,        ONLY : force_xdm
   USE tsvdw_module,      ONLY : FtsvdW
   USE esm,               ONLY : do_comp_esm, esm_bc, esm_force_ew
@@ -64,15 +65,15 @@ SUBROUTINE forces()
   !
   IMPLICIT NONE
   !
-  REAL(DP), ALLOCATABLE :: forcenl(:,:),   &
-                           forcelc(:,:),   &
-                           forcecc(:,:),   &
-                           forceion(:,:),  &
-                           force_disp(:,:),&
-                           force_d3(:,:),  &
+  REAL(DP), ALLOCATABLE :: forcenl(:,:),         &
+                           forcelc(:,:),         &
+                           forcecc(:,:),         &
+                           forceion(:,:),        &
+                           force_disp(:,:),      &
+                           force_d3(:,:),        &
                            force_disp_xdm(:,:),  &
-                           force_mt(:,:),  &
-                           forcescc(:,:),  &
+                           force_mt(:,:),        &
+                           forcescc(:,:),        &
                            forces_bp_efield(:,:),&
                            forceh(:,:)
   ! nonlocal, local, core-correction, ewald, scf correction terms, and hubbard
@@ -96,76 +97,76 @@ SUBROUTINE forces()
   INTEGER  :: ig
   !
   !
-  if (use_sirius) then
+  IF (use_sirius) THEN
     ! recalculate the exchange-correlation potential
-    allocate (vxc(dfftp%nnr, nspin))
+    ALLOCATE(vxc(dfftp%nnr, nspin))
     !
-    call v_xc (rho, rho_core, rhog_core, etxc, vtxc, vxc)
+    CALL v_xc (rho, rho_core, rhog_core, etxc, vtxc, vxc)
     !
-    psic=(0.0_DP,0.0_DP)
-    if (nspin == 1 .or. nspin == 4) then
+    psic = (0.0_DP,0.0_DP)
+    IF (nspin == 1 .OR. nspin == 4) THEN
        psic(:) = vxc(:, 1)
-    else
+    ELSE
        psic(:) = (vxc(:, 1) + vxc(:, 2)) * 0.5d0
-    endif
-    deallocate(vxc)
-    call fwfft('Rho', psic, dfftp)
+    ENDIF
+    DEALLOCATE(vxc)
+    CALL fwfft('Rho', psic, dfftp)
     !
     ! psic contains now Vxc(G)
     !
-    allocate(vxc_g(ngm))
-    do ig = 1, ngm
+    ALLOCATE(vxc_g(ngm))
+    DO ig = 1, ngm
        vxc_g(ig) = psic(dfftp%nl(ig)) * 0.5d0 ! convert to Ha
-    enddo
+    ENDDO
     ! set XC potential
-    call sirius_set_pw_coeffs(gs_handler, string("vxc"), vxc_g(1), bool(.true.), ngm, mill(1, 1), intra_bgrp_comm)
+    CALL sirius_set_pw_coeffs(gs_handler, string("vxc"), vxc_g(1), bool(.true.), ngm, mill(1, 1), intra_bgrp_comm)
 
     !
     ! vnew is V_out - V_in, psic is the temp space
     !
-    if (nspin == 1 .or. nspin == 4) then
+    IF (nspin == 1 .OR. nspin == 4) THEN
        psic(:) = vnew%of_r(:, 1)
-    else
+    ELSE
        psic(:) = (vnew%of_r(:, 1) + vnew%of_r(:, 2)) * 0.5d0
-    endif
-    call fwfft ('Rho', psic, dfftp)
+    ENDIF
+    CALL fwfft ('Rho', psic, dfftp)
 
-    do ig = 1, ngm
+    DO ig = 1, ngm
        vxc_g(ig) = psic(dfftp%nl(ig)) * 0.5d0 ! convert to Ha
-    enddo
+    ENDDO
     ! set XC potential
-    call sirius_set_pw_coeffs(gs_handler, string("dveff"), vxc_g(1), bool(.true.), ngm, mill(1, 1), intra_bgrp_comm)
+    CALL sirius_set_pw_coeffs(gs_handler, string("dveff"), vxc_g(1), bool(.true.), ngm, mill(1, 1), intra_bgrp_comm)
 
-    deallocate(vxc_g)
-  endif
+    DEALLOCATE(vxc_g)
+  ENDIF
   CALL start_clock( 'forces' )
   !
-  ALLOCATE( forcenl( 3, nat ), forcelc( 3, nat ), forcecc( 3, nat ), &
-            forceh( 3, nat ), forceion( 3, nat ), forcescc( 3, nat ) )
-  !    
+  ALLOCATE( forcenl(3,nat), forcelc(3,nat), forcecc(3,nat), &
+            forceh(3,nat), forceion(3,nat), forcescc(3,nat) )
+  !
   forcescc(:,:) = 0.D0
   forceh(:,:)   = 0.D0
   force(:,:)    = 0.D0
   !
   ! ... The nonlocal contribution is computed here
   !
-  call sirius_start_timer(string("qe|force|us"))
+  CALL sirius_start_timer(string("qe|force|us"))
   CALL force_us( forcenl )
-  call sirius_stop_timer(string("qe|force|us"))
+  CALL sirius_stop_timer(string("qe|force|us"))
   !
   ! ... The local contribution
   !
-  call sirius_start_timer(string("qe|force|local"))
-  CALL force_lc( nat, tau, ityp, alat, omega, ngm, ngl, igtongl, &
+  CALL sirius_start_timer(string("qe|force|local"))
+  CALL force_lc( nat, tau, ityp, alat, omega, ngm, ngl, igtongl,       &
                  g, rho%of_r(:,1), dfftp%nl, gstart, gamma_only, vloc, &
                  forcelc )
-  call sirius_stop_timer(string("qe|force|local"))
+  CALL sirius_stop_timer(string("qe|force|local"))
   !
   ! ... The NLCC contribution
   !
-  call sirius_start_timer(string("qe|force|cc"))
+  CALL sirius_start_timer(string("qe|force|cc"))
   CALL force_cc( forcecc )
-  call sirius_stop_timer(string("qe|force|cc"))
+  CALL sirius_stop_timer(string("qe|force|cc"))
   !
   ! ... The Hubbard contribution
   !     (included by force_us if using beta as local projectors)
@@ -174,31 +175,31 @@ SUBROUTINE forces()
   !
   ! ... The ionic contribution is computed here
   !
-  call sirius_start_timer(string("qe|force|ewald"))
+  CALL sirius_start_timer(string("qe|force|ewald"))
   IF( do_comp_esm ) THEN
      CALL esm_force_ew( forceion )
   ELSE
      CALL force_ew( alat, nat, ntyp, ityp, zv, at, bg, tau, omega, g, &
                     gg, ngm, gstart, gamma_only, gcutm, strf, forceion )
   END IF
-  call sirius_stop_timer(string("qe|force|ewald"))
+  CALL sirius_stop_timer(string("qe|force|ewald"))
   !
   ! ... the semi-empirical dispersion correction
   !
   IF ( llondon ) THEN
     !
-    ALLOCATE ( force_disp ( 3 , nat ) )
-    force_disp ( : , : ) = 0.0_DP
+    ALLOCATE( force_disp(3,nat) )
+    force_disp(:,:) = 0.0_DP
     force_disp = force_london( alat , nat , ityp , at , bg , tau )
     !
-  END IF
+  ENDIF
   !
   ! ... The Grimme-D3 dispersion correction
   !
   IF ( ldftd3 ) THEN
     !
     ALLOCATE( force_d3(3, nat) )
-    force_d3( : , : ) = 0.0_DP
+    force_d3(:,:) = 0.0_DP
     latvecs(:,:) = at(:,:)*alat
     tau(:,:) = tau(:,:)*alat
     atnum(:) = get_atomic_number(atm(ityp(:)))
@@ -206,28 +207,27 @@ SUBROUTINE forces()
                           force_d3, stress_dftd3 )
     force_d3 = -2.d0*force_d3
     tau(:,:) = tau(:,:)/alat
-  END IF
+  ENDIF
   !
   !
   IF (lxdm) THEN
      ALLOCATE( force_disp_xdm(3,nat) )
      force_disp_xdm = 0._dp
      force_disp_xdm = force_xdm(nat)
-  END IF
-     
+  ENDIF
   !
   ! ... The SCF contribution
   !
-  call sirius_start_timer(string("qe|force|scf"))
+  CALL sirius_start_timer(string("qe|force|scf"))
   CALL force_corr( forcescc )
-  call sirius_stop_timer(string("qe|force|scf"))
+  CALL sirius_stop_timer(string("qe|force|scf"))
   !
   IF (do_comp_mt) THEN
     !
-    ALLOCATE( force_mt( 3 , nat ) )
-    CALL wg_corr_force( .true.,omega, nat, ntyp, ityp, ngm, g, tau, zv, strf, &
+    ALLOCATE( force_mt(3,nat) )
+    CALL wg_corr_force( .TRUE., omega, nat, ntyp, ityp, ngm, g, tau, zv, strf, &
                         rho%of_g(:,1), force_mt )
-  END IF
+  ENDIF
   !
   ! ... call void routine for user define/ plugin patches on internal forces
   !
@@ -237,17 +237,17 @@ SUBROUTINE forces()
   !
   IF (lelfield) THEN
      ALLOCATE( forces_bp_efield(3,nat) )
-     forces_bp_efield(:,:)=0.d0
+     forces_bp_efield(:,:) = 0.d0
      IF (.NOT.l3dstring) THEN
         IF (okvan) CALL forces_us_efield( forces_bp_efield, gdir, efield )
         CALL forces_ion_efield( forces_bp_efield, gdir, efield )
      ELSE
         IF (okvan) THEN
-           DO ipol=1,3
+           DO ipol = 1, 3
               CALL forces_us_efield( forces_bp_efield, ipol, efield_cry(ipol) )
            ENDDO
         ENDIF
-        DO ipol=1,3
+        DO ipol = 1, 3
            CALL forces_ion_efield( forces_bp_efield, ipol, efield_cart(ipol) )
         ENDDO
      ENDIF
@@ -282,7 +282,7 @@ SUBROUTINE forces()
         !
         sumfor = sumfor + force(ipol,na)
         !
-     END DO
+     ENDDO
      !
      !TB
      IF ((gate.AND.relaxz).AND.(ipol==3)) WRITE( stdout, '("Total force in z direction = 0 disabled")')
@@ -294,19 +294,19 @@ SUBROUTINE forces()
         DO na = 1, nat
            IF ( ipol /= 3) force(ipol,na) = force(ipol,na)  &
                                             - sumfor / DBLE( nat )
-        END DO
+        ENDDO
         !
-     ELSE IF ( qmmm_mode < 0 ) THEN
+     ELSEIF ( qmmm_mode < 0 ) THEN
         !
         ! ... impose total force = 0 except in a QM-MM calculation
         !
         DO na = 1, nat
            force(ipol,na) = force(ipol,na) - sumfor / DBLE( nat ) 
-        END DO
+        ENDDO
         !
      ENDIF
      !
-  END DO
+  ENDDO
   !
   ! ... resymmetrize (should not be needed, but ...)
   !
@@ -326,7 +326,7 @@ SUBROUTINE forces()
   WRITE( stdout, '(/,5x,"Forces acting on atoms (cartesian axes, Ry/au):", / )')
   DO na = 1, nat
      WRITE( stdout, 9035) na, ityp(na), force(:,na)
-  END DO
+  ENDDO
   !
   ! ... forces on fixed coordinates are set to zero ( C.S. 15/10/2003 )
   !
@@ -338,60 +338,60 @@ SUBROUTINE forces()
         WRITE( stdout, '(5x,"The Martyna-Tuckerman correction term to forces")')
         DO na = 1, nat
            WRITE( stdout, 9035) na, ityp(na), ( force_mt(ipol,na), ipol = 1, 3 )
-        END DO
+        ENDDO
      END IF
      !
      WRITE( stdout, '(5x,"The non-local contrib.  to forces")')
      DO na = 1, nat
         WRITE( stdout, 9035) na, ityp(na), ( forcenl(ipol,na), ipol = 1, 3 )
-     END DO
+     ENDDO
      WRITE( stdout, '(5x,"The ionic contribution  to forces")')
      DO na = 1, nat
         WRITE( stdout, 9035) na, ityp(na), ( forceion(ipol,na), ipol = 1, 3 )
-     END DO
+     ENDDO
      WRITE( stdout, '(5x,"The local contribution  to forces")')
      DO na = 1, nat
         WRITE( stdout, 9035) na, ityp(na), ( forcelc(ipol,na), ipol = 1, 3 )
-     END DO
+     ENDDO
      WRITE( stdout, '(5x,"The core correction contribution to forces")')
      DO na = 1, nat
         WRITE( stdout, 9035) na, ityp(na), ( forcecc(ipol,na), ipol = 1, 3 )
-     END DO
+     ENDDO
      WRITE( stdout, '(5x,"The Hubbard contrib.    to forces")')
      DO na = 1, nat
         WRITE( stdout, 9035) na, ityp(na), ( forceh(ipol,na), ipol = 1, 3 )
-     END DO
+     ENDDO
      WRITE( stdout, '(5x,"The SCF correction term to forces")')
      DO na = 1, nat
         WRITE( stdout, 9035) na, ityp(na), ( forcescc(ipol,na), ipol = 1, 3 )
-     END DO
+     ENDDO
      !
      IF ( llondon) THEN
         WRITE( stdout, '(/,5x,"Dispersion contribution to forces:")')
         DO na = 1, nat
            WRITE( stdout, 9035) na, ityp(na), (force_disp(ipol,na), ipol = 1, 3)
-        END DO
+        ENDDO
      END IF
      !
      IF ( ldftd3 ) THEN
         WRITE( stdout, '(/,5x,"DFT-D3 dispersion contribution to forces:")')
         DO na = 1, nat
            WRITE( stdout, 9035) na, ityp(na), (force_d3(ipol,na), ipol = 1, 3)
-        END DO
+        ENDDO
      END IF
      !
      IF (lxdm) THEN
         WRITE( stdout, '(/,5x,"XDM contribution to forces:")')
         DO na = 1, nat
            WRITE( stdout, 9035) na, ityp(na), (force_disp_xdm(ipol,na), ipol = 1, 3)
-        END DO
+        ENDDO
      END IF
      !
      IF ( ts_vdw) THEN
         WRITE( stdout, '(/,5x,"TS-VDW contribution to forces:")')
         DO na = 1, nat
            WRITE( stdout, 9035) na, ityp(na), (2.0d0*FtsvdW(ipol,na), ipol=1,3)
-        END DO
+        ENDDO
      END IF
      !
      ! TB gate forces
@@ -399,7 +399,7 @@ SUBROUTINE forces()
         WRITE( stdout, '(/,5x,"Gate contribution to forces:")')
         DO na = 1, nat
            WRITE( stdout, 9035) na, ityp(na), (forcegate(ipol,na), ipol = 1, 3)
-        END DO
+        ENDDO
      END IF
      !
   END IF
@@ -412,7 +412,7 @@ SUBROUTINE forces()
      sumfor = sumfor + force(1,na)**2 + force(2,na)**2 + force(3,na)**2
      sumscf = sumscf + forcescc(1,na)**2 + forcescc(2,na)**2+ forcescc(3,na)**2
      !
-  END DO
+  ENDDO
   !
   sumfor = SQRT( sumfor )
   sumscf = SQRT( sumscf )
@@ -426,7 +426,7 @@ SUBROUTINE forces()
      DO na = 1, nat
         sum_mm = sum_mm + &
                  force_disp(1,na)**2 + force_disp(2,na)**2 + force_disp(3,na)**2
-     END DO
+     ENDDO
      sum_mm = SQRT( sum_mm )
      WRITE ( stdout, '(/,5x, "Total Dispersion Force = ",F12.6)') sum_mm
      !
@@ -438,7 +438,7 @@ SUBROUTINE forces()
      DO na = 1, nat
         sum_mm = sum_mm + &
                  force_d3(1,na)**2 + force_d3(2,na)**2 + force_d3(3,na)**2
-     END DO
+     ENDDO
      sum_mm = SQRT( sum_mm )
      WRITE ( stdout, '(/,5x, "DFT-D3 dispersion Force = ",F12.6)') sum_mm
      !
@@ -450,7 +450,7 @@ SUBROUTINE forces()
      DO na = 1, nat
         sum_mm = sum_mm + &
                  force_disp_xdm(1,na)**2 + force_disp_xdm(2,na)**2 + force_disp_xdm(3,na)**2
-     END DO
+     ENDDO
      sum_mm = SQRT( sum_mm )
      WRITE ( stdout, '(/,5x, "Total XDM Force = ",F12.6)') sum_mm
      !
