@@ -45,13 +45,7 @@ SUBROUTINE init_run()
   logical exst_file,exst_mem
   !
   CALL start_clock( 'init_run' )
-  call sirius_start_timer(string("qe|init_run"))
-  if (use_sirius) then
-    call clear_sirius
-    call sirius_start_timer(string("qe|init_run|setup_sirius"))
-    call setup_sirius
-    call sirius_stop_timer(string("qe|init_run|setup_sirius"))
-  endif
+  CALL sirius_start_timer(string("qe|init_run"))
   !
   ! ... calculate limits of some indices, used in subsequent allocations
   !
@@ -72,6 +66,13 @@ SUBROUTINE init_run()
   !
   ! ... generate reciprocal-lattice vectors and fft indices
   !
+  IF (use_sirius) THEN
+    ! at this point FFT dimensions are known and we can pass them to SIRIUS
+    CALL clear_sirius
+    CALL sirius_start_timer(string("qe|init_run|setup_sirius"))
+    CALL setup_sirius
+    CALL sirius_stop_timer(string("qe|init_run|setup_sirius"))
+  ENDIF
   IF( smallmem ) THEN
      CALL ggen( dfftp, gamma_only, at, bg, gcutm, ngm_g, ngm, &
           g, gg, mill, ig_l2g, gstart, no_global_sort = .TRUE. )
@@ -131,12 +132,12 @@ SUBROUTINE init_run()
   !
   CALL newd()
   !
-  if (.not.(use_sirius.and.use_sirius_ks_solver)) then
+  IF (.NOT.(use_sirius.AND.use_sirius_ks_solver)) THEN
     CALL wfcinit()
-  else
-    call sirius_initialize_subspace(gs_handler, ks_handler)
+  ELSE
+    CALL sirius_initialize_subspace(gs_handler, ks_handler)
     CALL open_buffer( iunwfc, 'wfc', nwordwfc, io_level, exst_mem, exst_file )
-  endif
+  ENDIF
   !
   IF(use_wannier) CALL wannier_init()
   !
@@ -147,11 +148,11 @@ SUBROUTINE init_run()
   !
   IF ( lmd ) CALL allocate_dyn_vars()
   !
-  if (use_sirius.and.use_sirius_q_operator) then
-    call get_q_operator_from_sirius
-  endif
+  IF (use_sirius.AND.use_sirius_q_operator) THEN
+    CALL get_q_operator_from_sirius
+  ENDIF
   CALL stop_clock( 'init_run' )
-  call sirius_stop_timer(string("qe|init_run"))
+  CALL sirius_stop_timer(string("qe|init_run"))
   !
   RETURN
   !

@@ -133,6 +133,10 @@ endif
 if (lspinorb.or.noncolin) then
   nmagd = 3
 endif
+! copy dimensions of dense FFT grid
+dims(1) = dfftp%nr1
+dims(2) = dfftp%nr2
+dims(3) = dfftp%nr3
 ! set basic parameters
 ! set |G| cutoff of the dense FFT grid: convert from G^2/2 Rydbergs to |G| in [a.u.^-1]
 ! set |G+k| cutoff for the wave-functions: onvert from |G+k|^2/2 Rydbergs to |G+k| in [a.u.^-1]
@@ -141,7 +145,7 @@ call sirius_set_parameters(sctx, num_bands=nbnd, num_mag_dims=nmagd, gamma_point
                           &use_symmetry=bool(.false.), so_correction=bool(lspinorb),&
                           &pw_cutoff=sqrt(ecutrho), gk_cutoff=sqrt(ecutwfc),&
                           &hubbard_correction=bool(lda_plus_U), hubbard_correction_kind=lda_plus_u_kind,&
-                          &hubbard_orbitals=string(U_projection))
+                          &hubbard_orbitals=string(U_projection),fft_grid_size=dims(1))
 if (do_comp_esm) then
   call sirius_set_parameters(sctx, esm_bc=esm_bc)
 endif
