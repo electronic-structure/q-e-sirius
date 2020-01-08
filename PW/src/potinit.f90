@@ -135,8 +135,10 @@ SUBROUTINE potinit()
         !
      ENDIF
 
+     CALL sirius_start_timer(string("qe|paw_becsum"))
      ! ... in the paw case uses atomic becsum
      IF ( okpaw )      CALL PAW_atomic_becsum()
+     CALL sirius_stop_timer(string("qe|paw_becsum"))
      !
      IF ( input_drho /= ' ' ) THEN
         !
@@ -216,7 +218,9 @@ SUBROUTINE potinit()
   !
   CALL v_of_rho( rho, rho_core, rhog_core, &
                  ehart, etxc, vtxc, eth, etotefield, charge, v )
+  CALL sirius_start_timer(string("qe|paw_potential"))
   IF (okpaw) CALL PAW_potential(rho%bec, ddd_PAW, epaw)
+  CALL sirius_stop_timer(string("qe|paw_potential"))
   !
   ! ... define the total local potential (external+scf)
   !
