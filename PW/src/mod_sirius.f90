@@ -98,6 +98,7 @@ use ldaU, only : lda_plus_U, Hubbard_J, Hubbard_U, Hubbard_alpha, &
 use esm,       only : esm_local, esm_bc, do_comp_esm
 use mp_diag, only : nproc_ortho
 use control_flags, only : iverbosity
+USE Coul_cut_2D,          ONLY : do_cutoff_2D
 implicit none
 !
 integer :: dims(3), i, ia, iat, rank, ierr, ijv, li, lj, mb, nb, j, l,&
@@ -108,6 +109,10 @@ integer, allocatable :: nk_loc(:)
 integer :: ih, jh, ijh, lmax_beta
 INTEGER,EXTERNAL           :: set_hubbard_l,set_hubbard_n
 real(8), external :: hubbard_occ
+
+if (do_cutoff_2D) then
+  use_sirius_vloc = .false.
+endif
 
 allocate(atom_type(nsp))
 
