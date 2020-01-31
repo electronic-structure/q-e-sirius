@@ -1196,6 +1196,7 @@ mod_sirius.o : mod_spline.o
 mod_sirius.o : pwcom.o
 mod_sirius.o : scf_mod.o
 mod_sirius.o : symm_base.o
+mod_sirius.o : Coul_cut_2D.o
 move_ions.o : ../../Modules/basic_algebra_routines.o
 move_ions.o : ../../Modules/bfgs_module.o
 move_ions.o : ../../Modules/cell_base.o
