@@ -172,7 +172,7 @@ else
   call sirius_set_parameters(sctx, iter_solver_tol_empty=1d-5)
 endif
 
-call sirius_set_parameters(sctx, min_occupancy=0.01d0)
+!call sirius_set_parameters(sctx, min_occupancy=0.01d0)
 
 ! set lattice vectors of the unit cell (length is in [a.u.])
 a1(:) = at(:, 1) * alat

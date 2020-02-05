@@ -70,7 +70,7 @@ SUBROUTINE force_lc( nat, tau, ityp, alat, omega, ngm, ngl, &
   ! contribution to the force from the local part of the bare potential
   ! F_loc = Omega \Sum_G n*(G) d V_loc(G)/d R_i
   !
-  IF (use_sirius.AND.use_sirius_forces) THEN
+  IF (use_sirius.AND.use_sirius_forces.and.use_sirius_vloc) THEN
     CALL sirius_get_forces(gs_handler, string("vloc"), forcelc(1, 1))
     forcelc = forcelc * 2 ! convert to Ry
 
