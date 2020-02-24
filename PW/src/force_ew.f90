@@ -90,7 +90,7 @@ SUBROUTINE force_ew( alat, nat, ntyp, ityp, zv, at, bg, tau, omega, &
   ! auxiliary space
   REAL(DP), EXTERNAL :: qe_erfc
   !
-  IF (use_sirius.AND.use_sirius_forces) THEN
+  IF (use_sirius.AND.use_sirius_forces.and..NOT.do_cutoff_2D) THEN
     CALL sirius_get_forces(gs_handler, string("ewald"), forceion(1, 1))
     forceion = forceion * 2 ! convert to Ry
     RETURN
