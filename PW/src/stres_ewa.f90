@@ -89,7 +89,7 @@ SUBROUTINE stres_ewa( alat, nat, ntyp, ityp, zv, at, bg, tau, &
   REAL(DP), EXTERNAL :: qe_erfc
   ! the erfc function
   !
-  IF (use_sirius.AND.use_sirius_stress) THEN
+  IF (use_sirius.AND.use_sirius_stress.AND..NOT.do_cutoff_2D) THEN
     CALL sirius_get_stress_tensor(gs_handler, string("ewald"), sigmaewa(1, 1))
     sigmaewa = -sigmaewa * 2 ! convert to Ry
     RETURN
