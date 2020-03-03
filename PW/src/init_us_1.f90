@@ -43,6 +43,7 @@ subroutine init_us_1
   USE paw_variables,ONLY : okpaw
   USE mp_bands,     ONLY : intra_bgrp_comm
   USE mp,           ONLY : mp_sum
+  USE mod_sirius
   !
   implicit none
   !
@@ -72,6 +73,16 @@ subroutine init_us_1
   real(DP), EXTERNAL :: spinor
   !
   call start_clock ('init_us_1')
+  !
+  IF (use_sirius) THEN
+    IF (ALLOCATED(beta_ri_tab)) DEALLOCATE(beta_ri_tab)
+    ALLOCATE(beta_ri_tab(nqx, nbetam, ntyp))
+    beta_ri_tab = 0.d0
+    IF (ALLOCATED(aug_ri_tab)) DEALLOCATE(aug_ri_tab)
+    ALLOCATE(aug_ri_tab(nqxq, nbetam*(nbetam+1)/2, lmaxq, ntyp))
+    aug_ri_tab = 0.d0
+  ENDIF
+
   !
   !    Initialization of the variables
   !
@@ -300,10 +311,38 @@ subroutine init_us_1
               enddo
               ! igl
            enddo
+           IF (use_sirius) THEN
+             DO iq = startq, lastq
+                q = (iq - 1) * dq
+                CALL sph_bes ( upf(nt)%kkbeta, rgrid(nt)%r, q, l, aux)
+                !
+                !   and then we integrate with all the Q functions
+                !
+                DO nb = 1, upf(nt)%nbeta
+                   !
+                   !    the Q are symmetric with respect to indices
+                   !
+                   DO mb = nb, upf(nt)%nbeta
+                      ijv = mb * (mb - 1) / 2 + nb
+                      IF ( ( l >= ABS(upf(nt)%lll(nb) - upf(nt)%lll(mb)) ) .AND. &
+                           ( l <=     upf(nt)%lll(nb) + upf(nt)%lll(mb)  ) .AND. &
+                           (MOD(l+upf(nt)%lll(nb)+upf(nt)%lll(mb),2)==0) ) THEN
+                         DO ir = 1, upf(nt)%kkbeta
+                            aux1 (ir) = aux (ir) * qtot (ir, ijv)
+                         ENDDO
+                         CALL simpson(upf(nt)%kkbeta, aux1, rgrid(nt)%rab, aug_ri_tab(iq, ijv, l + 1, nt))
+                      ENDIF
+                   ENDDO
+                ENDDO
+             ENDDO
+           ENDIF
            ! l
         enddo
         qrad (:, :, :, nt) = qrad (:, :, :, nt)*prefr
         call mp_sum ( qrad (:, :, :, nt), intra_bgrp_comm )
+        IF (use_sirius) THEN
+          CALL mp_sum ( aug_ri_tab(:, :, :, nt), intra_bgrp_comm )
+        ENDIF
      endif
      ! ntyp
   enddo
@@ -394,11 +433,17 @@ subroutine init_us_1
            enddo
            call simpson (upf(nt)%kkbeta, aux, rgrid(nt)%rab, vqint)
            tab (iq, nb, nt) = vqint * pref
+           IF (use_sirius) THEN
+             beta_ri_tab(iq, nb, nt) = vqint
+           ENDIF
         enddo
      enddo
   enddo
 
   call mp_sum(  tab, intra_bgrp_comm )
+  IF (use_sirius) THEN
+    CALL mp_sum(  beta_ri_tab, intra_bgrp_comm )
+  ENDIF
 
   ! initialize spline interpolation
   if (spline_ps) then

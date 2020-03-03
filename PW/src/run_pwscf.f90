@@ -51,6 +51,13 @@ SUBROUTINE run_pwscf( exit_status )
                                    qmmm_update_positions, qmmm_update_forces
   USE qexsd_module,         ONLY : qexsd_set_status
   USE funct,                ONLY : dft_is_hybrid, stop_exx 
+  !USE cell_base,            ONLY : at, bg
+  !USE gvect,                ONLY : ngm, g, eigts1, eigts2, eigts3
+  !USE ions_base,            ONLY : nat, nsp, ityp, tau
+  !USE vlocal,               ONLY : strf
+  !USE mp_world,             ONLY : mpime
+  !USE dfunct,               ONLY : newd
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -137,8 +144,13 @@ SUBROUTINE run_pwscf( exit_status )
      IF ( .NOT. lscf) THEN
         CALL non_scf()
      ELSE
+        CALL sirius_start_timer(string("qe|electrons"))
         CALL electrons()
+        CALL sirius_stop_timer(string("qe|electrons"))
      END IF
+     IF (use_sirius.AND.use_sirius_ks_solver) THEN
+       CALL get_wave_functions_from_sirius
+     ENDIF
      !
      ! ... code stopped by user or not converged
      !
@@ -153,6 +165,7 @@ SUBROUTINE run_pwscf( exit_status )
      ! ... ionic section starts here
      !
      CALL start_clock( 'ions' ); !write(*,*)' start ions' ; FLUSH(6)
+     CALL sirius_start_timer(string("qe|ions"))
      conv_ions = .TRUE.
      !
      ! ... recover from a previous run, if appropriate
@@ -166,6 +179,14 @@ SUBROUTINE run_pwscf( exit_status )
      ELSE
         CALL pw2casino( 0 )
      END IF
+
+     IF (use_sirius) THEN
+        CALL put_density_to_sirius
+        IF (.NOT.use_sirius_density_matrix) THEN
+           CALL put_density_matrix_to_sirius
+        ENDIF
+     ENDIF
+
      !
      ! ... force calculation
      !
@@ -187,6 +208,9 @@ SUBROUTINE run_pwscf( exit_status )
         ! ... ionic step (for molecular dynamics or optimization)
         !
         CALL move_ions ( idone, ions_status )
+        IF (use_sirius) THEN
+          CALL update_sirius
+        ENDIF
         conv_ions = ( ions_status == 0 ) .OR. &
                     ( ions_status == 1 .AND. treinit_gvecs )
         !
@@ -200,6 +224,7 @@ SUBROUTINE run_pwscf( exit_status )
         IF (dft_is_hybrid() )  CALL stop_exx()
      END IF
      !
+     CALL sirius_stop_timer(string("qe|ions"))
      CALL stop_clock( 'ions' ); !write(*,*)' stop ions' ; FLUSH(6)
      !
      ! ... send out forces to MM code in QM/MM run
@@ -244,6 +269,20 @@ SUBROUTINE run_pwscf( exit_status )
               CALL reset_gvectors ( )
               !
            ELSE
+              IF (use_sirius) THEN
+                 CALL sirius_start_timer(string("qe|update"))
+                 IF ( lmovecell ) THEN
+                   CALL scale_h()
+                 ENDIF
+                 CALL struc_fact( nat, tau, nsp, ityp, ngm, g, bg, &
+                                  dfftp%nr1, dfftp%nr2, dfftp%nr3, strf, eigts1, eigts2, eigts3 )
+                 CALL setlocal()
+                 CALL set_rhoc()
+                 CALL potinit
+                 CALL newd
+                 CALL sirius_initialize_subspace(gs_handler, ks_handler)
+                 CALL sirius_stop_timer(string("qe|update"))
+              ELSE
               !
               ! ... update the wavefunctions, charge density, potential
               ! ... update_pot initializes structure factor array as well
@@ -253,6 +292,7 @@ SUBROUTINE run_pwscf( exit_status )
               ! ... re-initialize atomic position-dependent quantities
               !
               CALL hinit1()
+              END IF
               !
            END IF
            !
@@ -265,11 +305,17 @@ SUBROUTINE run_pwscf( exit_status )
      ethr = 1.0D-6
      !
   ENDDO main_loop
+  ! write basic results to a JSON file
+  IF (mpime.eq.0) THEN
+    CALL write_json()
+  endif
   !
   ! ... save final data file
   !
   CALL qexsd_set_status( exit_status )
+  CALL sirius_start_timer(string("qe|punch"))
   CALL punch( 'all' )
+  CALL sirius_stop_timer(string("qe|punch"))
   !
   CALL qmmm_shutdown()
   !
