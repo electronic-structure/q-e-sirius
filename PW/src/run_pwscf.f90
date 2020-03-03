@@ -56,6 +56,7 @@ SUBROUTINE run_pwscf( exit_status )
   USE ions_base,            ONLY : nat, nsp, ityp, tau
   USE vlocal,               ONLY : strf
   USE mp_world,             ONLY : mpime
+  USE dfunct,               ONLY : newd
   USE mod_sirius
   !
   IMPLICIT NONE
