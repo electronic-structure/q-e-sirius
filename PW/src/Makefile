@@ -243,7 +243,8 @@ ortho_wfc.o \
 wannier_init.o \
 wannier_check.o \
 wannier_clean.o \
-wannier_occ.o
+wannier_occ.o \
+mod_sirius.o
 
 QEMODS=../../Modules/libqemod.a \
        ../../KS_Solvers/libks_solvers.a \
