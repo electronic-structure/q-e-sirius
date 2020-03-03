@@ -29,7 +29,7 @@ SUBROUTINE force_cc( forcecc )
   USE mp_bands,             ONLY : intra_bgrp_comm
   USE mp,                   ONLY : mp_sum
   USE mod_sirius
-  USE gvec,                 ONLY : mill
+  USE gvect,                ONLY : mill
   !
   IMPLICIT NONE
   !
