@@ -28,6 +28,8 @@ SUBROUTINE force_cc( forcecc )
   USE wavefunctions,        ONLY : psic
   USE mp_bands,             ONLY : intra_bgrp_comm
   USE mp,                   ONLY : mp_sum
+  USE mod_sirius
+  USE gvec,                 ONLY : mill
   !
   IMPLICIT NONE
   !
@@ -43,10 +45,16 @@ SUBROUTINE force_cc( forcecc )
   ! counter on types of atoms
   ! counter on atoms
   REAL(DP), ALLOCATABLE :: vxc(:,:), rhocg(:)
+  REAL(DP), ALLOCATABLE :: rho_core_g(:)
   ! exchange-correlation potential
   ! radial fourier transform of rho core
   REAL(DP) ::  arg, fact
   !
+  !IF (use_sirius.AND.use_sirius_forces) THEN
+  !  CALL sirius_get_forces(gs_handler, string("core"), forcecc(1, 1))
+  !  forcecc = forcecc * 2 ! convert to Ry
+  !  RETURN
+  !ENDIF
   !
   forcecc(:,:) = 0.d0
   !
@@ -84,6 +92,9 @@ SUBROUTINE force_cc( forcecc )
   ! ... psic contains now Vxc(G)
   !
   ALLOCATE( rhocg(ngl) )
+  IF (use_sirius.AND.use_sirius_rho_core) THEN
+    ALLOCATE( rho_core_g(ngm) )
+  ENDIF
   !
   ! ... core correction term: sum on g of omega*ig*exp(-i*r_i*g)*n_core(g)*vxc
   ! g = 0 term gives no contribution
@@ -91,6 +102,24 @@ SUBROUTINE force_cc( forcecc )
   DO nt = 1, ntyp
      IF ( upf(nt)%nlcc ) THEN
         !
+        IF (use_sirius.AND.use_sirius_rho_core) THEN
+          CALL sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, string("rhoc"), rho_core_g(1),&
+                                        &ngm, mill(1, 1), intra_bgrp_comm)
+!$omp parallel do private(arg)
+          DO na = 1, nat
+             IF (nt == ityp (na) ) THEN
+                DO ig = gstart, ngm
+                   arg = (g(1,ig) * tau(1,na) + g (2, ig) * tau (2, na) &
+                        + g(3,ig) * tau(3,na) ) * tpi
+                   forcecc (1:3, na) = forcecc(1:3, na) + tpiba * omega * &
+                           rho_core_g(ig) * CONJG(psic(dfftp%nl(ig) ) ) * &
+                           CMPLX( SIN(arg), COS(arg), KIND=DP) * g(1:3,ig) * fact
+                ENDDO
+             ENDIF
+          ENDDO
+!$omp end parallel do
+          CYCLE
+        ENDIF
         CALL drhoc( ngl, gl, omega, tpiba2, msh(nt), rgrid(nt)%r, &
                     rgrid(nt)%rab, upf(nt)%rho_atc, rhocg )
 !$omp parallel do private(arg)
@@ -112,6 +141,9 @@ SUBROUTINE force_cc( forcecc )
   CALL mp_sum( forcecc, intra_bgrp_comm )
   !
   DEALLOCATE( rhocg )
+  IF (use_sirius.AND.use_sirius_rho_core) THEN
+    DEALLOCATE( rho_core_g )
+  ENDIF
   !
   RETURN
   !

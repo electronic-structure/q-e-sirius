@@ -43,6 +43,7 @@ SUBROUTINE sum_band()
   USE paw_variables,        ONLY : okpaw
   USE becmod,               ONLY : allocate_bec_type, deallocate_bec_type, &
                                    becp
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -72,6 +73,45 @@ SUBROUTINE sum_band()
   ! ... calculates weights of Kohn-Sham orbitals used in calculation of rho
   !
   CALL weights ( )
+
+  IF (use_sirius.AND.use_sirius_ks_solver) THEN
+    CALL put_band_occupancies_to_sirius
+  ENDIF
+
+  IF (use_sirius.AND.use_sirius_density) THEN
+    CALL sirius_start_timer(string("qe|sum_band"))
+    CALL put_band_occupancies_to_sirius
+    CALL sirius_generate_density(gs_handler)
+    CALL get_density_from_sirius
+    CALL sirius_get_energy(gs_handler, string("evalsum"), eband)
+    eband = eband * 2 ! convert to Ry
+
+    IF (okvan.and.okpaw)  then
+      CALL paw_symmetrize(rho%bec)
+    ENDIF
+
+    CALL sirius_start_timer(string("qe|sym_rho"))
+    CALL sym_rho(nspin_mag, rho%of_g)
+    CALL sirius_stop_timer(string("qe|sym_rho"))
+    DO is = 1, nspin_mag
+       psic(:) = ( 0.d0, 0.d0 )
+       psic(dfftp%nl(:)) = rho%of_g(:,is)
+       IF ( gamma_only ) psic(dfftp%nlm(:)) = CONJG( rho%of_g(:,is) )
+       CALL invfft ('Rho', psic, dfftp)
+       rho%of_r(:,is) = psic(:)
+    ENDDO
+    IF (lda_plus_u) THEN
+       IF(noncolin) THEN
+          CALL new_ns_nc(rho%ns_nc)
+       ELSE
+          CALL new_ns(rho%ns)
+       ENDIF
+    ENDIF
+    CALL stop_clock( 'sum_band' )
+    CALL sirius_stop_timer(string("qe|sum_band"))
+    RETURN
+  ENDIF
+
   !
   IF (one_atom_occupations) CALL new_evc()
   !
@@ -212,6 +252,9 @@ SUBROUTINE sum_band()
      !
   END IF
   !
+  IF (use_sirius.AND.use_sirius_ks_solver.AND..NOT.use_sirius_density_matrix) then
+    CALL put_density_matrix_to_sirius
+  ENDIF
   ! ... if LSDA rho%of_r and rho%of_g are converted from (up,dw) to
   ! ... (up+dw,up-dw) format.
   !

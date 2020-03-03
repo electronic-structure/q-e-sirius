@@ -93,6 +93,7 @@ SUBROUTINE setup()
   USE paw_variables,      ONLY : okpaw
   USE fcp_variables,      ONLY : lfcpopt, lfcpdyn
   USE extfield,           ONLY : gate
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -109,6 +110,7 @@ SUBROUTINE setup()
 #else
   LOGICAL :: lpara = .false.
 #endif
+  call sirius_start_timer(string("qe|setup"))
 
   !
   ! ... okvan/okpaw = .TRUE. : at least one pseudopotential is US/PAW
@@ -574,6 +576,21 @@ SUBROUTINE setup()
      !
   END IF
   !
+  IF (use_sirius) THEN
+    ! get inverse of the reciprocal lattice vectors
+    call invert_mtrx(bg, bg_inv)
+    num_kpoints = nkstot
+    IF (allocated(kpoints)) DEALLOCATE(kpoints)
+    ALLOCATE(kpoints(3, num_kpoints))
+    ! save the k-point list in lattice coordinates
+    DO ik = 1, num_kpoints
+      kpoints(:, ik) =  matmul(bg_inv, xk(:, ik))
+    ENDDO
+    IF (allocated(wkpoints)) DEALLOCATE(wkpoints)
+    ALLOCATE(wkpoints(num_kpoints))
+    wkpoints(1:num_kpoints) = wk(1:num_kpoints)
+  ENDIF
+  !
   IF ( lsda ) THEN
      !
      ! ... LSDA case: two different spin polarizations,
@@ -635,6 +652,7 @@ SUBROUTINE setup()
   !
   IF (lda_plus_u .or. okpaw .or. (okvan.and.dft_is_hybrid()) ) CALL d_matrix( d1, d2, d3 )
   !
+  call sirius_stop_timer(string("qe|setup"))
   RETURN
   !
 END SUBROUTINE setup

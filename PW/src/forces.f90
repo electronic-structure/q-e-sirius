@@ -55,6 +55,13 @@ SUBROUTINE forces()
   USE tsvdw_module,      ONLY : FtsvdW
   USE esm,               ONLY : do_comp_esm, esm_bc, esm_force_ew
   USE qmmm,              ONLY : qmmm_mode
+  USE wavefunctions,     ONLY : psic
+  USE scf,               ONLY : vnew, rho_core, rhog_core
+  USE ener,              ONLY : etxc, vtxc
+  USE mp_bands,          ONLY : intra_bgrp_comm
+  USE fft_interfaces,    ONLY : fwfft
+  USE gvect,             ONLY : mill
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -85,8 +92,55 @@ SUBROUTINE forces()
   REAL(DP) :: latvecs(3,3)
   INTEGER :: atnum(1:nat)
   REAL(DP) :: stress_dftd3(3,3)
+  REAL(DP), ALLOCATABLE :: vxc(:, :)
+  COMPLEX(DP), ALLOCATABLE :: vxc_g(:)
+  INTEGER  :: ig
   !
   !
+  CALL sirius_start_timer(string("qe|forces"))
+  !
+  IF (use_sirius) THEN
+    ! recalculate the exchange-correlation potential
+    ALLOCATE(vxc(dfftp%nnr, nspin))
+    !
+    CALL v_xc (rho, rho_core, rhog_core, etxc, vtxc, vxc)
+    !
+    psic = (0.0_DP,0.0_DP)
+    IF (nspin == 1 .OR. nspin == 4) THEN
+       psic(:) = vxc(:, 1)
+    ELSE
+       psic(:) = (vxc(:, 1) + vxc(:, 2)) * 0.5d0
+    ENDIF
+    DEALLOCATE(vxc)
+    CALL fwfft('Rho', psic, dfftp)
+    !
+    ! psic contains now Vxc(G)
+    !
+    ALLOCATE(vxc_g(ngm))
+    DO ig = 1, ngm
+       vxc_g(ig) = psic(dfftp%nl(ig)) * 0.5d0 ! convert to Ha
+    ENDDO
+    ! set XC potential
+    CALL sirius_set_pw_coeffs(gs_handler, string("vxc"), vxc_g(1), bool(.true.), ngm, mill(1, 1), intra_bgrp_comm)
+
+    !
+    ! vnew is V_out - V_in, psic is the temp space
+    !
+    IF (nspin == 1 .OR. nspin == 4) THEN
+       psic(:) = vnew%of_r(:, 1)
+    ELSE
+       psic(:) = (vnew%of_r(:, 1) + vnew%of_r(:, 2)) * 0.5d0
+    ENDIF
+    CALL fwfft ('Rho', psic, dfftp)
+
+    DO ig = 1, ngm
+       vxc_g(ig) = psic(dfftp%nl(ig)) * 0.5d0 ! convert to Ha
+    ENDDO
+    ! set XC potential
+    CALL sirius_set_pw_coeffs(gs_handler, string("dveff"), vxc_g(1), bool(.true.), ngm, mill(1, 1), intra_bgrp_comm)
+
+    DEALLOCATE(vxc_g)
+  ENDIF
   CALL start_clock( 'forces' )
   !
   ALLOCATE( forcenl(3,nat), forcelc(3,nat), forcecc(3,nat), &
@@ -98,17 +152,23 @@ SUBROUTINE forces()
   !
   ! ... The nonlocal contribution is computed here
   !
+  CALL sirius_start_timer(string("qe|force|us"))
   CALL force_us( forcenl )
+  CALL sirius_stop_timer(string("qe|force|us"))
   !
   ! ... The local contribution
   !
+  CALL sirius_start_timer(string("qe|force|local"))
   CALL force_lc( nat, tau, ityp, alat, omega, ngm, ngl, igtongl,       &
                  g, rho%of_r(:,1), dfftp%nl, gstart, gamma_only, vloc, &
                  forcelc )
+  CALL sirius_stop_timer(string("qe|force|local"))
   !
   ! ... The NLCC contribution
   !
+  CALL sirius_start_timer(string("qe|force|cc"))
   CALL force_cc( forcecc )
+  CALL sirius_stop_timer(string("qe|force|cc"))
   !
   ! ... The Hubbard contribution
   !     (included by force_us if using beta as local projectors)
@@ -117,12 +177,14 @@ SUBROUTINE forces()
   !
   ! ... The ionic contribution is computed here
   !
+  CALL sirius_start_timer(string("qe|force|ewald"))
   IF( do_comp_esm ) THEN
      CALL esm_force_ew( forceion )
   ELSE
      CALL force_ew( alat, nat, ntyp, ityp, zv, at, bg, tau, omega, g, &
                     gg, ngm, gstart, gamma_only, gcutm, strf, forceion )
   ENDIF
+  CALL sirius_stop_timer(string("qe|force|ewald"))
   !
   ! ... the semi-empirical dispersion correction
   !
@@ -158,7 +220,9 @@ SUBROUTINE forces()
   !
   ! ... The SCF contribution
   !
+  CALL sirius_start_timer(string("qe|force|scf"))
   CALL force_corr( forcescc )
+  CALL sirius_stop_timer(string("qe|force|scf"))
   !
   IF (do_comp_mt) THEN
     !
@@ -409,6 +473,8 @@ SUBROUTINE forces()
                    &  "reduce conv_thr to get better values")')
   !
   IF(ALLOCATED(force_mt))   DEALLOCATE( force_mt )
+
+  CALL sirius_stop_timer(string("qe|forces"))
 
   RETURN
   !

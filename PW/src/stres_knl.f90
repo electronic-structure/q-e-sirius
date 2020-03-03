@@ -27,6 +27,7 @@ SUBROUTINE stres_knl( sigmanlc, sigmakin )
   USE mp_pools,             ONLY: inter_pool_comm
   USE mp_bands,             ONLY: intra_bgrp_comm
   USE mp,                   ONLY: mp_sum
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -41,6 +42,35 @@ SUBROUTINE stres_knl( sigmanlc, sigmakin )
   REAL(DP) :: twobysqrtpi, gk2, arg
   INTEGER  :: npw, ik, l, m, i, ibnd, is
   !
+  REAL(DP) :: tmp(3, 3)
+  INTEGER :: idx(2, 3)
+  REAL(DP) :: d1
+
+  IF (use_sirius.AND.use_sirius_ks_solver.AND.use_sirius_stress) THEN
+    CALL sirius_get_stress_tensor(gs_handler, string("kin"), sigmakin(1, 1))
+    sigmakin = -sigmakin * 2 ! convert to Ha
+    CALL sirius_get_stress_tensor(gs_handler, string("nonloc"), sigmanlc(1, 1))
+    sigmanlc = -sigmanlc * 2 ! convert to Ha
+    CALL sirius_get_stress_tensor(gs_handler, string("us"), tmp(1, 1))
+    sigmanlc = sigmanlc - 2 * tmp
+    CALL symmatrix ( sigmakin )
+    CALL symmatrix ( sigmanlc )
+
+    idx = RESHAPE((/1, 2, 1, 3, 2, 3/), (/2, 3/))
+
+    DO i = 1, 3
+      d1 = 0.5 * (sigmakin(idx(1, i), idx(2, i)) + sigmakin(idx(2, i), idx(1, i)))
+      sigmakin(idx(1, i), idx(2, i)) = d1
+      sigmakin(idx(2, i), idx(1, i)) = d1
+
+      d1 = 0.5 * (sigmanlc(idx(1, i), idx(2, i)) + sigmanlc(idx(2, i), idx(1, i)))
+      sigmanlc(idx(1, i), idx(2, i)) = d1
+      sigmanlc(idx(2, i), idx(1, i)) = d1
+    ENDDO
+
+    RETURN
+  ENDIF
+
   ALLOCATE( gk(npwx,3) )
   ALLOCATE( kfac(npwx) )
   !

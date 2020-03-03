@@ -18,6 +18,7 @@ SUBROUTINE force_ew( alat, nat, ntyp, ityp, zv, at, bg, tau, omega, &
   USE mp_bands,     ONLY : intra_bgrp_comm, me_bgrp, nproc_bgrp
   USE mp,           ONLY : mp_sum
   USE Coul_cut_2D,  ONLY : do_cutoff_2D, cutoff_force_ew 
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -89,6 +90,11 @@ SUBROUTINE force_ew( alat, nat, ntyp, ityp, zv, at, bg, tau, omega, &
   ! auxiliary space
   REAL(DP), EXTERNAL :: qe_erfc
   !
+  IF (use_sirius.AND.use_sirius_forces.and..NOT.do_cutoff_2D) THEN
+    CALL sirius_get_forces(gs_handler, string("ewald"), forceion(1, 1))
+    forceion = forceion * 2 ! convert to Ry
+    RETURN
+  ENDIF
   forceion(:,:) = 0.0_DP
   tpiba2 = (tpi / alat)**2
   charge = 0.0_DP

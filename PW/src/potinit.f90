@@ -54,6 +54,8 @@ SUBROUTINE potinit()
   USE paw_variables,        ONLY : okpaw, ddd_PAW
   USE paw_init,             ONLY : PAW_atomic_becsum
   USE paw_onecenter,        ONLY : PAW_potential
+  USE mod_sirius
+
   !
   IMPLICIT NONE
   !
@@ -65,6 +67,7 @@ SUBROUTINE potinit()
   CHARACTER(LEN=320)    :: filename
   !
   CALL start_clock('potinit')
+  CALL sirius_start_timer(string("qe|potinit"))
   !
   filename = TRIM (restart_dir( )) // 'charge-density'
 #if defined __HDF5
@@ -126,11 +129,16 @@ SUBROUTINE potinit()
         ELSE
            CALL init_ns()
         ENDIF
+        IF (use_sirius) THEN
+           CALL qe_sirius_set_hubbard_occupancy(rho)
+        ENDIF
         !
      ENDIF
 
+     CALL sirius_start_timer(string("qe|paw_becsum"))
      ! ... in the paw case uses atomic becsum
      IF ( okpaw )      CALL PAW_atomic_becsum()
+     CALL sirius_stop_timer(string("qe|paw_becsum"))
      !
      IF ( input_drho /= ' ' ) THEN
         !
@@ -210,7 +218,9 @@ SUBROUTINE potinit()
   !
   CALL v_of_rho( rho, rho_core, rhog_core, &
                  ehart, etxc, vtxc, eth, etotefield, charge, v )
+  CALL sirius_start_timer(string("qe|paw_potential"))
   IF (okpaw) CALL PAW_potential(rho%bec, ddd_PAW, epaw)
+  CALL sirius_stop_timer(string("qe|paw_potential"))
   !
   ! ... define the total local potential (external+scf)
   !
@@ -235,6 +245,7 @@ SUBROUTINE potinit()
   IF ( report /= 0 .AND. &
        noncolin .AND. domag .AND. lscf ) CALL report_mag()
   !
+  CALL sirius_stop_timer(string("qe|potinit"))
   CALL stop_clock('potinit')
   !
   RETURN

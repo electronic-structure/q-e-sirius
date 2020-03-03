@@ -411,6 +411,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
   USE wrappers,             ONLY : memstat
   !
   USE plugin_variables,     ONLY : plugin_etot
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -646,6 +647,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
         ! ... is parallelized on the entire image
         !
         ! IF ( my_pool_id == root_pool ) 
+        CALL sirius_start_timer(string("qe|mix"))
         CALL mix_rho( rho, rhoin, mixing_beta, dr2, tr2_min, iter, nmix, &
                       iunmix, conv_elec )
         !
@@ -666,6 +668,8 @@ SUBROUTINE electrons_scf ( printout, exxen )
         CALL bcast_scf_type( rhoin, root_pool, inter_pool_comm )
         CALL mp_bcast( dr2, root_pool, inter_pool_comm )
         CALL mp_bcast( conv_elec, root_pool, inter_pool_comm )
+        CALL sirius_stop_timer(string("qe|mix"))
+        !
         !
         IF (.NOT. scf_must_converge .AND. idum == niter) conv_elec = .TRUE.
         !
@@ -1306,6 +1310,8 @@ SUBROUTINE electrons_scf ( printout, exxen )
              WRITE( stdout, 9084 ) dr2
           END IF
        ENDIF
+       WRITE(stdout,*)''
+       WRITE(stdout, 9990)eband
        !
        CALL plugin_print_energies()
        !
@@ -1336,6 +1342,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
 9064 FORMAT( '     electric field correction =',F17.8,' Ry' )
 9065 FORMAT( '     gate field correction     =',F17.8,' Ry' ) ! TB
 9066 FORMAT( '     Hubbard energy            =',F17.8,' Ry' )
+9990 FORMAT( '     Band energy sum           =',F17.8,' Ry' )
 9067 FORMAT( '     one-center paw contrib.   =',F17.8,' Ry' )
 9068 FORMAT( '      -> PAW hartree energy AE =',F17.8,' Ry' &
             /'      -> PAW hartree energy PS =',F17.8,' Ry' &

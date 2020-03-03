@@ -33,10 +33,16 @@ SUBROUTINE init_run()
   USE esm,                ONLY : do_comp_esm, esm_init
   USE tsvdw_module,       ONLY : tsvdw_initialize
   USE Coul_cut_2D,        ONLY : do_cutoff_2D, cutoff_fact 
+  USE mod_sirius
+  USE control_flags,        ONLY : io_level
+  USE io_files,             ONLY : iunwfc, nwordwfc
+  USE buffers,              ONLY : open_buffer
   !
   IMPLICIT NONE
+  LOGICAL exst_file,exst_mem
   !
   CALL start_clock( 'init_run' )
+  CALL sirius_start_timer(string("qe|init_run"))
   !
   ! ... calculate limits of some indices, used in subsequent allocations
   !
@@ -110,24 +116,44 @@ SUBROUTINE init_run()
   CALL allocate_wfc_k()
   CALL openfil()
   !
+  IF (use_sirius) THEN
+    CALL init_us_1()
+    ! at this point FFT dimensions are known and we can pass them to SIRIUS
+    CALL clear_sirius
+    CALL sirius_start_timer(string("qe|init_run|setup_sirius"))
+    CALL setup_sirius
+    CALL sirius_stop_timer(string("qe|init_run|setup_sirius"))
+  ENDIF
   CALL hinit0()
   !
   CALL potinit()
   !
   CALL newd()
   !
+  IF (use_sirius) THEN
+    CALL sirius_initialize_kset(ks_handler)
+  ENDIF
+
+  IF (use_sirius.AND.use_sirius_ks_solver) THEN
+    CALL sirius_initialize_subspace(gs_handler, ks_handler)
+    CALL open_buffer( iunwfc, 'wfc', nwordwfc, io_level, exst_mem, exst_file )
+  ELSE
   CALL wfcinit()
+  ENDIF
   !
   IF(use_wannier) CALL wannier_init()
   !
 #if defined(__MPI)
   ! Cleanup PAW arrays that are only used for init
+  IF (.NOT.use_sirius) THEN
   IF (okpaw) CALL paw_post_init() ! only parallel!
+  ENDIF
 #endif
   !
   IF ( lmd ) CALL allocate_dyn_vars()
   !
   CALL stop_clock( 'init_run' )
+  CALL sirius_stop_timer(string("qe|init_run"))
   !
   RETURN
   !

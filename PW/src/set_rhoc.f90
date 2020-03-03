@@ -27,10 +27,13 @@ SUBROUTINE set_rhoc
   USE mp_bands,  ONLY : intra_bgrp_comm
   USE mp,        ONLY : mp_sum
   USE scf,       ONLY : rho_core, rhog_core
+  USE mod_sirius
+  USE gvect,     ONLY : mill
   !
   IMPLICIT NONE
   !
   REAL(DP) , ALLOCATABLE ::  rhocg(:)
+  REAL(DP) , ALLOCATABLE ::  rho_core_g(:)
   ! the radial fourier transform
   REAL(DP) ::  rhoneg
   ! used to check the core charge
@@ -39,17 +42,29 @@ SUBROUTINE set_rhoc
   ! counter on atomic types
   ! counter on g vectors
 
+  CALL sirius_start_timer(string("qe|set_rhoc"))
+
   rhog_core(:) = 0.0_DP
   rho_core(:)  = 0.0_DP
 
   IF ( ANY( upf(1:ntyp)%nlcc ) ) THEN
 
      ALLOCATE (rhocg( ngl))    
+     IF (use_sirius.AND.use_sirius_rho_core) THEN
+       ALLOCATE(rho_core_g(ngm))
+     ENDIF
      !
      !    the sum is on atom types
      !
      DO nt = 1, ntyp
         IF ( upf(nt)%nlcc ) THEN
+           IF (use_sirius.AND.use_sirius_rho_core) THEN
+              CALL sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, string("rhoc"), rho_core_g(1),&
+                                            &ngm, mill(1, 1), intra_bgrp_comm)
+              DO ng = 1, ngm
+                 rhog_core(ng) = rhog_core(ng) + strf(ng,nt) * rho_core_g(ng)
+              END DO
+           ELSE
            !
            ! drhoc computes the radial fourier transform for each shell of g vec
            !
@@ -61,9 +76,13 @@ SUBROUTINE set_rhoc
            DO ng = 1, ngm
               rhog_core(ng) = rhog_core(ng) + strf(ng,nt) * rhocg(igtongl(ng))
            END DO
+           ENDIF
        ENDIF
      ENDDO
      DEALLOCATE (rhocg)
+     IF (use_sirius.AND.use_sirius_rho_core) THEN
+       DEALLOCATE (rho_core_g)
+     ENDIF
      !
      CALL rho_g2r( dfftp, rhog_core, rho_core )
      !
@@ -108,6 +127,8 @@ SUBROUTINE set_rhoc
      !   WRITE( stdout,  * ) 'BEWARE it will be subtracted from total energy !'
      !
   END IF
+  !
+  CALL sirius_stop_timer(string("qe|set_rhoc"))
   !
   RETURN
 

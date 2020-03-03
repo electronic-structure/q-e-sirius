@@ -36,6 +36,7 @@ SUBROUTINE stress( sigma )
   USE tsvdw_module,     ONLY : HtsvdW
   USE esm,              ONLY : do_comp_esm, esm_bc ! for ESM stress
   USE esm,              ONLY : esm_stres_har, esm_stres_ewa, esm_stres_loclong ! for ESM stress
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -64,6 +65,8 @@ SUBROUTINE stress( sigma )
      CALL infomsg( 'stres', 'stress with USPP and electric fields (Berry) not implemented' )
      RETURN
   END IF
+  !
+  CALL sirius_start_timer(string("qe|stress"))
   !
   CALL start_clock( 'stress' )
   !
@@ -230,6 +233,8 @@ SUBROUTINE stress( sigma )
   ENDIF
   !
   CALL stop_clock( 'stress' )
+  !
+  CALL sirius_stop_timer(string("qe|stress"))
   !
   RETURN
 9000 format (10x,'total   stress  (Ry/bohr**3) ',18x,'(kbar)', &

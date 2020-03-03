@@ -31,8 +31,10 @@ SUBROUTINE hinit1()
   USE paw_onecenter,       ONLY : paw_potential
   USE paw_symmetry,        ONLY : paw_symmetrize_ddd
   USE dfunct,              ONLY : newd
+  USE mod_sirius
   !
   IMPLICIT NONE
+  CALL sirius_start_timer(string("qe|hinit1"))
   !
   ! these routines can be used to patch quantities that are dependent
   ! on the ions and cell parameters
@@ -82,6 +84,8 @@ SUBROUTINE hinit1()
   IF ( lda_plus_u  ) CALL orthoUwfc() 
   IF ( use_wannier ) CALL orthoatwfc( .TRUE. )
   !
+  !
+  CALL sirius_stop_timer(string("qe|hinit1"))
   !
   RETURN
   !

@@ -40,6 +40,7 @@ SUBROUTINE force_hub( forceh )
    USE klist,                ONLY : nks, xk, ngk, igk_k
    USE io_files,             ONLY : nwordwfc, iunwfc
    USE buffers,              ONLY : get_buffer
+   USE mod_sirius
    !
    IMPLICIT NONE
    !
@@ -61,6 +62,12 @@ SUBROUTINE force_hub( forceh )
                    " forces in full LDA+U scheme are not yet implemented", 1 )
    !
    CALL start_clock( 'force_hub' )
+   !
+   IF (use_sirius) THEN
+      CALL sirius_get_forces(gs_handler, string("hubbard"), forceh(1, 1))
+      forceh(:,:) = 2.0d0 * forceh(:,:);
+   ELSE
+   !
    ldim = 2 * Hubbard_lmax + 1
    ALLOCATE( dns(ldim,ldim,nspin,nat) )
    ALLOCATE( spsi(npwx,nbnd)          ) 
@@ -147,6 +154,8 @@ SUBROUTINE force_hub( forceh )
    DEALLOCATE( dns ) 
    !
    IF (nspin == 1) forceh(:,:) = 2.d0 * forceh(:,:)
+   !
+   ENDIF !sirius
    !
    ! ...symmetrize...
    !

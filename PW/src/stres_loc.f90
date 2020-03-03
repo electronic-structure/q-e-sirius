@@ -26,6 +26,8 @@ subroutine stres_loc (sigmaloc)
   USE mp_bands,             ONLY : intra_bgrp_comm
   USE mp,                   ONLY : mp_sum
   USE Coul_cut_2D,          ONLY : do_cutoff_2D, cutoff_stres_evloc, cutoff_stres_sigmaloc 
+  USE mod_sirius
+  USE symme,                ONLY: symmatrix
   !
   implicit none
   !
@@ -37,6 +39,12 @@ subroutine stres_loc (sigmaloc)
   ! counter on atomic type
   ! counter on angular momentum
   ! counter on spin components
+  IF (use_sirius.AND.use_sirius_vloc.AND.use_sirius_density.AND.use_sirius_stress) then
+    CALL sirius_get_stress_tensor(gs_handler, string("vloc"), sigmaloc(1, 1))
+    sigmaloc = -sigmaloc * 2 ! convert to Ry
+    !call symmatrix ( sigmaloc )
+    RETURN
+  ENDIF
 
   allocate(dvloc(ngl))
   sigmaloc(:,:) = 0.d0

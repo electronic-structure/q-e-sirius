@@ -23,6 +23,7 @@ SUBROUTINE stres_hub( sigmah )
    USE symme,     ONLY: symmatrix
    USE io_files,  ONLY: prefix
    USE io_global, ONLY: stdout, ionode
+   USE mod_sirius
    !
    IMPLICIT NONE
    !
@@ -43,6 +44,14 @@ SUBROUTINE stres_hub( sigmah )
                    " stress in full LDA+U scheme is not yet implemented", 1 )
    !
    sigmah(:,:) = 0.d0
+   !
+   IF (use_sirius) THEN
+     CALL sirius_get_stress_tensor(gs_handler, string("hubbard"), sigmah(1, 1))
+     sigmah = sigmah * 2.d0 ! convert to Ry
+     CALL symmatrix ( sigmah )
+     CALL stop_clock( 'stres_hub' )
+     RETURN
+   ENDIF
    !
    ldim = 2 * Hubbard_lmax + 1
    ALLOCATE (dns(ldim,ldim,nspin,nat))

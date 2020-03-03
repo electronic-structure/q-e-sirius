@@ -66,6 +66,7 @@ SUBROUTINE clean_pw( lflag )
   USE control_flags,        ONLY : ts_vdw
   USE tsvdw_module,         ONLY : tsvdw_finalize
   USE dftd3_qe,             ONLY : dftd3_clean
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -76,6 +77,10 @@ SUBROUTINE clean_pw( lflag )
   !
   INTEGER :: nt, nr1, nr2, nr3
   !
+  IF (use_sirius) THEN
+    CALL clear_sirius
+  ENDIF
+
   IF ( lflag ) THEN
      !
      ! ... arrays allocated at the very beginning of the calculation

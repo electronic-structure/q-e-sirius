@@ -20,11 +20,14 @@ SUBROUTINE stop_run( exit_status )
   USE mp_global,          ONLY : mp_global_end
   USE environment,        ONLY : environment_end
   USE io_files,           ONLY : iuntmp, seqopn
+  USE mp_world, ONLY: mpime
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
   INTEGER, INTENT(IN) :: exit_status
   LOGICAL             :: exst, opnd, lflag
+  CHARACTER*100 tname
   !
   lflag = ( exit_status == 0 ) 
   IF ( lflag ) THEN
@@ -50,6 +53,16 @@ SUBROUTINE stop_run( exit_status )
   CALL clean_pw( .TRUE. )
   !
   CALL environment_end( 'PWSCF' )
+  ! finalize sirius at the very end
+  IF (use_sirius) THEN
+     CALL sirius_finalize(call_mpi_fin=bool(.false.))
+     WRITE(tname,'("timer",I4.4,".json")')mpime
+     IF (mpime.eq.0) THEN
+       CALL sirius_print_timers
+       CALL sirius_serialize_timers(string("timers.json"))
+     ENDIF
+     !CALL sirius_serialize_timers(string(trim(tname)))
+  ENDIF
   !
   CALL mp_global_end()
   !

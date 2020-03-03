@@ -39,6 +39,7 @@ SUBROUTINE new_ns( ns )
   USE mp,                   ONLY : mp_sum
   USE becmod,               ONLY : bec_type, calbec, &
                                    allocate_bec_type, deallocate_bec_type
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -54,6 +55,7 @@ SUBROUTINE new_ns( ns )
   !    "    "  bands
   !    "    "  spins
   REAL(DP), ALLOCATABLE :: nr(:,:,:,:)
+  COMPLEX(DP) , ALLOCATABLE :: nrc(:,:,:,:)
   REAL(DP) :: psum
   !
   CALL start_clock( 'new_ns' )
@@ -67,6 +69,13 @@ SUBROUTINE new_ns( ns )
   ! Offset of atomic wavefunctions initialized in setup and stored in offsetU
   !
   nr(:,:,:,:) = 0.d0
+  IF (use_sirius) THEN
+     ALLOCATE(nrc(2*Hubbard_lmax+1,2*Hubbard_lmax+1,nspin,nat))
+     CALL sirius_calculate_hubbard_occupancies(gs_handler)
+     CALL sirius_get_hubbard_occupancies(gs_handler, nrc(1,1,1,1), ldim)
+     CALL sirius_to_qe_real(nrc(:, :, :, :), nr(:, :, :, :))
+     DEALLOCATE(nrc)
+  ELSE
   !
   !    we start a loop on k points
   !
@@ -136,6 +145,7 @@ SUBROUTINE new_ns( ns )
         ENDDO
      ENDDO
   ENDDO
+  ENDIF ! sirius
   !
   ! symmetrize the quantities nr -> ns
   ns (:,:,:,:) = 0.d0
@@ -323,6 +333,7 @@ SUBROUTINE new_ns_nc( ns )
   USE mp_bands,             ONLY : intra_bgrp_comm
   USE mp_pools,             ONLY : inter_pool_comm
   USE mp,                   ONLY : mp_sum
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -336,6 +347,7 @@ SUBROUTINE new_ns_nc( ns )
   COMPLEX(DP) , ALLOCATABLE :: nr(:,:,:,:,:), nr1(:,:,:,:,:), proj(:,:)
   COMPLEX(DP) :: z  
   REAL(DP) :: psum
+  COMPLEX(DP) , ALLOCATABLE :: nss(:,:,:,:)
   !
   CALL start_clock( 'new_ns' )
   !
@@ -347,6 +359,27 @@ SUBROUTINE new_ns_nc( ns )
   nr(:,:,:,:,:)  = 0.d0
   nr1(:,:,:,:,:) = 0.d0
   ns(:,:,:,:)    = 0.d0
+  IF (use_sirius) THEN
+     ALLOCATE(nss(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, 4, nat))
+     CALL sirius_calculate_hubbard_occupancies(gs_handler)
+     CALL sirius_get_hubbard_occupancies(gs_handler, nss(1, 1, 1, 1), ldim)
+     CALL sirius_to_qe_complex(nss(:, :, :, :), ns(:, :, :, :))
+     DO na = 1, nat
+        nt = ityp (na)
+        IF ( is_hubbard(nt) ) THEN
+           ldim = 2 * Hubbard_l(nt) + 1
+           DO m1 = 1, 2 * Hubbard_l(nt) + 1
+              DO m2 = 1, 2 * Hubbard_l(nt) + 1
+                 nr(m1,m2,1,1,na) = ns(m1,m2, 1, na)
+                 nr(m1,m2,1,2,na) = ns(m1,m2, 2, na)
+                 nr(m1,m2,2,1,na) = ns(m1,m2, 3, na)
+                 nr(m1,m2,2,2,na) = ns(m1,m2, 4, na)
+              ENDDO
+           ENDDO
+        ENDIF
+     ENDDO
+     DEALLOCATE(nss)
+  ELSE
   !
   !--
   !  loop on k points
@@ -399,6 +432,7 @@ SUBROUTINE new_ns_nc( ns )
   !--
   !
   CALL mp_sum( nr, inter_pool_comm )
+  ENDIF !sirius
   !
   !--  symmetrize: nr  -->  nr1
   !

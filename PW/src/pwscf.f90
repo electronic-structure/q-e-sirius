@@ -45,6 +45,7 @@ PROGRAM pwscf
   USE mp_exx,               ONLY : negrp
   USE read_input,           ONLY : read_input_file
   USE command_line_options, ONLY : input_file_, command_line, ndiag_, nimage_
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -62,6 +63,9 @@ PROGRAM pwscf
   !! checks if first string is contained in the second
   !
   CALL mp_startup( start_images=.TRUE. )
+  IF (use_sirius) THEN
+     CALL sirius_initialize(call_mpi_init=bool(.false.))
+  ENDIF
   !
   IF( negrp > 1 .OR. do_diag_in_band_group ) THEN
   !IF( do_diag_in_band_group ) THEN

@@ -20,6 +20,7 @@ SUBROUTINE force_lc( nat, tau, ityp, alat, omega, ngm, ngl, &
   USE fft_interfaces,  ONLY : fwfft
   USE esm,             ONLY : esm_force_lc, do_comp_esm, esm_bc
   USE Coul_cut_2D,     ONLY : do_cutoff_2D, cutoff_force_lc
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -64,10 +65,29 @@ SUBROUTINE force_lc( nat, tau, ityp, alat, omega, ngm, ngl, &
   COMPLEX(DP), ALLOCATABLE :: aux(:)
   ! auxiliary space for FFT
   REAL(DP) :: arg, fact
+  REAL(DP) force_tmp(3, nat)
   !
   ! contribution to the force from the local part of the bare potential
   ! F_loc = Omega \Sum_G n*(G) d V_loc(G)/d R_i
   !
+  IF (use_sirius.AND.use_sirius_forces.and.use_sirius_vloc) THEN
+    CALL sirius_get_forces(gs_handler, string("vloc"), forcelc(1, 1))
+    forcelc = forcelc * 2 ! convert to Ry
+
+    IF ( do_comp_esm .AND. ( esm_bc .NE. 'pbc' ) ) THEN
+      ALLOCATE(aux(dfftp%nnr))
+      aux(:) = CMPLX( rho(:), 0.0_dp, kind=dp )
+      !
+      CALL fwfft ('Rho', aux, dfftp)
+      force_tmp = 0.d0
+      CALL esm_force_lc ( aux, force_tmp )
+      CALL mp_sum( force_tmp, intra_bgrp_comm )
+      forcelc = forcelc + force_tmp
+      DEALLOCATE(aux)
+    ENDIF
+    RETURN
+  ENDIF
+
   ALLOCATE( aux(dfftp%nnr) )
   !
   aux(:) = CMPLX( rho(:), 0.0_DP, KIND=DP )
