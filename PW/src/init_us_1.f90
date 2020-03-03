@@ -313,7 +313,7 @@ subroutine init_us_1
            enddo
            IF (use_sirius) THEN
              DO iq = startq, lastq
-                q = (iq - 1) * dq
+                q = (iq - 1) * dq * tpiba
                 CALL sph_bes ( upf(nt)%kkbeta, rgrid(nt)%r, q, l, aux)
                 !
                 !   and then we integrate with all the Q functions
