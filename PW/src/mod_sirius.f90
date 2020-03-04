@@ -38,6 +38,8 @@ type atom_type_t
   character(len=1, kind=C_CHAR) :: label(100)
   ! nh(iat) in the QE notation
   integer                 :: num_beta_projectors
+  ! lmax for beta-projectors
+  integer                 :: lmax
   ! plane-wave coefficients of Q-operator
   complex(8), allocatable :: qpw(:, :)
 end type atom_type_t
@@ -158,7 +160,7 @@ if (upf(iat)%tvanp) then
   i1 = i0 + 1
   i2 = i0 + 2
   i3 = i0 + 3
-  do l = 1, upf(iat)%nqlc
+  do l = 1, 2 * atom_type(iat)%lmax + 1
     do nb = 1, upf(iat)%nbeta
       do mb = nb, upf(iat)%nbeta
         ijv = mb * (mb-1) / 2 + nb
@@ -199,7 +201,7 @@ if (upf(iat)%tvanp) then
   i1 = i0 + 1
   i2 = i0 + 2
   i3 = i0 + 3
-  do l = 1, upf(iat)%nqlc
+  do l = 1, 2 * atom_type(iat)%lmax + 1
     do nb = 1, upf(iat)%nbeta
       do mb = nb, upf(iat)%nbeta
         ijv = mb * (mb-1) / 2 + nb
@@ -263,6 +265,12 @@ allocate(atom_type(nsp))
 
 do iat = 1, nsp
   atom_type(iat)%label = string(atm(iat))
+
+  lmax_beta = 0
+  do i = 1, upf(iat)%nbeta
+    lmax_beta = max(lmax_beta, upf(iat)%lll(i))
+  enddo
+  atom_type(iat)%lmax = lmax_beta
 enddo
 
 ! create context of simulation
