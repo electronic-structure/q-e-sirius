@@ -597,6 +597,7 @@ SUBROUTINE pcegterg(h_psi, s_psi, uspp, g_psi, &
   USE mp_bands_util,    ONLY : intra_bgrp_comm, inter_bgrp_comm, root_bgrp_id, nbgrp, my_bgrp_id
   USE mp,               ONLY : mp_bcast, mp_root_sum, mp_sum, mp_barrier, &
                                mp_size, mp_type_free, mp_allgather
+  USE mp_bands_util, ONLY : evp_work_count
   !
   IMPLICIT NONE
   !
@@ -823,13 +824,17 @@ SUBROUTINE pcegterg(h_psi, s_psi, uspp, g_psi, &
      CALL start_clock( 'cegterg:diag' )
      IF ( do_distr_diag_inside_bgrp ) THEN ! NB on output of pdiaghg ew and vl are the same across ortho_parent_comm
         ! only the first bgrp performs the diagonalization
-        IF( my_bgrp_id == root_bgrp_id ) CALL pdiaghg( nbase, hl, sl, nx, ew, vl, idesc )
+        IF( my_bgrp_id == root_bgrp_id ) THEN
+           CALL pdiaghg( nbase, hl, sl, nx, ew, vl, idesc )
+           evp_work_count = evp_work_count + (1.d0 * nbase / nvec)**3
+        ENDIF
         IF( nbgrp > 1 ) THEN ! results must be brodcast to the other band groups
            CALL mp_bcast( vl, root_bgrp_id, inter_bgrp_comm )
            CALL mp_bcast( ew, root_bgrp_id, inter_bgrp_comm )
         ENDIF
      ELSE
         CALL pdiaghg( nbase, hl, sl, nx, ew, vl, idesc )
+        evp_work_count = evp_work_count + (1.d0 * nbase / nvec)**3
      END IF
      CALL stop_clock( 'cegterg:diag' )
      !
@@ -966,13 +971,17 @@ SUBROUTINE pcegterg(h_psi, s_psi, uspp, g_psi, &
      CALL start_clock( 'cegterg:diag' )
      IF ( do_distr_diag_inside_bgrp ) THEN ! NB on output of pdiaghg ew and vl are the same across ortho_parent_comm
         ! only the first bgrp performs the diagonalization
-        IF( my_bgrp_id == root_bgrp_id ) CALL pdiaghg( nbase, hl, sl, nx, ew, vl, idesc )
+        IF( my_bgrp_id == root_bgrp_id ) THEN
+           CALL pdiaghg( nbase, hl, sl, nx, ew, vl, idesc )
+           evp_work_count = evp_work_count + (1.d0 * nbase / nvec)**3
+        ENDIF
         IF( nbgrp > 1 ) THEN ! results must be brodcast to the other band groups
            CALL mp_bcast( vl, root_bgrp_id, inter_bgrp_comm )
            CALL mp_bcast( ew, root_bgrp_id, inter_bgrp_comm )
         ENDIF
      ELSE
         CALL pdiaghg( nbase, hl, sl, nx, ew, vl, idesc )
+        evp_work_count = evp_work_count + (1.d0 * nbase / nvec)**3
      END IF
      CALL stop_clock( 'cegterg:diag' )
      !
