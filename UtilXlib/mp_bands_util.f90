@@ -42,5 +42,7 @@ MODULE mp_bands_util
 #else
   INTEGER :: gstart =  2  ! appropriate value for serial execution
 #endif
+  REAL(8) :: evp_work_count = 0.d0
+  INTEGER :: num_loc_op_applied = 0
 
 END MODULE mp_bands_util
