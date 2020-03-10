@@ -28,6 +28,7 @@ SUBROUTINE regterg(  h_psi, s_psi, uspp, g_psi, &
           nbgrp, my_bgrp_id, me_bgrp, root_bgrp
   USE mp_bands_util, ONLY : gstart
   USE mp,            ONLY : mp_sum, mp_bcast
+  USE mp_bands_util, ONLY : evp_work_count
   !
   IMPLICIT NONE
   !
@@ -210,6 +211,7 @@ SUBROUTINE regterg(  h_psi, s_psi, uspp, g_psi, &
      CALL start_clock( 'regterg:diag' )
      IF( my_bgrp_id == root_bgrp_id ) THEN
         CALL diaghg( nbase, nvec, hr, sr, nvecx, ew, vr, me_bgrp, root_bgrp, intra_bgrp_comm )
+        evp_work_count = evp_work_count + (1.d0 * nbase / nvec)**3
      END IF
      IF( nbgrp > 1 ) THEN
         CALL mp_bcast( vr, root_bgrp_id, inter_bgrp_comm )
@@ -371,6 +373,7 @@ SUBROUTINE regterg(  h_psi, s_psi, uspp, g_psi, &
      CALL start_clock( 'regterg:diag' )
      IF( my_bgrp_id == root_bgrp_id ) THEN
         CALL diaghg( nbase, nvec, hr, sr, nvecx, ew, vr, me_bgrp, root_bgrp, intra_bgrp_comm )
+        evp_work_count = evp_work_count + (1.d0 * nbase / nvec)**3
      END IF
      IF( nbgrp > 1 ) THEN
         CALL mp_bcast( vr, root_bgrp_id, inter_bgrp_comm )
