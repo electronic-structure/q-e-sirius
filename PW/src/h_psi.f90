@@ -21,6 +21,7 @@ SUBROUTINE h_psi( lda, n, m, psi, hpsi )
   USE mp_bands,           ONLY: use_bgrp_in_hpsi, inter_bgrp_comm
   USE mp,                 ONLY: mp_allgather, mp_size, &
                                 mp_type_create_column_section, mp_type_free
+  USE mp_bands_util,      ONLY: num_loc_op_applied
   !
   IMPLICIT NONE
   !
@@ -42,6 +43,7 @@ SUBROUTINE h_psi( lda, n, m, psi, hpsi )
   INTEGER, ALLOCATABLE :: recv_counts(:), displs(:)
   !
   !
+  num_loc_op_applied = num_loc_op_applied + m
   CALL start_clock( 'h_psi_bgrp' ); !write (*,*) 'start h_psi_bgrp'; FLUSH(6)
   !
   ! band parallelization with non-distributed bands is performed if

@@ -58,7 +58,7 @@ SUBROUTINE run_pwscf( exit_status )
   USE mp_world,             ONLY : mpime
   USE dfunct,               ONLY : newd
   USE mod_sirius
-  USE mp_bands_util, ONLY : evp_work_count
+  USE mp_bands_util, ONLY : evp_work_count, num_loc_op_applied
   !
   IMPLICIT NONE
   !
@@ -149,9 +149,11 @@ SUBROUTINE run_pwscf( exit_status )
         CALL electrons()
         IF (use_sirius) THEN
           CALL sirius_get_parameters(sctx, evp_work_count=evp_work_count)
+          CALL sirius_get_parameters(sctx, num_loc_op_applied=num_loc_op_applied)
         ENDIF
         WRITE(stdout, *)
-        WRITE(stdout,'("     evp_work_count : ", F12.6)')evp_work_count
+        WRITE(stdout,'("     evp_work_count     : ", F12.6)')evp_work_count
+        WRITE(stdout,'("     num_loc_op_applied : ", I6)')num_loc_op_applied
         CALL sirius_stop_timer(string("qe|electrons"))
      END IF
      IF (use_sirius.AND.use_sirius_ks_solver) THEN
