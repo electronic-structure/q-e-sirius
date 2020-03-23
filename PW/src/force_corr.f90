@@ -47,11 +47,11 @@ subroutine force_corr (forcescc)
   !
   ! vnew is V_out - V_in, psic is the temp space
   !
-  IF (use_sirius.AND.use_sirius_stress) THEN
-    CALL sirius_get_forces(gs_handler, string("scf_corr"), forcescc(1, 1))
-    forcescc = forcescc * 2 ! convert to Ry
-    RETURN
-  ENDIF
+  !IF (use_sirius.AND.use_sirius_stress) THEN
+  !  CALL sirius_get_forces(gs_handler, string("scf_corr"), forcescc(1, 1))
+  !  forcescc = forcescc * 2 ! convert to Ry
+  !  RETURN
+  !ENDIF
   if (nspin == 1 .or. nspin == 4) then
      psic(:) = vnew%of_r (:, 1)
   else

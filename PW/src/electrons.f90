@@ -1239,7 +1239,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
           !
           WRITE( stdout, 9081 ) etot
           IF ( only_paw ) WRITE( stdout, 9085 ) etot+total_core_energy
-          IF ( iverbosity > 1 ) WRITE( stdout, 9082 ) hwf_energy
+          IF ( iverbosity >= 1 ) WRITE( stdout, 9082 ) hwf_energy
           IF ( dr2 > eps8 ) THEN
              WRITE( stdout, 9083 ) dr2
           ELSE
@@ -1289,7 +1289,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
        ELSE IF ( conv_elec ) THEN
           !
           WRITE( stdout, 9081 ) etot
-          IF ( iverbosity > 1 ) WRITE( stdout, 9082 ) hwf_energy
+          IF ( iverbosity >= 1 ) WRITE( stdout, 9082 ) hwf_energy
           IF ( dr2 > eps8 ) THEN
              WRITE( stdout, 9083 ) dr2
           ELSE
@@ -1303,7 +1303,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
        ELSE
           !
           WRITE( stdout, 9080 ) etot
-          IF ( iverbosity > 1 ) WRITE( stdout, 9082 ) hwf_energy
+          IF ( iverbosity >= 1 ) WRITE( stdout, 9082 ) hwf_energy
           IF ( dr2 > eps8 ) THEN
              WRITE( stdout, 9083 ) dr2
           ELSE
