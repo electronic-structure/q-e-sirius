@@ -214,7 +214,6 @@ bp_mod.o : ../../UtilXlib/mp.o
 bp_qvan3.o : ../../Modules/ions_base.o
 bp_qvan3.o : ../../Modules/kind.o
 bp_qvan3.o : ../../Modules/uspp.o
-bp_qvan3.o : pwcom.o
 bp_strings.o : ../../Modules/kind.o
 buffers.o : ../../Modules/io_files.o
 buffers.o : ../../Modules/kind.o
