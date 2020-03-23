@@ -139,7 +139,6 @@ subroutine calc_aug_radial_integrals(iat, q, aug_ri, ld1, ld2) bind(C)
 use iso_c_binding
 use us,           only : dq, qrad
 use uspp_param,   only : upf
-use cell_base,    only : tpiba
 implicit none
 !
 integer(kind=c_int), intent(in), value :: iat
@@ -152,11 +151,11 @@ real(8) :: px, ux, vx, wx
 integer :: i0, i1, i2, i3, l, nb, mb, ijv
 !
 if (upf(iat)%tvanp) then
-  px = q / dq / tpiba - INT(q / dq / tpiba)
+  px = q / dq - INT(q / dq)
   ux = 1.d0 - px
   vx = 2.d0 - px
   wx = 3.d0 - px
-  i0 = INT(q / dq / tpiba) + 1
+  i0 = INT(q / dq) + 1
   i1 = i0 + 1
   i2 = i0 + 2
   i3 = i0 + 3
@@ -180,7 +179,6 @@ subroutine calc_aug_dj_radial_integrals(iat, q, aug_ri, ld1, ld2) bind(C)
 use iso_c_binding
 use us,           only : dq, qrad
 use uspp_param,   only : upf
-use cell_base,    only : tpiba
 implicit none
 !
 integer(kind=c_int), intent(in), value :: iat
@@ -193,11 +191,11 @@ real(8) :: px, ux, vx, wx
 integer :: i0, i1, i2, i3, l, nb, mb, ijv
 !
 if (upf(iat)%tvanp) then
-  px = q / dq / tpiba - INT(q / dq / tpiba)
+  px = q / dq - INT(q / dq)
   ux = 1.d0 - px
   vx = 2.d0 - px
   wx = 3.d0 - px
-  i0 = INT(q / dq / tpiba) + 1
+  i0 = INT(q / dq) + 1
   i1 = i0 + 1
   i2 = i0 + 2
   i3 = i0 + 3
@@ -209,7 +207,7 @@ if (upf(iat)%tvanp) then
                          + aug_ri_tab(i1, ijv, l, iat) * (wx*vx - px*wx - px*vx) * 0.5d0 &
                          - aug_ri_tab(i2, ijv, l, iat) * (wx*ux - px*wx - px*ux) * 0.5d0 &
                          + aug_ri_tab(i3, ijv, l, iat) * (ux*vx - px*ux - px*vx) / 6.d0
-        aug_ri(ijv, l) = aug_ri(ijv, l) / dq / tpiba
+        aug_ri(ijv, l) = aug_ri(ijv, l) / dq
       enddo
     enddo
   enddo

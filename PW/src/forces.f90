@@ -99,48 +99,48 @@ SUBROUTINE forces()
   !
   CALL sirius_start_timer(string("qe|forces"))
   !
-  IF (use_sirius) THEN
-    ! recalculate the exchange-correlation potential
-    ALLOCATE(vxc(dfftp%nnr, nspin))
-    !
-    CALL v_xc (rho, rho_core, rhog_core, etxc, vtxc, vxc)
-    !
-    psic = (0.0_DP,0.0_DP)
-    IF (nspin == 1 .OR. nspin == 4) THEN
-       psic(:) = vxc(:, 1)
-    ELSE
-       psic(:) = (vxc(:, 1) + vxc(:, 2)) * 0.5d0
-    ENDIF
-    DEALLOCATE(vxc)
-    CALL fwfft('Rho', psic, dfftp)
-    !
-    ! psic contains now Vxc(G)
-    !
-    ALLOCATE(vxc_g(ngm))
-    DO ig = 1, ngm
-       vxc_g(ig) = psic(dfftp%nl(ig)) * 0.5d0 ! convert to Ha
-    ENDDO
-    ! set XC potential
-    CALL sirius_set_pw_coeffs(gs_handler, string("vxc"), vxc_g(1), bool(.true.), ngm, mill(1, 1), intra_bgrp_comm)
+  !IF (use_sirius) THEN
+  !  ! recalculate the exchange-correlation potential
+  !  ALLOCATE(vxc(dfftp%nnr, nspin))
+  !  !
+  !  CALL v_xc (rho, rho_core, rhog_core, etxc, vtxc, vxc)
+  !  !
+  !  psic = (0.0_DP,0.0_DP)
+  !  IF (nspin == 1 .OR. nspin == 4) THEN
+  !     psic(:) = vxc(:, 1)
+  !  ELSE
+  !     psic(:) = (vxc(:, 1) + vxc(:, 2)) * 0.5d0
+  !  ENDIF
+  !  DEALLOCATE(vxc)
+  !  CALL fwfft('Rho', psic, dfftp)
+  !  !
+  !  ! psic contains now Vxc(G)
+  !  !
+  !  ALLOCATE(vxc_g(ngm))
+  !  DO ig = 1, ngm
+  !     vxc_g(ig) = psic(dfftp%nl(ig)) * 0.5d0 ! convert to Ha
+  !  ENDDO
+  !  ! set XC potential
+  !  CALL sirius_set_pw_coeffs(gs_handler, string("vxc"), vxc_g(1), bool(.true.), ngm, mill(1, 1), intra_bgrp_comm)
 
-    !
-    ! vnew is V_out - V_in, psic is the temp space
-    !
-    IF (nspin == 1 .OR. nspin == 4) THEN
-       psic(:) = vnew%of_r(:, 1)
-    ELSE
-       psic(:) = (vnew%of_r(:, 1) + vnew%of_r(:, 2)) * 0.5d0
-    ENDIF
-    CALL fwfft ('Rho', psic, dfftp)
+  !  !
+  !  ! vnew is V_out - V_in, psic is the temp space
+  !  !
+  !  IF (nspin == 1 .OR. nspin == 4) THEN
+  !     psic(:) = vnew%of_r(:, 1)
+  !  ELSE
+  !     psic(:) = (vnew%of_r(:, 1) + vnew%of_r(:, 2)) * 0.5d0
+  !  ENDIF
+  !  CALL fwfft ('Rho', psic, dfftp)
 
-    DO ig = 1, ngm
-       vxc_g(ig) = psic(dfftp%nl(ig)) * 0.5d0 ! convert to Ha
-    ENDDO
-    ! set XC potential
-    CALL sirius_set_pw_coeffs(gs_handler, string("dveff"), vxc_g(1), bool(.true.), ngm, mill(1, 1), intra_bgrp_comm)
+  !  DO ig = 1, ngm
+  !     vxc_g(ig) = psic(dfftp%nl(ig)) * 0.5d0 ! convert to Ha
+  !  ENDDO
+  !  ! set XC potential
+  !  CALL sirius_set_pw_coeffs(gs_handler, string("dveff"), vxc_g(1), bool(.true.), ngm, mill(1, 1), intra_bgrp_comm)
 
-    DEALLOCATE(vxc_g)
-  ENDIF
+  !  DEALLOCATE(vxc_g)
+  !ENDIF
   CALL start_clock( 'forces' )
   !
   ALLOCATE( forcenl(3,nat), forcelc(3,nat), forcecc(3,nat), &
