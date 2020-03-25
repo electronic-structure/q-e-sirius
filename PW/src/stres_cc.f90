@@ -66,9 +66,9 @@ subroutine stres_cc (sigmaxcc)
   ! psic contains now Vxc(G)
   !
   allocate(rhocg(ngl))
-  IF (use_sirius.AND.use_sirius_rho_core) THEN
-    ALLOCATE(rho_core_g(ngm))
-  ENDIF
+  !IF (use_sirius.AND.use_sirius_rho_core) THEN
+  !  ALLOCATE(rho_core_g(ngm))
+  !ENDIF
   sigmadiag = 0.0d0
   if (gamma_only) then
      fact = 2.d0
@@ -77,30 +77,30 @@ subroutine stres_cc (sigmaxcc)
   end if
   do nt = 1, ntyp
      if ( upf(nt)%nlcc ) then
-        IF (use_sirius.AND.use_sirius_rho_core) THEN
-          CALL sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, string("rhoc"), rho_core_g(1),&
-                                        &ngm, mill(1, 1), intra_bgrp_comm)
-          ! diagonal term
-          IF (gstart==2) sigmadiag = sigmadiag + &
-               CONJG(psic (dfftp%nl(1) ) ) * strf (1,nt) * rho_core_g(1)
-          DO ng = gstart, ngm
-             sigmadiag = sigmadiag + CONJG(psic (dfftp%nl (ng) ) ) * &
-                  strf (ng,nt) * rho_core_g(ng) * fact
-          ENDDO
-          CALL sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, string("rhoc_dg"), rho_core_g(1),&
-                                        &ngm, mill(1, 1), intra_bgrp_comm)
-          ! non diagonal term (g=0 contribution missing)
-          DO ng = gstart, ngm
-             DO l = 1, 3
-                DO m = 1, 3
-                   sigmaxcc (l, m) = sigmaxcc (l, m) + CONJG(psic (dfftp%nl (ng) ) ) &
-                        * strf (ng, nt) * rho_core_g(ng) * tpiba * &
-                        g (l, ng) * g (m, ng) / sqrt (gg (ng) ) * fact
-                ENDDO
-             ENDDO
-          ENDDO
-          CYCLE
-        ELSE
+        !IF (use_sirius.AND.use_sirius_rho_core) THEN
+        !  CALL sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, string("rhoc"), rho_core_g(1),&
+        !                                &ngm, mill(1, 1), intra_bgrp_comm)
+        !  ! diagonal term
+        !  IF (gstart==2) sigmadiag = sigmadiag + &
+        !       CONJG(psic (dfftp%nl(1) ) ) * strf (1,nt) * rho_core_g(1)
+        !  DO ng = gstart, ngm
+        !     sigmadiag = sigmadiag + CONJG(psic (dfftp%nl (ng) ) ) * &
+        !          strf (ng,nt) * rho_core_g(ng) * fact
+        !  ENDDO
+        !  CALL sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, string("rhoc_dg"), rho_core_g(1),&
+        !                                &ngm, mill(1, 1), intra_bgrp_comm)
+        !  ! non diagonal term (g=0 contribution missing)
+        !  DO ng = gstart, ngm
+        !     DO l = 1, 3
+        !        DO m = 1, 3
+        !           sigmaxcc (l, m) = sigmaxcc (l, m) + CONJG(psic (dfftp%nl (ng) ) ) &
+        !                * strf (ng, nt) * rho_core_g(ng) * tpiba * &
+        !                g (l, ng) * g (m, ng) / sqrt (gg (ng) ) * fact
+        !        ENDDO
+        !     ENDDO
+        !  ENDDO
+        !  CYCLE
+        !ELSE
         call drhoc (ngl, gl, omega, tpiba2, msh(nt), rgrid(nt)%r, &
               rgrid(nt)%rab, upf(nt)%rho_atc, rhocg)
         ! diagonal term
@@ -123,7 +123,7 @@ subroutine stres_cc (sigmaxcc)
               enddo
            enddo
         enddo
-        ENDIF
+        !ENDIF
      endif
   enddo
 
@@ -132,9 +132,9 @@ subroutine stres_cc (sigmaxcc)
   enddo
   call mp_sum(  sigmaxcc, intra_bgrp_comm )
   deallocate (rhocg)
-  IF (use_sirius.AND.use_sirius_rho_core) THEN
-    DEALLOCATE(rho_core_g)
-  ENDIF
+  !IF (use_sirius.AND.use_sirius_rho_core) THEN
+  !  DEALLOCATE(rho_core_g)
+  !ENDIF
   return
 end subroutine stres_cc
 
