@@ -152,8 +152,8 @@ SUBROUTINE run_pwscf( exit_status )
           CALL sirius_get_parameters(sctx, num_loc_op_applied=num_loc_op_applied)
         ENDIF
         WRITE(stdout, *)
-        WRITE(stdout,'("     evp_work_count     : ", F12.6)')evp_work_count
-        WRITE(stdout,'("     num_loc_op_applied : ", I6)')num_loc_op_applied
+        WRITE(stdout,'("     evp_work_count     : ", F15.3)')evp_work_count
+        WRITE(stdout,'("     num_loc_op_applied : ", I10)')num_loc_op_applied
         CALL sirius_stop_timer(string("qe|electrons"))
      END IF
      IF (use_sirius.AND.use_sirius_ks_solver) THEN
