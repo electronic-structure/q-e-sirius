@@ -147,15 +147,15 @@ SUBROUTINE run_pwscf( exit_status )
      ELSE
         CALL sirius_start_timer(string("qe|electrons"))
         CALL electrons()
-        IF (use_sirius) THEN
-          CALL sirius_get_parameters(sctx, evp_work_count=evp_work_count)
-          CALL sirius_get_parameters(sctx, num_loc_op_applied=num_loc_op_applied)
-        ENDIF
-        WRITE(stdout, *)
-        WRITE(stdout,'("     evp_work_count     : ", I10)')int(evp_work_count)
-        WRITE(stdout,'("     num_loc_op_applied : ", I10)')num_loc_op_applied
         CALL sirius_stop_timer(string("qe|electrons"))
      END IF
+     IF (use_sirius) THEN
+       CALL sirius_get_parameters(sctx, evp_work_count=evp_work_count)
+       CALL sirius_get_parameters(sctx, num_loc_op_applied=num_loc_op_applied)
+     ENDIF
+     WRITE(stdout, *)
+     WRITE(stdout,'("     evp_work_count     : ", I10)')int(evp_work_count)
+     WRITE(stdout,'("     num_loc_op_applied : ", I10)')num_loc_op_applied
      IF (use_sirius.AND.use_sirius_ks_solver) THEN
        CALL get_wave_functions_from_sirius
      ENDIF
