@@ -37,7 +37,7 @@ SUBROUTINE run_pwscf( exit_status )
   USE parameters,           ONLY : ntypx, npk, lmaxx
   USE cell_base,            ONLY : fix_volume, fix_area
   USE control_flags,        ONLY : conv_elec, gamma_only, ethr, lscf, treinit_gvecs
-  USE control_flags,        ONLY : conv_ions, istep, nstep, restart, lmd, lbfgs
+  USE control_flags,        ONLY : conv_ions, istep, nstep, restart, lmd, lbfgs, lensemb
   USE cellmd,               ONLY : lmovecell
   USE command_line_options, ONLY : command_line
   USE force_mod,            ONLY : lforce, lstres, sigma, force
@@ -51,6 +51,9 @@ SUBROUTINE run_pwscf( exit_status )
                                    qmmm_update_positions, qmmm_update_forces
   USE qexsd_module,         ONLY : qexsd_set_status
   USE funct,                ONLY : dft_is_hybrid, stop_exx 
+#ifdef use_beef
+  USE beef,                 ONLY : beef_energies
+#endif 
   USE cell_base,            ONLY : bg
   USE gvect,                ONLY : ngm, g, eigts1, eigts2, eigts3
   USE ions_base,            ONLY : nat, nsp, ityp, tau
@@ -142,13 +145,13 @@ SUBROUTINE run_pwscf( exit_status )
      !
      ! ... electronic self-consistency or band structure calculation
      !
+     CALL sirius_start_timer(string("qe|KS"))
      IF ( .NOT. lscf) THEN
         CALL non_scf()
      ELSE
-        CALL sirius_start_timer(string("qe|electrons"))
         CALL electrons()
-        CALL sirius_stop_timer(string("qe|electrons"))
      END IF
+     CALL sirius_stop_timer(string("qe|KS"))
      IF (use_sirius) THEN
        CALL sirius_get_parameters(sctx, evp_work_count=evp_work_count)
        CALL sirius_get_parameters(sctx, num_loc_op_applied=num_loc_op_applied)
@@ -170,16 +173,6 @@ SUBROUTINE run_pwscf( exit_status )
         RETURN
      ENDIF
      !
-     ! ... ionic section starts here
-     !
-     CALL start_clock( 'ions' ); !write(*,*)' start ions' ; FLUSH(6)
-     CALL sirius_start_timer(string("qe|ions"))
-     conv_ions = .TRUE.
-     !
-     ! ... recover from a previous run, if appropriate
-     !
-     !IF ( restart .AND. lscf ) CALL restart_in_ions()
-     !
      ! ... file in CASINO format written here if required
      !
      IF ( lmd ) THEN
@@ -196,6 +189,12 @@ SUBROUTINE run_pwscf( exit_status )
      ENDIF
 
      !
+     ! ... ionic section starts here
+     !
+     CALL start_clock( 'ions' ); !write(*,*)' start ions' ; FLUSH(6)
+     CALL sirius_start_timer(string("qe|ions"))
+     conv_ions = .TRUE.
+     !
      ! ... force calculation
      !
      IF ( lforce ) CALL forces()
@@ -205,6 +204,10 @@ SUBROUTINE run_pwscf( exit_status )
      IF ( lstres ) CALL stress( sigma )
      !
      IF ( lmd .OR. lbfgs ) THEN
+        !
+        ! ... add information on this ionic step to xml file
+        !
+        CALL add_qexsd_step( idone )
         !
         IF (fix_volume) CALL impose_deviatoric_stress( sigma )
         IF (fix_area)   CALL impose_deviatoric_stress_2d( sigma )
@@ -222,14 +225,15 @@ SUBROUTINE run_pwscf( exit_status )
         conv_ions = ( ions_status == 0 ) .OR. &
                     ( ions_status == 1 .AND. treinit_gvecs )
         !
-        ! ... then we save restart information for the new configuration
+        IF (dft_is_hybrid() )  CALL stop_exx()
         !
-        IF ( idone <= nstep .AND. .NOT. conv_ions ) THEN 
+        ! ... save restart information for the new configuration
+        !
+        IF ( idone <= nstep .AND. .NOT. conv_ions ) THEN
             CALL qexsd_set_status( 255 )
-            CALL punch( 'config-nowf' )
+            CALL punch( 'config-only' )
         END IF
         !
-        IF (dft_is_hybrid() )  CALL stop_exx()
      END IF
      !
      CALL sirius_stop_timer(string("qe|ions"))
@@ -241,7 +245,6 @@ SUBROUTINE run_pwscf( exit_status )
      !
      ! ... exit condition (ionic convergence) is checked here
      !
-     IF ( lmd .OR. lbfgs ) CALL add_qexsd_step( idone )
      IF ( conv_ions ) EXIT main_loop
      !
      ! ... receive new positions from MM code in QM/MM run
@@ -321,6 +324,9 @@ SUBROUTINE run_pwscf( exit_status )
   ! ... save final data file
   !
   CALL qexsd_set_status( exit_status )
+#ifdef use_beef
+  IF ( lensemb ) CALL beef_energies( )
+#endif 
   CALL sirius_start_timer(string("qe|punch"))
   CALL punch( 'all' )
   CALL sirius_stop_timer(string("qe|punch"))
