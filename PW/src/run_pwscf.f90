@@ -314,6 +314,9 @@ SUBROUTINE run_pwscf( exit_status )
      ! ... the first scf iteration of each ionic step (after the first)
      !
      ethr = 1.0D-6
+     IF (use_sirius) THEN
+        ethr = 1.0D-2
+     ENDIF
      !
   ENDDO main_loop
   ! write basic results to a JSON file
