@@ -81,11 +81,13 @@ SUBROUTINE stress( sigma )
   !
   !  hartree contribution
   !
+  CALL sirius_start_timer(string("qe|stress|har"))
   IF ( do_comp_esm .AND. ( esm_bc /= 'pbc' ) )  THEN ! for ESM stress
      CALL esm_stres_har( sigmahar, rho%of_g(:,1) )
   ELSE
      CALL stres_har( sigmahar )
   END IF
+  CALL sirius_stop_timer(string("qe|stress|har"))
   !
   !  xc contribution (diagonal)
   !
@@ -96,8 +98,10 @@ SUBROUTINE stress( sigma )
   !
   !  xc contribution: add gradient corrections (non diagonal)
   !
+  CALL sirius_start_timer(string("qe|stress|gradcorr"))
   CALL stres_gradcorr( rho%of_r, rho%of_g, rho_core, rhog_core, rho%kin_r, &
        nspin, dfftp, g, alat, omega, sigmaxc )
+  CALL sirius_stop_timer(string("qe|stress|gradcorr"))
   !
   !  meta-GGA contribution 
   !
@@ -105,16 +109,20 @@ SUBROUTINE stress( sigma )
   !
   ! core correction contribution
   !
+  CALL sirius_start_timer(string("qe|stress|cc"))
   CALL stres_cc( sigmaxcc )
+  CALL sirius_stop_timer(string("qe|stress|cc"))
   !
   !  ewald contribution
   !
+  CALL sirius_start_timer(string("qe|stress|ewa"))
   IF ( do_comp_esm .AND. ( esm_bc /= 'pbc' ) ) THEN ! for ESM stress
      CALL esm_stres_ewa( sigmaewa )
   ELSE
      CALL stres_ewa( alat, nat, ntyp, ityp, zv, at, bg, tau, omega, g, &
           gg, ngm, gstart, gamma_only, gcutm, sigmaewa )
   END IF
+  CALL sirius_stop_timer(string("qe|stress|ewa"))
   !
   ! semi-empirical dispersion contribution: Grimme-D2 and D3
   !
@@ -136,7 +144,9 @@ SUBROUTINE stress( sigma )
   !
   !  kinetic + nonlocal contribuition
   !
+  CALL sirius_start_timer(string("qe|stress|knl"))
   CALL stres_knl( sigmanlc, sigmakin )
+  CALL sirius_stop_timer(string("qe|stress|knl"))
   !
   DO l = 1, 3
      DO m = 1, 3
