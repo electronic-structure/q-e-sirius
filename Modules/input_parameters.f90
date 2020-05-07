@@ -32,6 +32,7 @@ MODULE input_parameters
   USE kinds,      ONLY : DP
   USE parameters, ONLY : nsx, natx, sc_size
   USE wannier_new,ONLY : wannier_data
+  USE iso_c_binding, ONLY : c_char
   !
   IMPLICIT NONE
   !
@@ -1023,6 +1024,32 @@ MODULE input_parameters
 
 !
 !=----------------------------------------------------------------------------=!
+!  SIRIUS Namelist Input Parameters
+!=----------------------------------------------------------------------------=!
+
+
+!
+!=----------------------------------------------------------------------------=!
+!  NLCG Namelist Input Parameters
+!=----------------------------------------------------------------------------=!
+        INTEGER           :: nlcg_maxiter
+        INTEGER           :: nlcg_restart
+        REAL(DP)          :: nlcg_tau
+        REAL(DP)          :: nlcg_T
+        REAL(DP)          :: nlcg_kappa
+        REAL(DP)          :: nlcg_tol
+        CHARACTER(len=80, kind=C_CHAR) :: nlcg_smearing
+        CHARACTER(len=80) :: nlcg_smearing_allowed(2)
+        DATA nlcg_smearing_allowed / 'FD', 'GS' /
+        CHARACTER(len=80, kind=C_CHAR) :: nlcg_processing_unit = 'none'
+        CHARACTER(len=80) :: nlcg_processing_unit_allowed(3)
+        DATA nlcg_processing_unit_allowed / 'none', 'cpu', 'gpu' /
+
+        NAMELIST / nlcg / nlcg_maxiter, nlcg_restart, nlcg_tau, nlcg_T, nlcg_kappa, &
+          nlcg_tol, nlcg_smearing, nlcg_processing_unit
+
+!
+!=----------------------------------------------------------------------------=!
 !  IONS Namelist Input Parameters
 !=----------------------------------------------------------------------------=!
 
@@ -1529,6 +1556,7 @@ MODULE input_parameters
       ! if .true. PW produce an xml output
 
       LOGICAL  :: use_sirius = .FALSE.
+      LOGICAL  :: use_nlcg = .FALSE.
       CHARACTER(len=256) :: sirius_cfg
 
 CONTAINS
