@@ -62,6 +62,8 @@ SUBROUTINE run_pwscf( exit_status )
   USE dfunct,               ONLY : newd
   USE mod_sirius
   USE mp_bands_util, ONLY : evp_work_count, num_loc_op_applied
+  USE input_parameters,     ONLY : use_nlcg
+
   !
   IMPLICIT NONE
   !
@@ -151,6 +153,14 @@ SUBROUTINE run_pwscf( exit_status )
      ELSE
         CALL electrons()
      END IF
+
+     IF ( use_nlcg ) THEN
+       CALL insert_xc_functional_to_sirius
+       CALL sirius_nlcg(gs_handler, ks_handler)
+       CALL get_band_occupancies_from_sirius
+       ! todo also retrieve  occupation numbers
+     ENDIF
+
      CALL sirius_stop_timer(string("qe|KS"))
      IF (use_sirius) THEN
        CALL sirius_get_parameters(sctx, evp_work_count=evp_work_count)
