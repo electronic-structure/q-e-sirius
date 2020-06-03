@@ -34,7 +34,7 @@ SUBROUTINE hinit1()
   USE mod_sirius
   !
   IMPLICIT NONE
-  CALL sirius_start_timer(string("qe|hinit1"))
+  CALL sirius_start_timer("qe|hinit1")
   !
   ! these routines can be used to patch quantities that are dependent
   ! on the ions and cell parameters
@@ -85,7 +85,7 @@ SUBROUTINE hinit1()
   IF ( use_wannier ) CALL orthoatwfc( .TRUE. )
   !
   !
-  CALL sirius_stop_timer(string("qe|hinit1"))
+  CALL sirius_stop_timer("qe|hinit1")
   !
   RETURN
   !

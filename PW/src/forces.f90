@@ -97,7 +97,7 @@ SUBROUTINE forces()
   INTEGER  :: ig
   !
   !
-  CALL sirius_start_timer(string("qe|forces"))
+  CALL sirius_start_timer("qe|forces")
   !
   !IF (use_sirius) THEN
   !  ! recalculate the exchange-correlation potential
@@ -152,23 +152,23 @@ SUBROUTINE forces()
   !
   ! ... The nonlocal contribution is computed here
   !
-  CALL sirius_start_timer(string("qe|force|us"))
+  CALL sirius_start_timer("qe|force|us")
   CALL force_us( forcenl )
-  CALL sirius_stop_timer(string("qe|force|us"))
+  CALL sirius_stop_timer("qe|force|us")
   !
   ! ... The local contribution
   !
-  CALL sirius_start_timer(string("qe|force|local"))
+  CALL sirius_start_timer("qe|force|local")
   CALL force_lc( nat, tau, ityp, alat, omega, ngm, ngl, igtongl,       &
                  g, rho%of_r(:,1), dfftp%nl, gstart, gamma_only, vloc, &
                  forcelc )
-  CALL sirius_stop_timer(string("qe|force|local"))
+  CALL sirius_stop_timer("qe|force|local")
   !
   ! ... The NLCC contribution
   !
-  CALL sirius_start_timer(string("qe|force|cc"))
+  CALL sirius_start_timer("qe|force|cc")
   CALL force_cc( forcecc )
-  CALL sirius_stop_timer(string("qe|force|cc"))
+  CALL sirius_stop_timer("qe|force|cc")
   !
   ! ... The Hubbard contribution
   !     (included by force_us if using beta as local projectors)
@@ -177,14 +177,14 @@ SUBROUTINE forces()
   !
   ! ... The ionic contribution is computed here
   !
-  CALL sirius_start_timer(string("qe|force|ewald"))
+  CALL sirius_start_timer("qe|force|ewald")
   IF( do_comp_esm ) THEN
      CALL esm_force_ew( forceion )
   ELSE
      CALL force_ew( alat, nat, ntyp, ityp, zv, at, bg, tau, omega, g, &
                     gg, ngm, gstart, gamma_only, gcutm, strf, forceion )
   ENDIF
-  CALL sirius_stop_timer(string("qe|force|ewald"))
+  CALL sirius_stop_timer("qe|force|ewald")
   !
   ! ... the semi-empirical dispersion correction
   !
@@ -220,9 +220,9 @@ SUBROUTINE forces()
   !
   ! ... The SCF contribution
   !
-  CALL sirius_start_timer(string("qe|force|scf"))
+  CALL sirius_start_timer("qe|force|scf")
   CALL force_corr( forcescc )
-  CALL sirius_stop_timer(string("qe|force|scf"))
+  CALL sirius_stop_timer("qe|force|scf")
   !
   IF (do_comp_mt) THEN
     !
@@ -474,7 +474,7 @@ SUBROUTINE forces()
   !
   IF(ALLOCATED(force_mt))   DEALLOCATE( force_mt )
 
-  CALL sirius_stop_timer(string("qe|forces"))
+  CALL sirius_stop_timer("qe|forces")
 
   RETURN
   !

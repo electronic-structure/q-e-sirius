@@ -48,7 +48,7 @@ SUBROUTINE force_us( forcenl )
   INTEGER    :: npw, ik, ipol, ig, jkb
   !
   IF (use_sirius.AND.use_sirius_ks_solver.AND.use_sirius_forces) THEN
-    CALL sirius_get_forces(gs_handler, string("usnl"), forcenl(1, 1))
+    CALL sirius_get_forces(gs_handler, "usnl", forcenl)
     forcenl = forcenl * 2 ! convert to Ry
     CALL symvector(nat, forcenl)
     RETURN

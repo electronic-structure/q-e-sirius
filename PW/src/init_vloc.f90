@@ -33,7 +33,7 @@ SUBROUTINE init_vloc()
   ! counter on atomic types
   !
   CALL start_clock( 'init_vloc' )
-  CALL sirius_start_timer(string("qe|init_vloc"))
+  CALL sirius_start_timer("qe|init_vloc")
   !
   vloc(:,:) = 0._DP
   !
@@ -63,7 +63,7 @@ SUBROUTINE init_vloc()
         !
         IF (use_sirius.AND.use_sirius_vloc) THEN
           ALLOCATE(tmp(ngm))
-          CALL sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, string("vloc"), tmp(1), ngm, mill(1, 1), intra_bgrp_comm)
+          CALL sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, "vloc", tmp, ngm, mill, intra_bgrp_comm)
           DO i = 1, ngm
             vloc(igtongl(i), nt) = tmp(i) * 2 ! convert to Ry
           ENDDO
@@ -87,7 +87,7 @@ SUBROUTINE init_vloc()
   !
   IF (do_cutoff_2D) CALL cutoff_lr_Vloc() 
   !
-  CALL sirius_stop_timer(string("qe|init_vloc"))
+  CALL sirius_stop_timer("qe|init_vloc")
   CALL stop_clock( 'init_vloc' )
   !
   RETURN

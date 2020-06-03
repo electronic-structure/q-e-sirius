@@ -145,13 +145,13 @@ SUBROUTINE run_pwscf( exit_status )
      !
      ! ... electronic self-consistency or band structure calculation
      !
-     CALL sirius_start_timer(string("qe|KS"))
+     CALL sirius_start_timer("qe|KS")
      IF ( .NOT. lscf) THEN
         CALL non_scf()
      ELSE
         CALL electrons()
      END IF
-     CALL sirius_stop_timer(string("qe|KS"))
+     CALL sirius_stop_timer("qe|KS")
      IF (use_sirius) THEN
        CALL sirius_get_parameters(sctx, evp_work_count=evp_work_count)
        CALL sirius_get_parameters(sctx, num_loc_op_applied=num_loc_op_applied)
@@ -192,7 +192,7 @@ SUBROUTINE run_pwscf( exit_status )
      ! ... ionic section starts here
      !
      CALL start_clock( 'ions' ); !write(*,*)' start ions' ; FLUSH(6)
-     CALL sirius_start_timer(string("qe|ions"))
+     CALL sirius_start_timer("qe|ions")
      conv_ions = .TRUE.
      !
      ! ... force calculation
@@ -236,7 +236,7 @@ SUBROUTINE run_pwscf( exit_status )
         !
      END IF
      !
-     CALL sirius_stop_timer(string("qe|ions"))
+     CALL sirius_stop_timer("qe|ions")
      CALL stop_clock( 'ions' ); !write(*,*)' stop ions' ; FLUSH(6)
      !
      ! ... send out forces to MM code in QM/MM run
@@ -281,7 +281,7 @@ SUBROUTINE run_pwscf( exit_status )
               !
            ELSE
               IF (use_sirius) THEN
-                 CALL sirius_start_timer(string("qe|update"))
+                 CALL sirius_start_timer("qe|update")
                  IF ( lmovecell ) THEN
                    CALL scale_h()
                  ENDIF
@@ -292,7 +292,7 @@ SUBROUTINE run_pwscf( exit_status )
                  CALL potinit
                  CALL newd
                  CALL sirius_initialize_subspace(gs_handler, ks_handler)
-                 CALL sirius_stop_timer(string("qe|update"))
+                 CALL sirius_stop_timer("qe|update")
               ELSE
               !
               ! ... update the wavefunctions, charge density, potential
@@ -330,9 +330,9 @@ SUBROUTINE run_pwscf( exit_status )
 #ifdef use_beef
   IF ( lensemb ) CALL beef_energies( )
 #endif 
-  CALL sirius_start_timer(string("qe|punch"))
+  CALL sirius_start_timer("qe|punch")
   CALL punch( 'all' )
-  CALL sirius_stop_timer(string("qe|punch"))
+  CALL sirius_stop_timer("qe|punch")
   !
   CALL qmmm_shutdown()
   !

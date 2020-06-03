@@ -69,7 +69,7 @@ SUBROUTINE stres_hub ( sigmah )
    sigmah(:,:) = 0.d0
    !
    IF (use_sirius) THEN
-     CALL sirius_get_stress_tensor(gs_handler, string("hubbard"), sigmah(1, 1))
+     CALL sirius_get_stress_tensor(gs_handler, "hubbard", sigmah)
      sigmah = sigmah * 2.d0 ! convert to Ry
      CALL symmatrix ( sigmah )
      CALL stop_clock( 'stres_hub' )

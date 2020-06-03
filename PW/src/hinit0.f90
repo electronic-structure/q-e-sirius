@@ -40,15 +40,15 @@ SUBROUTINE hinit0()
   !
   IF (tbeta_smoothing) CALL init_us_b0()
   IF (tq_smoothing) CALL init_us_0()
-  CALL sirius_start_timer(string("qe|init_run|hinit0|init_us_1"))
+  CALL sirius_start_timer("qe|init_run|hinit0|init_us_1")
   IF (.NOT.use_sirius) THEN
   CALL init_us_1()
   ENDIF
-  CALL sirius_stop_timer(string("qe|init_run|hinit0|init_us_1"))
+  CALL sirius_stop_timer("qe|init_run|hinit0|init_us_1")
   IF ( lda_plus_U .AND. ( U_projection == 'pseudo' ) ) CALL init_q_aeps()
-  CALL sirius_start_timer(string("qe|init_run|hinit0|init_at_1"))
+  CALL sirius_start_timer("qe|init_run|hinit0|init_at_1")
   CALL init_at_1()
-  CALL sirius_stop_timer(string("qe|init_run|hinit0|init_at_1"))
+  CALL sirius_stop_timer("qe|init_run|hinit0|init_at_1")
   !
   IF ( restart .AND. startingconfig == 'file' ) THEN
      !

@@ -75,7 +75,7 @@ SUBROUTINE force_hub( forceh )
    CALL start_clock( 'force_hub' )
    !
    IF (use_sirius) THEN
-      CALL sirius_get_forces(gs_handler, string("hubbard"), forceh(1, 1))
+      CALL sirius_get_forces(gs_handler, "hubbard", forceh)
       forceh(:,:) = 2.0d0 * forceh(:,:);
       CALL symvector( nat, forceh )
       RETURN

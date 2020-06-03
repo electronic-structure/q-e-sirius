@@ -81,20 +81,20 @@ SUBROUTINE sum_band()
   ENDIF
 
   IF (use_sirius.AND.use_sirius_density) THEN
-    CALL sirius_start_timer(string("qe|sum_band"))
+    CALL sirius_start_timer("qe|sum_band")
     CALL put_band_occupancies_to_sirius
     CALL sirius_generate_density(gs_handler)
     CALL get_density_from_sirius
-    CALL sirius_get_energy(gs_handler, string("evalsum"), eband)
+    CALL sirius_get_energy(gs_handler, "evalsum", eband)
     eband = eband * 2 ! convert to Ry
 
     IF (okvan.and.okpaw)  then
       CALL paw_symmetrize(rho%bec)
     ENDIF
 
-    CALL sirius_start_timer(string("qe|sym_rho"))
+    CALL sirius_start_timer("qe|sym_rho")
     CALL sym_rho(nspin_mag, rho%of_g)
-    CALL sirius_stop_timer(string("qe|sym_rho"))
+    CALL sirius_stop_timer("qe|sym_rho")
     DO is = 1, nspin_mag
        psic(:) = ( 0.d0, 0.d0 )
        psic(dfftp%nl(:)) = rho%of_g(:,is)
@@ -110,7 +110,7 @@ SUBROUTINE sum_band()
        ENDIF
     ENDIF
     CALL stop_clock( 'sum_band' )
-    CALL sirius_stop_timer(string("qe|sum_band"))
+    CALL sirius_stop_timer("qe|sum_band")
     RETURN
   ENDIF
   !

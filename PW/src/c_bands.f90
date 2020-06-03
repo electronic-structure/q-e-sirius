@@ -54,7 +54,7 @@ SUBROUTINE c_bands( iter )
       CALL put_q_operator_matrix_to_sirius
     ENDIF
     ! solve H\psi = E\psi
-    CALL sirius_find_eigen_states(gs_handler, ks_handler, bool(.true.), iter_solver_tol=ethr/2)
+    CALL sirius_find_eigen_states(gs_handler, ks_handler, .true., iter_solver_tol=ethr/2)
     IF (.NOT.use_sirius_density) then
       CALL get_wave_functions_from_sirius
     ENDIF
@@ -718,7 +718,7 @@ SUBROUTINE c_bands_nscf( )
     ! initialize subspace before calling "sirius_find_eigen_states" first time
     CALL sirius_initialize_subspace(gs_handler, ks_handler)
     ! solve H\spi = E\psi
-    CALL sirius_find_eigen_states(gs_handler, ks_handler, bool(.true.), iter_solver_tol=ethr/2)
+    CALL sirius_find_eigen_states(gs_handler, ks_handler, .true., iter_solver_tol=ethr/2)
     ! get all wave-functions
     CALL get_wave_functions_from_sirius
     ! get band energies

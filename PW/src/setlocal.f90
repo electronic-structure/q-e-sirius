@@ -45,7 +45,7 @@ SUBROUTINE setlocal
   ! counter on atom types
   ! counter on g vectors
   !
-  call sirius_start_timer(string("qe|setlocal"))
+  call sirius_start_timer("qe|setlocal")
   ALLOCATE( aux(dfftp%nnr) )
   aux(:) = (0.d0,0.d0)
   !
@@ -121,7 +121,7 @@ SUBROUTINE setlocal
   DEALLOCATE( aux )
   !
   !
-  CALL sirius_stop_timer(string("qe|setlocal"))
+  CALL sirius_stop_timer("qe|setlocal")
   RETURN
   !
 END SUBROUTINE setlocal
