@@ -860,7 +860,7 @@ subroutine get_band_occupancies_from_sirius
     maxocc = 1.d0
   endif
   do ik = 1, nks
-    wg(:, ik) = bnd_occ(:, global_kpoint_index(nkstot, ik)) / wg(:, ik) * wk(ik)
+    wg(:, ik) = bnd_occ(:, global_kpoint_index(nkstot, ik)) / maxocc * wk(ik)
   enddo
 
   deallocate(bnd_occ)
