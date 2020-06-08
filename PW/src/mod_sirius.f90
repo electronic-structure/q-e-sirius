@@ -15,7 +15,7 @@ logical :: use_sirius_density_matrix          = .true.
 ! use SIRIUS to compute local part of pseudopotential
 logical :: use_sirius_vloc                    = .true.
 ! use SIRIUS to compute core charge density
-logical :: use_sirius_rho_core                = .false.
+logical :: use_sirius_rho_core                = .true.
 ! use SIRIUS to compute plane-wave coefficients of atomic charge density
 logical :: use_sirius_rho_atomic              = .true.
 ! use SIRIUS to compute forces
