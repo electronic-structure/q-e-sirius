@@ -32,6 +32,7 @@ MODULE input_parameters
   USE kinds,      ONLY : DP
   USE parameters, ONLY : nsx, lqmax, natx
   USE wannier_new,ONLY : wannier_data
+  USE  iso_c_binding, ONLY : c_char
   !
   IMPLICIT NONE
   !
@@ -1036,10 +1037,10 @@ MODULE input_parameters
         REAL(DP)          :: nlcg_T
         REAL(DP)          :: nlcg_kappa
         REAL(DP)          :: nlcg_tol
-        CHARACTER(len=80) :: nlcg_smearing
+        CHARACTER(len=80, kind=C_CHAR) :: nlcg_smearing
         CHARACTER(len=80) :: nlcg_smearing_allowed(2)
         DATA nlcg_smearing_allowed / 'FD', 'GS' /
-        CHARACTER(len=80) :: nlcg_processing_unit = 'none'
+        CHARACTER(len=80, kind=C_CHAR) :: nlcg_processing_unit = 'none'
         CHARACTER(len=80) :: nlcg_processing_unit_allowed(3)
         DATA nlcg_processing_unit_allowed / 'none', 'cpu', 'gpu' /
 

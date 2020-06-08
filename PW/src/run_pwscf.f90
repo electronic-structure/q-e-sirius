@@ -62,7 +62,9 @@ SUBROUTINE run_pwscf( exit_status )
   USE dfunct,               ONLY : newd
   USE mod_sirius
   USE mp_bands_util, ONLY : evp_work_count, num_loc_op_applied
-  USE input_parameters,     ONLY : use_nlcg
+  USE input_parameters,     ONLY : use_nlcg, nlcg_T, nlcg_tau, nlcg_tol,&
+    & nlcg_kappa, nlcg_maxiter, nlcg_restart, nlcg_smearing,&
+    & nlcg_processing_unit
 
   !
   IMPLICIT NONE
@@ -156,7 +158,9 @@ SUBROUTINE run_pwscf( exit_status )
 
      IF ( use_nlcg ) THEN
        CALL insert_xc_functional_to_sirius
-       CALL sirius_nlcg(gs_handler, ks_handler)
+       CALL sirius_nlcg_params(gs_handler, ks_handler, nlcg_T, string(TRIM(ADJUSTL(nlcg_smearing)))&
+         &, nlcg_kappa, nlcg_tau, nlcg_tol, nlcg_maxiter, nlcg_restart,&
+         & string(TRIM(ADJUSTL(nlcg_processing_unit))))
        CALL get_band_occupancies_from_sirius
        ! todo also retrieve  occupation numbers
      ENDIF

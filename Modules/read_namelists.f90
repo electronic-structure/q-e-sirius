@@ -454,12 +454,12 @@ CONTAINS
       !
       CHARACTER(LEN=2) :: prog ! .. specify the calling probram
 
-      nlcg_maxiter = 300
+      nlcg_maxiter = 300_DP
       nlcg_restart = 10
-      nlcg_tau = 0.1
-      nlcg_T = 300
-      nlcg_kappa = 0.3
-      nlcg_tol = 1e-9
+      nlcg_tau = 0.1_DP
+      nlcg_T = 300.0_DP
+      nlcg_kappa = 0.3_DP
+      nlcg_tol = 1.0E-9_DP
       nlcg_smearing = 'FD'
       nlcg_processing_unit = 'none'
 
