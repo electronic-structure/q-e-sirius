@@ -1022,6 +1022,27 @@ MODULE input_parameters
 
 !
 !=----------------------------------------------------------------------------=!
+!  SIRIUS Namelist Input Parameters
+!=----------------------------------------------------------------------------=!
+
+
+!
+!=----------------------------------------------------------------------------=!
+!  NLCG Namelist Input Parameters
+!=----------------------------------------------------------------------------=!
+        INTEGER           :: maxiter
+        INTEGER           :: restart
+        REAL(DP)          :: tau
+        REAL(DP)          :: T
+        REAL(DP)          :: kappa
+        REAL(DP)          :: tol
+        CHARACTER(len=80) :: smearing
+        DATA smearing_allowed / 'FD', 'GS' /
+        CHARACTER(len=80) :: processing_unit = 'none'
+        DATA processing_unit_allowed / 'none', 'cpu', 'gpu' /
+
+!
+!=----------------------------------------------------------------------------=!
 !  IONS Namelist Input Parameters
 !=----------------------------------------------------------------------------=!
 
