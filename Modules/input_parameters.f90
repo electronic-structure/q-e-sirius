@@ -1030,16 +1030,21 @@ MODULE input_parameters
 !=----------------------------------------------------------------------------=!
 !  NLCG Namelist Input Parameters
 !=----------------------------------------------------------------------------=!
-        INTEGER           :: maxiter
-        INTEGER           :: restart
-        REAL(DP)          :: tau
-        REAL(DP)          :: T
-        REAL(DP)          :: kappa
-        REAL(DP)          :: tol
-        CHARACTER(len=80) :: smearing
-        DATA smearing_allowed / 'FD', 'GS' /
-        CHARACTER(len=80) :: processing_unit = 'none'
-        DATA processing_unit_allowed / 'none', 'cpu', 'gpu' /
+        INTEGER           :: nlcg_maxiter
+        INTEGER           :: nlcg_restart
+        REAL(DP)          :: nlcg_tau
+        REAL(DP)          :: nlcg_T
+        REAL(DP)          :: nlcg_kappa
+        REAL(DP)          :: nlcg_tol
+        CHARACTER(len=80) :: nlcg_smearing
+        CHARACTER(len=80) :: nlcg_smearing_allowed(2)
+        DATA nlcg_smearing_allowed / 'FD', 'GS' /
+        CHARACTER(len=80) :: nlcg_processing_unit = 'none'
+        CHARACTER(len=80) :: nlcg_processing_unit_allowed(3)
+        DATA nlcg_processing_unit_allowed / 'none', 'cpu', 'gpu' /
+
+        NAMELIST / nlcg / nlcg_maxiter, nlcg_restart, nlcg_tau, nlcg_T, nlcg_kappa, &
+          nlcg_tol, nlcg_smearing, nlcg_processing_unit
 
 !
 !=----------------------------------------------------------------------------=!
