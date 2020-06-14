@@ -520,6 +520,8 @@ do ia = 1, nat
   call sirius_add_atom(sctx, atom_type(iat)%label, v2(1), v1(1))
 enddo
 
+call insert_xc_functional_to_sirius
+
 ! initialize global variables/indices/arrays/etc. of the simulation
 call sirius_initialize_context(sctx)
 

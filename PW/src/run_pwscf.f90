@@ -157,7 +157,6 @@ SUBROUTINE run_pwscf( exit_status )
      END IF
 
      IF ( use_nlcg ) THEN
-       CALL insert_xc_functional_to_sirius
        CALL sirius_nlcg_params(gs_handler, ks_handler, nlcg_T, string(TRIM(ADJUSTL(nlcg_smearing)))&
          &, nlcg_kappa, nlcg_tau, nlcg_tol, nlcg_maxiter, nlcg_restart,&
          & string(TRIM(ADJUSTL(nlcg_processing_unit))))
