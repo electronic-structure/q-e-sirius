@@ -325,10 +325,10 @@ else
   call sirius_set_parameters(sctx, iter_solver_tol_empty=1d-5)
 endif
 
-call sirius_set_callback_function(sctx, string("beta_ri"), C_FUNLOC(calc_beta_radial_integrals))
-call sirius_set_callback_function(sctx, string("beta_ri_djl"), C_FUNLOC(calc_beta_dj_radial_integrals))
-call sirius_set_callback_function(sctx, string("aug_ri"), C_FUNLOC(calc_aug_radial_integrals))
-call sirius_set_callback_function(sctx, string("aug_ri_djl"), C_FUNLOC(calc_aug_dj_radial_integrals))
+! call sirius_set_callback_function(sctx, string("beta_ri"), C_FUNLOC(calc_beta_radial_integrals))
+! call sirius_set_callback_function(sctx, string("beta_ri_djl"), C_FUNLOC(calc_beta_dj_radial_integrals))
+! call sirius_set_callback_function(sctx, string("aug_ri"), C_FUNLOC(calc_aug_radial_integrals))
+! call sirius_set_callback_function(sctx, string("aug_ri_djl"), C_FUNLOC(calc_aug_dj_radial_integrals))
 
 !call sirius_set_parameters(sctx, min_occupancy=0.01d0)
 
