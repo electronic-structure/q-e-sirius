@@ -299,11 +299,20 @@ dims(3) = dfftp%nr3
 ! set |G| cutoff of the dense FFT grid: convert from G^2/2 Rydbergs to |G| in [a.u.^-1]
 ! set |G+k| cutoff for the wave-functions: onvert from |G+k|^2/2 Rydbergs to |G+k| in [a.u.^-1]
 ! disable symmetry on SIRIUS side; QE is taking care of the symmetrization
-call sirius_set_parameters(sctx, num_bands=nbnd, num_mag_dims=nmagd, gamma_point=bool(gamma_only),&
-                          &use_symmetry=bool(.true.), so_correction=bool(lspinorb),&
-                          &pw_cutoff=sqrt(ecutrho), gk_cutoff=sqrt(ecutwfc),&
-                          &hubbard_correction=bool(lda_plus_U), hubbard_correction_kind=lda_plus_u_kind,&
-                          &hubbard_orbitals=string(U_projection),fft_grid_size=dims(1))
+if (nosym) then
+  call sirius_set_parameters(sctx, num_bands=nbnd, num_mag_dims=nmagd, gamma_point=bool(gamma_only),&
+    &use_symmetry=bool(.false.), so_correction=bool(lspinorb),&
+    &pw_cutoff=sqrt(ecutrho), gk_cutoff=sqrt(ecutwfc),&
+    &hubbard_correction=bool(lda_plus_U), hubbard_correction_kind=lda_plus_u_kind,&
+    &hubbard_orbitals=string(U_projection),fft_grid_size=dims(1))
+else
+  call sirius_set_parameters(sctx, num_bands=nbnd, num_mag_dims=nmagd, gamma_point=bool(gamma_only),&
+    &use_symmetry=bool(.true.), so_correction=bool(lspinorb),&
+    &pw_cutoff=sqrt(ecutrho), gk_cutoff=sqrt(ecutwfc),&
+    &hubbard_correction=bool(lda_plus_U), hubbard_correction_kind=lda_plus_u_kind,&
+    &hubbard_orbitals=string(U_projection),fft_grid_size=dims(1))
+endif
+
 if (do_comp_esm) then
   call sirius_set_parameters(sctx, esm_bc=esm_bc)
 endif
