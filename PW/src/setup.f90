@@ -330,9 +330,9 @@ SUBROUTINE setup()
         !
         ! ... metallic case: add 20% more bands, with a minimum of 4
         !
-        nbnd = MAX( NINT( 1.4D0 * nelec / degspin ), &
-                    NINT( 1.4D0 * nelup), NINT( 1.4d0 * neldw ), &
-                    ( nbnd + 6 ) )
+        nbnd = MAX( NINT( 1.3D0 * nelec / degspin ), &
+                    NINT( 1.3D0 * nelup), NINT( 1.3d0 * neldw ), &
+                    ( nbnd + 10 ) )
         !
      END IF
      !
