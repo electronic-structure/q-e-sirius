@@ -1569,6 +1569,12 @@ subroutine insert_xc_functional_to_sirius
       call sirius_insert_xc_functional(gs_handler, string("XC_GGA_X_PW91"))
     case(3)
       call sirius_insert_xc_functional(gs_handler, string("XC_GGA_X_PBE"))
+    case(10)
+      call sirius_insert_xc_functional(gs_handler, string("XC_GGA_X_PBE_SOL"))
+    case(21)
+      call sirius_insert_xc_functional(gs_handler, string("XC_GGA_X_PW86"))
+    case(22)
+      call sirius_insert_xc_functional(gs_handler, string("XC_GGA_X_B86"))
     case default
       write(*,*)get_igcx()
       stop ("interface for this gradient exchange functional is not implemented")
@@ -1590,10 +1596,14 @@ subroutine insert_xc_functional_to_sirius
   if (get_icorr().ne.0.and.get_igcc().ne.0) then
     select case(get_igcc())
     case(0)
+    case(1)
+      call sirius_insert_xc_functional(gs_handler, string("XC_GGA_C_PW86"))
     case(2)
       call sirius_insert_xc_functional(gs_handler, string("XC_GGA_C_PW91"))
     case(4)
       call sirius_insert_xc_functional(gs_handler, string("XC_GGA_C_PBE"))
+    case(8)
+      call sirius_insert_xc_functional(gs_handler, string("XC_GGA_C_PBE_SOL"))
     case default
       stop ("interface for this gradient correlation functional is not implemented")
     end select
