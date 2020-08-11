@@ -51,7 +51,7 @@
     USE kinds,         ONLY : DP
     USE io_global,     ONLY : stdout
     USE elph2,         ONLY : dynq
-    USE phcom,         ONLY : nmodes
+    USE modes,         ONLY : nmodes
     USE constants_epw, ONLY : cone, czero, twopi, rydcm1, eps10, cmm12meV
     USE control_flags, ONLY : iverbosity
     USE cell_base,     ONLY : at, bg
@@ -600,11 +600,11 @@
     !! the number of symmetries of the crystal
     INTEGER, INTENT(in) :: s(3, 3, 48)
     !! the symmetry matrices
-    INTEGER, INTENT(out) :: gmapsym(ngxxf, 48)
+    INTEGER, INTENT(out) :: gmapsym(ngxxf, nsym)
     !! the map S(G) = gmapsym (G,S) 1...nsym
     REAL(KIND = DP), INTENT(in) :: ft(3, 48)
     !! the fractional traslations in crystal axis
-    COMPLEX(KIND = DP), INTENT(out) :: eigv(ngxxf, 48)
+    COMPLEX(KIND = DP), INTENT(out) :: eigv(ngxxf, nsym)
     !! e^{ iGv} for 1...nsym
     !
     ! Local variables

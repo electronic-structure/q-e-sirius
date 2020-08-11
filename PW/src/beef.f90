@@ -46,7 +46,11 @@ SUBROUTINE beef_energies( )
 
   USE ener,                 ONLY : vtxc, etxc
   USE scf,                  ONLY : rho, rho_core, rhog_core, v
-
+  !
+#if defined(use_beef)
+  USE beef_interface, ONLY: beefsetmode, beefrandinitdef, beefensemble
+#endif
+  !
   implicit none
   !real(DP), allocatable      :: beefxc(:), energies(:)
   real(DP)                    :: ldaxc
@@ -130,7 +134,7 @@ SUBROUTINE beef_print( )
 
   WRITE(*,*) "BEEFens 2000 ensemble energies"
   do i=1,2000
-     WRITE(*, "(E35.15)"), energies(i)
+     WRITE(*, "(E35.15)") energies(i)
   enddo
   WRITE(*,*)
   WRITE(*,*) "BEEF-vdW xc energy contributions"

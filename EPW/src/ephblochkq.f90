@@ -21,10 +21,11 @@ CONTAINS
         USE cell_base,     ONLY : at, bg, omega, alat
         USE start_k,       ONLY : nk1, nk2, nk3
         USE ions_base,     ONLY : nat, amass, ityp, tau
-        USE phcom,         ONLY : nq1, nq2, nq3, nmodes
+        USE phcom,         ONLY : nq1, nq2, nq3
+        USE modes,         ONLY : nmodes
         USE epwcom,        ONLY : nbndsub, fsthick, epwread, longrange, &
             epwwrite, ngaussw, degaussw, lpolar, lifc, lscreen, &
-            nbndskip, etf_mem, scr_typ, &
+            etf_mem, scr_typ, &
             elecselfen, phonselfen, nest_fn, a2f, specfun_ph, &
             vme, eig_read, ephwrite, nkf1, nkf2, nkf3, &
             efermi_read, fermi_energy, specfun_el, band_plot, &
@@ -41,7 +42,7 @@ CONTAINS
             ibndmin, ibndmax, lambda_all, dmec, dmef, vmef, &
             sigmai_all, sigmai_mode, gamma_all, epsi, zstar, &
             efnew, ifc, sigmar_all, zi_all, nkqtotf, eps_rpa, &
-            g2_4, wf
+            g2_4, wf, nbndskip
 #if defined(__NAG)
         USE f90_unix_io,   ONLY : FLUSH
 #endif
@@ -131,10 +132,11 @@ CONTAINS
         USE cell_base,     ONLY : at, bg, omega, alat
         USE start_k,       ONLY : nk1, nk2, nk3
         USE ions_base,     ONLY : nat, amass, ityp, tau
-        USE phcom,         ONLY : nq1, nq2, nq3, nmodes
+        USE phcom,         ONLY : nq1, nq2, nq3
+        USE modes,         ONLY : nmodes
         USE epwcom,        ONLY : nbndsub, fsthick, epwread, longrange, &
             epwwrite, ngaussw, degaussw, lpolar, lifc, lscreen,&
-            nbndskip, etf_mem, scr_typ,&
+            etf_mem, scr_typ,&
             elecselfen, phonselfen, nest_fn, a2f, specfun_ph, &
             vme, eig_read, ephwrite, nkf1, nkf2, nkf3, &
             efermi_read, fermi_energy, specfun_el, band_plot, &
@@ -151,7 +153,7 @@ CONTAINS
             ibndmin, ibndmax, lambda_all, dmec, dmef, vmef, &
             sigmai_all, sigmai_mode, gamma_all, epsi, zstar, &
             efnew, ifc, sigmar_all, zi_all, nkqtotf, eps_rpa, &
-            g2_4, wf
+            g2_4, wf, nbndskip
 #if defined(__NAG)
         USE f90_unix_io,   ONLY : FLUSH
 #endif
@@ -301,10 +303,11 @@ CONTAINS
         USE cell_base,     ONLY : at, bg, omega, alat
         USE start_k,       ONLY : nk1, nk2, nk3
         USE ions_base,     ONLY : nat, amass, ityp, atm, ntyp => nsp, tau
-        USE phcom,         ONLY : nq1, nq2, nq3, nmodes
+        USE phcom,         ONLY : nq1, nq2, nq3
+        USE modes,         ONLY : nmodes
         USE epwcom,        ONLY : nbndsub, fsthick, epwread, longrange, &
             epwwrite, ngaussw, degaussw, lpolar, lifc, lscreen, &
-            nbndskip, etf_mem, scr_typ, &
+            etf_mem, scr_typ, &
             elecselfen, phonselfen, nest_fn, a2f, specfun_ph, &
             vme, eig_read, ephwrite, nkf1, nkf2, nkf3, &
             efermi_read, fermi_energy, specfun_el, band_plot, &
@@ -321,7 +324,7 @@ CONTAINS
             ibndmin, ibndmax, lambda_all, dmec, dmef, vmef, &
             sigmai_all, sigmai_mode, gamma_all, epsi, zstar, &
             efnew, ifc, sigmar_all, zi_all, nkqtotf, eps_rpa, &
-            g2_4, wf
+            g2_4, wf, nbndskip
 #if defined(__NAG)
         USE f90_unix_io,   ONLY : FLUSH
 #endif
@@ -467,10 +470,11 @@ CONTAINS
         USE cell_base,     ONLY : at, bg, omega, alat
         USE start_k,       ONLY : nk1, nk2, nk3
         USE ions_base,     ONLY : nat, amass, ityp, atm, ntyp => nsp, tau
-        USE phcom,         ONLY : nq1, nq2, nq3, nmodes
+        USE phcom,         ONLY : nq1, nq2, nq3
+        USE modes,         ONLY : nmodes
         USE epwcom,        ONLY : nbndsub, fsthick, epwread, longrange, &
             epwwrite, ngaussw, degaussw, lpolar, lifc, lscreen, &
-            nbndskip, etf_mem, scr_typ, &
+            etf_mem, scr_typ, &
             elecselfen, phonselfen, nest_fn, a2f, specfun_ph, &
             vme, eig_read, ephwrite, nkf1, nkf2, nkf3, &
             efermi_read, fermi_energy, specfun_el, band_plot, &
@@ -487,7 +491,7 @@ CONTAINS
             ibndmin, ibndmax, lambda_all, dmec, dmef, vmef, &
             sigmai_all, sigmai_mode, gamma_all, epsi, zstar, &
             efnew, ifc, sigmar_all, zi_all, nkqtotf, eps_rpa, &
-            g2_4, wf
+            g2_4, wf, nbndskip
 #if defined(__NAG)
         USE f90_unix_io,   ONLY : FLUSH
 #endif
@@ -634,10 +638,11 @@ CONTAINS
         USE cell_base,     ONLY : at, bg, omega, alat
         USE start_k,       ONLY : nk1, nk2, nk3
         USE ions_base,     ONLY : nat, amass, ityp, atm, ntyp => nsp, tau
-        USE phcom,         ONLY : nq1, nq2, nq3, nmodes
+        USE phcom,         ONLY : nq1, nq2, nq3
+        USE modes,         ONLY : nmodes
         USE epwcom,        ONLY : nbndsub, fsthick, epwread, longrange, &
             epwwrite, ngaussw, degaussw, lpolar, lifc, lscreen, &
-            nbndskip, etf_mem, scr_typ, &
+            etf_mem, scr_typ, &
             elecselfen, phonselfen, nest_fn, a2f, specfun_ph, &
             vme, eig_read, ephwrite, nkf1, nkf2, nkf3, &
             efermi_read, fermi_energy, specfun_el, band_plot, &
@@ -654,7 +659,7 @@ CONTAINS
             ibndmin, ibndmax, lambda_all, dmec, dmef, vmef, &
             sigmai_all, sigmai_mode, gamma_all, epsi, zstar, &
             efnew, ifc, sigmar_all, zi_all, nkqtotf, eps_rpa, &
-            g2_4, wf
+            g2_4, wf, nbndskip
 #if defined(__NAG)
         USE f90_unix_io,   ONLY : FLUSH
 #endif
@@ -899,9 +904,9 @@ CONTAINS
         USE kinds,         ONLY : dp
         use test_tools, only : para_write
         USE io_global,     ONLY : stdout,ionode_id, meta_ionode_id
-        USE phcom,         ONLY : nmodes
+        USE modes,         ONLY : nmodes
         USE epwcom,        ONLY : nbndsub, shortrange, restart_polaron,&
-            fsthick, eptemp, ngaussw, degaussw,spherical_cutoff,&
+            fsthick, ngaussw, degaussw,spherical_cutoff,&
             eps_acustic, efermi_read, fermi_energy, lscreen, &
             model_vertex, nkf1, nkf2, nkf3, conv_thr_polaron, &
             r01, r02, r03, num_cbands, start_mode, cb_shift, &

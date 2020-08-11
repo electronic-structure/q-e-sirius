@@ -224,7 +224,7 @@
       ! Size of the degenerate subspace
       length   = ending - starting + 1
       !
-      ALLOCATE(rwork(length**2 + 2 * length), STAT = ierr)
+      ALLOCATE(rwork(1 + 5 * length + 2 * length**2), STAT = ierr)
       IF (ierr /= 0) CALL errore('hamwan2bloch', 'Error allocating rwork', 1)
       ALLOCATE(iwork(3 + 5 * length), STAT = ierr)
       IF (ierr /= 0) CALL errore('hamwan2bloch', 'Error allocating iwork', 1)
@@ -1792,6 +1792,7 @@
     !  every pool works with its own subset of k points on the fine grid
     !
     ! SP: Because nrr_g can be quite small, we do a combined parallelization on WS vector and atoms
+    !
     IF (use_ws) THEN
       CALL para_bounds(ir_start, ir_stop, nrr_g * nat)
     ELSE
@@ -2294,7 +2295,7 @@
     CALL para_bounds(ir_start, ir_stop, nrr_g)
     !
 #if defined(__MPI)
-    filint = TRIM(tmp_dir) // TRIM(prefix) // '.epmatwp1'
+    filint = TRIM(tmp_dir) // TRIM(prefix) // '.epmatwp'
     CALL MPI_FILE_OPEN(world_comm, filint, MPI_MODE_RDONLY, MPI_INFO_NULL, iunepmatwp2, ierr)
     IF (ierr /= 0) CALL errore('ephwan2blochp_mem', 'error in MPI_FILE_OPEN', 1)
 #endif

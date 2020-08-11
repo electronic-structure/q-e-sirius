@@ -53,8 +53,8 @@ SUBROUTINE xc_gcx( length, ns, rho, grho, ex, ec, v1x, v2x, v1c, v2c, v2c_ud )
   !!       between q-e and libxc libraries.
   !
 #if defined(__LIBXC)
-  USE xc_f90_types_m
-  USE xc_f90_lib_m
+#include "xc_version.h"
+  USE xc_f03_lib_m
 #endif
   !
   IMPLICIT NONE
@@ -85,8 +85,8 @@ SUBROUTINE xc_gcx( length, ns, rho, grho, ex, ec, v1x, v2x, v1c, v2c, v2c_ud )
   ! ... local variables
   !
 #if defined(__LIBXC)
-  TYPE(xc_f90_pointer_t) :: xc_func
-  TYPE(xc_f90_pointer_t) :: xc_info1, xc_info2
+  TYPE(xc_f03_func_t) :: xc_func
+  TYPE(xc_f03_func_info_t) :: xc_info1, xc_info2
   REAL(DP), ALLOCATABLE :: rho_lxc(:), sigma(:)
   REAL(DP), ALLOCATABLE :: ex_lxc(:), ec_lxc(:)
   REAL(DP), ALLOCATABLE :: vx_rho(:), vx_sigma(:)
@@ -98,6 +98,11 @@ SUBROUTINE xc_gcx( length, ns, rho, grho, ex, ec, v1x, v2x, v1c, v2c, v2c_ud )
   !
   LOGICAL :: POLARIZED
   INTEGER :: ildax, ildac, pol_unpol
+#if (XC_MAJOR_VERSION > 4)
+  INTEGER(8) :: lengthxc
+#else
+  INTEGER :: lengthxc
+#endif
 #endif
   REAL(DP), ALLOCATABLE :: arho(:,:)
   REAL(DP), ALLOCATABLE :: rh(:), zeta(:)
@@ -120,6 +125,9 @@ SUBROUTINE xc_gcx( length, ns, rho, grho, ex, ec, v1x, v2x, v1c, v2c, v2c_ud )
   IF ( PRESENT(v2c_ud) ) v2c_ud = 0.0_DP
   !
 #if defined(__LIBXC)
+  !
+  fkind_x = -1
+  lengthxc = length
   !
   POLARIZED = .FALSE.
   IF (ns == 2) THEN
@@ -179,11 +187,12 @@ SUBROUTINE xc_gcx( length, ns, rho, grho, ex, ec, v1x, v2x, v1c, v2c, v2c_ud )
   !
   IF ( is_libxc(3) ) THEN
     !
-    CALL xc_f90_func_init( xc_func, xc_info1, igcx, pol_unpol )
-    CALL xc_f90_func_set_dens_threshold( xc_func, rho_threshold )
-    fkind_x  = xc_f90_info_kind( xc_info1 )
-     CALL xc_f90_gga_exc_vxc( xc_func, length, rho_lxc(1), sigma(1), ex_lxc(1), vx_rho(1), vx_sigma(1) )
-    CALL xc_f90_func_end( xc_func )
+    CALL xc_f03_func_init( xc_func, igcx, pol_unpol )
+     xc_info1 = xc_f03_func_get_info( xc_func )
+     CALL xc_f03_func_set_dens_threshold( xc_func, rho_threshold )
+     fkind_x  = xc_f03_func_info_get_kind( xc_info1 )
+     CALL xc_f03_gga_exc_vxc( xc_func, lengthxc, rho_lxc(1), sigma(1), ex_lxc(1), vx_rho(1), vx_sigma(1) )
+    CALL xc_f03_func_end( xc_func )
     !
     IF (.NOT. POLARIZED) THEN
       DO k = 1, length
@@ -223,10 +232,11 @@ SUBROUTINE xc_gcx( length, ns, rho, grho, ex, ec, v1x, v2x, v1c, v2c, v2c_ud )
   !
   IF ( is_libxc(4) ) THEN  !lda part of LYP not present in libxc
     !
-    CALL xc_f90_func_init( xc_func, xc_info2, igcc, pol_unpol )
-    CALL xc_f90_func_set_dens_threshold( xc_func, rho_threshold )
-     CALL xc_f90_gga_exc_vxc( xc_func, length, rho_lxc(1), sigma(1), ec_lxc(1), vc_rho(1), vc_sigma(1) )
-    CALL xc_f90_func_end( xc_func )
+    CALL xc_f03_func_init( xc_func, igcc, pol_unpol )
+     xc_info2 = xc_f03_func_get_info( xc_func )
+     CALL xc_f03_func_set_dens_threshold( xc_func, rho_threshold )
+     CALL xc_f03_gga_exc_vxc( xc_func, lengthxc, rho_lxc(1), sigma(1), ec_lxc(1), vc_rho(1), vc_sigma(1) )
+    CALL xc_f03_func_end( xc_func )
     !
     IF (.NOT. POLARIZED) THEN
       DO k = 1, length
@@ -406,6 +416,10 @@ SUBROUTINE gcxc( length, rho_in, grho_in, sx_out, sc_out, v1x_out, &
   !
   USE exch_gga
   USE corr_gga
+  !
+#if defined(use_beef)
+  USE beef_interface, ONLY: beefx, beeflocalcorr
+#endif
   !
   IMPLICIT NONE
   !
@@ -652,6 +666,18 @@ SUBROUTINE gcxc( length, rho_in, grho_in, sx_out, sc_out, v1x_out, &
         CALL beefx(rho, grho, sx, v1x, v2x, 0)
 #endif
         !
+     CASE( 44 ) ! 'RPBE'
+        !
+        CALL pbex( rho, grho, 8, sx, v1x, v2x )
+        !
+     CASE( 45 ) ! 'W31X'
+        !
+        CALL pbex( rho, grho, 9, sx, v1x, v2x )
+        !
+     CASE( 46 ) ! 'W32X'
+        !
+        CALL b86b( rho, grho, 4, sx, v1x, v2x )
+        !
      CASE DEFAULT
         !
         sx  = 0.0_DP
@@ -747,6 +773,9 @@ SUBROUTINE gcx_spin( length, rho_in, grho2_in, sx_tot, v1x_out, v2x_out )
   !! Gradient corrections for exchange - Hartree a.u.
   !
   USE exch_gga
+#if defined(use_beef)
+  USE beef_interface, ONLY: beefx
+#endif
   !
   IMPLICIT NONE
   !
@@ -845,9 +874,10 @@ SUBROUTINE gcx_spin( length, rho_in, grho2_in, sx_tot, v1x_out, v2x_out )
         sx_tot(ir) = 0.5_DP * ( sx(1)*rnull(1) + sx(2)*rnull(2) )
         v2x = 2.0_DP * v2x
         !
-     CASE( 3, 4, 8, 10, 12, 20, 23, 24, 25 )
-        ! igcx=3: PBE, igcx=4: revised PBE, igcx=8: PBE0, igcx=10: PBEsol
-        ! igcx=12: HSE,  igcx=20: gau-pbe, igcx=23: obk8, igcx=24: ob86, igcx=25: ev93
+     CASE( 3, 4, 8, 10, 12, 20, 23, 24, 25, 44, 45 )
+        ! igcx=3:  PBE,  igcx=4:  revised PBE, igcx=8:  PBE0, igcx=10: PBEsol
+        ! igcx=12: HSE,  igcx=20: gau-pbe,     igcx=23: obk8, igcx=24: ob86,
+        ! igcx=25: ev93, igcx=44: RPBE,        igcx=45: W31X
         !
         iflag = 1
         IF ( igcx== 4 ) iflag = 2
@@ -855,6 +885,8 @@ SUBROUTINE gcx_spin( length, rho_in, grho2_in, sx_tot, v1x_out, v2x_out )
         IF ( igcx==23 ) iflag = 5
         IF ( igcx==24 ) iflag = 6
         IF ( igcx==25 ) iflag = 7
+        IF ( igcx==44 ) iflag = 8
+        IF ( igcx==45 ) iflag = 9
         !
         rho = 2.0_DP * rho
         grho2 = 4.0_DP * grho2
@@ -963,13 +995,15 @@ SUBROUTINE gcx_spin( length, rho_in, grho2_in, sx_tot, v1x_out, v2x_out )
         sx_tot(ir) = 0.5_DP * ( sx(1)*rnull(1) + sx(2)*rnull(2) )
         v2x = 2.0_DP * v2x
         !
-      CASE( 26 )                  ! 'B86R for rev-vdW-DF2'
+      CASE( 26, 46 )                  ! 'B86R for rev-vdW-DF2'
         !
         rho = 2.0_DP * rho
         grho2 = 4.0_DP * grho2
         !
-        CALL b86b( rho(1), grho2(1), 3, sx(1), v1x(1), v2x(1) )
-        CALL b86b( rho(2), grho2(2), 3, sx(2), v1x(2), v2x(2) )
+        IF ( igcx==26 ) iflag = 3 ! B86R for rev-vdW-DF2
+        IF ( igcx==46 ) iflag = 4 ! W32X for vdW-DF3-opt2
+        CALL b86b( rho(1), grho2(1), iflag, sx(1), v1x(1), v2x(1) )
+        CALL b86b( rho(2), grho2(2), iflag, sx(2), v1x(2), v2x(2) )
         !
         sx_tot(ir) = 0.5_DP * ( sx(1)*rnull(1) + sx(2)*rnull(2) )
         v2x = 2.0_DP * v2x
@@ -1135,7 +1169,9 @@ SUBROUTINE gcx_spin( length, rho_in, grho2_in, sx_tot, v1x_out, v2x_out )
      !
      CASE DEFAULT
         !
-        CALL errore( 'gcx_spin', 'not implemented', igcx )
+        sx = 0.0_DP
+        v1x = 0.0_DP
+        v2x = 0.0_DP
         !
      END SELECT
      !
@@ -1159,6 +1195,10 @@ SUBROUTINE gcc_spin( length, rho_in, zeta_io, grho_in, sc_out, v1c_out, v2c_out 
   !! Implemented: Perdew86, GGA (PW91), PBE
   !
   USE corr_gga
+  !
+#if defined(use_beef)
+  USE beef_interface, ONLY: beeflocalcorrspin
+#endif
   !
   IMPLICIT NONE
   !
@@ -1239,7 +1279,9 @@ SUBROUTINE gcc_spin( length, rho_in, zeta_io, grho_in, sc_out, v1c_out, v2c_out 
 #endif
     CASE DEFAULT
        !
-       CALL errore( 'xc_gga_drivers (gcc_spin)', 'not implemented', igcc )
+       sc = 0.0_DP
+       v1c = 0.0_DP
+       v2c = 0.0_DP
        !
     END SELECT
     !

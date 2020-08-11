@@ -380,7 +380,7 @@ do iat = 1, nsp
         l = -l
       endif
     endif
-    if (associated(upf(iat)%nchi)) then
+    if (allocated(upf(iat)%nchi)) then
       i = upf(iat)%nchi(iwf)
     else
       i = -1
@@ -452,7 +452,7 @@ do iat = 1, nsp
   if (use_sirius_rho_core) then
     allocate(vloc(upf(iat)%mesh))
     vloc = 0.d0
-    if (associated(upf(iat)%rho_atc)) then
+    if (allocated(upf(iat)%rho_atc)) then
       do i = 1, msh(iat)
         vloc(i) = upf(iat)%rho_atc(i)
       enddo
