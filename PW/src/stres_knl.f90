@@ -47,11 +47,11 @@ SUBROUTINE stres_knl( sigmanlc, sigmakin )
   REAL(DP) :: d1
 
   IF (use_sirius.AND.use_sirius_ks_solver.AND.use_sirius_stress) THEN
-    CALL sirius_get_stress_tensor(gs_handler, string("kin"), sigmakin(1, 1))
+    CALL sirius_get_stress_tensor(gs_handler, "kin", sigmakin)
     sigmakin = -sigmakin * 2 ! convert to Ha
-    CALL sirius_get_stress_tensor(gs_handler, string("nonloc"), sigmanlc(1, 1))
+    CALL sirius_get_stress_tensor(gs_handler, "nonloc", sigmanlc)
     sigmanlc = -sigmanlc * 2 ! convert to Ha
-    CALL sirius_get_stress_tensor(gs_handler, string("us"), tmp(1, 1))
+    CALL sirius_get_stress_tensor(gs_handler, "us", tmp)
     sigmanlc = sigmanlc - 2 * tmp
     CALL symmatrix ( sigmakin )
     CALL symmatrix ( sigmanlc )

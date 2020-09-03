@@ -59,6 +59,7 @@ SUBROUTINE v_of_rho( rho, rho_core, rhog_core, &
   INTEGER :: is, ir
   !
   CALL start_clock( 'v_of_rho' )
+  CALL sirius_start_timer("qe|v_of_rho")
   !
   ! ... calculate exchange-correlation potential
   !
@@ -142,6 +143,7 @@ SUBROUTINE v_of_rho( rho, rho_core, rhog_core, &
   IF (use_sirius.AND.use_sirius_ks_solver) THEN
     CALL put_potential_to_sirius
   ENDIF
+  CALL sirius_stop_timer("qe|v_of_rho")
   !
   RETURN
   !
@@ -675,7 +677,7 @@ SUBROUTINE v_hubbard( ns, v_hub, eth )
   USE ldaU,                 ONLY : Hubbard_lmax, Hubbard_l, Hubbard_U, &
                                    Hubbard_alpha, Hubbard_J0, Hubbard_beta
   USE lsda_mod,             ONLY : nspin
-  USE control_flags,        ONLY : iverbosity
+  USE control_flags,        ONLY : iverbosity, dfpt_hub
   USE io_global,            ONLY : stdout
   !
   IMPLICIT NONE
@@ -749,7 +751,7 @@ SUBROUTINE v_hubbard( ns, v_hub, eth )
   !
   ! Hubbard energy
   !
-  IF ( iverbosity > 0 ) THEN
+  IF ( iverbosity > 0 .AND. .NOT.dfpt_hub ) THEN
      WRITE(stdout,*) '--- in v_hubbard ---'
      WRITE(stdout,'("Hubbard energy ",f9.4)') eth
      WRITE(stdout,*) '-------'
@@ -774,7 +776,7 @@ SUBROUTINE v_hubbard_b (ns, v_hub, eth)
                                    ldim_back, ldmx_b, Hubbard_alpha_back, &
                                    is_hubbard_back
   USE lsda_mod,             ONLY : nspin
-  USE control_flags,        ONLY : iverbosity
+  USE control_flags,        ONLY : iverbosity, dfpt_hub
   USE io_global,            ONLY : stdout
 
   IMPLICIT NONE
@@ -789,12 +791,12 @@ SUBROUTINE v_hubbard_b (ns, v_hub, eth)
   !
   v_hub(:,:,:,:) = 0.d0
   !
-  IF (Hubbard_J0(nt).NE.0.d0 .OR. Hubbard_beta(nt).NE.0.d0) &
-     CALL errore('v_hubbard_b', 'Hubbard_J0 and Hubbard_beta are not supported',1) 
-  !
   DO na = 1, nat
      !
      nt = ityp (na)
+     !
+     IF (Hubbard_J0(nt).NE.0.d0 .OR. Hubbard_beta(nt).NE.0.d0) &
+     CALL errore('v_hubbard_b', 'Hubbard_J0 and Hubbard_beta are not supported',1) 
      !
      IF (is_hubbard_back(nt)) THEN
         !
@@ -830,7 +832,7 @@ SUBROUTINE v_hubbard_b (ns, v_hub, eth)
   !
   ! Hubbard energy
   !
-  IF ( iverbosity > 0 ) THEN
+  IF ( iverbosity > 0 .AND. .NOT.dfpt_hub ) THEN
      WRITE(stdout,*) '--- in v_hubbard_b ---'
      WRITE(stdout,'(''Hubbard_back energy '',f9.4)') eth
      WRITE(stdout,*) '-------'
@@ -1185,7 +1187,7 @@ SUBROUTINE v_hubbard_extended (nsg, v_hub, eth)
                                 ldim_u, ldmx_tot, max_num_neighbors, at_sc, neighood, &
                                 Hubbard_V, Hubbard_alpha_back, is_hubbard, is_hubbard_back
   USE lsda_mod,          ONLY : nspin
-  USE control_flags,     ONLY : iverbosity
+  USE control_flags,     ONLY : iverbosity, dfpt_hub
   USE io_global,         ONLY : stdout
   !
   IMPLICIT NONE
@@ -1339,7 +1341,7 @@ SUBROUTINE v_hubbard_extended (nsg, v_hub, eth)
   !
   ! Hubbard energy
   !
-  IF ( iverbosity > 0 ) THEN
+  IF ( iverbosity > 0 .AND. .NOT.dfpt_hub ) THEN
      WRITE(stdout,*) '--- in v_hubbard_extended ---'
      WRITE(stdout,'("Hubbard energy ",f9.4)') eth
      WRITE(stdout,*) '-----------------------------'

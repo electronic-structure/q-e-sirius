@@ -30,7 +30,7 @@ MODULE input_parameters
 !=----------------------------------------------------------------------------=!
   !
   USE kinds,      ONLY : DP
-  USE parameters, ONLY : nsx, lqmax, natx
+  USE parameters, ONLY : nsx, natx, sc_size
   USE wannier_new,ONLY : wannier_data
   USE  iso_c_binding, ONLY : c_char
   !
@@ -400,11 +400,11 @@ MODULE input_parameters
         INTEGER :: lda_plus_u_kind = 0
         INTEGER :: lback(nsx) = -1
         INTEGER :: l1back(nsx) = -1
-        INTEGER, PARAMETER :: nspinx=2
+        INTEGER, PARAMETER :: nspinx=2, lqmax=7
         REAL(DP) :: starting_ns_eigenvalue(lqmax,nspinx,nsx) = -1.0_DP
         REAL(DP) :: hubbard_u(nsx) = 0.0_DP
         REAL(DP) :: hubbard_u_back(nsx) = 0.0_DP
-        REAL(DP) :: hubbard_v(natx,27*natx,4) = 0.0_DP 
+        REAL(DP) :: hubbard_v(natx,natx*(2*sc_size+1)**3,4) = 0.0_DP 
         REAL(DP) :: hubbard_j0(nsx) = 0.0_DP
         REAL(DP) :: hubbard_j(3,nsx) = 0.0_DP
         REAL(DP) :: hubbard_alpha(nsx) = 0.0_DP
@@ -633,6 +633,7 @@ MODULE input_parameters
              Hubbard_U, Hubbard_U_back, Hubbard_J, Hubbard_alpha,             &
              Hubbard_alpha_back, Hubbard_J0, Hubbard_beta,                    &
              hub_pot_fix, Hubbard_V, Hubbard_parameters,                      &
+             backall, lback, l1back, reserv, reserv_back,                     &
              edir, emaxpos, eopreg, eamp, smearing, starting_ns_eigenvalue,   &
              U_projection_type, input_dft, la2F, assume_isolated,             &
              nqx1, nqx2, nqx3, ecutfock, localization_thr, scdm, ace,         &

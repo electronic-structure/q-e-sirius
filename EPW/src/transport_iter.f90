@@ -30,9 +30,9 @@
     USE io_global,        ONLY : stdout
     USE cell_base,        ONLY : at, bg
     USE epwcom,           ONLY : mob_maxiter, nstemp, broyden_beta,            &
-                                 mp_mesh_k, nkf1, nkf2, nkf3
+                                 mp_mesh_k, nkf1, nkf2, nkf3, fixsym
     USE elph2,            ONLY : nkqf, wkf, xkf, nkqtotf, nbndfst,             &
-                                 nktotf, map_rebal, xqf, transp_temp,          &
+                                 nktotf, map_rebal, xqf, gtemp,          &
                                  ixkqf_tr, s_bztoibz_full
     USE constants_epw,    ONLY : zero, one, two, pi, kelvin2eV, ryd2ev, eps10,     &
                                  bohr2ang, ang2cm, hbarJ, eps6, eps8, &
@@ -40,16 +40,15 @@
     USE mp,               ONLY : mp_barrier, mp_sum, mp_bcast
     USE mp_global,        ONLY : world_comm
     USE symm_base,        ONLY : s, t_rev, time_reversal, set_sym_bl, nrot
-    USE io_eliashberg,    ONLY : kpmq_map
     USE printing,         ONLY : print_mob, print_mob_sym
-    USE grid,             ONLY : k_avg
     USE io_transport,     ONLY : fin_write, fin_read
     USE io_files,         ONLY : diropn
     USE control_flags,    ONLY : iverbosity
     USE kinds_epw,        ONLY : SIK2
     USE wigner,           ONLY : backtoWS
-    USE grid,             ONLY : special_points, kpoint_grid_epw
+    USE grid,             ONLY : k_avg, special_points, kpoint_grid_epw, kpmq_map
     USE poolgathering,    ONLY : poolgather2
+    USE low_lvl,          ONLY : fix_sym
     !
     IMPLICIT NONE
     !
@@ -185,6 +184,7 @@
       nsym(:) = 0
       !
       CALL set_sym_bl()
+      IF (fixsym) CALL fix_sym(.TRUE.)
       wkf(:) = 0d0
       ! What we get from this call is bztoibz
       CALL start_clock('kpoint_paral')
@@ -226,7 +226,7 @@
       WRITE(stdout, *) 'temp k-index  ibnd       k-point          eig[Ry]        F_SERTA   '
     ENDIF
     DO itemp = 1, nstemp
-      etemp = transp_temp(itemp)
+      etemp = gtemp(itemp)
       DO ik = 1, nktotf
         DO ibnd = 1, nbndfst
           IF (ABS(inv_tau(ibnd, ik, itemp)) > eps160) THEN

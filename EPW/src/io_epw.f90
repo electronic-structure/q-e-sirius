@@ -113,7 +113,9 @@
     !----------------------------------------------------------------------
     SUBROUTINE epw_write(nrr_k, nrr_q, nrr_g, w_centers)
     !----------------------------------------------------------------------
-    !
+    !!
+    !! Routine to write files on real-space grid for fine grid interpolation
+    !!
     USE kinds,     ONLY : DP
     USE epwcom,    ONLY : nbndsub, vme, eig_read, etf_mem
     USE pwcom,     ONLY : ef, nelec
@@ -121,7 +123,7 @@
                           zstar, epsi, epmatwp
     USE ions_base, ONLY : amass, ityp, nat, tau
     USE cell_base, ONLY : at, bg, omega, alat
-    USE phcom,     ONLY : nmodes
+    USE modes,     ONLY : nmodes
     USE io_var,    ONLY : epwdata, iundmedata, iunvmedata, iunksdata, iunepmatwp, &
                           crystal
     USE noncollin_module, ONLY : noncolin
@@ -156,6 +158,14 @@
     !! Cartesian direction (polarison direction)
     INTEGER :: lrepmatw
     !! Record length
+    INTEGER*8 :: unf_recl
+    !! Record length
+    INTEGER :: direct_io_factor
+    !! Type of IOlength
+    INTEGER :: ierr
+    !! Error index
+    REAL(KIND = DP) :: dummy
+    !! Dummy variable
     !
     WRITE(stdout,'(/5x,"Writing Hamiltonian, Dynamical matrix and EP vertex in Wann rep to file"/)')
     !
@@ -218,7 +228,14 @@
         !     of kind 4.
         lrepmatw = 2 * nbndsub * nbndsub * nrr_k * nmodes
         filint   = TRIM(prefix)//'.epmatwp'
-        CALL diropn(iunepmatwp, 'epmatwp', lrepmatw, exst)
+        INQUIRE(IOLENGTH = direct_io_factor) dummy
+        unf_recl = direct_io_factor * INT(lrepmatw, KIND = KIND(unf_recl))
+        IF (unf_recl <= 0) CALL errore('epw_write', 'wrong record length', 3)
+        OPEN(iunepmatwp, FILE = TRIM(ADJUSTL(filint)), IOSTAT = ierr, form='unformatted', &
+             STATUS = 'unknown', ACCESS = 'direct', RECL = unf_recl)
+        IF (ierr /= 0) CALL errore('epw_write', 'error opening ' // TRIM(filint), 1)
+        !
+        !CALL diropn(iunepmatwp, 'epmatwp', lrepmatw, exst)
         DO irg = 1, nrr_g
           CALL davcio(epmatwp(:, :, :, :, irg), lrepmatw, iunepmatwp, irg, +1)
         ENDDO
@@ -243,11 +260,15 @@
     !--------------------------------------------------------------------------------
     SUBROUTINE epw_read(nrr_k, nrr_q, nrr_g)
     !--------------------------------------------------------------------------------
+    !!
+    !! Routine to read the real space quantities for fine grid interpolation
+    !!
+    USE kinds,     ONLY : DP
     USE epwcom,    ONLY : nbndsub, vme, eig_read, etf_mem, lifc
     USE pwcom,     ONLY : ef
     USE elph2,     ONLY : chw, rdw, epmatwp, cdmew, cvmew, chw_ks, zstar, epsi
     USE ions_base, ONLY : nat
-    USE phcom,     ONLY : nmodes
+    USE modes,     ONLY : nmodes
     USE io_global, ONLY : stdout
     USE io_files,  ONLY : prefix, diropn
     USE io_var,    ONLY : epwdata, iundmedata, iunvmedata, iunksdata, iunepmatwp
@@ -289,6 +310,13 @@
     !! Status of files
     INTEGER :: ierr
     !! Error status
+    INTEGER*8 :: unf_recl
+    !! Record length
+    INTEGER :: direct_io_factor
+    !! Type of IOlength
+    REAL(KIND = DP) :: dummy
+    !! Dummy variable
+
     !
     WRITE(stdout,'(/5x,"Reading Hamiltonian, Dynamical matrix and EP vertex in Wann rep from file"/)')
     FLUSH(stdout)
@@ -382,7 +410,7 @@
     ENDIF
     !
     IF (lifc) THEN
-      CALL read_ifc
+      CALL read_ifc_epw
     ENDIF
     !
     IF (etf_mem == 0) THEN
@@ -397,7 +425,14 @@
         !     of kind 4.
         lrepmatw = 2 * nbndsub * nbndsub * nrr_k * nmodes
         filint   = TRIM(prefix)//'.epmatwp'
-        CALL diropn(iunepmatwp, 'epmatwp', lrepmatw, exst)
+        !
+        INQUIRE(IOLENGTH = direct_io_factor) dummy
+        unf_recl = direct_io_factor * INT(lrepmatw, KIND = KIND(unf_recl))
+        IF (unf_recl <= 0) CALL errore('epw_read', 'wrong record length', 3)
+        OPEN(iunepmatwp, FILE = TRIM(ADJUSTL(filint)), IOSTAT = ierr, FORM = 'unformatted', &
+             STATUS = 'unknown', ACCESS = 'direct', RECL = unf_recl)
+        IF (ierr /= 0) CALL errore('epw_read', 'error opening ' // TRIM(filint), 1)
+        !
         DO irg = 1, nrr_g
           CALL davcio(epmatwp(:, :, :, :, irg), lrepmatw, iunepmatwp, irg, -1)
         ENDDO
@@ -425,349 +460,8 @@
     END SUBROUTINE epw_read
     !------------------------------------------------------------------------------
     !
-    !----------------------------------------------------------------------------
-    SUBROUTINE read_dyn_mat_param(fildyn, ntyp, nat)
-    !----------------------------------------------------------------------------
-    !!
-    !! Read paramters from the dynamical matrix
-    !!
-    USE iotk_module, ONLY : iotk_index, iotk_scan_begin, iotk_open_read,     &
-                            iotk_attlenx, iotk_scan_dat, iotk_scan_end,      &
-                            iotk_scan_attr, iotk_free_unit, iotk_close_read, &
-                            iotk_scan_empty
-    USE kinds,       ONLY : DP
-    USE io_global,   ONLY : meta_ionode
-    USE io_var,      ONLY : iudyn
-    !
-    IMPLICIT NONE
-    !
-    CHARACTER(LEN = 256), INTENT(in) :: fildyn
-    !! Name of the file to read
-    INTEGER, INTENT(out) :: ntyp
-    !! Number of type of atoms
-    INTEGER, INTENT(out) :: nat
-    !! Number of atoms
-    !
-    ! Local variables
-    INTEGER :: ierr
-    !! Error status
-    !
-    IF (meta_ionode) THEN
-      !
-      CALL iotk_free_unit(iudyn, ierr)
-      !
-    ENDIF
-    !
-    CALL errore('read_dyn_mat_param', 'no free units to write ', ierr)
-    IF (meta_ionode) THEN
-      !
-      ! Open XML descriptor
-      ierr = 0
-      CALL iotk_open_read(iudyn, FILE = TRIM(fildyn) // '.xml', BINARY = .FALSE., IERR = ierr)
-    ENDIF
-    !
-    CALL errore('read_dyn_mat_param', 'error opening the dyn mat file ', ierr)
-    !
-    IF (meta_ionode) THEN
-      CALL iotk_scan_begin(iudyn, "GEOMETRY_INFO")
-      CALL iotk_scan_dat(iudyn, "NUMBER_OF_TYPES", ntyp)
-      CALL iotk_scan_dat(iudyn, "NUMBER_OF_ATOMS", nat)
-      CALL iotk_scan_end(iudyn, "GEOMETRY_INFO")
-    ENDIF
-    !
-    RETURN
-    !----------------------------------------------------------------------------
-    END SUBROUTINE read_dyn_mat_param
-    !----------------------------------------------------------------------------
-    !
-    !----------------------------------------------------------------------------
-    SUBROUTINE read_dyn_mat_header(ntyp, nat, ibrav, nspin_mag,     &
-               celldm, at, bg, omega, atm, amass, tau, ityp, m_loc, &
-               nqs, lrigid, epsil, zstareu, lraman, ramtns)
-    !----------------------------------------------------------------------------
-    !!
-    !! Read the dynamical matrix
-    !!
-    USE iotk_module, ONLY : iotk_index, iotk_scan_begin, iotk_open_read,     &
-                            iotk_attlenx, iotk_scan_dat, iotk_scan_end,      &
-                            iotk_scan_attr, iotk_free_unit, iotk_close_read, &
-                            iotk_scan_empty
-    USE kinds,       ONLY : DP
-    USE io_global,   ONLY : meta_ionode
-    USE io_var,      ONLY : iudyn
-    !
-    IMPLICIT NONE
-    !
-    CHARACTER(LEN = 3), INTENT(out) :: atm(ntyp)
-    !! Atom
-    LOGICAL, INTENT(out), OPTIONAL :: lrigid
-    !!
-    LOGICAL, INTENT(out), OPTIONAL :: lraman
-    !! Raman
-    INTEGER, INTENT(in) :: ntyp
-    !! Number of type of atoms
-    INTEGER, INTENT(in) :: nat
-    !! Number of atoms
-    INTEGER, INTENT(out) :: ibrav
-    !! Bravais lattice
-    INTEGER, INTENT(out) :: nspin_mag
-    !!
-    INTEGER, INTENT(out) :: nqs
-    !!
-    INTEGER,  INTENT(out) :: ityp(nat)
-    !! Atom type
-    REAL(KIND = DP), INTENT(out) :: celldm(6)
-    !! Celldm
-    REAL(KIND = DP), INTENT(out) :: at(3, 3)
-    !! Real-space lattice
-    REAL(KIND = DP), INTENT(out) :: bg(3, 3)
-    !! Reciprocal-space latrice
-    REAL(KIND = DP), INTENT(out) :: omega
-    !! Volume of primitive cell
-    REAL(KIND = DP), INTENT(out) :: amass(ntyp)
-    !! Atom mass
-    REAL(KIND = DP), INTENT(out) :: tau(3, nat)
-    !! Atom position
-    REAL(KIND = DP), INTENT(out) :: m_loc(3, nat)
-    !!
-    REAL(KIND = DP), INTENT(out), OPTIONAL :: epsil(3, 3)
-    !! Dielectric cst
-    REAL(KIND = DP), INTENT(out), OPTIONAL :: zstareu(3, 3, nat)
-    !!
-    REAL(KIND = DP), INTENT(out), OPTIONAL :: ramtns(3, 3, 3, nat)
-    !!
-    !
-    ! Local work
-    CHARACTER(iotk_attlenx) :: attr
-    !! Attribute
-    LOGICAL :: found_z
-    !!
-    LOGICAL :: lrigid_
-    !!
-    INTEGER :: nt
-    !! Type of atoms
-    INTEGER :: na
-    !! Number of atoms
-    INTEGER :: kc
-    !! Cartesian direction
-    REAL(KIND = DP) :: aux(3, 3)
-    !! Auxillary
-    !
-    IF (meta_ionode) THEN
-      CALL iotk_scan_begin(iudyn, "GEOMETRY_INFO")
-      CALL iotk_scan_dat(iudyn, "BRAVAIS_LATTICE_INDEX", ibrav)
-      CALL iotk_scan_dat(iudyn, "SPIN_COMPONENTS", nspin_mag)
-      CALL iotk_scan_dat(iudyn, "CELL_DIMENSIONS", celldm)
-      CALL iotk_scan_dat(iudyn, "AT", at)
-      CALL iotk_scan_dat(iudyn, "BG", bg)
-      CALL iotk_scan_dat(iudyn, "UNIT_CELL_VOLUME_AU", omega)
-      !
-      DO nt = 1, ntyp
-        CALL iotk_scan_dat(iudyn, "TYPE_NAME"//TRIM(iotk_index(nt)), atm(nt))
-        CALL iotk_scan_dat(iudyn, "MASS" // TRIM(iotk_index(nt)), amass(nt))
-      ENDDO
-      DO na = 1, nat
-        CALL iotk_scan_empty(iudyn,"ATOM" // TRIM(iotk_index(na)), attr)
-        CALL iotk_scan_attr(attr, "INDEX",  ityp(na))
-        CALL iotk_scan_attr(attr, "TAU", tau(:, na))
-        IF (nspin_mag == 4) THEN
-          CALL iotk_scan_dat(iudyn, "STARTING_MAG_" // TRIM(iotk_index(na)), m_loc(:, na))
-        ENDIF
-      ENDDO
-      CALL iotk_scan_dat(iudyn, "NUMBER_OF_Q", nqs)
-
-      CALL iotk_scan_end(iudyn, "GEOMETRY_INFO")
-      IF (PRESENT(lrigid)) lrigid = .FALSE.
-      IF (PRESENT(epsil)) THEN
-        CALL iotk_scan_begin(iudyn, "DIELECTRIC_PROPERTIES", FOUND = lrigid_)
-        IF (PRESENT(lrigid)) lrigid = lrigid_
-        IF (lrigid_) THEN
-          CALL iotk_scan_dat(iudyn, "EPSILON", epsil)
-          CALL iotk_scan_begin(iudyn, "ZSTAR", FOUND = found_z)
-          IF (found_z) THEN
-            DO na = 1, nat
-              CALL iotk_scan_dat(iudyn, "Z_AT_" // TRIM(iotk_index(na)), aux(:, :))
-              IF (PRESENT(zstareu)) zstareu(:, :, na) = aux
-            ENDDO
-            CALL iotk_scan_end(iudyn, "ZSTAR")
-          ELSE
-            IF (PRESENT(zstareu)) zstareu = 0.0_DP
-          ENDIF
-          IF (PRESENT(lraman)) THEN
-            CALL iotk_scan_begin(iudyn, "RAMAN_TENSOR_A2", found = lraman)
-            IF (lraman) THEN
-              DO na = 1, nat
-                DO kc = 1, 3
-                  CALL iotk_scan_dat(iudyn, "RAMAN_S_ALPHA" // TRIM(iotk_index(na)) &
-                      // TRIM(iotk_index(kc)), aux)
-                  IF (PRESENT(ramtns)) ramtns(:, :, kc, na) = aux(:, :)
-                ENDDO
-              ENDDO
-              CALL iotk_scan_END(iudyn, "RAMAN_TENSOR_A2")
-            ELSE
-              IF (PRESENT(ramtns)) ramtns = 0.0_DP
-            ENDIF
-          ENDIF
-          CALL iotk_scan_end(iudyn, "DIELECTRIC_PROPERTIES")
-        ELSE
-          IF (PRESENT(epsil)) epsil = 0.0_DP
-          IF (PRESENT(zstareu)) zstareu = 0.0_DP
-          IF (PRESENT(ramtns)) ramtns = 0.0_DP
-        ENDIF
-      ENDIF
-    ENDIF
-    RETURN
-    !----------------------------------------------------------------------------
-    END SUBROUTINE read_dyn_mat_header
-    !----------------------------------------------------------------------------
-    !
-    !----------------------------------------------------------------------------
-    SUBROUTINE read_dyn_mat(nat, iq, xq, dyn)
-    !----------------------------------------------------------------------------
-    !!
-    !! This routine reads the dynamical matrix file. The file is assumed to
-    !! be already opened. iq is the number of the dynamical matrix to read.
-    !!
-    USE iotk_module, ONLY : iotk_index, iotk_scan_begin, iotk_open_read,     &
-                            iotk_attlenx, iotk_scan_dat, iotk_scan_end,      &
-                            iotk_scan_attr, iotk_free_unit, iotk_close_read, &
-                            iotk_scan_empty
-    USE kinds,       ONLY : DP
-    USE io_global,   ONLY : meta_ionode
-    USE io_var,      ONLY : iudyn
-    !
-    IMPLICIT NONE
-    !
-    INTEGER, INTENT(in) :: nat
-    !! Number of atoms
-    INTEGER, INTENT(in) :: iq
-    !! Q-point index
-    REAL(KIND = DP), INTENT(out) :: xq(3)
-    !! Q-point value
-    COMPLEX(KIND = DP), INTENT(out) :: dyn(3, 3, nat, nat)
-    !! Dynamical matrix
-    !
-    ! Local variables
-    INTEGER :: na, nb
-    !! Number of atoms
-    !
-    IF (meta_ionode) THEN
-      CALL iotk_scan_begin(iudyn, "DYNAMICAL_MAT_" // TRIM(iotk_index(iq)))
-      CALL iotk_scan_dat(iudyn, "Q_POINT", xq)
-      !
-      DO na = 1, nat
-        DO nb = 1, nat
-          CALL iotk_scan_dat(iudyn, "PHI"//TRIM(iotk_index(na)) // TRIM(iotk_index(nb)), dyn(:, :, na, nb))
-        ENDDO
-      ENDDO
-      !
-      CALL iotk_scan_end(iudyn, "DYNAMICAL_MAT_" // TRIM(iotk_index(iq)))
-    ENDIF
-    !
-    RETURN
-    !----------------------------------------------------------------------------
-    END SUBROUTINE read_dyn_mat
-    !----------------------------------------------------------------------------
-    !
-    !----------------------------------------------------------------------------
-    SUBROUTINE read_ifc_param(nr1, nr2, nr3)
-    !----------------------------------------------------------------------------
-    !!
-    !! Read IFC parameters
-    !!
-    USE iotk_module, ONLY : iotk_index, iotk_scan_begin, iotk_open_read,     &
-                            iotk_attlenx, iotk_scan_dat, iotk_scan_end
-    USE kinds,       ONLY : DP
-    USE io_global,   ONLY : meta_ionode
-    USE io_var,      ONLY : iudyn
-    !
-    IMPLICIT NONE
-    !
-    INTEGER, INTENT(out) :: nr1, nr2, nr3
-    !! Grid size
-    ! Local varialbes
-    INTEGER :: meshfft(3)
-    !! Mesh
-    !
-    IF (meta_ionode) THEN
-      CALL iotk_scan_begin(iudyn, "INTERATOMIC_FORCE_CONSTANTS")
-      CALL iotk_scan_dat(iudyn, "MESH_NQ1_NQ2_NQ3", meshfft)
-      nr1 = meshfft(1)
-      nr2 = meshfft(2)
-      nr3 = meshfft(3)
-      CALL iotk_scan_end(iudyn, "INTERATOMIC_FORCE_CONSTANTS")
-    ENDIF
-    RETURN
-    !----------------------------------------------------------------------------
-    END SUBROUTINE read_ifc_param
-    !----------------------------------------------------------------------------
-    !
-    !----------------------------------------------------------------------------
-    SUBROUTINE read_ifc_xml(nr1, nr2, nr3, nat, phid)
-    !----------------------------------------------------------------------------
-    !!
-    !! Read IFC in XML format
-    !!
-    USE iotk_module, ONLY : iotk_index, iotk_scan_begin, iotk_open_read,     &
-                            iotk_attlenx, iotk_scan_dat, iotk_scan_end,      &
-                            iotk_scan_attr, iotk_free_unit, iotk_close_read, &
-                            iotk_scan_empty
-    USE kinds,       ONLY : DP
-    USE io_global,   ONLY : meta_ionode
-    USE io_var,      ONLY : iudyn
-    !
-    IMPLICIT NONE
-    !
-    INTEGER, INTENT(in) :: nr1, nr2, nr3
-    !! Grid size
-    INTEGER, INTENT(in) :: nat
-    !! Number of atoms
-    REAL(KIND = DP), INTENT(out) :: phid(nr1 * nr2 * nr3, 3, 3, nat, nat)
-    !!
-    ! Local variables
-    INTEGER :: na, nb
-    !! Atoms
-    INTEGER :: nn
-    !!
-    INTEGER :: m1, m2, m3
-    !! nr dimension
-    REAL(KIND = DP) :: aux(3, 3)
-    !! Auxillary
-    !
-    IF (meta_ionode) THEN
-      CALL iotk_scan_begin(iudyn, "INTERATOMIC_FORCE_CONSTANTS")
-      DO na = 1, nat
-        DO nb = 1, nat
-          nn = 0
-          DO m3 = 1, nr3
-            DO m2 = 1, nr2
-              DO m1 = 1, nr1
-                nn = nn + 1
-                CALL iotk_scan_begin(iudyn, "s_s1_m1_m2_m3" //     &
-                    TRIM(iotk_index(na)) // TRIM(iotk_index(nb)) // &
-                    TRIM(iotk_index(m1)) // TRIM(iotk_index(m2)) // &
-                    TRIM(iotk_index(m3)))
-                CALL iotk_scan_dat(iudyn, 'IFC', aux)
-                phid(nn, :, :, na, nb) = aux(:, :)
-                CALL iotk_scan_end(iudyn, "s_s1_m1_m2_m3" //        &
-                     TRIM(iotk_index(na)) // TRIM(iotk_index(nb)) // &
-                     TRIM(iotk_index(m1)) // TRIM(iotk_index(m2)) // &
-                     TRIM(iotk_index(m3)))
-              ENDDO ! m1
-            ENDDO ! m2
-          ENDDO ! m3
-        ENDDO ! nb
-      ENDDO ! na
-      CALL iotk_scan_end(iudyn, "INTERATOMIC_FORCE_CONSTANTS")
-      CALL iotk_close_read(iudyn)
-    ENDIF ! meta_ionode
-    RETURN
-    !----------------------------------------------------------------------------
-    END SUBROUTINE read_ifc_xml
-    !----------------------------------------------------------------------------
-    !
     !---------------------------------------------------------------------------------
-    SUBROUTINE read_ifc()
+    SUBROUTINE read_ifc_epw()
     !---------------------------------------------------------------------------------
     !!
     !! Read IFC in real space from the file generated by q2r.
@@ -782,10 +476,12 @@
     USE io_global, ONLY : stdout
     USE io_var,    ONLY : iunifc
     USE noncollin_module, ONLY : nspin_mag
-    USE io_global, ONLY : ionode_id
+    USE io_global, ONLY : ionode_id, ionode
     USE mp,        ONLY : mp_barrier, mp_bcast
     USE mp_global, ONLY : intra_pool_comm, inter_pool_comm, root_pool
     USE mp_world,  ONLY : mpime, world_comm
+    USE io_dyn_mat,ONLY : read_dyn_mat_param, read_dyn_mat_header, &
+                          read_ifc_param, read_ifc
 #if defined(__NAG)
     USE f90_unix_io, ONLY : flush
 #endif
@@ -852,30 +548,35 @@
     ! The following function will check if the file exists in xml format
     CALL check_is_xml_file(tempfile, is_xml_file)
     !
-    IF (mpime == ionode_id) THEN
+    IF (is_xml_file) THEN
+      !IF (mpime == 0) THEN
+      !  ionode = .TRUE.
+      !ELSE
+      !  ionode = .FALSE.
+      !ENDIF            
       !
-      IF (is_xml_file) THEN
-        ! pass the 'tempfile' as the '.xml' extension is added in the next routine
-        CALL read_dyn_mat_param(tempfile, ntyp_, nat_)
-        ALLOCATE(m_loc(3, nat_), STAT = ierr)
-        IF (ierr /= 0) CALL errore('read_ifc', 'Error allocating m_loc', 1)
-        ALLOCATE(atm(ntyp_), STAT = ierr)
-        IF (ierr /= 0) CALL errore('read_ifc', 'Error allocating atm', 1)
-        CALL read_dyn_mat_header(ntyp_, nat_, ibrav, nspin_mag, &
-                 celldm, at, bg, omega, atm, amass2, &
-                 tau_, ityp_,  m_loc, nqs, has_zstar, epsi, zstar)
-        call volume(alat, at(1, 1), at(1, 2), at(1, 3), omega)
-        CALL read_ifc_param(nqc1, nqc2, nqc3)
-        CALL read_ifc_xml(nqc1, nqc2, nqc3, nat_, ifc)
-        DEALLOCATE(m_loc, STAT = ierr)
-        IF (ierr /= 0) CALL errore('read_ifc', 'Error deallocating m_loc', 1)
-        DEALLOCATE(atm, STAT = ierr)
-        IF (ierr /= 0) CALL errore('read_ifc', 'Error deallocating atm', 1)
-        !
-      ELSE
+      ! pass the 'tempfile' as the '.xml' extension is added in the next routine
+      CALL read_dyn_mat_param(tempfile, ntyp_, nat_)
+      ALLOCATE(m_loc(3, nat_), STAT = ierr)
+      IF (ierr /= 0) CALL errore('read_ifc_epw', 'Error allocating m_loc', 1)
+      ALLOCATE(atm(ntyp_), STAT = ierr)
+      IF (ierr /= 0) CALL errore('read_ifc_epw', 'Error allocating atm', 1)
+      CALL read_dyn_mat_header(ntyp_, nat_, ibrav, nspin_mag, &
+               celldm, at, bg, omega, atm, amass2, &
+               tau_, ityp_,  m_loc, nqs, has_zstar, epsi, zstar)
+      CALL volume(alat, at(1, 1), at(1, 2), at(1, 3), omega)
+      CALL read_ifc_param(nqc1, nqc2, nqc3)
+      CALL read_ifc(nqc1, nqc2, nqc3, nat_, ifc)
+      DEALLOCATE(m_loc, STAT = ierr)
+      IF (ierr /= 0) CALL errore('read_ifc_epw', 'Error deallocating m_loc', 1)
+      DEALLOCATE(atm, STAT = ierr)
+      IF (ierr /= 0) CALL errore('read_ifc_epw', 'Error deallocating atm', 1)
+      !
+    ELSE ! is_xml_file
+      IF (mpime == ionode_id) THEN      
         !
         OPEN(UNIT = iunifc, FILE = tempfile, STATUS = 'old', IOSTAT = ios)
-        IF (ios /= 0) call errore ('read_ifc', 'error opening ifc.q2r', iunifc)
+        IF (ios /= 0) call errore ('read_ifc_epw', 'error opening ifc.q2r', iunifc)
         !
         !  read real-space interatomic force constants
         !
@@ -918,39 +619,33 @@
             ENDDO
           ENDDO
         ENDDO
-      ENDIF ! noncol
-    ENDIF
-    !
-    ! It has to be casted like this because mpi cannot cast 7 indices
-    DO i = 1, 3
-      DO j = 1, 3
-        DO na = 1, nat
-          DO nb = 1, nat
-            CALL mp_bcast(ifc(:, :, :, i, j, na, nb), ionode_id, inter_pool_comm)
-            CALL mp_bcast(ifc(:, :, :, i, j, na, nb), root_pool, intra_pool_comm)
+        CLOSE(iunifc)
+      ENDIF ! mpime
+      ! It has to be casted like this because mpi cannot cast 7 indices
+      DO i = 1, 3
+        DO j = 1, 3
+          DO na = 1, nat
+            DO nb = 1, nat
+              CALL mp_bcast(ifc(:, :, :, i, j, na, nb), ionode_id, inter_pool_comm)
+              CALL mp_bcast(ifc(:, :, :, i, j, na, nb), root_pool, intra_pool_comm)
+            ENDDO
           ENDDO
         ENDDO
       ENDDO
-    ENDDO
-    !
-    CALL mp_bcast(zstar, ionode_id, world_comm)
-    CALL mp_bcast(epsi, ionode_id, world_comm)
-    CALL mp_bcast(tau_, ionode_id, world_comm)
-    CALL mp_bcast(ibrav_, ionode_id, world_comm)
-    !
+      CALL mp_bcast(zstar, ionode_id, world_comm)
+      CALL mp_bcast(epsi, ionode_id, world_comm)
+      CALL mp_bcast(tau_, ionode_id, world_comm)
+      CALL mp_bcast(ibrav_, ionode_id, world_comm)
+    ENDIF ! has_xml
+    ! 
     WRITE(stdout,'(5x,"IFC last ", 1f12.7)') ifc(nqc1, nqc2, nqc3, 3, 3, nat, nat)
     !
     CALL set_asr2(asr_typ, nqc1, nqc2, nqc3, ifc, zstar, nat, ibrav_, tau_)
     !
-    !CALL mp_barrier(inter_pool_comm)
-    IF (mpime == ionode_id) THEN
-      CLOSE(iunifc)
-    ENDIF
-    !
     WRITE(stdout, '(/5x,"Finished reading ifcs"/)')
     !
     !-------------------------------------------------------------------------------
-    END SUBROUTINE read_ifc
+    END SUBROUTINE read_ifc_epw
     !-------------------------------------------------------------------------------
     !
     !----------------------------------------------------------------------
@@ -1804,7 +1499,7 @@
     !-------------------------------------------------------------
     !!
     !! Open int3paw files as direct access, read, and close again
-    !! 
+    !!
     !! HL - Mar 2020 based on the subroutine of readdvscf
     !!
     !-------------------------------------------------------------
@@ -1942,40 +1637,31 @@
     !------------------------------------------------------------
     !
     !--------------------------------------------------------------
-    SUBROUTINE readgmap(nkstot, ngxx, ng0vec, g0vec_all_r, lower_bnd)
+    SUBROUTINE readgmap(nkstot)
     !--------------------------------------------------------------
     !!
-    !! read map of G vectors G -> G-G_0 for a given q point
+    !! read the map of G vectors G -> G-G_0 for a given q point
     !! (this is used for the folding of k+q into the first BZ)
     !!
     !
     USE kinds,    ONLY : DP
-    USE mp_global,ONLY : inter_pool_comm, world_comm
+    USE mp_global,ONLY : world_comm
     USE mp,       ONLY : mp_bcast, mp_max
-    use io_global,ONLY : meta_ionode, meta_ionode_id
-    use io_var,   ONLY : iukgmap, iukmap
-    use pwcom,    ONLY : nks
-    use elph2,    ONLY : shift, gmap, igk_k_all, ngk_all
+    USE io_global,ONLY : meta_ionode, meta_ionode_id
+    USE io_var,   ONLY : iukgmap
+    USE elph2,    ONLY : ngxxf, ngxx, ng0vec, shift, gmap, g0vec_all_r
     USE io_files, ONLY : prefix
     !
     IMPLICIT NONE
     !
     INTEGER, INTENT(in) :: nkstot
     !! Total number of k-points
-    INTEGER, INTENT(in) :: ngxx
-    !! Maximum number of G-vectors over all pools
-    INTEGER, INTENT(out) :: ng0vec
-    !! Number of G_0 vectors
-    INTEGER, INTENT(in) :: lower_bnd
-    !! Lower bound for the k-parallellization
-    REAL(KIND = DP), INTENT(out) :: g0vec_all_r(3, 125)
-    !! G_0 vectors needed to fold the k+q grid into the k grid, cartesian coord.
     !
     ! Lork variables
     INTEGER :: ik
     !! Counter on k-points
-    INTEGER :: ik1, itmp
-    !! Temporary indeces when reading kmap and kgmap files
+    INTEGER :: ik1
+    !! Temporary indices when reading kgmap files
     INTEGER :: ig0
     !! Counter on G_0 vectors
     INTEGER :: ishift
@@ -1992,42 +1678,26 @@
       OPEN(iukgmap, FILE = TRIM(prefix)//'.kgmap', FORM = 'formatted', STATUS = 'old', IOSTAT = ios)
       IF (ios /=0) CALL errore('readgmap', 'error opening kgmap file', iukgmap)
       !
-      ! dummy operation for skipping unnecessary data (ngxxf) here
+      READ(iukgmap, *) ngxxf
       !
-      READ(iukgmap, *) ik ! dummy
+      !! HL: The part below should be removed later since it is useless.
       !
       DO ik = 1, nkstot
         READ(iukgmap, *) ik1, shift(ik1)
       ENDDO
+      !
       READ(iukgmap, *) ng0vec
-      !
-      !  the following seems crazy but I make it for compatibility
-      !  with versions up to 2.1.5:
-      !
-      !  iukgmap has been created by ../PW/set_kplusq.f90 and has
-      !  the correct gmap(), but the wrong shift() (actually the
-      !  shift for a specific q-point)
-      !
-      !  since createkmap.f90 has regenerated the shifts for the
-      !  present k-point I read them again in kmap.dat. The above
-      !  'fake' reading is because the gmap appears *after* the
-      !  wrong kmap.
-      !
-      OPEN(iukmap, FILE = TRIM(prefix)//'.kmap', FORM = 'formatted', STATUS = 'old', IOSTAT = ios)
-      IF (ios /= 0) CALL errore('readgmap', 'error opening kmap file', iukmap)
-      DO ik = 1, nkstot
-        READ(iukmap,*) ik1, itmp, shift(ik1)
-      ENDDO
-      CLOSE(iukmap)
       !
     ENDIF
     !
     ! first node broadcasts ng0vec to all nodes for allocation of gmap
     !
+    CALL mp_bcast(ngxxf, meta_ionode_id, world_comm)
     CALL mp_bcast(ng0vec, meta_ionode_id, world_comm)
     !
     ALLOCATE(gmap(ngxx * ng0vec), STAT = ierr)
     IF (ierr /= 0) CALL errore('readgmap', 'Error allocating gmap', 1)
+    gmap(:) = 0
     !
     IF (meta_ionode) THEN
        !
@@ -2038,21 +1708,69 @@
         !
         ! at variance with the nscf calculation, here gmap is read as a vector,
         !
-        READ(iukgmap,*) (gmap(ng0vec * ( ig - 1 ) + ishift), ishift = 1, ng0vec)
+        READ(iukgmap,*) (gmap(ng0vec * (ig - 1) + ishift), ishift = 1, ng0vec)
       ENDDO
       !
       CLOSE(iukgmap)
       !
     ENDIF
     !
-    ! first node broadcasts everything to all nodes
+    ! first node broadcasts arrays to all nodes
     !
     CALL mp_bcast(g0vec_all_r, meta_ionode_id, world_comm)
-    CALL mp_bcast(shift, meta_ionode_id, world_comm)
     CALL mp_bcast(gmap, meta_ionode_id, world_comm)
     !
     !-----------------------------------------------------------------------
     END SUBROUTINE readgmap
+    !-----------------------------------------------------------------------
+    !
+    !--------------------------------------------------------------
+    SUBROUTINE readkmap(nkstot)
+    !--------------------------------------------------------------
+    !!
+    !! Read the index of G_0 such that k+q+G_0 belongs to the 1st BZ
+    !!
+    !
+    USE kinds,    ONLY : DP
+    USE mp_global,ONLY : world_comm
+    USE mp,       ONLY : mp_bcast
+    USE io_global,ONLY : meta_ionode, meta_ionode_id
+    USE io_var,   ONLY : iukmap
+    USE io_files, ONLY : prefix
+    USE elph2,    ONLY : shift
+    !
+    IMPLICIT NONE
+    !
+    INTEGER, INTENT(in) :: nkstot
+    !! Total number of k-points
+    !
+    ! Local variables
+    INTEGER :: ik
+    !! Counter on k-points
+    INTEGER :: ik1
+    !! Temporary indices when reading kmap files
+    INTEGER :: itmp
+    !! Temporary indices when reading kmap files
+    INTEGER :: ios
+    !! Integer variable for I/O control
+    !
+    IF (meta_ionode) THEN
+      !
+      OPEN(iukmap, FILE = TRIM(prefix)//'.kmap', FORM = 'formatted', STATUS = 'old', IOSTAT = ios)
+      IF (ios /= 0) CALL errore('readkmap', 'error opening kmap file', iukmap)
+      DO ik = 1, nkstot
+        READ(iukmap,*) ik1, itmp, shift(ik1)
+      ENDDO
+      CLOSE(iukmap)
+      !
+    ENDIF
+    !
+    ! first node broadcasts shift to all nodes
+    !
+    CALL mp_bcast(shift, meta_ionode_id, world_comm)
+    !
+    !-----------------------------------------------------------------------
+    END SUBROUTINE readkmap
     !-----------------------------------------------------------------------
     !
     !-----------------------------------------------------------------------

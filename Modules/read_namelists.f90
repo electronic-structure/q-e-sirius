@@ -201,252 +201,277 @@ CONTAINS
     !
     starting_magnetization = sm_not_set
 
-    IF ( prog == 'PW' ) THEN
-      starting_ns_eigenvalue = -1.0_DP
-      U_projection_type = 'atomic'
-    END IF
-    !
-    ! .. DFT + U and its extensions
-    !
-    lda_plus_U = .FALSE.
-    lda_plus_u_kind = 0
-    Hubbard_U = 0.0_DP
-    Hubbard_U_back = 0.0_DP
-    Hubbard_V = 0.0_DP
-    Hubbard_J0 = 0.0_DP
-    Hubbard_J = 0.0_DP
-    Hubbard_alpha = 0.0_DP
-    Hubbard_alpha_back = 0.0_DP
-    Hubbard_beta = 0.0_DP
-    Hubbard_parameters = 'input'
-    reserv = .false.
-    reserv_back = .false.
-    backall = .false.
-    lback = -1
-    l1back = -1
-    hub_pot_fix = .false.
-    step_pen=.false.
-    A_pen=0.0_DP
-    sigma_pen=0.01_DP
-    alpha_pen=0.0_DP
-    !
-    ! ... EXX
-    !
-    ace=.TRUE.
-    n_proj = 0
-    localization_thr = 0.0_dp
-    scdm=.FALSE.
-    scdmden=1.0d0
-    scdmgrd=1.0d0
-    nscdm=1
-    !
-    ! ... electric fields
-    !
-    edir = 1
-    emaxpos = 0.5_DP
-    eopreg = 0.1_DP
-    eamp = 0.0_DP
-    ! TB gate related variables
-    zgate = 0.5
-    relaxz = .false.
-    block = .false.
-      block_1 = 0.45
-      block_2 = 0.55
-      block_height = 0.0
-      !
-      !  ... postprocessing of DOS & phonons & el-ph
-      !
-      la2F = .FALSE.
-      !
-      ! ... non collinear program variables
-      !
-      lspinorb = .FALSE.
-      lforcet = .FALSE.
-      starting_spin_angle=.FALSE.
-      noncolin = .FALSE.
-      lambda = 1.0_DP
-      constrained_magnetization= 'none'
-      fixed_magnetization = 0.0_DP
-      B_field = 0.0_DP
-      angle1 = 0.0_DP
-      angle2 = 0.0_DP
-      report =-1
-      !
-      no_t_rev = .FALSE.
-      !
-      assume_isolated = 'none'
-      !
-      one_atom_occupations=.FALSE.
-      !
-      spline_ps = .false.
-      !
-      real_space = .false.
-      !
-      ! ... DFT-D, Tkatchenko-Scheffler, XDM
-      !
-      vdw_corr    = 'none'
-      london      = .false.
-      london_s6   = 0.75_DP
-      london_rcut = 200.00_DP
-      london_c6   = -1.0_DP
-      london_rvdw = -1.0_DP
-      ts_vdw          = .FALSE.
-      ts_vdw_isolated = .FALSE.
-      ts_vdw_econv_thr = 1.E-6_DP
-      xdm = .FALSE.
-      xdm_a1 = 0.0_DP
-      xdm_a2 = 0.0_DP
-      dftd3_version = 3
-      dftd3_threebody = .TRUE.
-      !
-      ! ... ESM
-      !
-      esm_bc='pbc'
-      esm_efield=0.0_DP
-      esm_w=0.0_DP
-      esm_a=0.0_DP
-      esm_zb=-2.0_DP
-      esm_nfit=4
-      esm_debug=.FALSE.
-      esm_debug_gpmax=0
-      !
-      ! ... FCP
-      !
-      fcp_mu          = 0.0_DP
-      fcp_mass        = 10000.0_DP
-      fcp_tempw       = 0.0_DP
-      fcp_relax       = 'lm'
-      fcp_relax_step  = 0.5_DP
-      fcp_relax_crit  = 0.001_DP
-      fcp_mdiis_size  = 4
-      fcp_mdiis_step  = 0.2_DP
-      !
-      ! ... Wyckoff
-      !
-      space_group=0
-      uniqueb = .FALSE.
-      origin_choice = 1
-      rhombohedral = .TRUE.
-      !
-      RETURN
-      !
-    END SUBROUTINE
-    !
-    !=----------------------------------------------------------------------=!
-    !
-    !  Variables initialization for Namelist ELECTRONS
-    !
-    !=----------------------------------------------------------------------=!
-    !
-    !-----------------------------------------------------------------------
-    SUBROUTINE electrons_defaults( prog )
-      !-----------------------------------------------------------------------
-      !
-      IMPLICIT NONE
-      !
-      CHARACTER(LEN=2) :: prog   ! ... specify the calling program
-      !
-      !
-      emass = 400.0_DP
-      emass_cutoff = 2.5_DP
-      orthogonalization = 'ortho'
-      ortho_eps = 1.E-9_DP
-      ortho_max = 300
-      electron_maxstep = 100
-      scf_must_converge = .true.
-      !
-      ! ... ( 'sd' | 'cg' | 'damp' | 'verlet' | 'none' | 'diis' | 'cp-bo' )
-      !
-      electron_dynamics = 'none'
-      electron_damping = 0.1_DP
-      !
-      ! ... ( 'zero' | 'default' )
-      !
-      electron_velocities = 'default'
-      !
-      ! ... ( 'nose' | 'not_controlled' | 'rescaling')
-      !
-      electron_temperature = 'not_controlled'
-      ekincw = 0.001_DP
-      fnosee = 1.0_DP
-      ampre  = 0.0_DP
-      grease = 1.0_DP
-      conv_thr = 1.E-6_DP
-      diis_size = 4
-      diis_nreset = 3
-      diis_hcut = 1.0_DP
-      diis_wthr = 0.0_DP
-      diis_delt = 0.0_DP
-      diis_maxstep = 100
-      diis_rot = .FALSE.
-      diis_fthr = 0.0_DP
-      diis_temp = 0.0_DP
-      diis_achmix = 0.0_DP
-      diis_g0chmix = 0.0_DP
-      diis_g1chmix = 0.0_DP
-      diis_nchmix = 3
-      diis_nrot = 3
-      diis_rothr  = 0.0_DP
-      diis_ethr   = 0.0_DP
-      diis_chguess = .FALSE.
-      mixing_mode = 'plain'
-      mixing_fixed_ns = 0
-      mixing_beta = 0.7_DP
-      mixing_ndim = 8
-      diagonalization = 'david'
-      diago_thr_init = 0.0_DP
-      diago_cg_maxiter = 20
-      diago_ppcg_maxiter = 20
-      diago_david_ndim = 4
-      diago_full_acc = .FALSE.
-      !
-      sic = 'none'
-      sic_epsilon = 0.0_DP
-      sic_alpha = 0.0_DP
-      force_pairing = .false.
-      !
-      fermi_energy = 0.0_DP
-      n_inner = 2
-      niter_cold_restart=1
-      lambda_cold=0.03_DP
-      rotation_dynamics = "line-minimization"
-      occupation_dynamics = "line-minimization"
-      rotmass = 0.0_DP
-      occmass = 0.0_DP
-      rotation_damping = 0.0_DP
-      occupation_damping = 0.0_DP
-      !
-      tcg     = .FALSE.
-      maxiter = 100
-      passop  = 0.3_DP
-      niter_cg_restart = 20
-      etresh  = 1.E-6_DP
-      !
-      epol   = 3
-      efield = 0.0_DP
-      epol2  = 3
-      efield2 = 0.0_DP
-      efield_cart(1)=0.d0
-      efield_cart(2)=0.d0
-      efield_cart(3)=0.d0
-      efield_phase='none'
-      !
-      occupation_constraints = .false.
-      !
-      adaptive_thr   =  .false.
-      conv_thr_init  =  0.1E-2_DP
-      conv_thr_multi =  0.1_DP
-      !
-      ! ... CP-BO ...
-      tcpbo = .false.
-      emass_emin = 200.0_DP
-      emass_cutoff_emin = 6.0_DP
-      electron_damping_emin = 0.35_DP
-      dt_emin = 4.0_DP
-      !
-      RETURN
-      !
-    END SUBROUTINE electrons_defaults
+       IF ( prog == 'PW' ) THEN
+          starting_ns_eigenvalue = -1.0_DP
+          U_projection_type = 'atomic'
+       END IF
+       !
+       ! .. DFT + U and its extensions
+       !
+       lda_plus_U = .FALSE.
+       lda_plus_u_kind = 0
+       Hubbard_U = 0.0_DP
+       Hubbard_U_back = 0.0_DP
+       Hubbard_V = 0.0_DP
+       Hubbard_J0 = 0.0_DP
+       Hubbard_J = 0.0_DP
+       Hubbard_alpha = 0.0_DP
+       Hubbard_alpha_back = 0.0_DP
+       Hubbard_beta = 0.0_DP
+       Hubbard_parameters = 'input'
+       reserv = .false.
+       reserv_back = .false.
+       backall = .false.
+       lback = -1
+       l1back = -1
+       hub_pot_fix = .false.
+       step_pen=.false.
+       A_pen=0.0_DP
+       sigma_pen=0.01_DP
+       alpha_pen=0.0_DP
+       !
+       ! ... EXX
+       !
+       ace=.TRUE.
+       n_proj = 0
+       localization_thr = 0.0_dp
+       scdm=.FALSE.
+       scdmden=1.0d0
+       scdmgrd=1.0d0
+       nscdm=1
+       !
+       ! ... electric fields
+       !
+       edir = 1
+       emaxpos = 0.5_DP
+       eopreg = 0.1_DP
+       eamp = 0.0_DP
+       ! TB gate related variables
+       zgate = 0.5
+       relaxz = .false.
+       block = .false.
+       block_1 = 0.45
+       block_2 = 0.55
+       block_height = 0.0
+       !
+       !  ... postprocessing of DOS & phonons & el-ph
+       !
+       la2F = .FALSE.
+       !
+       ! ... non collinear program variables
+       !
+       lspinorb = .FALSE.
+       lforcet = .FALSE.
+       starting_spin_angle=.FALSE.
+       noncolin = .FALSE.
+       lambda = 1.0_DP
+       constrained_magnetization= 'none'
+       fixed_magnetization = 0.0_DP
+       B_field = 0.0_DP
+       angle1 = 0.0_DP
+       angle2 = 0.0_DP
+       report =-1
+       !
+       no_t_rev = .FALSE.
+       !
+       assume_isolated = 'none'
+       !
+       one_atom_occupations=.FALSE.
+       !
+       spline_ps = .false.
+       !
+       real_space = .false.
+       !
+       ! ... DFT-D, Tkatchenko-Scheffler, XDM
+       !
+       vdw_corr    = 'none'
+       london      = .false.
+       london_s6   = 0.75_DP
+       london_rcut = 200.00_DP
+       london_c6   = -1.0_DP
+       london_rvdw = -1.0_DP
+       ts_vdw          = .FALSE.
+       ts_vdw_isolated = .FALSE.
+       ts_vdw_econv_thr = 1.E-6_DP
+       xdm = .FALSE.
+       xdm_a1 = 0.0_DP
+       xdm_a2 = 0.0_DP
+       dftd3_version = 3
+       dftd3_threebody = .TRUE.
+       !
+       ! ... ESM
+       !
+       esm_bc='pbc'
+       esm_efield=0.0_DP
+       esm_w=0.0_DP
+       esm_a=0.0_DP
+       esm_zb=-2.0_DP
+       esm_nfit=4
+       esm_debug=.FALSE.
+       esm_debug_gpmax=0
+       !
+       ! ... FCP
+       !
+       fcp_mu          = 0.0_DP
+       fcp_mass        = 10000.0_DP
+       fcp_tempw       = 0.0_DP
+       fcp_relax       = 'lm'
+       fcp_relax_step  = 0.5_DP
+       fcp_relax_crit  = 0.001_DP
+       fcp_mdiis_size  = 4
+       fcp_mdiis_step  = 0.2_DP
+       !
+       ! ... Wyckoff
+       !
+       space_group=0
+       uniqueb = .FALSE.
+       origin_choice = 1
+       rhombohedral = .TRUE.
+       !
+       RETURN
+       !
+     END SUBROUTINE
+     !
+     !=----------------------------------------------------------------------=!
+     !
+     !  Variables initialization for Namelist ELECTRONS
+     !
+     !=----------------------------------------------------------------------=!
+     !
+     !-----------------------------------------------------------------------
+     SUBROUTINE electrons_defaults( prog )
+       !-----------------------------------------------------------------------
+       !
+       IMPLICIT NONE
+       !
+       CHARACTER(LEN=2) :: prog   ! ... specify the calling program
+       !
+       !
+       emass = 400.0_DP
+       emass_cutoff = 2.5_DP
+       orthogonalization = 'ortho'
+       ortho_eps = 1.E-9_DP
+       ortho_max = 300
+       electron_maxstep = 100
+       scf_must_converge = .true.
+       !
+       ! ... ( 'sd' | 'cg' | 'damp' | 'verlet' | 'none' | 'diis' | 'cp-bo' )
+       !
+       electron_dynamics = 'none'
+       electron_damping = 0.1_DP
+       !
+       ! ... ( 'zero' | 'default' )
+       !
+       electron_velocities = 'default'
+       !
+       ! ... ( 'nose' | 'not_controlled' | 'rescaling')
+       !
+       electron_temperature = 'not_controlled'
+       ekincw = 0.001_DP
+       fnosee = 1.0_DP
+       ampre  = 0.0_DP
+       grease = 1.0_DP
+       conv_thr = 1.E-6_DP
+       diis_size = 4
+       diis_nreset = 3
+       diis_hcut = 1.0_DP
+       diis_wthr = 0.0_DP
+       diis_delt = 0.0_DP
+       diis_maxstep = 100
+       diis_rot = .FALSE.
+       diis_fthr = 0.0_DP
+       diis_temp = 0.0_DP
+       diis_achmix = 0.0_DP
+       diis_g0chmix = 0.0_DP
+       diis_g1chmix = 0.0_DP
+       diis_nchmix = 3
+       diis_nrot = 3
+       diis_rothr  = 0.0_DP
+       diis_ethr   = 0.0_DP
+       diis_chguess = .FALSE.
+       mixing_mode = 'plain'
+       mixing_fixed_ns = 0
+       mixing_beta = 0.7_DP
+       mixing_ndim = 8
+       diagonalization = 'david'
+       diago_thr_init = 0.0_DP
+       diago_cg_maxiter = 20
+       diago_ppcg_maxiter = 20
+       diago_david_ndim = 2
+       diago_full_acc = .FALSE.
+       !
+       sic = 'none'
+       sic_epsilon = 0.0_DP
+       sic_alpha = 0.0_DP
+       force_pairing = .false.
+       !
+       fermi_energy = 0.0_DP
+       n_inner = 2
+       niter_cold_restart=1
+       lambda_cold=0.03_DP
+       rotation_dynamics = "line-minimization"
+       occupation_dynamics = "line-minimization"
+       rotmass = 0.0_DP
+       occmass = 0.0_DP
+       rotation_damping = 0.0_DP
+       occupation_damping = 0.0_DP
+       !
+       tcg     = .FALSE.
+       maxiter = 100
+       passop  = 0.3_DP
+       niter_cg_restart = 20
+       etresh  = 1.E-6_DP
+       !
+       epol   = 3
+       efield = 0.0_DP
+       epol2  = 3
+       efield2 = 0.0_DP
+       efield_cart(1)=0.d0
+       efield_cart(2)=0.d0
+       efield_cart(3)=0.d0
+       efield_phase='none'
+       !
+       occupation_constraints = .false.
+       !
+       adaptive_thr   =  .false.
+       conv_thr_init  =  0.1E-2_DP
+       conv_thr_multi =  0.1_DP
+       !
+       ! ... CP-BO ...
+       tcpbo = .false.
+       emass_emin = 200.0_DP
+       emass_cutoff_emin = 6.0_DP
+       electron_damping_emin = 0.35_DP
+       dt_emin = 4.0_DP
+       !
+       RETURN
+       !
+     END SUBROUTINE
+     !
+     !=----------------------------------------------------------------------=!
+     !
+     !  Variables initialization for Namelist WANNIER_AC
+     !
+     !----------------------------------------------------------------------
+     SUBROUTINE wannier_ac_defaults( prog )
+       !----------------------------------------------------------------------
+       !
+       IMPLICIT NONE
+       !
+       CHARACTER(LEN=2) :: prog   ! ... specify the calling program
+       !
+       !
+       plot_wannier = .FALSE.
+       use_energy_int = .FALSE.
+       print_wannier_coeff = .FALSE.
+       nwan = 0
+       constrain_pot = 0.d0
+       plot_wan_num = 0
+       plot_wan_spin = 1
+       !
+       RETURN
+       !
+     END SUBROUTINE
 
 
     SUBROUTINE nlcg_defaults( prog )
@@ -1898,236 +1923,221 @@ CONTAINS
           startingwfc = 'atomic+random'
           startingpot = 'atomic'
           !
-        ELSE
+       END IF
+       !
+       IF ( TRIM( sic ) /= 'none' ) THEN
+         force_pairing = ( nspin == 2 .AND. ( tot_magnetization==0._dp .OR. &
+                                              tot_magnetization==1._dp ) )
+       END IF
+       !
+       RETURN
+       !
+     END SUBROUTINE
+     !
+     !=----------------------------------------------------------------------=!
+     !
+     !  Namelist parsing main routine
+     !
+     !=----------------------------------------------------------------------=!
+     !
+     !-----------------------------------------------------------------------
+     SUBROUTINE read_namelists( prog_, unit )
+       !-----------------------------------------------------------------------
+       !
+       !  this routine reads data from standard input and puts them into
+       !  module-scope variables (accessible from other routines by including
+       !  this module, or the one that contains them)
+       !  ----------------------------------------------
+       !
+       ! ... declare modules
+       !
+       USE io_global, ONLY : ionode, ionode_id
+       USE mp,        ONLY : mp_bcast
+       USE mp_images, ONLY : intra_image_comm
+       !
+       IMPLICIT NONE
+       !
+       ! ... declare variables
+       !
+       CHARACTER(LEN=*) :: prog_  ! specifies the calling program, allowed:
+                                  !     prog = 'PW'     pwscf
+                                  !     prog = 'CP'     cp
+                                  !     prog = 'PW+iPi' pwscf + i-Pi
+       !
+       INTEGER, INTENT(IN), optional :: unit
+       !
+       ! ... declare other variables
+       !
+       CHARACTER(LEN=2) :: prog
+       INTEGER :: ios
+       INTEGER :: unit_loc=5
+       !
+       ! ... end of declarations
+       !
+       !  ----------------------------------------------
+       !
+       IF(PRESENT(unit)) unit_loc = unit
+       !
+       prog = prog_(1:2) ! Allowed: 'PW' or 'CP'
+       IF( prog /= 'PW' .AND. prog /= 'CP' ) &
+          CALL errore( ' read_namelists ', ' unknown calling program ', 1 )
+       !
+       ! ... default settings for all namelists
+       !
+       CALL control_defaults( prog )
+       CALL system_defaults( prog )
+       CALL electrons_defaults( prog )
+       CALL ions_defaults( prog )
+       CALL cell_defaults( prog )
+       !
+       ! ... Here start reading standard input file
+       !
+       !
+       ! ... CONTROL namelist
+       !
+       ios = 0
+       IF( ionode ) THEN
+          READ( unit_loc, control, iostat = ios )
+       END IF
+       CALL check_namelist_read(ios, unit_loc, "control")
+       !
+       CALL control_bcast( )
+       CALL control_checkin( prog )
+       !
+       ! ... fixval changes some default values according to the value
+       ! ... of "calculation" read in CONTROL namelist
+       !
+       CALL fixval( prog )
+       !
+       ! ... SYSTEM namelist
+       !
+       ios = 0
+       IF( ionode ) THEN
+          READ( unit_loc, system, iostat = ios )
+       END IF
+       CALL check_namelist_read(ios, unit_loc, "system")
+       !
+       CALL system_bcast( )
+       !
+       CALL system_checkin( prog )
+       !
+       ! ... ELECTRONS namelist
+       !
+       ios = 0
+       IF( ionode ) THEN
+          READ( unit_loc, electrons, iostat = ios )
+       END IF
+       CALL check_namelist_read(ios, unit_loc, "electrons")
+       !
+       CALL electrons_bcast( )
+       CALL electrons_checkin( prog )
+       !
+       ! ... IONS namelist - must be read only if ionic motion is expected,
+       ! ...                 or if code called by i-Pi via run_driver
+       !
+       ios = 0
+       IF ( ionode ) THEN
+          IF ( ( TRIM( calculation ) /= 'nscf'  .AND. &
+                 TRIM( calculation ) /= 'bands' ) .OR. &
+               ( TRIM( prog_ ) == 'PW+iPi' ) ) THEN
+             READ( unit_loc, ions, iostat = ios )
+          END IF
           !
-          startingwfc = 'file'
-          startingpot = 'file'
+          ! SCF might (optionally) have &ions :: ion_positions = 'from_file'
           !
-        END IF
-        !
-      ELSE IF ( prog == 'CP' ) THEN
-        !
-        startingwfc = 'random'
-        startingpot = ' '
-        !
-      END IF
-      !
-      IF ( TRIM( sic ) /= 'none' ) THEN
-        force_pairing = ( nspin == 2 .AND. ( tot_magnetization==0._dp .OR. &
-          tot_magnetization==1._dp ) )
-      END IF
-      !
-      RETURN
-      !
-    END SUBROUTINE fixval
-    !
-    !=----------------------------------------------------------------------=!
-    !
-    !  Namelist parsing main routine
-    !
-    !=----------------------------------------------------------------------=!
-    !
-    !-----------------------------------------------------------------------
-    SUBROUTINE read_namelists( prog_, unit )
-      !-----------------------------------------------------------------------
-      !
-      !  this routine reads data from standard input and puts them into
-      !  module-scope variables (accessible from other routines by including
-      !  this module, or the one that contains them)
-      !  ----------------------------------------------
-      !
-      ! ... declare modules
-      !
-      USE io_global, ONLY : ionode, ionode_id
-      USE mp,        ONLY : mp_bcast
-      USE mp_images, ONLY : intra_image_comm
-      !
-      IMPLICIT NONE
-      !
-      ! ... declare variables
-      !
-      CHARACTER(LEN=*) :: prog_  ! specifies the calling program, allowed:
-      !     prog = 'PW'     pwscf
-      !     prog = 'CP'     cp
-      !     prog = 'PW+iPi' pwscf + i-Pi
-      !
-      INTEGER, INTENT(IN), optional :: unit
-      !
-      ! ... declare other variables
-      !
-      CHARACTER(LEN=2) :: prog
-      INTEGER :: ios
-      INTEGER :: unit_loc=5
-      !
-      ! ... end of declarations
-      !
-      !  ----------------------------------------------
-      !
-      IF(PRESENT(unit)) unit_loc = unit
-      !
-      prog = prog_(1:2) ! Allowed: 'PW' or 'CP'
-      IF( prog /= 'PW' .AND. prog /= 'CP' ) &
-        CALL errore( ' read_namelists ', ' unknown calling program ', 1 )
-      !
-      ! ... default settings for all namelists
-      !
-      CALL control_defaults( prog )
-      CALL system_defaults( prog )
-      CALL electrons_defaults( prog )
-      CALL nlcg_defaults( prog )
-      CALL ions_defaults( prog )
-      CALL cell_defaults( prog )
-      !
-      ! ... Here start reading standard input file
-      !
-      !
-      ! ... CONTROL namelist
-      !
-      ios = 0
-      IF( ionode ) THEN
-        READ( unit_loc, control, iostat = ios )
-      END IF
-      CALL check_namelist_read(ios, unit_loc, "control")
-      !
-      CALL control_bcast( )
-      CALL control_checkin( prog )
-      !
-      ! ... fixval changes some default values according to the value
-      ! ... of "calculation" read in CONTROL namelist
-      !
-      CALL fixval( prog )
-      !
-      ! ... SYSTEM namelist
-      !
-      ios = 0
-      IF( ionode ) THEN
-        READ( unit_loc, system, iostat = ios )
-      END IF
-      CALL check_namelist_read(ios, unit_loc, "system")
-      !
-      CALL system_bcast( )
-      !
-      CALL system_checkin( prog )
-      !
-      ! ... ELECTRONS namelist
-      !
-      ios = 0
-      IF( ionode ) THEN
-        READ( unit_loc, electrons, iostat = ios )
-      END IF
-      CALL check_namelist_read(ios, unit_loc, "electrons")
-      !
-      CALL electrons_bcast( )
-      CALL electrons_checkin( prog )
-      !
-      ! ... NLCG namelist
-      !
-      ios = 0
-      IF( ionode ) THEN
-        READ( unit_loc, nlcg, iostat = ios )
-      END IF
-      CALL check_namelist_read(ios, unit_loc, "nlcg")
-      !
-      CALL nlcg_bcast( )
-      CALL nlcg_checkin( prog )
-
-      !
-      ! ... IONS namelist - must be read only if ionic motion is expected,
-      ! ...                 or if code called by i-Pi via run_driver
-      !
-      ios = 0
-      IF ( ionode ) THEN
-        IF ( ( TRIM( calculation ) /= 'scf'   .AND. &
-          TRIM( calculation ) /= 'nscf'  .AND. &
-          TRIM( calculation ) /= 'bands' ) .OR. &
-          ( TRIM( prog_ ) == 'PW+iPi' ) ) THEN
-          READ( unit_loc, ions, iostat = ios )
-        END IF
-      END IF
-      CALL check_namelist_read(ios, unit_loc, "ions")
-      !
-      CALL ions_bcast( )
-      CALL ions_checkin( prog )
-      !
-      ! ... CELL namelist
-      !
-      ios = 0
-      IF( ionode ) THEN
-        IF( TRIM( calculation ) == 'vc-relax' .OR. &
-          TRIM( calculation ) == 'vc-cp'    .OR. &
-          TRIM( calculation ) == 'vc-md'    .OR. &
-          TRIM( calculation ) == 'vc-md'    .OR. &
-          TRIM( calculation ) == 'vc-cp-wf') THEN
-          READ( unit_loc, cell, iostat = ios )
-        END IF
-      END IF
-      CALL check_namelist_read(ios, unit_loc, "cell")
-      !
-      CALL cell_bcast()
-      CALL cell_checkin( prog )
-      !
-      ios = 0
-      IF( ionode ) THEN
-        if (tabps) then
-          READ( unit_loc, press_ai, iostat = ios )
-        end if
-      END IF
-      CALL check_namelist_read(ios, unit_loc, "press_ai")
-      !
-      CALL press_ai_bcast()
-      !
-      ! ... WANNIER NAMELIST
-      !
-      CALL wannier_defaults( prog )
-      ios = 0
-      IF( ionode ) THEN
-        IF( TRIM( calculation ) == 'cp-wf'       .OR. &
-          TRIM( calculation ) == 'vc-cp-wf'    .OR. &
-          TRIM( calculation ) == 'cp-wf-nscf') THEN
-          READ( unit_loc, wannier, iostat = ios )
-        END IF
-      END IF
-      CALL check_namelist_read(ios, unit_loc, "wannier")
-      !
-      CALL wannier_bcast()
-      CALL wannier_checkin( prog )
-      !
-      ! ... WANNIER_NEW NAMELIST
-      !
-      CALL wannier_ac_defaults( prog )
-      ios = 0
-      IF( ionode ) THEN
-        IF( use_wannier ) THEN
-          READ( unit_loc, wannier_ac, iostat = ios )
-        END IF
-      END IF
-      CALL check_namelist_read(ios, unit_loc, "wannier_ac")
-      !
-      CALL wannier_ac_bcast()
-      CALL wannier_ac_checkin( prog )
-      !
-      RETURN
-      !
-    END SUBROUTINE read_namelists
-    !
-    SUBROUTINE check_namelist_read(ios, unit_loc, nl_name)
-      USE io_global, ONLY : ionode, ionode_id
-      USE mp,        ONLY : mp_bcast
-      USE mp_images, ONLY : intra_image_comm
-      !
-      IMPLICIT NONE
-      INTEGER,INTENT(in) :: ios, unit_loc
-      CHARACTER(LEN=*) :: nl_name
-      CHARACTER(len=512) :: line
-      INTEGER :: ios2
-      !
-      IF( ionode ) THEN
-        ios2=0
-        IF (ios /=0) THEN
-          BACKSPACE(unit_loc)
-          READ(unit_loc,'(A512)', iostat=ios2) line
-        END IF
-      END IF
+          IF ( (ios /= 0) .AND. TRIM( calculation ) == 'scf' ) THEN
+             ! presumably, not found: rewind the file pointer to the location
+             ! of the previous present section, in this case electrons
+             REWIND( unit_loc )
+             READ( unit_loc, electrons, iostat = ios )
+          END IF
+          !
+       END IF
+       !
+       CALL check_namelist_read(ios, unit_loc, "ions")
+       !
+       CALL ions_bcast( )
+       CALL ions_checkin( prog )
+       !
+       ! ... CELL namelist
+       !
+       ios = 0
+       IF( ionode ) THEN
+          IF( TRIM( calculation ) == 'vc-relax' .OR. &
+              TRIM( calculation ) == 'vc-cp'    .OR. &
+              TRIM( calculation ) == 'vc-md'    .OR. &
+              TRIM( calculation ) == 'vc-md'    .OR. &
+              TRIM( calculation ) == 'vc-cp-wf') THEN
+             READ( unit_loc, cell, iostat = ios )
+          END IF
+       END IF
+       CALL check_namelist_read(ios, unit_loc, "cell")
+       !
+       CALL cell_bcast()
+       CALL cell_checkin( prog )
+       !
+       ios = 0
+       IF( ionode ) THEN
+          if (tabps) then
+             READ( unit_loc, press_ai, iostat = ios )
+          end if
+       END IF
+       CALL check_namelist_read(ios, unit_loc, "press_ai")
+       !
+       CALL press_ai_bcast()
+       !
+       ! ... WANNIER NAMELIST
+       !
+       CALL wannier_defaults( prog )
+       ios = 0
+       IF( ionode ) THEN
+          IF( TRIM( calculation ) == 'cp-wf'       .OR. &
+              TRIM( calculation ) == 'vc-cp-wf'    .OR. &
+              TRIM( calculation ) == 'cp-wf-nscf') THEN
+             READ( unit_loc, wannier, iostat = ios )
+          END IF
+       END IF
+       CALL check_namelist_read(ios, unit_loc, "wannier")
+       !
+       CALL wannier_bcast()
+       CALL wannier_checkin( prog )
+       !
+       ! ... WANNIER_NEW NAMELIST
+       !
+       CALL wannier_ac_defaults( prog )
+       ios = 0
+       IF( ionode ) THEN
+          IF( use_wannier ) THEN
+             READ( unit_loc, wannier_ac, iostat = ios )
+          END IF
+       END IF
+       CALL check_namelist_read(ios, unit_loc, "wannier_ac")
+       !
+       CALL wannier_ac_bcast()
+       CALL wannier_ac_checkin( prog )
+       !
+       RETURN
+       !
+     END SUBROUTINE read_namelists
+     !
+     SUBROUTINE check_namelist_read(ios, unit_loc, nl_name)
+       USE io_global, ONLY : ionode, ionode_id
+       USE mp,        ONLY : mp_bcast
+       USE mp_images, ONLY : intra_image_comm
+       !
+       IMPLICIT NONE
+       INTEGER,INTENT(in) :: ios, unit_loc
+       CHARACTER(LEN=*) :: nl_name
+       CHARACTER(len=512) :: line
+       INTEGER :: ios2
+       !
+       IF( ionode ) THEN
+         ios2=0
+         IF (ios /=0) THEN
+           BACKSPACE(unit_loc)
+           READ(unit_loc,'(A512)', iostat=ios2) line
+         END IF
+       END IF
 
       CALL mp_bcast( ios2, ionode_id, intra_image_comm )
       IF( ios2 /= 0 ) THEN

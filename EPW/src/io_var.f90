@@ -26,14 +26,14 @@
             iospectral_cum, iuwanep, iuwane, iunukk, iudvscf, iuqpeig, iures, &
             iuint3paw
   PUBLIC :: epwdata, iundmedata, iunvmedata, iunksdata, iudyn, iukgmap, iuepb,&
-            iufilfreq, iufilegnv, iufileph, iufilkqmap, &
+            iufilfreq, iufilegnv, iufileph, iufilkqmap, iunpattern, &
             iufilikmap, iueig, iunepmatwp, iunepmatwe, iunkf, iunqf, &
             iufileig, iukmap, crystal, iunifc, iunimem, iunepmatwp2
   PUBLIC :: iuwinfil, iun_plot, iuprojfil, iudecayH, iudecayP, &
             iudecaydyn, iudecayv, iunnkp, iuamn, iummn, iubvec
   PUBLIC :: iufilsigma, iufilseebeck, iufilkappael, iufilkappa, iufilscatt_rate,&
             iufilFi_all, iufilsigma_all, iufiltau_all, iuindabs, iuntau, iuntaucb, &
-            iufilesigma_all
+            iufilesigma_all, epwbib
   PUBLIC :: iunsparseq, iunsparsek, iunsparsei, iunsparsej, iunsparset, iunselecq, &
             iunsparseqcb, iunsparsekcb, iunsparseicb, iunsparsejcb, iunsparsetcb, &
             iunrestart, iufilibtev_sup, iunepmat, iunepmatcb, iufilF, iunepmat_merge,&
@@ -44,7 +44,6 @@
   !
   ! Output of physically relevant quantities (60-100)
   !
-  INTEGER :: iuqpeig         = 59  ! Reading quasi-particle eigenenergies from file
   INTEGER :: lambda_phself   = 60  ! Lambda factor of the phonon self-energy
                                    ! [lambda.phself]
   INTEGER :: linewidth_phself= 61  ! Imaginary part of the phonon self-energy
@@ -77,8 +76,7 @@
   INTEGER :: iukgmap         = 96  ! Map of folding G-vector indexes [.kgmap]
   INTEGER :: iuwanep         = 97  ! Spatial decay of e-p matrix elements in wannier basis
                                    ! Electrons + phonons [epmat_wanep]
-  INTEGER :: iuwane          = 98  ! Spatial decay of matrix elements in Wannier basis
-                                   ! [.epwane]
+  INTEGER :: iuwane          = 98  ! Spatial decay of matrix elements in Wannier basis [.epwane]
   INTEGER :: iuint3paw       = 99  ! Unit for the dvscf_paw_q file
   !
   ! Output of quantity for restarting purposes (101-200)
@@ -127,7 +125,8 @@
   INTEGER :: iunepmatcb      = 141  ! Opening the epmatkqcb file
   INTEGER :: iuntau          = 142  ! Opening the tau file
   INTEGER :: iuntaucb        = 143  ! Opening the taucb file
-
+  INTEGER :: iuqpeig         = 144  ! Reading quasi-particle eigenenergies from file
+  INTEGER :: iunpattern      = 145  ! Unit for reading the pattern files.
   !
   ! Output quantites related to Wannier (201-250)
   !
@@ -160,8 +159,11 @@
   !
   ! Output quantities related to Indirect absorption (301-325)
   INTEGER :: iuindabs        = 301 ! Indirect absorption data
+  ! 
+  ! Miscellaneous (326-350)
+  INTEGER :: epwbib          = 326 ! EPW bibliographic file.       
   !
-  ! Merging of files
+  ! Merging of files (400-450)
   INTEGER :: iunepmat_merge    = 400
   INTEGER :: iunsparseq_merge  = 401
   INTEGER :: iunsparsek_merge  = 402

@@ -53,13 +53,13 @@ SUBROUTINE atomic_rho_g( rhocg, nspina )
   REAL(DP) :: angular(nspina)
   INTEGER :: ir, is, ig, igl, nt, ndm
   !
-  CALL sirius_start_timer(string("qe|atomic_rho_g"))
+  CALL sirius_start_timer("qe|atomic_rho_g")
   !
   IF (use_sirius.AND.use_sirius_rho_atomic) THEN
      rhocg(:,:) = (0.0_dp,0.0_dp)
      ALLOCATE(rho_g(ngm))
      DO nt = 1, ntyp
-        CALL sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, string("rho"), rho_g(1), ngm, mill(1, 1), intra_bgrp_comm)
+        CALL sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, "rho", rho_g, ngm, mill, intra_bgrp_comm)
         !rho_g(:) = rho_g(:) * omega
         IF (upf(nt)%zp > eps8) THEN
            rhoscale = MAX(0.0_dp, upf(nt)%zp - starting_charge(nt)) / upf(nt)%zp
@@ -92,7 +92,7 @@ SUBROUTINE atomic_rho_g( rhocg, nspina )
         ENDIF ! nspina
      ENDDO !nt
      DEALLOCATE(rho_g)
-     CALL sirius_stop_timer(string("qe|atomic_rho_g"))
+     CALL sirius_stop_timer("qe|atomic_rho_g")
      RETURN
   ENDIF
 
@@ -184,7 +184,7 @@ SUBROUTINE atomic_rho_g( rhocg, nspina )
 
   DEALLOCATE (rhocgnt)
 
-  CALL sirius_stop_timer(string("qe|atomic_rho_g"))
+  CALL sirius_stop_timer("qe|atomic_rho_g")
 
 END SUBROUTINE atomic_rho_g
 !

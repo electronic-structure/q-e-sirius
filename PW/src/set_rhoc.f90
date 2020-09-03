@@ -42,7 +42,7 @@ SUBROUTINE set_rhoc
   ! counter on atomic types
   ! counter on g vectors
 
-  CALL sirius_start_timer(string("qe|set_rhoc"))
+  CALL sirius_start_timer("qe|set_rhoc")
 
   rhog_core(:) = 0.0_DP
   rho_core(:)  = 0.0_DP
@@ -59,8 +59,8 @@ SUBROUTINE set_rhoc
      DO nt = 1, ntyp
         IF ( upf(nt)%nlcc ) THEN
            IF (use_sirius.AND.use_sirius_rho_core) THEN
-              CALL sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, string("rhoc"), rho_core_g(1),&
-                                            &ngm, mill(1, 1), intra_bgrp_comm)
+              CALL sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, "rhoc", rho_core_g,&
+                                            &ngm, mill, intra_bgrp_comm)
               DO ng = 1, ngm
                  rhog_core(ng) = rhog_core(ng) + strf(ng,nt) * rho_core_g(ng)
               END DO
@@ -128,7 +128,7 @@ SUBROUTINE set_rhoc
      !
   END IF
   !
-  CALL sirius_stop_timer(string("qe|set_rhoc"))
+  CALL sirius_stop_timer("qe|set_rhoc")
   !
   RETURN
 

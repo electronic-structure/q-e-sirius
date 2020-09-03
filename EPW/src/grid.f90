@@ -29,12 +29,13 @@
     USE mp_world,  ONLY : mpime
     USE kinds,     ONLY : DP
     USE epwcom,    ONLY : filkf, nkf1, nkf2, nkf3, iterative_bte, &
-                          rand_k, rand_nk, mp_mesh_k, system_2d, eig_read, vme
+                          rand_k, rand_nk, mp_mesh_k, system_2d, eig_read, vme, &
+                          fixsym
     USE elph2,     ONLY : nkqtotf, nkqf, xkf, wkf, nkf, xkfd, deltaq
     USE cell_base, ONLY : at, bg
     USE symm_base, ONLY : s, t_rev, time_reversal, set_sym_bl, nrot
     USE io_var,    ONLY : iunkf
-    USE low_lvl,   ONLY : init_random_seed
+    USE low_lvl,   ONLY : init_random_seed, fix_sym
     USE constants_epw, ONLY : eps4
     USE noncollin_module, ONLY : noncolin
     !
@@ -120,6 +121,7 @@
           ! get size of the mp_mesh in the irr wedge
           WRITE(stdout,'(a,3i4)') '     Using uniform MP k-mesh: ', nkf1, nkf2, nkf3
           call set_sym_bl()
+          IF (fixsym) CALL fix_sym(.TRUE.)
           !
           ALLOCATE(xkf_(3, 2 * nkf1 * nkf2 * nkf3), STAT = ierr)
           IF (ierr /= 0) CALL errore('loadkmesh_para', 'Error allocating xkf_', 1)
@@ -355,12 +357,13 @@
     USE mp_world,  ONLY : mpime
     USE kinds,     ONLY : DP
     USE epwcom,    ONLY : filkf, nkf1, nkf2, nkf3, &
-                          rand_k, rand_nk, mp_mesh_k, system_2d, eig_read, vme
+                          rand_k, rand_nk, mp_mesh_k, system_2d, eig_read, vme, &
+                          fixsym
     USE elph2,     ONLY : xkf, wkf, nkqtotf, nkf, nkqf, xkfd, deltaq
     USE cell_base, ONLY : at, bg
     USE symm_base, ONLY : s, t_rev, time_reversal, set_sym_bl, nrot
     USE io_var,    ONLY : iunkf
-    USE low_lvl,   ONLY : init_random_seed
+    USE low_lvl,   ONLY : init_random_seed, fix_sym
     USE constants_epw, ONLY : eps4
     !
     IMPLICIT NONE
@@ -435,13 +438,14 @@
           ! get size of the mp_mesh in the irr wedge
           WRITE(stdout, '(a,3i4)') '     Using uniform k-mesh: ', nkf1, nkf2, nkf3
           CALL set_sym_bl()
+          IF (fixsym) CALL fix_sym(.TRUE.)
           !
           ALLOCATE(xkf(3, 2 * nkf1 * nkf2 * nkf3), STAT = ierr)
           IF (ierr /= 0) CALL errore('loadkmesh_serial', 'Error allocating xkf', 1)
           ALLOCATE(wkf(2 * nkf1 * nkf2 * nkf3), STAT = ierr)
           IF (ierr /= 0) CALL errore('loadkmesh_serial', 'Error allocating wkf', 1)
           ! the result of this call is just nkqtotf
-          CALL kpoint_grid(nrot, time_reversal, s, t_rev, bg, nkf1 * nkf2 * nkf3, &
+          CALL kpoint_grid(nrot, time_reversal, .FALSE., s, t_rev, bg, nkf1 * nkf2 * nkf3, &
                0, 0, 0, nkf1, nkf2, nkf3, nkqtotf, xkf, wkf)
           DEALLOCATE(xkf, STAT = ierr)
           IF (ierr /= 0) CALL errore('loadkmesh_serial', 'Error deallocating xkf', 1)
@@ -455,7 +459,7 @@
           IF (ierr /= 0) CALL errore('loadkmesh_serial', 'Error allocating xkf_tmp', 1)
           ALLOCATE(wkf_tmp(nkqtotf), STAT = ierr)
           IF (ierr /= 0) CALL errore('loadkmesh_serial', 'Error allocating wkf_tmp', 1)
-          CALL kpoint_grid(nrot, time_reversal, s, t_rev, bg, nkf1 * nkf2 * nkf3, &
+          CALL kpoint_grid(nrot, time_reversal, .FALSE., s, t_rev, bg, nkf1 * nkf2 * nkf3, &
                0, 0, 0, nkf1, nkf2, nkf3, nkqtotf, xkf_tmp, wkf_tmp)
           !
           ! assign to k and k+q for xkf and wkf
@@ -888,14 +892,15 @@
     USE kinds,     ONLY : DP
     USE io_global, ONLY : stdout
     USE epwcom,    ONLY : filqf, nqf1, nqf2, nqf3, plselfen, specfun_pl, &
-                          rand_q, rand_nq, mp_mesh_q, system_2d, lscreen
+                          rand_q, rand_nq, mp_mesh_q, system_2d, lscreen, &
+                          fixsym
     USE elph2,     ONLY : xqf, wqf, nqf, nqtotf
     USE cell_base, ONLY : at, bg
     USE symm_base, ONLY : s, t_rev, time_reversal, set_sym_bl, nrot
     USE io_var,    ONLY : iunqf
     USE noncollin_module, ONLY : noncolin
     USE constants_epw, ONLY : eps4
-    USE low_lvl,   ONLY : init_random_seed
+    USE low_lvl,   ONLY : init_random_seed, fix_sym
     !
     IMPLICIT NONE
     !
@@ -955,6 +960,7 @@
           ! get size of the mp_mesh in the irr wedge
           WRITE(stdout, '(a,3i4)') '     Using uniform MP q-mesh: ', nqf1, nqf2, nqf3
           call set_sym_bl()
+          IF (fixsym) CALL fix_sym(.TRUE.)
           !
           ALLOCATE(xqf_(3, nqf1 * nqf2 * nqf3), STAT = ierr)
           IF (ierr /= 0) CALL errore('loadqmesh_para', 'Error allocating xqf_ ', 1)
@@ -1107,12 +1113,12 @@
     USE io_global, ONLY : stdout
     USE epwcom,    ONLY : filqf, nqf1, nqf2, nqf3, &
                           rand_q, rand_nq, mp_mesh_q, system_2d, lscreen, &
-                          plselfen, specfun_pl
+                          plselfen, specfun_pl, fixsym
     USE elph2,     ONLY : xqf, wqf, nqtotf, nqf
     USE cell_base, ONLY : at, bg
     USE symm_base, ONLY : s, t_rev, time_reversal, set_sym_bl, nrot
     USE io_var,    ONLY : iunqf
-    USE low_lvl,   ONLY : init_random_seed
+    USE low_lvl,   ONLY : init_random_seed, fix_sym
     USE constants_epw, ONLY : eps4
     !
     IMPLICIT NONE
@@ -1165,13 +1171,14 @@
           ! get size of the mp_mesh in the irr wedge
           WRITE (stdout, '(a,3i4)') '     Using uniform q-mesh: ', nqf1, nqf2, nqf3
           call set_sym_bl()
+          IF (fixsym) CALL fix_sym(.TRUE.)
           !
           ALLOCATE(xqf(3, nqf1 * nqf2 * nqf3), STAT = ierr)
           IF (ierr /= 0) CALL errore('loadqmesh_serial', 'Error allocating xqf', 1)
           ALLOCATE(wqf(nqf1 * nqf2 * nqf3), STAT = ierr)
           IF (ierr /= 0) CALL errore('loadqmesh_serial', 'Error allocating wqf', 1)
           ! the result of this call is just nkqtotf
-          CALL kpoint_grid(nrot, time_reversal, s, t_rev, bg, nqf1 * nqf2 * nqf3, &
+          CALL kpoint_grid(nrot, time_reversal, .FALSE., s, t_rev, bg, nqf1 * nqf2 * nqf3, &
                0, 0, 0, nqf1, nqf2, nqf3, nqtotf, xqf, wqf)
           DEALLOCATE(xqf, STAT = ierr)
           IF (ierr /= 0) CALL errore('loadqmesh_serial', 'Error deallocating xqf', 1)
@@ -1181,7 +1188,7 @@
           IF (ierr /= 0) CALL errore('loadqmesh_serial', 'Error allocating xqf', 1)
           ALLOCATE(wqf(nqtotf), STAT = ierr)
           IF (ierr /= 0) CALL errore('loadqmesh_serial', 'Error allocating wqf', 1)
-          CALL kpoint_grid(nrot, time_reversal, s, t_rev, bg, nqf1 * nqf2 * nqf3, &
+          CALL kpoint_grid(nrot, time_reversal, .FALSE., s, t_rev, bg, nqf1 * nqf2 * nqf3, &
                0,0,0, nqf1, nqf2, nqf3, nqtotf, xqf, wqf)
           !
           ! bring xqf in crystal coordinates
@@ -1289,15 +1296,16 @@
     USE mp,            ONLY : mp_sum, mp_bcast
     USE constants_epw, ONLY : twopi, ci, zero, eps6, ryd2ev, czero
     USE epwcom,        ONLY : nbndsub, fsthick, use_ws, mp_mesh_k, nkf1, nkf2, &
-                              nkf3, iterative_bte, restart_step, scissor
+                              nkf3, iterative_bte, restart_step, scissor, ephwrite, &
+                              fixsym
     USE noncollin_module, ONLY : noncolin
     USE pwcom,         ONLY : ef, nelec
     USE cell_base,     ONLY : bg
     USE symm_base,     ONLY : s, t_rev, time_reversal, set_sym_bl, nrot
     USE wan2bloch,     ONLY : hamwan2bloch
-    USE io_eliashberg, ONLY : kpmq_map
     USE kinds_epw,     ONLY : SIK2
     USE poolgathering, ONLY : poolgather
+    USE low_lvl,       ONLY : fix_sym
     !
     IMPLICIT NONE
     !
@@ -1446,18 +1454,18 @@
           s_bztoibz(:) = 0
           !
           CALL set_sym_bl()
+          IF (fixsym) CALL fix_sym(.TRUE.)
           !
           ! What we get from this call is bztoibz
           CALL kpoint_grid_epw(nrot, time_reversal, .FALSE., s, t_rev, nkf1, nkf2, nkf3, bztoibz, s_bztoibz)
           !
-          IF (iterative_bte) THEN
+          IF (iterative_bte .OR. ephwrite) THEN
             bztoibz_tmp(:) = 0
             DO ikbz = 1, nkf1 * nkf2 * nkf3
               bztoibz_tmp(ikbz) = map_rebal(bztoibz(ikbz))
             ENDDO
             bztoibz(:) = bztoibz_tmp(:)
           ENDIF
-          !
           !
         ENDIF ! mp_mesh_k
         !
@@ -1697,7 +1705,9 @@
     INTEGER :: rest
     !! Rest of the points
     INTEGER :: tot
-    !! Total number of k-point
+    !! Total number of k-point (quotient)
+    INTEGER :: counter
+    !! temp variable
     INTEGER :: ierr
     !! Error status
     INTEGER :: kpt_in(nkqtotf)
@@ -1782,17 +1792,19 @@
     ! We then split those k-points such that the first core has the first k-point,
     ! the second core has the second k-point etc
     !
-    tot = (nkqtotf / (2 * npool))
-    rest = (nktotf - tot * npool)
-    !
+    tot = (nkqtotf / (2 * npool))         ! quotient
+    rest = (nktotf - tot * npool)         ! reminder
+    counter = 0
     DO ipool = 1, npool
       DO ik = 1,  tot
-        map_rebal_inv_tmp(ik + (ipool - 1) * tot) = map_rebal_inv(npool * ik - (npool - ipool))
+        counter = counter + 1
+        map_rebal_inv_tmp(counter) = map_rebal_inv(npool * ik - (npool - ipool))
       ENDDO
-    ENDDO
-    ! Do the rest
-    DO ik = 1, rest
-      map_rebal_inv_tmp(ik + npool * tot) = map_rebal_inv(npool * tot + ik)
+      !Do the rest
+      IF (ipool <= rest) THEN
+        counter = counter + 1
+        map_rebal_inv_tmp(counter) = map_rebal_inv(npool * (tot + 1) - (npool - ipool))
+      ENDIF
     ENDDO
     map_rebal_inv(:) = map_rebal_inv_tmp(:)
     !
@@ -1966,6 +1978,65 @@
     !
     !-----------------------------------------------------------------------
     END SUBROUTINE special_points
+    !-----------------------------------------------------------------------
+    !
+    !-----------------------------------------------------------------------
+    SUBROUTINE kpmq_map(xk, xq, sign1, nkq)
+    !-----------------------------------------------------------------------
+    !!
+    !! this routine finds the index of k+q or k-q point on the fine k-mesh
+    !!
+    USE kinds,     ONLY : DP
+    USE epwcom,    ONLY : nkf1, nkf2, nkf3
+    USE constants_epw, ONLY : eps5
+    USE mp,        ONLY : mp_bcast, mp_barrier
+    USE kfold,     ONLY : backtoBZ
+    !
+    IMPLICIT NONE
+    !
+    INTEGER, INTENT(in) :: sign1
+    !! +1 for searching k+q, -1 for k-q
+    INTEGER, INTENT(out) :: nkq
+    !! the index of k+sign*q
+    !
+    REAL(KIND = DP), INTENT(in) :: xk(3)
+    !! coordinates of k points
+    REAL(KIND = DP), INTENT(in) :: xq(3)
+    !! coordinates of q points
+    !
+    ! Local variables
+    LOGICAL :: in_the_list
+    !! Check if k point is in the list
+    !
+    REAL(KIND = DP) :: xx, yy, zz
+    !! Temporary variables
+    REAL(KIND = DP) :: xxk(3)
+    !! k + (sign1) * q
+    !
+    xxk(:) = xk(:) + DBLE(sign1) * xq(:)
+    xx = xxk(1) * nkf1
+    yy = xxk(2) * nkf2
+    zz = xxk(3) * nkf3
+    in_the_list = ABS(xx - NINT(xx)) <= eps5 .AND. &
+                  ABS(yy - NINT(yy)) <= eps5 .AND. &
+                  ABS(zz - NINT(zz)) <= eps5
+    IF (.NOT. in_the_list) CALL errore('kpmq_map', 'k+q does not fall on k-grid', 1)
+    !
+    !  find the index of this k+q or k-q in the k-grid
+    !  make sure xx, yy, zz are in the 1st BZ
+    !
+    CALL backtoBZ(xx, yy, zz, nkf1, nkf2, nkf3)
+    !
+    ! since k- and q- meshes are commensurate, nkq can be easily found
+    !
+    nkq = NINT(xx) * nkf2 * nkf3 + NINT(yy) * nkf3 + NINT(zz) + 1
+    !
+    !  Now nkq represents the index of k+sign*q on the fine k-grid.
+    !
+    RETURN
+    !
+    !-----------------------------------------------------------------------
+    END SUBROUTINE kpmq_map
     !-----------------------------------------------------------------------
     !
     !-----------------------------------------------------------------------

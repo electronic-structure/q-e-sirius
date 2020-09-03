@@ -705,7 +705,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
         ! ... is parallelized on the entire image
         !
         ! IF ( my_pool_id == root_pool ) 
-        CALL sirius_start_timer(string("qe|mix"))
+        CALL sirius_start_timer("qe|mix")
         CALL mix_rho( rho, rhoin, mixing_beta, dr2, tr2_min, iter, nmix, &
                       iunmix, conv_elec )
         !
@@ -726,7 +726,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
         CALL bcast_scf_type( rhoin, root_pool, inter_pool_comm )
         CALL mp_bcast( dr2, root_pool, inter_pool_comm )
         CALL mp_bcast( conv_elec, root_pool, inter_pool_comm )
-        CALL sirius_stop_timer(string("qe|mix"))
+        CALL sirius_stop_timer("qe|mix")
         !
         !
         IF (.NOT. scf_must_converge .AND. idum == niter) conv_elec = .TRUE.
@@ -1492,7 +1492,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
             /'      -> PAW hartree energy PS =',F17.8,' Ry' &
             /'      -> PAW xc energy AE      =',F17.8,' Ry' &
             /'      -> PAW xc energy PS      =',F17.8,' Ry' &
-            /'      -> total E_H with PAW    =',F17.8,' Ry'& 
+            /'      -> total E_H with PAW    =',F17.8,' Ry' &
             /'      -> total E_XC with PAW   =',F17.8,' Ry' )
 9069 FORMAT( '     scf correction            =',F17.8,' Ry' )
 9070 FORMAT( '     smearing contrib. (-TS)   =',F17.8,' Ry' )

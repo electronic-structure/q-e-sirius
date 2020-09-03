@@ -64,7 +64,7 @@ PROGRAM pwscf
   !
   CALL mp_startup( start_images=.TRUE. )
   IF (use_sirius) THEN
-     CALL sirius_initialize(call_mpi_init=bool(.false.))
+     CALL sirius_initialize(call_mpi_init=.false.)
   ENDIF
   !
   IF( negrp > 1 .OR. do_diag_in_band_group ) THEN

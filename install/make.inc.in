@@ -64,6 +64,7 @@ MOD_FLAG      = @imod@
 # Each Makefile can add directories to MODFLAGS and libraries to QEMODS
 
 BASEMOD_FLAGS= $(MOD_FLAG)$(TOPDIR)/iotk/src \
+               $(MOD_FLAG)$(TOPDIR)/upflib \
                $(MOD_FLAG)$(TOPDIR)/Modules \
                $(MOD_FLAG)$(TOPDIR)/FFTXlib \
 	       $(MOD_FLAG)$(TOPDIR)/LAXlib \
@@ -120,7 +121,8 @@ FFLAGS_NOMAIN   = @fflags_nomain@
 
 # Linker, linker-specific flags (if any)
 # Typically LD coincides with F90 or MPIF90, LD_LIBS is empty
-# for libxc, set LD_LIBS=-L/path/to/libxc/lib/ -lxcf90 -lxcf03 -lxc
+# for libxc, set LD_LIBS=-L/path/to/libxc/lib/ -lxcf90 -lxc
+# If libxc is older than v5.0.0 replace -lxcf90 with -lxcf03
 
 LD             = @ld@
 LDFLAGS        = @ldflags@

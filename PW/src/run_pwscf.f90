@@ -6,16 +6,16 @@
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
 !----------------------------------------------------------------------------
-SUBROUTINE run_pwscf( exit_status ) 
+SUBROUTINE run_pwscf( exit_status )
   !----------------------------------------------------------------------------
-  !! Author: Paolo Giannozzi  
-  !! License: GNU  
+  !! Author: Paolo Giannozzi
+  !! License: GNU
   !! Summary: Run an instance of the Plane Wave Self-Consistent Field code
   !
-  !! Run an instance of the Plane Wave Self-Consistent Field code 
-  !! MPI initialization and input data reading is performed in the 
-  !! calling code - returns in exit_status the exit code for pw.x, 
-  !! returned in the shell. Values are:  
+  !! Run an instance of the Plane Wave Self-Consistent Field code
+  !! MPI initialization and input data reading is performed in the
+  !! calling code - returns in exit_status the exit code for pw.x,
+  !! returned in the shell. Values are:
   !! * 0: completed successfully
   !! * 1: an error has occurred (value returned by the errore() routine)
   !! * 2-127: convergence error
@@ -34,7 +34,8 @@ SUBROUTINE run_pwscf( exit_status )
   !!
   !
   USE io_global,            ONLY : stdout, ionode, ionode_id
-  USE parameters,           ONLY : ntypx, npk, lmaxx
+  USE parameters,           ONLY : ntypx, npk
+  USE upf_params,           ONLY : lmaxx
   USE cell_base,            ONLY : fix_volume, fix_area
   USE control_flags,        ONLY : conv_elec, gamma_only, ethr, lscf, treinit_gvecs
   USE control_flags,        ONLY : conv_ions, istep, nstep, restart, lmd, lbfgs, lensemb
@@ -50,10 +51,10 @@ SUBROUTINE run_pwscf( exit_status )
   USE qmmm,                 ONLY : qmmm_initialization, qmmm_shutdown, &
                                    qmmm_update_positions, qmmm_update_forces
   USE qexsd_module,         ONLY : qexsd_set_status
-  USE funct,                ONLY : dft_is_hybrid, stop_exx 
+  USE funct,                ONLY : dft_is_hybrid, stop_exx
 #ifdef use_beef
   USE beef,                 ONLY : beef_energies
-#endif 
+#endif
   USE cell_base,            ONLY : bg
   USE gvect,                ONLY : ngm, g, eigts1, eigts2, eigts3
   USE ions_base,            ONLY : nat, nsp, ityp, tau
@@ -77,7 +78,7 @@ SUBROUTINE run_pwscf( exit_status )
   !
   ! ... local variables
   !
-  INTEGER :: idone 
+  INTEGER :: idone
   ! counter of electronic + ionic steps done in this run
   INTEGER :: ions_status
   ! ions_status =  3  not yet converged
@@ -94,7 +95,7 @@ SUBROUTINE run_pwscf( exit_status )
   !
   ! ... needs to come before iosys() so some input flags can be
   !     overridden without needing to write PWscf specific code.
-  ! 
+  !
   CALL qmmm_initialization()
   !
   ! ... convert to internal variables
@@ -149,7 +150,7 @@ SUBROUTINE run_pwscf( exit_status )
      !
      ! ... electronic self-consistency or band structure calculation
      !
-     CALL sirius_start_timer(string("qe|KS"))
+     CALL sirius_start_timer("qe|KS")
      IF ( .NOT. lscf) THEN
         CALL non_scf()
      ELSE
@@ -165,7 +166,7 @@ SUBROUTINE run_pwscf( exit_status )
        ! todo also retrieve  occupation numbers
      ENDIF
 
-     CALL sirius_stop_timer(string("qe|KS"))
+     CALL sirius_stop_timer("qe|KS")
      IF (use_sirius) THEN
        CALL sirius_get_parameters(sctx, evp_work_count=evp_work_count)
        CALL sirius_get_parameters(sctx, num_loc_op_applied=num_loc_op_applied)
@@ -206,7 +207,7 @@ SUBROUTINE run_pwscf( exit_status )
      ! ... ionic section starts here
      !
      CALL start_clock( 'ions' ); !write(*,*)' start ions' ; FLUSH(6)
-     CALL sirius_start_timer(string("qe|ions"))
+     CALL sirius_start_timer("qe|ions")
      conv_ions = .TRUE.
      !
      ! ... force calculation
@@ -250,7 +251,7 @@ SUBROUTINE run_pwscf( exit_status )
         !
      END IF
      !
-     CALL sirius_stop_timer(string("qe|ions"))
+     CALL sirius_stop_timer("qe|ions")
      CALL stop_clock( 'ions' ); !write(*,*)' stop ions' ; FLUSH(6)
      !
      ! ... send out forces to MM code in QM/MM run
@@ -275,7 +276,7 @@ SUBROUTINE run_pwscf( exit_status )
            ! ... final scf calculation with G-vectors for final cell
            !
            lbfgs=.FALSE.; lmd=.FALSE.
-           WRITE( UNIT = stdout, FMT=9020 ) 
+           WRITE( UNIT = stdout, FMT=9020 )
            CALL reset_gvectors( )
            !
         ELSE IF ( ions_status == 2 ) THEN
@@ -295,7 +296,7 @@ SUBROUTINE run_pwscf( exit_status )
               !
            ELSE
               IF (use_sirius) THEN
-                 CALL sirius_start_timer(string("qe|update"))
+                 CALL sirius_start_timer("qe|update")
                  IF ( lmovecell ) THEN
                    CALL scale_h()
                  ENDIF
@@ -306,7 +307,7 @@ SUBROUTINE run_pwscf( exit_status )
                  CALL potinit
                  CALL newd
                  CALL sirius_initialize_subspace(gs_handler, ks_handler)
-                 CALL sirius_stop_timer(string("qe|update"))
+                 CALL sirius_stop_timer("qe|update")
               ELSE
               !
               ! ... update the wavefunctions, charge density, potential
@@ -328,6 +329,9 @@ SUBROUTINE run_pwscf( exit_status )
      ! ... the first scf iteration of each ionic step (after the first)
      !
      ethr = 1.0D-6
+     IF (use_sirius) THEN
+        ethr = 1.0D-2
+     ENDIF
      !
   ENDDO main_loop
   ! write basic results to a JSON file
@@ -340,10 +344,10 @@ SUBROUTINE run_pwscf( exit_status )
   CALL qexsd_set_status( exit_status )
 #ifdef use_beef
   IF ( lensemb ) CALL beef_energies( )
-#endif 
-  CALL sirius_start_timer(string("qe|punch"))
+#endif
+  CALL sirius_start_timer("qe|punch")
   CALL punch( 'all' )
-  CALL sirius_stop_timer(string("qe|punch"))
+  CALL sirius_stop_timer("qe|punch")
   !
   CALL qmmm_shutdown()
   !
@@ -368,7 +372,7 @@ SUBROUTINE reset_gvectors( )
   !! Prepare a new scf calculation with newly recomputed grids,
   !! restarting from scratch, not from available data of previous
   !! steps (dimensions and file lengths will be different in general)
-  !! Useful as a check of variable-cell optimization: 
+  !! Useful as a check of variable-cell optimization:
   !! once convergence is achieved, compare the final energy with the
   !! energy computed with G-vectors and plane waves for the final cell
   !
@@ -377,7 +381,7 @@ SUBROUTINE reset_gvectors( )
   USE fft_base,   ONLY : dfftp
   USE fft_base,   ONLY : dffts
   USE funct,      ONLY : dft_is_hybrid
-  ! 
+  !
   IMPLICIT NONE
   !
   ! ... get magnetic moments from previous run before charge is deleted
@@ -409,20 +413,20 @@ END SUBROUTINE reset_gvectors
 !-------------------------------------------------------------
 SUBROUTINE reset_exx( )
 !-------------------------------------------------------------
-  USE fft_types,  ONLY : fft_type_deallocate 
-  USE exx_base,   ONLY : exx_grid_init, exx_mp_init, exx_div_check, & 
-                         coulomb_fac, coulomb_done 
-  USE exx,        ONLY : dfftt, exx_fft_create, deallocate_exx 
-  USE exx_band,   ONLY : igk_exx 
-  ! 
+  USE fft_types,  ONLY : fft_type_deallocate
+  USE exx_base,   ONLY : exx_grid_init, exx_mp_init, exx_div_check, &
+                         coulomb_fac, coulomb_done
+  USE exx,        ONLY : dfftt, exx_fft_create, deallocate_exx
+  USE exx_band,   ONLY : igk_exx
+  !
   IMPLICIT NONE
   !
   ! ... re-set EXX-related stuff...
   !
   IF (ALLOCATED(coulomb_fac) ) DEALLOCATE( coulomb_fac, coulomb_done )
   CALL deallocate_exx( )
-  IF (ALLOCATED(igk_exx)) DEALLOCATE(igk_exx) 
-  dfftt%nr1=0; dfftt%nr2=0; dfftt%nr3=0 
+  IF (ALLOCATED(igk_exx)) DEALLOCATE(igk_exx)
+  dfftt%nr1=0; dfftt%nr2=0; dfftt%nr3=0
   CALL fft_type_deallocate( dfftt ) ! FIXME: is this needed?
   !
   ! ... re-compute needed EXX-related stuff
@@ -431,16 +435,16 @@ SUBROUTINE reset_exx( )
   CALL exx_mp_init()
   CALL exx_fft_create()
   CALL exx_div_check()
-  ! 
+  !
 END SUBROUTINE reset_exx
 !
 !
 !----------------------------------------------------------------
 SUBROUTINE reset_magn()
   !----------------------------------------------------------------
-  !! LSDA optimization: a final configuration with zero 
-  !! absolute magnetization has been found and we check 
-  !! if it is really the minimum energy structure by 
+  !! LSDA optimization: a final configuration with zero
+  !! absolute magnetization has been found and we check
+  !! if it is really the minimum energy structure by
   !! performing a new scf iteration without any "electronic" history.
   !
   USE io_global,    ONLY : stdout
@@ -460,16 +464,16 @@ SUBROUTINE reset_magn()
            & /5X,'                   absolute magnetization has been found' )
 9020 FORMAT( /5X,'the program is checking if it is really ', &
            &     'the minimum energy structure',             &
-           & /5X,'by performing a new scf iteration ',       & 
-           &     'without any "electronic" history' )               
+           & /5X,'by performing a new scf iteration ',       &
+           &     'without any "electronic" history' )
   !
 END SUBROUTINE reset_magn
 !
 !
 !-------------------------------------------------------------------
-SUBROUTINE reset_starting_magnetization() 
+SUBROUTINE reset_starting_magnetization()
   !-------------------------------------------------------------------
-  !! On input, the scf charge density is needed.  
+  !! On input, the scf charge density is needed.
   !! On output, new values for starting_magnetization, angle1, angle2
   !! estimated from atomic magnetic moments - to be used in last step.
   !

@@ -87,7 +87,7 @@ SUBROUTINE setup()
   USE qexsd_copy,         ONLY : qexsd_copy_efermi
   USE qes_libs_module,    ONLY : qes_reset
   USE qes_types_module,   ONLY : output_type
-  USE exx,                ONLY : ecutfock, nbndproj
+  USE exx,                ONLY : ecutfock
   USE exx_base,           ONLY : exx_grid_init, exx_mp_init, exx_div_check
   USE funct,              ONLY : dft_is_meta, dft_is_hybrid, dft_is_gradient
   USE paw_variables,      ONLY : okpaw
@@ -110,7 +110,7 @@ SUBROUTINE setup()
 #else
   LOGICAL :: lpara = .false.
 #endif
-  call sirius_start_timer(string("qe|setup"))
+  call sirius_start_timer("qe|setup")
 
   !
   ! ... okvan/okpaw = .TRUE. : at least one pseudopotential is US/PAW
@@ -210,7 +210,7 @@ SUBROUTINE setup()
   IF ( noncolin  ) THEN
      domag = ANY ( ABS( starting_magnetization(1:ntyp) ) > 1.D-6 )
   ELSE
-     domag = .TRUE.
+     domag = .false.
   END IF
   !
   !  Set the different spin indices
@@ -655,7 +655,7 @@ SUBROUTINE setup()
   !
   IF (lda_plus_u .or. okpaw .or. (okvan.and.dft_is_hybrid()) ) CALL d_matrix( d1, d2, d3 )
   !
-  call sirius_stop_timer(string("qe|setup"))
+  call sirius_stop_timer("qe|setup")
   RETURN
   !
 END SUBROUTINE setup

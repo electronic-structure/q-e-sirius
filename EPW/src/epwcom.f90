@@ -169,6 +169,18 @@
   !! if .TRUE. compute the long range interaction of el-ph. Can only be .TRUE. if lpolar is also true.
   LOGICAL :: shortrange
   !! if .TRUE. compute the long range interaction of el-ph. Can only be .TRUE. if lpolar is also true.
+  LOGICAL :: fixsym
+  !! if .TRUE. try to fix the symmetry-related issues
+  LOGICAL :: epw_no_t_rev
+  !! if .TRUE. set t_rev = 0
+  LOGICAL :: epw_tr
+  !! set time_reversal to epw_tr
+  LOGICAL :: epw_nosym
+  !! If .TRUE. set nsym=1 (nrot=1) and invsym=.FALSE.
+  LOGICAL :: epw_noinv
+  !! If .TRUE. set imq to non-zero value
+  LOGICAL :: epw_crysym
+  !! If .TRUE. calculate the symmetry of the crystal
   !
   INTEGER :: ngaussw
   !! smearing type for Fermi surface average in e-ph coupling after wann. interp.
@@ -176,8 +188,6 @@
   !! nr. of bins for frequency scan in \delta( e_k - e_k+q - w ) when strict sel. rule is applied
   INTEGER :: nbndsub
   !! nr. of bands in the optimal subspace (when disentanglement is used)
-  INTEGER :: nbndskip
-  !! nr. of bands to be skipped when we use only a subspace (this is nfirstwin-1 in Marzari's notation)
   INTEGER :: num_iter
   !! nr. of steps used in creating the maximally localized Wannier functions
   INTEGER :: iprint
@@ -204,8 +214,8 @@
   !! Switch for symmetry operations
   INTEGER :: nwanxx = 200
   !! parameter used in writing prefix.win file.
-  INTEGER :: ntempxx = 25
-  !! Maximum number of wannier functions
+  INTEGER :: ntempxx = 50
+  !! Maximum number of temperatures
   INTEGER :: etf_mem
   !! If 0, all in memory. If 1, less is stored in memory (read files).
   INTEGER :: scr_typ
@@ -214,6 +224,14 @@
   !! band index for which the cumulant calculation is done
   INTEGER :: mob_maxiter
   !! Maximum number of iteration for the IBTE
+  INTEGER :: nstemp
+  !! nr. of temperature points for temperature dependent caclulations
+  REAL(KIND = DP) :: tempsmin
+  !! min. temperature in Eliashberg equations - deprecated as an input parameter
+  REAL(KIND = DP) :: tempsmax
+  !! max. temperature - deprecated as an input parameter
+  REAL(KIND = DP) :: temps(50)
+  !! input temperature array (units of Kelvin)
   !
   ! Superconductivity
   INTEGER :: nswfc
@@ -222,8 +240,6 @@
   !! nr. of grid points between (wsfc,wscut)
   INTEGER :: nswi
   !! nr. of grid points for Eliashberg equations of imaginary axis
-  INTEGER :: nstemp
-  !! nr. of temperature points for Eliashberg equations
   INTEGER :: nsiter
   !! nr. of iterations for self-consistency
   INTEGER :: broyden_ndim
@@ -237,8 +253,6 @@
   !! smearing width for Fermi surface average in e-ph coupling after wann interp
   REAL(KIND = DP) :: fsthick
   !! thickness of the Fermi shell for averaging the e-ph matrix element
-  REAL(KIND = DP) :: eptemp
-  ! temperature for the electronic Fermi occupations in the e-p calculation
   REAL(KIND = DP) :: wmin
   !! min frequency for frequency scan in \delta( e_k - e_k+q - w ) when strict sel. rule is applied
   REAL(KIND = DP) :: wmax
@@ -287,10 +301,6 @@
   !! power used to define a non-uniform grid between wsfc and wscut
   REAL(KIND = DP) :: wscut
   !! upper limit cutoff frequency in Eliashberg equations (at least 5 times wsphmax)
-  REAL(KIND = DP) :: tempsmin
-  !! min. temperature in Eliashberg equations
-  REAL(KIND = DP) :: tempsmax
-  !! max. temperature
   REAL(KIND = DP) :: broyden_beta
   !! mixing factor for broyden mixing
   REAL(KIND = DP) :: conv_thr_raxis
@@ -303,15 +313,13 @@
   REAL(KIND = DP) :: gap_edge
   !! initial guess of the superconducting gap
   REAL(KIND = DP) :: max_memlt
-  !! maximum memory that can be allocated per pool
+  !! maximum memory that can be allocated per pool 
   REAL(KIND = DP) :: fermi_energy
   !! fermi energy is given in the input file
   REAL(KIND = DP) :: wmin_specfun
   !! min frequency in electron spectral function due to e-p interaction
   REAL(KIND = DP) :: wmax_specfun
   !! max frequency in electron spectral function due to e-p `interaction
-  REAL(KIND = DP) :: temps(50)
-  !! temperature entering in the Eliashberg equtions (units of Kelvin)
   !
   ! Conductivity
   REAL(KIND = DP) :: scissor
@@ -343,7 +351,9 @@
   REAL(KIND = DP) :: n_r
   !! Refractive index
   !
+  ! ----------------------------------------------------------------------------------
   ! Added for polaron calculations. Originally by Danny Sio, modified by Chao Lian.
+  ! Shell implementation for future use.
   INTEGER :: num_cbands
   !! number of conduction bands accounted in the Hilbert space of polaron Hamilontian
   INTEGER :: start_band
@@ -366,23 +376,23 @@
   !! initial polaron wavefuntion with 1:Gaussian package and 2:Random number
   INTEGER :: niterPlrn
   !! Maximum number of polaron SCF loops.
-  REAL (KIND=DP) :: spherical_cutoff
+  REAL(KIND = DP) :: spherical_cutoff
   !!  spherical_cutoff for fast convergence in polaron calculation
-  REAL (KIND=DP) :: conv_thr_polaron
+  REAL(KIND = DP) :: conv_thr_polaron
   !!  convergent threshold for polaron calculation
-  REAL (KIND=DP) :: r01, r02, r03
+  REAL(KIND = DP) :: r01, r02, r03
   !!  x,y,z Carsteian coordinate of polaron centre
-  REAL (KIND=DP) :: emin_plrn, emax_plrn, sigma_edos_plrn
+  REAL(KIND = DP) :: emin_plrn, emax_plrn, sigma_edos_plrn
   !! Electron Energy range in polaron DOS calculation
-  REAL (KIND=DP) :: pmin_plrn, pmax_plrn, sigma_pdos_plrn
+  REAL(KIND = DP) :: pmin_plrn, pmax_plrn, sigma_pdos_plrn
   !! Phonon Energy range in polaron DOS calculation
-  REAL (KIND=DP) :: n_dop
+  REAL(KIND = DP) :: n_dop
   !! extra added charge per cell (as tot_charge, with opposite sign)
-  REAL (KIND=DP) :: sigma_plrn
+  REAL(KIND = DP) :: sigma_plrn
   !! decay radius of polaron wavefunction in initialization
-  REAL (KIND=DP) :: ethr_Plrn
+  REAL(KIND = DP) :: ethr_Plrn
   !! decay radius of polaron wavefunction in initialization
-  REAL (KIND=DP) :: mixing_Plrn
+  REAL(KIND = DP) :: mixing_Plrn
   !! Mixing weight in Self-consistency
   LOGICAL :: wfcelec
   !! if .true. calculates perturbated part of the wavefunction
@@ -406,6 +416,7 @@
   !! if .true. calculating contributed electron dos
   LOGICAL :: phonon_dos
   !! if .true. calculating excited phonon dos
+  ! ----------------------------------------------------------------------------------
   !
   !-----------------------------------------------------------------------
   END MODULE control_epw

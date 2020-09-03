@@ -42,7 +42,7 @@ SUBROUTINE init_run()
   LOGICAL exst_file,exst_mem
   !
   CALL start_clock( 'init_run' )
-  CALL sirius_start_timer(string("qe|init_run"))
+  CALL sirius_start_timer("qe|init_run")
   !
   ! ... calculate limits of some indices, used in subsequent allocations
   !
@@ -120,9 +120,9 @@ SUBROUTINE init_run()
     CALL init_us_1()
     ! at this point FFT dimensions are known and we can pass them to SIRIUS
     CALL clear_sirius
-    CALL sirius_start_timer(string("qe|init_run|setup_sirius"))
+    CALL sirius_start_timer("qe|init_run|setup_sirius")
     CALL setup_sirius
-    CALL sirius_stop_timer(string("qe|init_run|setup_sirius"))
+    CALL sirius_stop_timer("qe|init_run|setup_sirius")
   ENDIF
   CALL hinit0()
   !
@@ -153,7 +153,7 @@ SUBROUTINE init_run()
   IF ( lmd ) CALL allocate_dyn_vars()
   !
   CALL stop_clock( 'init_run' )
-  CALL sirius_stop_timer(string("qe|init_run"))
+  CALL sirius_stop_timer("qe|init_run")
   !
   RETURN
   !

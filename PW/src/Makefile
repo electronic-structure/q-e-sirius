@@ -252,8 +252,7 @@ wannier_clean.o \
 wannier_occ.o \
 mod_sirius.o
 
-QEMODS=../../Modules/libqemod.a \
-       ../../KS_Solvers/libks_solvers.a \
+QEMODS=../../Modules/libqemod.a ../../KS_Solvers/libks_solvers.a ../../upflib/libupf.a \
        ../../FFTXlib/libqefft.a ../../LAXlib/libqela.a ../../UtilXlib/libutil.a ../../dft-d3/libdftd3qe.a
 
 TLDEPS= bindir libs mods libks_solvers dftd3

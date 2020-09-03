@@ -66,26 +66,30 @@ SUBROUTINE stress( sigma )
      RETURN
   END IF
   !
-  CALL sirius_start_timer(string("qe|stress"))
+  CALL sirius_start_timer("qe|stress")
   !
   CALL start_clock( 'stress' )
   !
   !   contribution from local potential
   !
+  CALL sirius_start_timer("qe|stress|loc")
   CALL stres_loc( sigmaloc )
   IF ( do_comp_esm .AND. ( esm_bc /= 'pbc' ) ) THEN
      ! In ESM, sigmaloc has only short-range term: add long-range term
      CALL esm_stres_loclong( sigmaloclong, rho%of_g(:,1) )
      sigmaloc(:,:) = sigmaloc(:,:) + sigmaloclong(:,:)
   END IF
+  CALL sirius_stop_timer("qe|stress|loc")
   !
   !  hartree contribution
   !
+  CALL sirius_start_timer("qe|stress|har")
   IF ( do_comp_esm .AND. ( esm_bc /= 'pbc' ) )  THEN ! for ESM stress
      CALL esm_stres_har( sigmahar, rho%of_g(:,1) )
   ELSE
      CALL stres_har( sigmahar )
   END IF
+  CALL sirius_stop_timer("qe|stress|har")
   !
   !  xc contribution (diagonal)
   !
@@ -96,8 +100,10 @@ SUBROUTINE stress( sigma )
   !
   !  xc contribution: add gradient corrections (non diagonal)
   !
+  CALL sirius_start_timer("qe|stress|gradcorr")
   CALL stres_gradcorr( rho%of_r, rho%of_g, rho_core, rhog_core, rho%kin_r, &
        nspin, dfftp, g, alat, omega, sigmaxc )
+  CALL sirius_stop_timer("qe|stress|gradcorr")
   !
   !  meta-GGA contribution 
   !
@@ -105,16 +111,20 @@ SUBROUTINE stress( sigma )
   !
   ! core correction contribution
   !
+  CALL sirius_start_timer("qe|stress|cc")
   CALL stres_cc( sigmaxcc )
+  CALL sirius_stop_timer("qe|stress|cc")
   !
   !  ewald contribution
   !
+  CALL sirius_start_timer("qe|stress|ewa")
   IF ( do_comp_esm .AND. ( esm_bc /= 'pbc' ) ) THEN ! for ESM stress
      CALL esm_stres_ewa( sigmaewa )
   ELSE
      CALL stres_ewa( alat, nat, ntyp, ityp, zv, at, bg, tau, omega, g, &
           gg, ngm, gstart, gamma_only, gcutm, sigmaewa )
   END IF
+  CALL sirius_stop_timer("qe|stress|ewa")
   !
   ! semi-empirical dispersion contribution: Grimme-D2 and D3
   !
@@ -136,7 +146,9 @@ SUBROUTINE stress( sigma )
   !
   !  kinetic + nonlocal contribuition
   !
+  CALL sirius_start_timer("qe|stress|knl")
   CALL stres_knl( sigmanlc, sigmakin )
+  CALL sirius_stop_timer("qe|stress|knl")
   !
   DO l = 1, 3
      DO m = 1, 3
@@ -234,7 +246,7 @@ SUBROUTINE stress( sigma )
   !
   CALL stop_clock( 'stress' )
   !
-  CALL sirius_stop_timer(string("qe|stress"))
+  CALL sirius_stop_timer("qe|stress")
   !
   RETURN
 9000 format (10x,'total   stress  (Ry/bohr**3) ',18x,'(kbar)', &
