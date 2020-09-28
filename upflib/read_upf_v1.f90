@@ -209,7 +209,7 @@ subroutine read_pseudo_header (upf, iunps)
   TYPE (pseudo_upf), INTENT(INOUT) :: upf
   integer :: iunps  
   !
-  integer :: nw
+  integer :: nw,pqn(0:4),l
   character (len=80) :: dummy
   ! GTH analytical format: obviously not true in this case
   upf%is_gth=.false.
@@ -257,9 +257,20 @@ subroutine read_pseudo_header (upf, iunps)
   read (iunps, '(a)', err = 100, end = 100) dummy
   ALLOCATE( upf%els( upf%nwfc ), upf%lchi( upf%nwfc ), upf%oc( upf%nwfc ),&
        upf%nchi( upf%nwfc ) )
+  ! set default n
+  do l = 0, 4
+    pqn(l) = l + 1
+  enddo
   do nw = 1, upf%nwfc  
      read (iunps, * ) upf%els (nw), upf%lchi (nw), upf%oc (nw)  
-     upf%nchi (nw) = upf%lchi(nw)-1
+     dummy = trim(adjustl(upf%els (nw)))
+     if (dummy(1:1) == '1') pqn(upf%lchi (nw)) = 1
+     if (dummy(1:1) == '2') pqn(upf%lchi (nw)) = 2
+     if (dummy(1:1) == '3') pqn(upf%lchi (nw)) = 3
+     if (dummy(1:1) == '4') pqn(upf%lchi (nw)) = 4
+     if (dummy(1:1) == '5') pqn(upf%lchi (nw)) = 5
+     upf%nchi (nw) = pqn(upf%lchi (nw))
+     pqn(upf%lchi (nw)) = pqn(upf%lchi (nw)) + 1
   enddo
   ! next lines for compatibility with upf v.2
   ALLOCATE( upf%rcut_chi( upf%nwfc ), upf%rcutus_chi( upf%nwfc ), &
