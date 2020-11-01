@@ -69,7 +69,6 @@ SUBROUTINE new_ns( ns )
   nr(:,:,:,:) = 0.d0
   IF (use_sirius) THEN
      ALLOCATE(nrc(ldmx,ldmx,nspin,nat))
-     CALL sirius_calculate_hubbard_occupancies(gs_handler)
      CALL sirius_get_hubbard_occupancies(gs_handler, nrc(1,1,1,1), ldmx)
      CALL sirius_to_qe_real(nrc(:, :, :, :), nr(:, :, :, :))
      DEALLOCATE(nrc)
@@ -357,7 +356,6 @@ SUBROUTINE new_ns_nc( ns )
   ns(:,:,:,:)    = 0.d0
   IF (use_sirius) THEN
      ALLOCATE(nss(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, 4, nat))
-     CALL sirius_calculate_hubbard_occupancies(gs_handler)
      CALL sirius_get_hubbard_occupancies(gs_handler, nss(1, 1, 1, 1), ldim)
      CALL sirius_to_qe_complex(nss(:, :, :, :), ns(:, :, :, :))
      DO na = 1, nat
