@@ -114,6 +114,7 @@ set(sources
    src/lchk_tauxk.f90 
    src/ldaU.f90 
    src/make_pointlists.f90 
+   src/mod_sirius.f90
    src/makov_payne.f90 
    src/manypw.f90 
    src/martyna_tuckerman.f90 
@@ -245,6 +246,7 @@ qe_add_library(qe_pw ${sources})
 add_library(QE::PW ALIAS qe_pw)
 target_link_libraries(qe_pw
     PUBLIC
+        sirius
         QE::HDF5_Fortran
         QE::ELPA
         QE::SCALAPACK
@@ -261,6 +263,9 @@ target_link_libraries(qe_pw
         QE::OpenMP_Fortran
         QE::MPI_Fortran)
 
+get_property(_sirius_include_dirs TARGET sirius::sirius PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
+target_include_directories(qe_pw PRIVATE ${_sirius_include_dirs})
+
 ###########################################################
 # pw.x
 ###########################################################
@@ -269,7 +274,8 @@ qe_add_executable(qe_pw_exe ${sources})
 set_target_properties(qe_pw_exe PROPERTIES OUTPUT_NAME pw.x)
 target_link_libraries(qe_pw_exe
     PRIVATE
-        QE::PW)
+    QE::PW
+    sirius)
 
 ###########################################################
 # ibrav2cell.x
