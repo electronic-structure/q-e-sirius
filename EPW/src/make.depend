@@ -384,7 +384,6 @@ grid.o : elph2.o
 grid.o : epwcom.o
 grid.o : io_var.o
 grid.o : kfold.o
-grid.o : kinds_epw.o
 grid.o : low_lvl.o
 grid.o : poolgathering.o
 grid.o : wan2bloch.o
@@ -419,7 +418,6 @@ io_eliashberg.o : epwcom.o
 io_eliashberg.o : grid.o
 io_eliashberg.o : io_var.o
 io_eliashberg.o : kfold.o
-io_eliashberg.o : kinds_epw.o
 io_eliashberg.o : low_lvl.o
 io_eliashberg.o : supercond.o
 io_epw.o : ../../LR_Modules/lrcom.o
@@ -520,12 +518,15 @@ poolgathering.o : ../../Modules/mp_global.o
 poolgathering.o : ../../UtilXlib/mp.o
 printing.o : ../../Modules/cell_base.o
 printing.o : ../../Modules/constants.o
+printing.o : ../../Modules/control_flags.o
+printing.o : ../../Modules/io_files.o
 printing.o : ../../Modules/io_global.o
 printing.o : ../../Modules/kind.o
 printing.o : ../../Modules/mp_global.o
 printing.o : ../../Modules/mp_world.o
 printing.o : ../../Modules/noncol.o
 printing.o : ../../PHonon/PH/phcom.o
+printing.o : ../../PW/src/pwcom.o
 printing.o : ../../PW/src/symm_base.o
 printing.o : ../../UtilXlib/mp.o
 printing.o : ../../upflib/uspp.o
@@ -535,7 +536,6 @@ printing.o : eliashbergcom.o
 printing.o : elph2.o
 printing.o : epwcom.o
 printing.o : io_var.o
-printing.o : kinds_epw.o
 printing.o : poolgathering.o
 pw2wan2epw.o : ../../FFTXlib/fft_interfaces.o
 pw2wan2epw.o : ../../FFTXlib/scatter_mod.o
@@ -675,7 +675,6 @@ supercond_iso.o : ../../Modules/control_flags.o
 supercond_iso.o : ../../Modules/io_files.o
 supercond_iso.o : ../../Modules/io_global.o
 supercond_iso.o : ../../Modules/kind.o
-supercond_iso.o : ../../UtilXlib/mp.o
 supercond_iso.o : constants_epw.o
 supercond_iso.o : eliashbergcom.o
 supercond_iso.o : elph2.o
@@ -706,8 +705,6 @@ transport.o : epwcom.o
 transport.o : grid.o
 transport.o : io_transport.o
 transport.o : io_var.o
-transport.o : kinds_epw.o
-transport.o : low_lvl.o
 transport.o : poolgathering.o
 transport_iter.o : ../../Modules/cell_base.o
 transport_iter.o : ../../Modules/control_flags.o
@@ -726,8 +723,6 @@ transport_iter.o : epwcom.o
 transport_iter.o : grid.o
 transport_iter.o : io_transport.o
 transport_iter.o : io_var.o
-transport_iter.o : kinds_epw.o
-transport_iter.o : low_lvl.o
 transport_iter.o : poolgathering.o
 transport_iter.o : printing.o
 transport_iter.o : wigner.o

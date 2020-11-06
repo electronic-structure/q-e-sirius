@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2013-2017 Quantum ESPRESSO group
+! Copyright (C) 2013-2020 Quantum ESPRESSO group
 ! This file is distributed under the terms of the
 ! GNU General Public License. See the file `License'
 ! in the root directory of the present distribution,
@@ -33,12 +33,15 @@ SUBROUTINE run_pwscf( exit_status )
   !! @endnote
   !!
   !
+  USE kinds,                ONLY : DP
+  USE mp,                   ONLY : mp_bcast, mp_sum
   USE io_global,            ONLY : stdout, ionode, ionode_id
   USE parameters,           ONLY : ntypx, npk
   USE upf_params,           ONLY : lmaxx
   USE cell_base,            ONLY : fix_volume, fix_area
   USE control_flags,        ONLY : conv_elec, gamma_only, ethr, lscf, treinit_gvecs
   USE control_flags,        ONLY : conv_ions, istep, nstep, restart, lmd, lbfgs, lensemb
+  USE control_flags,        ONLY : io_level
   USE cellmd,               ONLY : lmovecell
   USE command_line_options, ONLY : command_line
   USE force_mod,            ONLY : lforce, lstres, sigma, force
@@ -52,17 +55,16 @@ SUBROUTINE run_pwscf( exit_status )
                                    qmmm_update_positions, qmmm_update_forces
   USE qexsd_module,         ONLY : qexsd_set_status
   USE funct,                ONLY : dft_is_hybrid, stop_exx 
-#ifdef use_beef
   USE beef,                 ONLY : beef_energies
-#endif 
-  USE cell_base,            ONLY : bg
-  USE gvect,                ONLY : ngm, g, eigts1, eigts2, eigts3
-  USE ions_base,            ONLY : nat, nsp, ityp, tau
-  USE vlocal,               ONLY : strf
-  USE mp_world,             ONLY : mpime
-  USE dfunct,               ONLY : newd
-  USE mod_sirius
-  USE mp_bands_util, ONLY : evp_work_count, num_loc_op_applied
+  !USE cell_base,            ONLY : bg
+  !USE gvect,                ONLY : ngm, g, eigts1, eigts2, eigts3
+  !USE ions_base,            ONLY : nat, nsp, ityp, tau
+  !USE vlocal,               ONLY : strf
+  !USE mp_world,             ONLY : mpime
+  !USE dfunct,               ONLY : newd
+  !USE mod_sirius
+  !USE mp_bands_util, ONLY : evp_work_count, num_loc_op_applied
+  USE ldaU,                 ONLY : lda_plus_u
   !
   IMPLICIT NONE
   !
@@ -263,7 +265,12 @@ SUBROUTINE run_pwscf( exit_status )
            !
            lbfgs=.FALSE.; lmd=.FALSE.
            WRITE( UNIT = stdout, FMT=9020 ) 
+           !
            CALL reset_gvectors( )
+           !
+           ! ... read atomic occupations for DFT+U(+V)
+           !
+           IF ( lda_plus_u ) CALL read_ns()
            !
         ELSE IF ( ions_status == 2 ) THEN
            !
@@ -328,11 +335,9 @@ SUBROUTINE run_pwscf( exit_status )
   ! ... save final data file
   !
   CALL qexsd_set_status( exit_status )
-#ifdef use_beef
   IF ( lensemb ) CALL beef_energies( )
-#endif 
   CALL sirius_start_timer("qe|punch")
-  CALL punch( 'all' )
+  IF ( io_level > -1 ) CALL punch( 'all' )
   CALL sirius_stop_timer("qe|punch")
   !
   CALL qmmm_shutdown()
