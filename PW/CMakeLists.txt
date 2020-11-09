@@ -275,7 +275,7 @@ set_target_properties(qe_pw_exe PROPERTIES OUTPUT_NAME pw.x)
 target_link_libraries(qe_pw_exe
     PRIVATE
     QE::PW
-    sirius)
+    sirius::sirius)
 
 ###########################################################
 # ibrav2cell.x
@@ -286,7 +286,7 @@ set_target_properties(qe_pw_tools_ibrav2cell_exe PROPERTIES OUTPUT_NAME ibrav2ce
 target_link_libraries(qe_pw_tools_ibrav2cell_exe
     PRIVATE
         QE::PW
-        sirius)
+        sirius::sirius)
 
 ###########################################################
 # cell2ibrav.x
@@ -297,7 +297,7 @@ set_target_properties(qe_pw_tools_cell2ibrav_exe PROPERTIES OUTPUT_NAME cell2ibr
 target_link_libraries(qe_pw_tools_cell2ibrav_exe
     PRIVATE
         QE::PW
-        sirius)
+        sirius::sirius)
 
 ###########################################################
 # ev.x
@@ -308,7 +308,7 @@ set_target_properties(qe_pw_tools_ev_exe PROPERTIES OUTPUT_NAME ev.x)
 target_link_libraries(qe_pw_tools_ev_exe
     PRIVATE
         QE::PW
-        sirius)
+        sirius::sirius)
 
 ###########################################################
 # kpoints.x
@@ -319,7 +319,7 @@ set_target_properties(qe_pw_tools_kpoints_exe PROPERTIES OUTPUT_NAME kpoints.x)
 target_link_libraries(qe_pw_tools_kpoints_exe
     PRIVATE
         QE::PW
-        sirius)
+        sirius::sirius)
 
 ###########################################################
 # pwi2xsf.x
@@ -330,7 +330,7 @@ set_target_properties(qe_pw_tools_pwi2xsf_exe PROPERTIES OUTPUT_NAME pwi2xsf.x)
 target_link_libraries(qe_pw_tools_pwi2xsf_exe
     PRIVATE
         QE::PW
-        sirius)
+        sirius::sirius)
 
 ###########################################################
 
