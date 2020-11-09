@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
-enable_language(CXX)
+#enable_language(CXX)
 # CMake < 3.13 cannot install external targets:
 # https://gitlab.kitware.com/cmake/cmake/merge_requests/2152
 
@@ -13,7 +13,7 @@ set(CMAKE_POLICY_DEFAULT_CMP0048 NEW)
 project(qe
     VERSION 6.6.0
     DESCRIPTION "ESPRESSO: opEn-Source Package for Research in Electronic Structure, Simulation, and Optimization"
-    LANGUAGES Fortran C)
+    LANGUAGES Fortran C CXX)
 
 if(${qe_BINARY_DIR} STREQUAL ${qe_SOURCE_DIR})
   message(FATAL_ERROR "QE source folder cannot be safely used as a build folder!")
