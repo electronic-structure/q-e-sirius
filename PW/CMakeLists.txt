@@ -285,7 +285,8 @@ qe_add_executable(qe_pw_tools_ibrav2cell_exe ${sources})
 set_target_properties(qe_pw_tools_ibrav2cell_exe PROPERTIES OUTPUT_NAME ibrav2cell.x)
 target_link_libraries(qe_pw_tools_ibrav2cell_exe
     PRIVATE
-        QE::PW)
+        QE::PW
+        sirius)
 
 ###########################################################
 # cell2ibrav.x
@@ -295,7 +296,8 @@ qe_add_executable(qe_pw_tools_cell2ibrav_exe ${sources})
 set_target_properties(qe_pw_tools_cell2ibrav_exe PROPERTIES OUTPUT_NAME cell2ibrav.x)
 target_link_libraries(qe_pw_tools_cell2ibrav_exe
     PRIVATE
-        QE::PW)
+        QE::PW
+        sirius)
 
 ###########################################################
 # ev.x
@@ -305,7 +307,8 @@ qe_add_executable(qe_pw_tools_ev_exe ${sources})
 set_target_properties(qe_pw_tools_ev_exe PROPERTIES OUTPUT_NAME ev.x)
 target_link_libraries(qe_pw_tools_ev_exe
     PRIVATE
-        QE::PW)
+        QE::PW
+        sirius)
 
 ###########################################################
 # kpoints.x
@@ -315,7 +318,8 @@ qe_add_executable(qe_pw_tools_kpoints_exe ${sources})
 set_target_properties(qe_pw_tools_kpoints_exe PROPERTIES OUTPUT_NAME kpoints.x)
 target_link_libraries(qe_pw_tools_kpoints_exe
     PRIVATE
-        QE::PW)
+        QE::PW
+        sirius)
 
 ###########################################################
 # pwi2xsf.x
@@ -325,7 +329,8 @@ qe_add_executable(qe_pw_tools_pwi2xsf_exe ${sources})
 set_target_properties(qe_pw_tools_pwi2xsf_exe PROPERTIES OUTPUT_NAME pwi2xsf.x)
 target_link_libraries(qe_pw_tools_pwi2xsf_exe
     PRIVATE
-        QE::PW)
+        QE::PW
+        sirius)
 
 ###########################################################
 
