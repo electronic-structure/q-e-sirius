@@ -56,14 +56,14 @@ SUBROUTINE run_pwscf( exit_status )
   USE qexsd_module,         ONLY : qexsd_set_status
   USE funct,                ONLY : dft_is_hybrid, stop_exx 
   USE beef,                 ONLY : beef_energies
-  !USE cell_base,            ONLY : bg
-  !USE gvect,                ONLY : ngm, g, eigts1, eigts2, eigts3
-  !USE ions_base,            ONLY : nat, nsp, ityp, tau
-  !USE vlocal,               ONLY : strf
-  !USE mp_world,             ONLY : mpime
-  !USE dfunct,               ONLY : newd
-  !USE mod_sirius
-  !USE mp_bands_util, ONLY : evp_work_count, num_loc_op_applied
+  USE cell_base,            ONLY : bg
+  USE gvect,                ONLY : ngm, g, eigts1, eigts2, eigts3
+  USE ions_base,            ONLY : nat, nsp, ityp, tau
+  USE vlocal,               ONLY : strf
+  USE mp_world,             ONLY : mpime
+  USE dfunct,               ONLY : newd
+  USE mod_sirius
+  USE mp_bands_util, ONLY : evp_work_count, num_loc_op_applied
   USE ldaU,                 ONLY : lda_plus_u
   !
   IMPLICIT NONE
