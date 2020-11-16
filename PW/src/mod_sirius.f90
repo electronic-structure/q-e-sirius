@@ -33,8 +33,6 @@ REAL(8), ALLOCATABLE :: kpoints(:,:)
 REAL(8), ALLOCATABLE :: wkpoints(:)
 REAL(8), ALLOCATABLE :: beta_ri_tab(:,:,:)
 REAL(8), ALLOCATABLE :: aug_ri_tab(:,:,:,:)
-! phase factors
-COMPLEX(8), ALLOCATABLE ::eigts(:,:,:)
 
 TYPE atom_type_t
   ! atom label
@@ -54,6 +52,222 @@ TYPE(C_PTR) :: gs_handler = C_NULL_PTR
 TYPE(C_PTR) :: ks_handler = C_NULL_PTR
 
 CONTAINS
+
+! A callback function to compute band occupancies is SIRIUS using QE
+! TODO: merge to a single function with argments (energies in, occupancies out)
+SUBROUTINE calc_band_occupancies() BIND(C)
+USE ISO_C_BINDING
+IMPLICIT NONE
+!
+CALL get_band_energies_from_sirius()
+CALL weights()
+CALL put_band_occupancies_to_sirius()
+!
+END SUBROUTINE calc_band_occupancies
+
+
+! A callback function to compute radial integrals of Vloc(r)
+SUBROUTINE calc_vloc_radial_integrals(iat, nq, q, vloc_ri) BIND(C)
+USE ISO_C_BINDING
+USE kinds
+USE atom
+USE constants
+USE esm
+USE Coul_cut_2D
+USE uspp_param, ONLY : upf
+IMPLICIT NONE
+!
+INTEGER(KIND=c_int), INTENT(IN), VALUE :: iat
+INTEGER(KIND=c_int), INTENT(IN), VALUE :: nq
+REAL(KIND=c_double), INTENT(IN)  :: q(nq)
+REAL(KIND=c_double), INTENT(OUT) :: vloc_ri(nq)
+!
+REAL(DP) :: aux(rgrid(iat)%mesh), aux1(rgrid(iat)%mesh), r, q2
+INTEGER :: iq, ir, nr
+!
+REAL(DP), EXTERNAL :: qe_erf
+! number of points to the effective infinity (~10 a.u. hardcoded somewhere in the code)
+nr = msh(iat)
+! q-independent radial function
+DO ir = 1, nr
+  r = rgrid(iat)%r(ir)
+  aux1(ir) = r * upf(iat)%vloc(ir) + upf(iat)%zp * e2 * qe_erf(r)
+END DO
+! loop over q-points
+DO iq = 1, nq
+  IF (q(iq) < eps8) THEN ! q=0 case
+    !
+    ! first the G=0 term
+    !
+    IF ((do_comp_esm .AND. (esm_bc .NE. 'pbc')) .OR. do_cutoff_2D) THEN
+      !
+      ! ... temporarily redefine term for ESM calculation
+      !
+      DO ir = 1, nr
+        r = rgrid(iat)%r(ir)
+        aux(ir) = r * (r * upf(iat)%vloc(ir) + upf(iat)%zp * e2 * qe_erf(r))
+      END DO
+      IF (do_cutoff_2D .AND. rgrid(iat)%r(nr) > lz) THEN
+        CALL errore('vloc_of_g','2D cutoff is smaller than pseudo cutoff radius: &
+          & increase interlayer distance (or see Modules/read_pseudo.f90)',1)
+      END IF
+    ELSE
+      DO ir = 1, nr
+        r = rgrid(iat)%r(ir)
+        aux(ir) = r * (r * upf(iat)%vloc(ir) + upf(iat)%zp * e2)
+      END DO
+    END IF
+    CALL simpson(nr, aux, rgrid(iat)%rab(1), vloc_ri(iq))
+  ELSE ! q > 0 case
+    DO ir = 1, nr
+      r = rgrid(iat)%r(ir)
+      aux(ir) = aux1(ir) * SIN(q(iq) * r) / q(iq)
+    END DO
+    CALL simpson(nr, aux, rgrid(iat)%rab(1), vloc_ri(iq))
+    IF ((.NOT.do_comp_esm) .OR. (esm_bc .EQ. 'pbc')) THEN
+      !
+      !   here we re-add the analytic fourier transform of the erf function
+      !
+      IF (.NOT. do_cutoff_2D) THEN
+        q2 = q(iq) * q(iq)
+        vloc_ri(iq) = vloc_ri(iq) - upf(iat)%zp * e2 * EXP(-q2 * 0.25d0) / q2
+      END IF
+    END IF
+  END IF
+  ! convert to Ha
+  vloc_ri(iq) = vloc_ri(iq) / 2.0
+END DO
+
+END SUBROUTINE calc_vloc_radial_integrals
+
+
+! A callback function to compute radial integrals of Vloc(r) with
+! derivatives of Bessel functions
+SUBROUTINE calc_vloc_dj_radial_integrals(iat, nq, q, vloc_dj_ri) BIND(C)
+USE ISO_C_BINDING
+USE kinds
+USE atom
+USE constants
+USE esm
+USE Coul_cut_2D
+USE uspp_param, ONLY : upf
+IMPLICIT NONE
+!
+INTEGER(KIND=c_int), INTENT(IN), VALUE :: iat
+INTEGER(KIND=c_int), INTENT(IN), VALUE :: nq
+REAL(KIND=c_double), INTENT(IN)  :: q(nq)
+REAL(KIND=c_double), INTENT(OUT) :: vloc_dj_ri(nq)
+!
+REAL(DP) :: aux(rgrid(iat)%mesh), aux1(rgrid(iat)%mesh), r, q2
+INTEGER :: iq, ir, nr
+!
+REAL(DP), EXTERNAL :: qe_erf
+! number of points to the effective infinity (~10 a.u. hardcoded somewhere in the code)
+nr = msh(iat)
+! q-independent radial function
+DO ir = 1, nr
+  r = rgrid(iat)%r(ir)
+  aux1(ir) = r * upf(iat)%vloc(ir) + upf(iat)%zp * e2 * qe_erf(r)
+END DO
+! loop over q-points
+DO iq = 1, nq
+  IF (q(iq) < eps8) THEN ! q=0 case
+    vloc_dj_ri(iq) = 0.d0
+  ELSE ! q > 0 case
+    DO ir = 1, nr
+      r = rgrid(iat)%r(ir)
+      aux(ir) = aux1(ir) * (SIN(q(iq) * r) / q(iq)**2 - r * COS(q(iq) * r) / q(iq))
+    END DO
+    CALL simpson(nr, aux, rgrid(iat)%rab(1), vloc_dj_ri(iq))
+    vloc_dj_ri(iq) = vloc_dj_ri(iq) / q(iq)
+    IF ((.NOT.do_comp_esm) .OR. (esm_bc .EQ. 'pbc')) THEN
+      IF (.NOT. do_cutoff_2D) THEN
+        q2 = q(iq) * q(iq)
+        vloc_dj_ri(iq) = vloc_dj_ri(iq) - upf(iat)%zp * e2 * &
+          &EXP(-q2 * 0.25d0) * (q2 + 4) / 2 / q2 / q2
+      END IF
+    END IF
+  END IF
+  ! convert to Ha
+  vloc_dj_ri(iq) = vloc_dj_ri(iq) / 2.0
+END DO
+
+END SUBROUTINE calc_vloc_dj_radial_integrals
+
+
+! A callback function to compute radial integrals of rho_core(r)
+SUBROUTINE calc_rhoc_radial_integrals(iat, nq, q, rhoc_ri) BIND(C)
+USE ISO_C_BINDING
+USE kinds
+USE atom
+USE constants
+USE uspp_param, ONLY : upf
+IMPLICIT NONE
+!
+INTEGER(KIND=c_int), INTENT(IN), VALUE :: iat
+INTEGER(KIND=c_int), INTENT(IN), VALUE :: nq
+REAL(KIND=c_double), INTENT(IN)  :: q(nq)
+REAL(KIND=c_double), INTENT(OUT) :: rhoc_ri(nq)
+!
+REAL(DP) :: aux(rgrid(iat)%mesh), r
+INTEGER :: iq, ir, nr
+! number of points to the effective infinity (~10 a.u. hardcoded somewhere in the code)
+nr = msh(iat)
+! loop over q-points
+DO iq = 1, nq
+  IF (q(iq) < eps8) THEN ! q=0 case
+    DO ir = 1, nr
+      r = rgrid(iat)%r(ir)
+      aux(ir) = r**2 * upf(iat)%rho_atc(ir)
+    ENDDO
+  ELSE
+    CALL sph_bes(nr, rgrid(iat)%r(1), q(iq), 0, aux)
+    DO ir = 1, nr
+      r = rgrid(iat)%r(ir)
+      aux(ir) = r**2 * upf(iat)%rho_atc(ir) * aux(ir)
+    ENDDO
+  END IF
+  CALL simpson(nr, aux, rgrid(iat)%rab(1), rhoc_ri(iq))
+END DO
+
+END SUBROUTINE calc_rhoc_radial_integrals
+
+
+! A callbacl function to compute radial integrals or rho_core(r) with
+! the derivatives of Bessel functions
+SUBROUTINE calc_rhoc_dj_radial_integrals(iat, nq, q, rhoc_dj_ri) BIND(C)
+USE ISO_C_BINDING
+USE kinds
+USE atom
+USE constants
+USE uspp_param, ONLY : upf
+IMPLICIT NONE
+!
+INTEGER(KIND=c_int), INTENT(IN), VALUE :: iat
+INTEGER(KIND=c_int), INTENT(IN), VALUE :: nq
+REAL(KIND=c_double), INTENT(IN)  :: q(nq)
+REAL(KIND=c_double), INTENT(OUT) :: rhoc_dj_ri(nq)
+!
+REAL(DP) :: aux(rgrid(iat)%mesh), r
+INTEGER :: iq, ir, nr
+! number of points to the effective infinity (~10 a.u. hardcoded somewhere in the code)
+nr = msh(iat)
+! loop over q-points
+DO iq = 1, nq
+  IF (q(iq) < eps8) THEN ! q=0 case
+    rhoc_dj_ri(iq) = 0.d0
+  ELSE
+    DO ir = 1, nr
+      r = rgrid(iat)%r(ir)
+      aux(ir) = r * upf(iat)%rho_atc(ir) * &
+        &(r * COS(q(iq) * r) / q(iq) - SIN(q(iq) * r) / q(iq)**2)
+    ENDDO
+    CALL simpson(nr, aux, rgrid(iat)%rab(1), rhoc_dj_ri(iq))
+  END IF
+END DO
+
+END SUBROUTINE calc_rhoc_dj_radial_integrals
+
 
 SUBROUTINE calc_beta_radial_integrals(iat, q, beta_ri, ld) BIND(C)
 USE iso_c_binding
@@ -229,14 +443,14 @@ USE fft_base, ONLY :  dfftp
 USE klist, ONLY : nks, xk, nkstot, wk
 USE gvect, ONLY : ngm_g, ecutrho, ngm, mill
 USE gvecw, ONLY : ecutwfc
-USE control_flags, ONLY : gamma_only, diago_full_acc
+USE control_flags, ONLY : gamma_only, diago_full_acc, mixing_beta, nmix
 USE mp_pools, ONLY : inter_pool_comm, npool
 USE mp_images,        ONLY : nproc_image, intra_image_comm
 USE mp, ONLY : mp_sum, mp_bcast
 USE wvfct, ONLY : nbnd
 USE parallel_include
 USE sirius
-USE input_parameters, ONLY : sirius_cfg
+USE input_parameters, ONLY : sirius_cfg, diago_david_ndim
 USE noncollin_module, ONLY : noncolin, npol, angle1, angle2
 USE lsda_mod, ONLY : lsda, nspin, starting_magnetization
 USE cell_base, ONLY : omega
@@ -255,9 +469,13 @@ REAL(8) :: a1(3), a2(3), a3(3), vlat(3, 3), vlat_inv(3, 3), v1(3), v2(3), tmp
 REAL(8), ALLOCATABLE :: dion(:, :), qij(:,:,:), vloc(:), wk_tmp(:), xk_tmp(:,:)
 INTEGER, ALLOCATABLE :: nk_loc(:)
 INTEGER :: ih, jh, ijh, lmax_beta
-INTEGER,EXTERNAL           :: set_hubbard_l,set_hubbard_n
+CHARACTER(LEN=1024) :: conf_str
+INTEGER, EXTERNAL :: set_hubbard_l,set_hubbard_n
 REAL(8), EXTERNAL :: hubbard_occ
 
+
+! TODO: check if this is necessary now, them radial integrals of vloc are
+! computed by QE
 IF (do_cutoff_2D) THEN
   use_sirius_vloc = .FALSE.
 ENDIF
@@ -276,10 +494,14 @@ ENDDO
 
 ! create context of simulation
 CALL sirius_create_context(intra_image_comm, sctx)
-! set type of caclulation
-CALL sirius_import_parameters(sctx, '{"parameters" : {"electronic_structure_method" : &
-                                                      "pseudopotential"},             &
-                                      "iterative_solver" : {"residual_tolerance" : 1e-6}}')
+! create initial configuration dictionary in JSON
+WRITE(conf_str, 10)diago_david_ndim, mixing_beta, nmix
+10 FORMAT('{"parameters" : {"electronic_structure_method" : "pseudopotential"},&
+            &"iterative_solver" : {"residual_tolerance" : 1e-6,"subspace_size" : ',I4,'}, &
+            &"mixer" : {"beta" : ',F12.6,',"max_history" : ',I4,', "use_hartree" : true},&
+            &"settings" : {"itsol_tol_scale" : [0.001, 0.5]}}')
+! set initial parameters
+CALL sirius_import_parameters(sctx, conf_str)
 ! set default verbosity
 CALL sirius_set_parameters(sctx, verbosity=MIN(1, iverbosity))
 ! import config file
@@ -301,20 +523,13 @@ dims(3) = dfftp%nr3
 ! set |G| cutoff of the dense FFT grid: convert from G^2/2 Rydbergs to |G| in [a.u.^-1]
 ! set |G+k| cutoff for the wave-functions: onvert from |G+k|^2/2 Rydbergs to |G+k| in [a.u.^-1]
 ! use symmetrization either on SIRIUS or QE side
-IF (nosym) THEN
-  CALL sirius_set_parameters(sctx, num_bands=nbnd, num_mag_dims=nmagd, gamma_point=gamma_only,&
-    &use_symmetry=.FALSE., so_correction=lspinorb,&
-    &pw_cutoff=SQRT(ecutrho), gk_cutoff=SQRT(ecutwfc),&
-    &hubbard_correction=lda_plus_U, hubbard_correction_kind=lda_plus_u_kind,&
-    &hubbard_orbitals=TRIM(ADJUSTL(U_projection)),fft_grid_size=dims)
-ELSE
-  CALL sirius_set_parameters(sctx, num_bands=nbnd, num_mag_dims=nmagd, gamma_point=gamma_only,&
-    &use_symmetry=.TRUE., so_correction=lspinorb,&
-    &pw_cutoff=SQRT(ecutrho), gk_cutoff=SQRT(ecutwfc),&
-    &hubbard_correction=lda_plus_U, hubbard_correction_kind=lda_plus_u_kind,&
-    &hubbard_orbitals=TRIM(ADJUSTL(U_projection)),fft_grid_size=dims)
-ENDIF
+CALL sirius_set_parameters(sctx, num_bands=nbnd, num_mag_dims=nmagd, gamma_point=gamma_only,&
+  &use_symmetry=use_sirius_scf.AND..NOT.nosym, so_correction=lspinorb,&
+  &pw_cutoff=SQRT(ecutrho), gk_cutoff=SQRT(ecutwfc),&
+  &hubbard_correction=lda_plus_U, hubbard_correction_kind=lda_plus_u_kind,&
+  &hubbard_orbitals=TRIM(ADJUSTL(U_projection)),fft_grid_size=dims)
 
+! check if this is requred now then radial integrals of Vloc are computed by QE
 IF (do_comp_esm) THEN
   CALL sirius_set_parameters(sctx, esm_bc=esm_bc)
 ENDIF
@@ -340,6 +555,11 @@ CALL sirius_set_callback_function(sctx, "beta_ri", C_FUNLOC(calc_beta_radial_int
 CALL sirius_set_callback_function(sctx, "beta_ri_djl", C_FUNLOC(calc_beta_dj_radial_integrals))
 CALL sirius_set_callback_function(sctx, "aug_ri", C_FUNLOC(calc_aug_radial_integrals))
 CALL sirius_set_callback_function(sctx, "aug_ri_djl", C_FUNLOC(calc_aug_dj_radial_integrals))
+CALL sirius_set_callback_function(sctx, "vloc_ri", C_FUNLOC(calc_vloc_radial_integrals))
+CALL sirius_set_callback_function(sctx, "vloc_ri_djl", C_FUNLOC(calc_vloc_dj_radial_integrals))
+CALL sirius_set_callback_function(sctx, "rhoc_ri", C_FUNLOC(calc_rhoc_radial_integrals))
+CALL sirius_set_callback_function(sctx, "rhoc_ri_djl", C_FUNLOC(calc_rhoc_dj_radial_integrals))
+CALL sirius_set_callback_function(sctx, "band_occ", C_FUNLOC(calc_band_occupancies))
 
 !call sirius_set_parameters(sctx, min_occupancy=0.01d0)
 
@@ -461,7 +681,7 @@ DO iat = 1, nsp
   ENDIF
 
   ! set non-linear core correction
-  IF (use_sirius_rho_core) THEN
+  IF (.TRUE.) THEN !use_sirius_rho_core) THEN
     ALLOCATE(vloc(upf(iat)%mesh))
     vloc = 0.d0
     IF (ALLOCATED(upf(iat)%rho_atc)) THEN
@@ -479,7 +699,7 @@ DO iat = 1, nsp
                                            &upf(iat)%rho_at, upf(iat)%mesh)
 
   ! the hack is done in Modules/readpp.f90
-  IF (use_sirius_vloc) THEN
+  IF (.TRUE.) THEN !use_sirius_vloc) THEN
     ALLOCATE(vloc(upf(iat)%mesh))
     DO i = 1, msh(iat)
       vloc(i) = upf(iat)%vloc(i)
@@ -518,6 +738,13 @@ DO ia = 1, nat
   ENDIF
   CALL sirius_add_atom(sctx, atom_type(iat)%label, v2, v1)
 ENDDO
+
+CALL put_xc_functional_to_sirius()
+
+write(*,*)''
+write(*,*)'=========================================='
+write(*,*)'* initializing SIRIUS simulation context *'
+write(*,*)'=========================================='
 
 ! initialize global variables/indices/arrays/etc. of the simulation
 CALL sirius_initialize_context(sctx)
@@ -1487,7 +1714,7 @@ IMPLICIT NONE
    SELECT CASE(get_iexch())
    CASE(0)
    CASE(1)
-     CALL sirius_add_xc_functional(gs_handler, "XC_LDA_X")
+     CALL sirius_add_xc_functional(sctx, "XC_LDA_X")
    CASE default
      STOP ("interface for this exchange functional is not implemented")
    END SELECT
@@ -1497,9 +1724,11 @@ IMPLICIT NONE
    SELECT CASE(get_igcx())
    CASE(0)
    CASE(2)
-     CALL sirius_add_xc_functional(gs_handler, "XC_GGA_X_PW91")
+     CALL sirius_add_xc_functional(sctx, "XC_GGA_X_PW91")
    CASE(3)
-     CALL sirius_add_xc_functional(gs_handler, "XC_GGA_X_PBE")
+     CALL sirius_add_xc_functional(sctx, "XC_GGA_X_PBE")
+   CASE(10)
+     CALL sirius_add_xc_functional(sctx, "XC_GGA_X_PBE_SOL")
    CASE default
      WRITE(*,*)get_igcx()
      STOP ("interface for this gradient exchange functional is not implemented")
@@ -1510,9 +1739,9 @@ IMPLICIT NONE
    SELECT CASE(get_icorr())
    CASE(0)
    CASE(1)
-     CALL sirius_add_xc_functional(gs_handler, "XC_LDA_C_PZ")
+     CALL sirius_add_xc_functional(sctx, "XC_LDA_C_PZ")
    CASE(4)
-     CALL sirius_add_xc_functional(gs_handler, "XC_LDA_C_PW")
+     CALL sirius_add_xc_functional(sctx, "XC_LDA_C_PW")
    CASE default
      STOP ("interface for this correlation functional is not implemented")
    END SELECT
@@ -1522,9 +1751,11 @@ IMPLICIT NONE
    SELECT CASE(get_igcc())
    CASE(0)
    CASE(2)
-     CALL sirius_add_xc_functional(gs_handler, "XC_GGA_C_PW91")
+     CALL sirius_add_xc_functional(sctx, "XC_GGA_C_PW91")
    CASE(4)
-     CALL sirius_add_xc_functional(gs_handler, "XC_GGA_C_PBE")
+     CALL sirius_add_xc_functional(sctx, "XC_GGA_C_PBE")
+   CASE(8)
+     CALL sirius_add_xc_functional(sctx, "XC_GGA_C_PBE_SOL")
    CASE default
      STOP ("interface for this gradient correlation functional is not implemented")
    END SELECT
