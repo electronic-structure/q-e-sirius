@@ -1,27 +1,29 @@
-module mod_sirius
-use input_parameters, only : use_sirius, sirius_cfg
-use sirius
-use funct
-implicit none
+MODULE mod_sirius
+USE input_parameters, ONLY : use_sirius, sirius_cfg
+USE sirius
+USE funct
+IMPLICIT NONE
 
 ! use SIRIUS to solve KS equations
-logical :: use_sirius_ks_solver               = .true.
+LOGICAL :: use_sirius_ks_solver               = .TRUE.
 ! use SIRIUS to generate density
-logical :: use_sirius_density                 = .true.
+LOGICAL :: use_sirius_density                 = .TRUE.
 ! use SIRIUS to generate effective potential; WARNING: currently must be always set to .false.
-logical :: use_sirius_potential               = .false.
+LOGICAL :: use_sirius_potential               = .FALSE.
 ! use SIRIUS to generate density matrix ('bec' thing in QE) WARNING: currently must be set to the value of use_sirius_density
-logical :: use_sirius_density_matrix          = .true.
+LOGICAL :: use_sirius_density_matrix          = .TRUE.
 ! use SIRIUS to compute local part of pseudopotential
-logical :: use_sirius_vloc                    = .true.
+LOGICAL :: use_sirius_vloc                    = .TRUE.
 ! use SIRIUS to compute core charge density
-logical :: use_sirius_rho_core                = .true.
+LOGICAL :: use_sirius_rho_core                = .TRUE.
 ! use SIRIUS to compute plane-wave coefficients of atomic charge density
-logical :: use_sirius_rho_atomic              = .true.
+LOGICAL :: use_sirius_rho_atomic              = .TRUE.
 ! use SIRIUS to compute forces
-logical :: use_sirius_forces                  = .true.
+LOGICAL :: use_sirius_forces                  = .TRUE.
 ! use SIRIUS to compute stress tensor
-logical :: use_sirius_stress                  = .true.
+LOGICAL :: use_sirius_stress                  = .TRUE.
+! use sirius for the full SCF run
+LOGICAL :: use_sirius_scf                     = .FALSE.
 
 ! inverse of the reciprocal lattice vectors matrix
 real(8) bg_inv(3,3)
@@ -51,7 +53,7 @@ type(C_PTR) :: sctx = C_NULL_PTR
 type(C_PTR) :: gs_handler = C_NULL_PTR
 type(C_PTR) :: ks_handler = C_NULL_PTR
 
-contains
+CONTAINS
 
 subroutine calc_beta_radial_integrals(iat, q, beta_ri, ld) bind(C)
 use iso_c_binding
