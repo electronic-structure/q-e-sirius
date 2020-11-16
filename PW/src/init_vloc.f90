@@ -57,18 +57,18 @@ SUBROUTINE init_vloc()
         !
         ! normal case
         !
-        IF (use_sirius.AND.use_sirius_vloc) THEN
-          ALLOCATE(tmp(ngm))
-          CALL sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, "vloc", tmp, ngm, mill, intra_bgrp_comm)
-          DO i = 1, ngm
-            vloc(igtongl(i), nt) = tmp(i) * 2 ! convert to Ry
-          ENDDO
-          DEALLOCATE(tmp)
-        ELSE
+        !IF (use_sirius.AND.use_sirius_vloc) THEN
+        !  ALLOCATE(tmp(ngm))
+        !  CALL sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, "vloc", tmp, ngm, mill, intra_bgrp_comm)
+        !  DO i = 1, ngm
+        !    vloc(igtongl(i), nt) = tmp(i) * 2 ! convert to Ry
+        !  ENDDO
+        !  DEALLOCATE(tmp)
+        !ELSE
         CALL vloc_of_g( rgrid(nt)%mesh, msh(nt), rgrid(nt)%rab, rgrid(nt)%r, &
                         upf(nt)%vloc(1), upf(nt)%zp, tpiba2, ngl, gl, omega, &
                         vloc(1,nt) )
-        ENDIF ! sirius
+        !ENDIF ! sirius
         !
      ENDIF
      !

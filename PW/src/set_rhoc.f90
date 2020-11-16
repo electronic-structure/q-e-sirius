@@ -49,22 +49,22 @@ SUBROUTINE set_rhoc
 
   IF ( ANY( upf(1:ntyp)%nlcc ) ) THEN
 
-     ALLOCATE (rhocg( ngl))    
-     IF (use_sirius.AND.use_sirius_rho_core) THEN
-       ALLOCATE(rho_core_g(ngm))
-     ENDIF
+     ALLOCATE (rhocg( ngl))
+     !IF (use_sirius.AND.use_sirius_rho_core) THEN
+     !  ALLOCATE(rho_core_g(ngm))
+     !ENDIF
      !
      !    the sum is on atom types
      !
      DO nt = 1, ntyp
         IF ( upf(nt)%nlcc ) THEN
-           IF (use_sirius.AND.use_sirius_rho_core) THEN
-              CALL sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, "rhoc", rho_core_g,&
-                                            &ngm, mill, intra_bgrp_comm)
-              DO ng = 1, ngm
-                 rhog_core(ng) = rhog_core(ng) + strf(ng,nt) * rho_core_g(ng)
-              END DO
-           ELSE
+           !IF (use_sirius.AND.use_sirius_rho_core) THEN
+           !   CALL sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, "rhoc", rho_core_g,&
+           !                                 &ngm, mill, intra_bgrp_comm)
+           !   DO ng = 1, ngm
+           !      rhog_core(ng) = rhog_core(ng) + strf(ng,nt) * rho_core_g(ng)
+           !   END DO
+           !ELSE
            !
            ! drhoc computes the radial fourier transform for each shell of g vec
            !
@@ -76,13 +76,13 @@ SUBROUTINE set_rhoc
            DO ng = 1, ngm
               rhog_core(ng) = rhog_core(ng) + strf(ng,nt) * rhocg(igtongl(ng))
            END DO
-           ENDIF
+           !ENDIF
        ENDIF
      ENDDO
      DEALLOCATE (rhocg)
-     IF (use_sirius.AND.use_sirius_rho_core) THEN
-       DEALLOCATE (rho_core_g)
-     ENDIF
+     !IF (use_sirius.AND.use_sirius_rho_core) THEN
+     !  DEALLOCATE (rho_core_g)
+     !ENDIF
      !
      CALL rho_g2r( dfftp, rhog_core, rho_core )
      !
