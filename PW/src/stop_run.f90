@@ -29,9 +29,9 @@ SUBROUTINE stop_run( exit_status )
   LOGICAL             :: exst, opnd, lflag
   CHARACTER*100 tname
   !
-  lflag = ( exit_status == 0 ) 
+  lflag = ( exit_status == 0 )
   IF ( lflag ) THEN
-     ! 
+     !
      ! ... remove files needed only to restart
      !
      CALL seqopn( iuntmp, 'restart', 'UNFORMATTED', exst )
@@ -58,8 +58,8 @@ SUBROUTINE stop_run( exit_status )
      CALL sirius_finalize(call_mpi_fin=.false.)
      WRITE(tname,'("timer",I4.4,".json")')mpime
      IF (mpime.eq.0) THEN
-       CALL sirius_print_timers
-       CALL sirius_serialize_timers("timers.json")
+       ! CALL sirius_print_timers
+       ! CALL sirius_serialize_timers("timers.json")
      ENDIF
      !CALL sirius_serialize_timers(string(trim(tname)))
   ENDIF
@@ -107,7 +107,7 @@ END SUBROUTINE do_stop
 !----------------------------------------------------------------------------
 SUBROUTINE closefile()
   !----------------------------------------------------------------------------
-  !! Close all files and synchronize processes before stopping.  
+  !! Close all files and synchronize processes before stopping.
   !! Called by "sigcatch" when it receives a signal.
   !
   USE io_global,  ONLY :  stdout

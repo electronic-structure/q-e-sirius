@@ -33,11 +33,11 @@ MODULE read_namelists_module
   PUBLIC :: check_namelist_read ! made public upon request of A.Jay
   ! FIXME: should the following ones be public?
   PUBLIC :: control_defaults, system_defaults, &
-       electrons_defaults, wannier_ac_defaults, ions_defaults, &
+       electrons_defaults, nlcg_defaults, wannier_ac_defaults, ions_defaults, &
        cell_defaults, press_ai_defaults, wannier_defaults, control_bcast,&
-       system_bcast, electrons_bcast, ions_bcast, cell_bcast, &
+       system_bcast, electrons_bcast, nlcg_bcast, ions_bcast, cell_bcast, &
        press_ai_bcast, wannier_bcast, wannier_ac_bcast, control_checkin, &
-       system_checkin, electrons_checkin, ions_checkin, cell_checkin, &
+       system_checkin, electrons_checkin, nlcg_checkin, ions_checkin, cell_checkin, &
        wannier_checkin, wannier_ac_checkin, fixval
   !
   !  ... end of module-scope declarations
@@ -59,7 +59,7 @@ MODULE read_namelists_module
        IMPLICIT NONE
        !
        CHARACTER(LEN=2) :: prog   ! ... specify the calling program
-       CHARACTER(LEN=20) ::    temp_string 
+       CHARACTER(LEN=20) ::    temp_string
        !
        !
        IF ( prog == 'PW' ) THEN
@@ -105,10 +105,10 @@ MODULE read_namelists_module
           pseudo_dir = TRIM( pseudo_dir ) // '/espresso/pseudo/'
        END IF
        !
-       ! ... max number of md steps added to the xml file. Needs to be limited for very long 
-       !     md simulations 
-       CALL get_environment_variable('MAX_XML_STEPS', temp_string) 
-            IF ( TRIM(temp_string) .NE.  ' ')  READ(temp_string, *) max_xml_steps 
+       ! ... max number of md steps added to the xml file. Needs to be limited for very long
+       !     md simulations
+       CALL get_environment_variable('MAX_XML_STEPS', temp_string)
+            IF ( TRIM(temp_string) .NE.  ' ')  READ(temp_string, *) max_xml_steps
        refg          = 0.05_DP
        max_seconds   = 1.E+7_DP
        ekin_conv_thr = 1.E-6_DP
@@ -124,7 +124,7 @@ MODULE read_namelists_module
        lelfield = .FALSE.
        lorbm = .FALSE.
        nberrycyc  = 1
-       lecrpa   = .FALSE.   
+       lecrpa   = .FALSE.
        tqmmm = .FALSE.
        !
        saverho = .TRUE.
@@ -233,7 +233,7 @@ MODULE read_namelists_module
        ! ... EXX
        !
        ace=.TRUE.
-       n_proj = 0    
+       n_proj = 0
        localization_thr = 0.0_dp
        scdm=.FALSE.
        scdmden=1.0d0
@@ -279,7 +279,7 @@ MODULE read_namelists_module
        one_atom_occupations=.FALSE.
        !
        spline_ps = .false.
-       ! 
+       !
        real_space = .false.
        !
        ! ... DFT-D, Tkatchenko-Scheffler, XDM
@@ -446,7 +446,33 @@ MODULE read_namelists_module
        !
        RETURN
        !
+     END SUBROUTINE electrons_defaults
+
+     !
+     !=----------------------------------------------------------------------=!
+     !
+     !  Variables initialization for Namelist NLCG
+     !
+     !=----------------------------------------------------------------------=!
+     !
+     !-----------------------------------------------------------------------
+     SUBROUTINE nlcg_defaults( prog )
+             IMPLICIT NONE
+             !
+             CHARACTER(LEN=2) :: prog ! .. specify the calling probram
+
+             nlcg_maxiter = 300
+             nlcg_restart = 10
+             nlcg_tau = 0.1_DP
+             nlcg_T = 300.0_DP
+             nlcg_kappa = 0.3_DP
+             nlcg_tol = 1.0E-9_DP
+             nlcg_smearing = 'FD'
+             nlcg_processing_unit = 'none'
+
+             RETURN
      END SUBROUTINE
+
      !
      !=----------------------------------------------------------------------=!
      !
@@ -541,7 +567,7 @@ MODULE read_namelists_module
        n_muller=0
        np_muller=1
        l_exit_muller=.false.
-       
+
 
        RETURN
        !
@@ -670,7 +696,7 @@ MODULE read_namelists_module
        wf_friction = 0.3_DP
 !=======================================================================
 !exx_wf related
-       exx_neigh        =  60 
+       exx_neigh        =  60
        vnbsp            =  0
        exx_poisson_eps  =  1.E-6_DP
        exx_dis_cutoff   =  8.0_DP
@@ -829,7 +855,7 @@ MODULE read_namelists_module
        CALL mp_bcast( nqx2,                   ionode_id, intra_image_comm )
        CALL mp_bcast( nqx3,                   ionode_id, intra_image_comm )
        CALL mp_bcast( exx_fraction,           ionode_id, intra_image_comm )
-       CALL mp_bcast( screening_parameter,    ionode_id, intra_image_comm ) 
+       CALL mp_bcast( screening_parameter,    ionode_id, intra_image_comm )
        CALL mp_bcast( gau_parameter,          ionode_id, intra_image_comm )
        CALL mp_bcast( exxdiv_treatment,       ionode_id, intra_image_comm )
        CALL mp_bcast( x_gamma_extrapolation,  ionode_id, intra_image_comm )
@@ -1063,6 +1089,34 @@ MODULE read_namelists_module
        !
        RETURN
        !
+     END SUBROUTINE electrons_bcast
+     !
+     !=----------------------------------------------------------------------=!
+     !
+     !  Broadcast variables values for Namelist NLCG
+     !
+     !=----------------------------------------------------------------------=!
+     !
+     !-----------------------------------------------------------------------
+     SUBROUTINE nlcg_bcast()
+       !-----------------------------------------------------------------------
+       !
+       USE io_global, ONLY: ionode_id
+       USE mp,        ONLY: mp_bcast
+       USE mp_images, ONLY : intra_image_comm
+       !
+       IMPLICIT NONE
+       !
+       CALL mp_bcast( nlcg_maxiter,          ionode_id, intra_image_comm )
+       CALL mp_bcast( nlcg_restart,          ionode_id, intra_image_comm )
+       CALL mp_bcast( nlcg_tau,              ionode_id, intra_image_comm )
+       CALL mp_bcast( nlcg_T,                ionode_id, intra_image_comm )
+       CALL mp_bcast( nlcg_kappa,            ionode_id, intra_image_comm )
+       CALL mp_bcast( nlcg_tol,              ionode_id, intra_image_comm )
+       CALL mp_bcast( nlcg_smearing,         ionode_id, intra_image_comm )
+       CALL mp_bcast( nlcg_processing_unit,  ionode_id, intra_image_comm )
+       RETURN
+       !
      END SUBROUTINE
      !
      !
@@ -1119,7 +1173,7 @@ MODULE read_namelists_module
        CALL mp_bcast( w_2,              ionode_id, intra_image_comm )
        !
        CALL mp_bcast(l_mplathe,         ionode_id, intra_image_comm )
-       CALL mp_bcast(n_muller,          ionode_id, intra_image_comm ) 
+       CALL mp_bcast(n_muller,          ionode_id, intra_image_comm )
        CALL mp_bcast(np_muller,         ionode_id, intra_image_comm )
        CALL mp_bcast(l_exit_muller,     ionode_id, intra_image_comm )
 
@@ -1560,6 +1614,49 @@ MODULE read_namelists_module
 !
        RETURN
      END SUBROUTINE
+     !=----------------------------------------------------------------------=!
+     !
+     !  Check input values for Namelist NLCG
+     !
+     !=----------------------------------------------------------------------=!
+     !
+     !-----------------------------------------------------------------------
+     SUBROUTINE nlcg_checkin( prog )
+       IMPLICIT NONE
+       LOGICAL :: allowed = .FALSE.
+       CHARACTER(LEN=20) :: sub_name = ' nlcg_checkin '
+       CHARACTER(LEN=2)  :: prog   ! ... specify the calling program
+       INTEGER           :: i
+
+       DO i = 1, SIZE(nlcg_smearing_allowed)
+         IF( TRIM(nlcg_smearing) == nlcg_smearing_allowed(i) ) allowed = .TRUE.
+       END DO
+       IF( .NOT. allowed ) &
+         CALL errore( sub_name, ' nlcg_smearing "'// &
+         & TRIM(nlcg_smearing)//'" not allowed ',1)
+
+       DO i = 1, SIZE(nlcg_processing_unit_allowed)
+         IF( TRIM(nlcg_processing_unit) == nlcg_processing_unit_allowed(i) ) allowed = .TRUE.
+       END DO
+       IF( .NOT. allowed ) &
+         CALL errore( sub_name, ' nlcg_processing_unit "'// &
+         & TRIM(nlcg_processing_unit)//'" not allowed ',1)
+
+       IF ( nlcg_T < 0.0_DP ) &
+         CALL errore(sub_name, 'nlcg_T out of range', 1)
+       IF ( nlcg_tau < 0.0_DP .or. nlcg_tau >= 1 ) &
+         CALL errore(sub_name, 'nlcg_tau out of range', 1)
+       IF ( nlcg_kappa < 0.0_DP ) &
+         CALL errore(sub_name, 'nlcg_kappa out of range', 1)
+       IF ( nlcg_tol < 0.0_DP ) &
+         CALL errore(sub_name, 'nlcg_tol out of range', 1)
+       IF ( nlcg_maxiter < 0 ) &
+         CALL errore(sub_name, 'nlcg_maxiter out of range', 1)
+       IF ( nlcg_restart < 0 ) &
+         CALL errore(sub_name, 'nlcg_restart out of range', 1)
+       RETURN
+     END SUBROUTINE
+
      !
      !=----------------------------------------------------------------------=!
      !
@@ -1882,6 +1979,7 @@ MODULE read_namelists_module
        CALL control_defaults( prog )
        CALL system_defaults( prog )
        CALL electrons_defaults( prog )
+       CALL nlcg_defaults( prog )
        CALL ions_defaults( prog )
        CALL cell_defaults( prog )
        !
@@ -1927,6 +2025,20 @@ MODULE read_namelists_module
        CALL electrons_bcast( )
        CALL electrons_checkin( prog )
        !
+       ! ... NLCG namelist
+       !
+       IF ( use_nlcg ) THEN
+         ios = 0
+         IF( ionode ) THEN
+           READ( unit_loc, nlcg, iostat = ios )
+         END IF
+         CALL check_namelist_read(ios, unit_loc, "nlcg")
+         !
+         CALL nlcg_bcast( )
+         CALL nlcg_checkin( prog )
+       END IF
+
+       !
        ! ... IONS namelist - must be read only if ionic motion is expected,
        ! ...                 or if code called by i-Pi via run_driver
        !
@@ -1944,7 +2056,11 @@ MODULE read_namelists_module
              ! presumably, not found: rewind the file pointer to the location
              ! of the previous present section, in this case electrons
              REWIND( unit_loc )
-             READ( unit_loc, electrons, iostat = ios )
+             IF ( use_nlcg ) THEN
+               READ( unit_loc, nlcg, iostat = ios )
+             ELSE
+               READ( unit_loc, electrons, iostat = ios )
+             END IF
           END IF
           !
        END IF
@@ -1961,7 +2077,7 @@ MODULE read_namelists_module
           IF( TRIM( calculation ) == 'vc-relax' .OR. &
               TRIM( calculation ) == 'vc-cp'    .OR. &
               TRIM( calculation ) == 'vc-md'    .OR. &
-              TRIM( calculation ) == 'vc-md'    .OR. & 
+              TRIM( calculation ) == 'vc-md'    .OR. &
               TRIM( calculation ) == 'vc-cp-wf') THEN
              READ( unit_loc, cell, iostat = ios )
           END IF
