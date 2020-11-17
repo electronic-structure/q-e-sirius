@@ -1,5 +1,5 @@
 MODULE mod_sirius
-USE input_parameters, ONLY : use_sirius, sirius_cfg
+USE input_parameters, ONLY : use_sirius, sirius_cfg, use_sirius_scf
 USE sirius
 USE funct
 IMPLICIT NONE
@@ -22,8 +22,6 @@ LOGICAL :: use_sirius_rho_atomic              = .TRUE.
 LOGICAL :: use_sirius_forces                  = .TRUE.
 ! use SIRIUS to compute stress tensor
 LOGICAL :: use_sirius_stress                  = .TRUE.
-! use sirius for the full SCF run
-LOGICAL :: use_sirius_scf                     = .FALSE.
 
 ! inverse of the reciprocal lattice vectors matrix
 REAL(8) bg_inv(3,3)
