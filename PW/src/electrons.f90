@@ -489,6 +489,41 @@ SUBROUTINE electrons_scf ( printout, exxen )
   CALL memstat( kilobytes )
   IF ( kilobytes > 0 ) WRITE( stdout, 9001 ) kilobytes/1000.0
   !
+  IF (use_sirius.AND.use_sirius_scf) THEN
+    write(*,*)''
+    write(*,*)'============================'
+    write(*,*)'* running DFT ground state *'
+    write(*,*)'============================'
+    IF ( do_comp_esm ) THEN
+      ewld = esm_ewald()
+    ELSE
+      ewld = ewald( alat, nat, nsp, ityp, zv, at, bg, tau, &
+                   omega, g, gg, ngm, gcutm, gstart, gamma_only, strf )
+    ENDIF
+    CALL start_clock( 'electrons' )
+    CALL sirius_find_ground_state(gs_handler, density_tol=1d-8, energy_tol=tr2, niter=niter, save_state=.false.)
+    CALL stop_clock( 'electrons' )
+    !CALL sirius_get_energy(gs_handler, "total", etot)
+    etot = etot * 2.d0 ! convert to Ry
+    CALL sirius_get_energy(gs_handler, "evalsum", eband)
+    eband = eband * 2.d0 ! convert to Ry
+    ! Vha should be multiplied by 2 to convert to Ry and divided by 2 to get Eha = 1/2 <Vha|rho>
+    CALL sirius_get_energy(gs_handler, "vha", ehart)
+    CALL sirius_get_energy(gs_handler, "exc", etxc)
+    etxc = etxc * 2.d0 ! convert to Ry
+    CALL sirius_get_energy(gs_handler, "one-el", deband)
+    deband = -deband * 2.d0 ! convert to Ry
+
+    etot = eband + ( etxc - etxcc ) + ewld + ehart + deband + demet + descf
+
+    etot_cmp_paw = 0.d0
+    epaw = 0.d0
+
+    IF ( lsda .OR. noncolin ) CALL compute_magnetization()
+    CALL print_energies ( printout )
+    conv_elec = .TRUE.
+    RETURN
+  ENDIF
   CALL start_clock( 'electrons' )
   !
   FLUSH( stdout )
