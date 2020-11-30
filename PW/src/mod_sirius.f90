@@ -493,11 +493,11 @@ ENDDO
 ! create context of simulation
 CALL sirius_create_context(intra_image_comm, sctx)
 ! create initial configuration dictionary in JSON
-WRITE(conf_str, 10)diago_david_ndim, mixing_beta, nmix
+WRITE(conf_str, 10)diago_david_ndim, mixing_beta, nmix+1
 10 FORMAT('{"parameters" : {"electronic_structure_method" : "pseudopotential"},&
             &"iterative_solver" : {"residual_tolerance" : 1e-6,"subspace_size" : ',I4,'}, &
             &"mixer" : {"beta" : ',F12.6,',"max_history" : ',I4,', "use_hartree" : true},&
-            &"settings" : {"itsol_tol_scale" : [0.001, 0.5]}}')
+            &"settings" : {"itsol_tol_scale" : [0.1, 1.0]}}')
 ! set initial parameters
 CALL sirius_import_parameters(sctx, conf_str)
 ! set default verbosity
