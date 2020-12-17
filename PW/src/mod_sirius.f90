@@ -438,7 +438,7 @@ USE ions_base, ONLY : tau, nsp, atm, zv, amass, ityp, nat
 USE uspp_param, ONLY : upf, nhm, nh
 USE atom, ONLY : rgrid, msh
 USE fft_base, ONLY :  dfftp
-USE klist, ONLY : nks, xk, nkstot, wk
+USE klist, ONLY : nks, xk, nkstot, wk, degauss
 USE gvect, ONLY : ngm_g, ecutrho, ngm, mill
 USE gvecw, ONLY : ecutwfc
 USE control_flags, ONLY : gamma_only, diago_full_acc, mixing_beta, nmix
@@ -493,11 +493,12 @@ ENDDO
 ! create context of simulation
 CALL sirius_create_context(intra_image_comm, sctx)
 ! create initial configuration dictionary in JSON
-WRITE(conf_str, 10)diago_david_ndim, mixing_beta, nmix
-10 FORMAT('{"parameters" : {"electronic_structure_method" : "pseudopotential"},&
-            &"iterative_solver" : {"residual_tolerance" : 1e-6,"subspace_size" : ',I4,'}, &
-            &"mixer" : {"beta" : ',F12.6,',"max_history" : ',I4,', "use_hartree" : true},&
-            &"settings" : {"itsol_tol_scale" : [0.001, 0.5]}}')
+! degauss is converted to Ha units
+WRITE(conf_str, 10)degauss/2.d0, diago_david_ndim, mixing_beta, nmix
+10 FORMAT('{"parameters" : {"electronic_structure_method" : "pseudopotential", "smearing_width" : ', F12.6, '},&
+           &"iterative_solver" : {"residual_tolerance" : 1e-6, "subspace_size" : ',I4,'}, &
+           &"mixer" : {"beta" : ', F12.6, ', "max_history" : ', I4, ', "use_hartree" : true},&
+           &"settings" : {"itsol_tol_scale" : [0.1, 0.95]}}')
 ! set initial parameters
 CALL sirius_import_parameters(sctx, conf_str)
 ! set default verbosity
@@ -557,7 +558,7 @@ CALL sirius_set_callback_function(sctx, "vloc_ri", C_FUNLOC(calc_vloc_radial_int
 CALL sirius_set_callback_function(sctx, "vloc_ri_djl", C_FUNLOC(calc_vloc_dj_radial_integrals))
 CALL sirius_set_callback_function(sctx, "rhoc_ri", C_FUNLOC(calc_rhoc_radial_integrals))
 CALL sirius_set_callback_function(sctx, "rhoc_ri_djl", C_FUNLOC(calc_rhoc_dj_radial_integrals))
-CALL sirius_set_callback_function(sctx, "band_occ", C_FUNLOC(calc_band_occupancies))
+!CALL sirius_set_callback_function(sctx, "band_occ", C_FUNLOC(calc_band_occupancies))
 
 !call sirius_set_parameters(sctx, min_occupancy=0.01d0)
 
