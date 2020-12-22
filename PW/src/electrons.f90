@@ -501,16 +501,22 @@ SUBROUTINE electrons_scf ( printout, exxen )
                    omega, g, gg, ngm, gcutm, gstart, gamma_only, strf )
     ENDIF
     CALL start_clock( 'electrons' )
-    CALL sirius_find_ground_state(gs_handler, density_tol=sqrt(tr2), energy_tol=0.1d0, niter=niter, save_state=.false.)
+    ! look only for the convergence of the density; converge total energy only to 10^-4
+    CALL sirius_find_ground_state(gs_handler, density_tol=sqrt(tr2), energy_tol=1d-4, niter=niter, save_state=.false.)
     CALL stop_clock( 'electrons' )
+
     !CALL sirius_get_energy(gs_handler, "total", etot)
-    etot = etot * 2.d0 ! convert to Ry
+    !etot = etot * 2.d0 ! convert to Ry
+
     CALL sirius_get_energy(gs_handler, "evalsum", eband)
     eband = eband * 2.d0 ! convert to Ry
+
     ! Vha should be multiplied by 2 to convert to Ry and divided by 2 to get Eha = 1/2 <Vha|rho>
     CALL sirius_get_energy(gs_handler, "vha", ehart)
+
     CALL sirius_get_energy(gs_handler, "exc", etxc)
     etxc = etxc * 2.d0 ! convert to Ry
+
     CALL sirius_get_energy(gs_handler, "one-el", deband)
     deband = -deband * 2.d0 ! convert to Ry
 

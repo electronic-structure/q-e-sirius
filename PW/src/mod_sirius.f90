@@ -438,7 +438,7 @@ USE ions_base, ONLY : tau, nsp, atm, zv, amass, ityp, nat
 USE uspp_param, ONLY : upf, nhm, nh
 USE atom, ONLY : rgrid, msh
 USE fft_base, ONLY :  dfftp
-USE klist, ONLY : nks, xk, nkstot, wk, degauss
+USE klist, ONLY : nks, xk, nkstot, wk, degauss, ngauss
 USE gvect, ONLY : ngm_g, ecutrho, ngm, mill
 USE gvecw, ONLY : ecutwfc
 USE control_flags, ONLY : gamma_only, diago_full_acc, mixing_beta, nmix
@@ -493,9 +493,8 @@ ENDDO
 ! create context of simulation
 CALL sirius_create_context(intra_image_comm, sctx)
 ! create initial configuration dictionary in JSON
-! degauss is converted to Ha units
-WRITE(conf_str, 10)degauss/2.d0, diago_david_ndim, mixing_beta, nmix
-10 FORMAT('{"parameters" : {"electronic_structure_method" : "pseudopotential", "smearing_width" : ', F12.6, '},&
+WRITE(conf_str, 10)diago_david_ndim, mixing_beta, nmix
+10 FORMAT('{"parameters" : {"electronic_structure_method" : "pseudopotential"}, &
            &"iterative_solver" : {"residual_tolerance" : 1e-6, "subspace_size" : ',I4,'}, &
            &"mixer" : {"beta" : ', F12.6, ', "max_history" : ', I4, ', "use_hartree" : true},&
            &"settings" : {"itsol_tol_scale" : [0.1, 0.95]}}')
@@ -528,6 +527,17 @@ CALL sirius_set_parameters(sctx, num_bands=nbnd, num_mag_dims=nmagd, gamma_point
   &hubbard_correction=lda_plus_U, hubbard_correction_kind=lda_plus_u_kind,&
   &hubbard_orbitals=TRIM(ADJUSTL(U_projection)),fft_grid_size=dims)
 
+! degauss is converted to Ha units
+CALL sirius_set_parameters(sctx, smearing_width=degauss/2.d0)
+SELECT CASE(ngauss)
+  CASE (0)
+    CALL sirius_set_parameters(sctx, smearing="gaussian")
+  CASE(-1)
+    CALL sirius_set_parameters(sctx, smearing="cold")
+  CASE(-99)
+    CALL sirius_set_parameters(sctx, smearing="fermi_dirac")
+END SELECT
+
 ! check if this is requred now then radial integrals of Vloc are computed by QE
 IF (do_comp_esm) THEN
   CALL sirius_set_parameters(sctx, esm_bc=esm_bc)
@@ -559,8 +569,6 @@ CALL sirius_set_callback_function(sctx, "vloc_ri_djl", C_FUNLOC(calc_vloc_dj_rad
 CALL sirius_set_callback_function(sctx, "rhoc_ri", C_FUNLOC(calc_rhoc_radial_integrals))
 CALL sirius_set_callback_function(sctx, "rhoc_ri_djl", C_FUNLOC(calc_rhoc_dj_radial_integrals))
 !CALL sirius_set_callback_function(sctx, "band_occ", C_FUNLOC(calc_band_occupancies))
-
-!call sirius_set_parameters(sctx, min_occupancy=0.01d0)
 
 ! set lattice vectors of the unit cell (length is in [a.u.])
 a1(:) = at(:, 1) * alat
@@ -1709,7 +1717,6 @@ IMPLICIT NONE
   ENDIF
 
   IF (get_iexch().NE.0.AND.get_igcx().EQ.0) THEN
-   WRITE(*,*) 'iexch, igcx:', get_iexch(), get_igcx()
    SELECT CASE(get_iexch())
    CASE(0)
    CASE(1)
