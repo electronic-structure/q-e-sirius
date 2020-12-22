@@ -48,7 +48,7 @@ SUBROUTINE electrons()
   USE ions_base,            ONLY : nat
   USE loc_scdm,             ONLY : use_scdm, localize_orbitals
   USE loc_scdm_k,           ONLY : localize_orbitals_k
-  !
+
   !
   IMPLICIT NONE
   !
@@ -255,14 +255,14 @@ SUBROUTINE electrons()
         ENDIF 
         !
         IF ( dexx < 0.0_dp ) THEN
-           IF( Doloc ) THEN
+           !IF( Doloc ) THEN
               WRITE(stdout,'(5x,a,1e12.3)') "BEWARE: negative dexx:", dexx
               dexx = ABS ( dexx )
-           ELSE
-              CALL errore( 'electrons', 'dexx is negative! &
-                   & Check that exxdiv_treatment is appropriate for the system,&
-                   & or ecutfock may be too low', 1 )
-           ENDIF
+           !ELSE
+           !   CALL errore( 'electrons', 'dexx is negative! &
+           !        & Check that exxdiv_treatment is appropriate for the system,&
+           !        & or ecutfock may be too low', 1 )
+           !ENDIF
         ENDIF
         !
         !   remove the estimate exchange energy exxen used in the inner SCF
@@ -378,7 +378,8 @@ SUBROUTINE electrons_scf ( printout, exxen )
                                    iprint, conv_elec, &
                                    restart, io_level, do_makov_payne,  &
                                    gamma_only, iverbosity, textfor,     &
-                                   llondon, ldftd3, scf_must_converge, lxdm, ts_vdw
+                                   llondon, ldftd3, scf_must_converge, lxdm, ts_vdw, &
+                                   mbd_vdw
   USE control_flags,        ONLY : n_scf_steps, scf_error
 
   USE io_files,             ONLY : iunmix, output_drho
@@ -416,6 +417,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
   USE iso_c_binding,        ONLY : c_int
   !
   USE plugin_variables,     ONLY : plugin_etot
+  USE libmbd_interface,     ONLY : EmbdvdW
   USE mod_sirius
   !
   IMPLICIT NONE
@@ -983,8 +985,12 @@ SUBROUTINE electrons_scf ( printout, exxen )
         etot = etot + exdm
         hwf_energy = hwf_energy + exdm
      ENDIF
-     IF (ts_vdw) THEN
-        ! factor 2 converts from Ha to Ry units
+     IF (mbd_vdw) THEN
+        ! factor 2 converts from Hartree to Ry units
+        etot = etot + 2.0d0*EmbdvdW
+        hwf_energy = hwf_energy + 2.0d0*EmbdvdW
+     ELSE IF (ts_vdw) THEN
+        ! factor 2 converts from Hartree to Ry units
         etot = etot + 2.0d0*EtsvdW
         hwf_energy = hwf_energy + 2.0d0*EtsvdW
      ENDIF
@@ -1448,7 +1454,11 @@ SUBROUTINE electrons_scf ( printout, exxen )
           IF ( llondon ) WRITE ( stdout , 9074 ) elondon
           IF ( ldftd3 )  WRITE ( stdout , 9078 ) edftd3
           IF ( lxdm )    WRITE ( stdout , 9075 ) exdm
-          IF ( ts_vdw )  WRITE ( stdout , 9076 ) 2.0d0*EtsvdW
+          IF ( mbd_vdw ) THEN
+             WRITE ( stdout , 9076 ) 2.0d0*Embdvdw
+          ELSEIF ( ts_vdw ) THEN
+             WRITE ( stdout , 9076 ) 2.0d0*EtsvdW
+          ENDIF
           IF ( textfor)  WRITE ( stdout , 9077 ) eext
           IF ( tefield )            WRITE( stdout, 9064 ) etotefield
           IF ( gate )               WRITE( stdout, 9065 ) etotgatefield
@@ -1548,7 +1558,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
 9073 FORMAT( '     lambda                    =',F11.2,' Ry' )
 9074 FORMAT( '     Dispersion Correction     =',F17.8,' Ry' )
 9075 FORMAT( '     Dispersion XDM Correction =',F17.8,' Ry' )
-9076 FORMAT( '     Dispersion T-S Correction =',F17.8,' Ry' )
+9076 FORMAT( '     Dispersion Correction     =',F17.8,' Ry' )
 9077 FORMAT( '     External forces energy    =',F17.8,' Ry' )
 9078 FORMAT( '     DFT-D3 Dispersion         =',F17.8,' Ry' )
 9080 FORMAT(/'     total energy              =',0PF17.8,' Ry' )

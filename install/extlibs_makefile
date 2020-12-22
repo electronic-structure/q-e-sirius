@@ -89,6 +89,7 @@ libcuda_eigensolver_clean:
 libcuda_eigensolver_veryclean:
 	if test -d ../EIGENSOLVER_GPU; then (rm -R -f ../EIGENSOLVER_GPU ../${EIGENSOLVER_GPU_NAME}); fi
 
+CUDA_PATH := $(if $(GPU_ARCH),$(CUDA_PATH),no)
 libcuda_devxlib :
 	cd ../external/devxlib; \
     if test ! -e configure; then \
@@ -99,7 +100,8 @@ libcuda_devxlib :
     if test ! -f make.inc; then \
     touch make.inc; \
     $(MAKE) clean; \
-    ./configure FC=$(F90) F77=$(F77) CC=$(CC) \
+    export F90FLAGS="$(FOX_FLAGS)"; \
+    ./configure FC=$(F90) CC=$(CC) \
                 --with-cuda=$(CUDA_PATH) \
                 --with-cuda-cc=$(GPU_ARCH) \
                 --with-cuda-runtime=$(CUDA_RUNTIME) \
@@ -107,13 +109,16 @@ libcuda_devxlib :
                 --enable-cuda-env-check=no; \
     fi; \
     make all
+	touch ../install/libcuda_devxlib # do not download and configure again
 
 libcuda_devxlib_clean:
-	cd ../external/devxlib; \
-	if test -f make.inc; then ($(MAKE) clean); fi
+	if test -f libcuda_devxlib; then rm libcuda_devxlib; fi
+	if test -d ../external/devxlib; then \
+	   (cd ../external/devxlib; if test -f make.inc; then $(MAKE) clean; fi); fi
 libcuda_devxlib_veryclean:
-	cd ../external/devxlib; \
-	if test -f make.inc; then ($(MAKE) distclean && rm make.inc); fi
+	if test -d ../external/devxlib; then \
+	   (cd ../external/devxlib; if test -f make.inc; then \
+	      ($(MAKE) distclean && rm make.inc); fi); fi
 
 ###################################
 # BEEF
@@ -140,9 +145,24 @@ libbeef_veryclean:
 	if test -d ../LIBBEEF; then (rm -R -f ../LIBBEEF); fi
 
 ###################################
+# LIBMBD
+###################################
+
+libmbd:
+	if test ! -d ../MBD; then \
+        mkdir ../MBD; \
+	(gzip -dc ../archive/libmbd-0.10.3.tar.gz | (cd ../MBD; tar -xvf -)); \
+	(gzip -dc ../archive/libmbd-0.10.3-non-cmake-makefiles.tar.gz | (cd ../MBD; tar -xvf -)); \
+	cd ../MBD/libmbd-0.10.3/src; export FXX=$(F90); export FXXOPT="$(F90FLAGS)"; \
+	cp serial.make Makefile; $(MAKE) ; cp *.mod *.a ../..; cd ../.. ;fi
+
+libmbd_clean:
+	if test -d ../MBD; then (rm -R -f ../MBD); fi
+
+###################################
 # cleaning
 ###################################
 
-clean: lapack_clean fox_clean libcuda_eigensolver_clean libcuda_devxlib_clean libbeef_clean
+clean: lapack_clean fox_clean libcuda_eigensolver_clean libcuda_devxlib_clean libbeef_clean libmbd_clean
 
-veryclean: lapack_veryclean fox_clean libcuda_eigensolver_veryclean libcuda_devxlib_veryclean libbeef_veryclean
+veryclean: lapack_veryclean fox_clean libcuda_eigensolver_veryclean libcuda_devxlib_veryclean libbeef_veryclean libmbd_clean

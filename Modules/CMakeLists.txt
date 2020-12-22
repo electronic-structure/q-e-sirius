@@ -1,4 +1,5 @@
 set(sources
+    additional_kpoints.f90 
     autopilot.f90 
     basic_algebra_routines.f90 
     becmod.f90 
@@ -73,6 +74,7 @@ set(sources
     setqf.f90 
     timestep.f90
     tsvdw.f90
+    mbdlib.f90
     version.f90 
     wannier_gw.f90
     wannier_new.f90 
@@ -137,12 +139,10 @@ set(sources
     date_and_tim.f90 
     volume.f90 
     dylmr2.f90 
-    ylmr2.f90 
     wgauss.f90 
     w0gauss.f90
     w1gauss.f90
-    deviatoric.f90
-)
+    deviatoric.f90)
 
 qe_add_library(qe_modules ${sources})
 add_library(QE::Modules ALIAS qe_modules)
@@ -156,10 +156,9 @@ target_link_libraries(qe_modules
         QE::CLIB # this is needed only by wrappers.f90
         QE::libbeef
         QE::MPI_Fortran
-    PUBLIC
+        QE::MBD
         QE::FOX
-        QE::UTILX
-)
+        QE::UTILX)
 
 ###########################################################
 

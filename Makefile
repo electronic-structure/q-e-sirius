@@ -175,7 +175,7 @@ pw4gwwlib : phlibs
 	if test -d GWW ; then \
 	( cd GWW ; $(MAKE) pw4gwwa || exit 1 ) ; fi
 
-mods : libfox libutil libla libfft libupf libbeef
+mods : libfox libutil libla libfft libupf libbeef libmbd
 	( cd Modules ; $(MAKE) TLDEPS= all || exit 1 )
 
 libks_solvers : libs libutil libla
@@ -219,6 +219,9 @@ libcuda:
 	cd install ; $(MAKE) -f extlibs_makefile $@
 
 libbeef:
+	cd install ; $(MAKE) -f extlibs_makefile $@
+
+libmbd:
 	cd install ; $(MAKE) -f extlibs_makefile $@
 
 #########################################################
@@ -339,7 +342,7 @@ tar-qe-modes :
 # NOTICE about "make doc": in order to build the .html and .txt
 # documentation in Doc, "tcl", "tcllib", "xsltproc" are needed;
 # in order to build the .pdf files in Doc, "pdflatex" is needed;
-# in order to build html files for user guide and developer manual,
+# in order to build html files for the user guide,
 # "latex2html" and "convert" (from Image-Magick) are needed.
 doc : 
 	if test -d Doc ; then \

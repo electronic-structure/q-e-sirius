@@ -239,14 +239,12 @@ set(sources
    src/wannier_init.f90 
    src/wannier_check.f90 
    src/wannier_clean.f90 
-   src/wannier_occ.f90
-)
+   src/wannier_occ.f90)
 
 qe_add_library(qe_pw ${sources})
 add_library(QE::PW ALIAS qe_pw)
 target_link_libraries(qe_pw
-    PUBLIC
-        sirius::sirius
+    PRIVATE
         QE::HDF5_Fortran
         QE::ELPA
         QE::SCALAPACK
@@ -261,7 +259,8 @@ target_link_libraries(qe_pw
         QE::FFTX
         QE::DFTD3
         QE::OpenMP_Fortran
-        QE::MPI_Fortran)
+        QE::MPI_Fortran
+        sirius::sirius)
 
 get_property(_sirius_include_dirs TARGET sirius::sirius PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
 target_include_directories(qe_pw PRIVATE ${_sirius_include_dirs})
@@ -274,8 +273,11 @@ qe_add_executable(qe_pw_exe ${sources})
 set_target_properties(qe_pw_exe PROPERTIES OUTPUT_NAME pw.x)
 target_link_libraries(qe_pw_exe
     PRIVATE
-    QE::PW
-    sirius::sirius)
+        QE::PW
+        QE::Modules
+        QE::LAX
+        QE::UTILX
+        sirius::sirius)
 
 ###########################################################
 # ibrav2cell.x
@@ -286,6 +288,7 @@ set_target_properties(qe_pw_tools_ibrav2cell_exe PROPERTIES OUTPUT_NAME ibrav2ce
 target_link_libraries(qe_pw_tools_ibrav2cell_exe
     PRIVATE
         QE::PW
+        QE::Modules
         sirius::sirius)
 
 ###########################################################
@@ -297,6 +300,7 @@ set_target_properties(qe_pw_tools_cell2ibrav_exe PROPERTIES OUTPUT_NAME cell2ibr
 target_link_libraries(qe_pw_tools_cell2ibrav_exe
     PRIVATE
         QE::PW
+        QE::Modules
         sirius::sirius)
 
 ###########################################################
@@ -308,6 +312,8 @@ set_target_properties(qe_pw_tools_ev_exe PROPERTIES OUTPUT_NAME ev.x)
 target_link_libraries(qe_pw_tools_ev_exe
     PRIVATE
         QE::PW
+        QE::Modules
+        QE::UTILX
         sirius::sirius)
 
 ###########################################################
@@ -319,6 +325,8 @@ set_target_properties(qe_pw_tools_kpoints_exe PROPERTIES OUTPUT_NAME kpoints.x)
 target_link_libraries(qe_pw_tools_kpoints_exe
     PRIVATE
         QE::PW
+        QE::Modules
+        QE::UTILX
         sirius::sirius)
 
 ###########################################################
@@ -330,6 +338,8 @@ set_target_properties(qe_pw_tools_pwi2xsf_exe PROPERTIES OUTPUT_NAME pwi2xsf.x)
 target_link_libraries(qe_pw_tools_pwi2xsf_exe
     PRIVATE
         QE::PW
+        QE::UTILX
+        QE::Modules
         sirius::sirius)
 
 ###########################################################
@@ -343,5 +353,4 @@ qe_install_targets(
     qe_pw_tools_cell2ibrav_exe
     qe_pw_tools_ev_exe
     qe_pw_tools_kpoints_exe
-    qe_pw_tools_pwi2xsf_exe
-)
+    qe_pw_tools_pwi2xsf_exe)
