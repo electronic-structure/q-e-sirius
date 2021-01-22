@@ -959,7 +959,6 @@ SUBROUTINE dprojdepsilon_k ( spsi, ik, ipol, jpol, nb_s, nb_e, mykey, dproj )
    USE lsda_mod,             ONLY : lsda, nspin, isk
    USE wvfct,                ONLY : nbnd, npwx, wg
    USE uspp,                 ONLY : nkb, vkb, okvan
-   USE uspp_param,           ONLY : upf, nhm, nh
    USE wavefunctions,        ONLY : evc
    USE becmod,               ONLY : becp, calbec
    USE basis,                ONLY : natomwfc, wfcatom, swfcatom
@@ -1379,7 +1378,7 @@ SUBROUTINE dprojdepsilon_gamma ( spsi, ik, ipol, jpol, nb_s, nb_e, mykey, dproj 
    USE lsda_mod,             ONLY : lsda, nspin, isk
    USE wvfct,                ONLY : nbnd, npwx, wg
    USE uspp,                 ONLY : nkb, vkb, qq_at, okvan
-   USE uspp_param,           ONLY : upf, nhm, nh
+   USE uspp_param,           ONLY : nh
    USE wavefunctions,        ONLY : evc
    USE becmod,               ONLY : becp, calbec
    USE basis,                ONLY : natomwfc

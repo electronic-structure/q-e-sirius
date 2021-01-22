@@ -26,17 +26,15 @@ SUBROUTINE init_run()
 #endif
   USE bp,                 ONLY : allocate_bp_efield, bp_global_map
   USE fft_base,           ONLY : dfftp, dffts
-  USE funct,              ONLY : dft_is_hybrid
   USE recvec_subs,        ONLY : ggen, ggens
   USE wannier_new,        ONLY : use_wannier    
   USE dfunct,             ONLY : newd
   USE esm,                ONLY : do_comp_esm, esm_init
   USE tsvdw_module,       ONLY : tsvdw_initialize
   USE Coul_cut_2D,        ONLY : do_cutoff_2D, cutoff_fact 
+  USE lsda_mod,           ONLY : nspin
+  USE xc_lib,             ONLY : xclib_dft_is_libxc, xclib_init_libxc
   USE mod_sirius
-  USE control_flags,        ONLY : io_level
-  USE io_files,             ONLY : iunwfc, nwordwfc
-  USE buffers,              ONLY : open_buffer
   !
   IMPLICIT NONE
   LOGICAL exst_file,exst_mem
@@ -124,6 +122,9 @@ SUBROUTINE init_run()
     CALL setup_sirius
     CALL sirius_stop_timer("qe|init_run|setup_sirius")
   ENDIF
+  !
+  IF (xclib_dft_is_libxc('ANY')) CALL xclib_init_libxc( nspin )
+  !
   CALL hinit0()
   !
   CALL potinit()
