@@ -54,15 +54,15 @@ SUBROUTINE stop_run( exit_status )
   !
   CALL environment_end( 'PWSCF' )
   ! finalize sirius at the very end
-  IF (use_sirius) THEN
-     CALL sirius_finalize(call_mpi_fin=.false.)
-     WRITE(tname,'("timer",I4.4,".json")')mpime
-     IF (mpime.eq.0) THEN
-       ! CALL sirius_print_timers
-       ! CALL sirius_serialize_timers("timers.json")
-     ENDIF
-     !CALL sirius_serialize_timers(string(trim(tname)))
-  ENDIF
+#if defined(__SIRIUS)
+  CALL sirius_finalize(call_mpi_fin=.false.)
+  !WRITE(tname,'("timer",I4.4,".json")')mpime
+  !IF (mpime.eq.0) THEN
+  !  ! CALL sirius_print_timers
+  !  ! CALL sirius_serialize_timers("timers.json")
+  !ENDIF
+  !CALL sirius_serialize_timers(string(trim(tname)))
+#endif
   !
   CALL mp_global_end()
   !

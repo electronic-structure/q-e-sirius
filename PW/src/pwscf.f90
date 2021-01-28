@@ -57,9 +57,9 @@ PROGRAM pwscf
   !! checks if first string is contained in the second
   !
   CALL mp_startup( start_images=.TRUE. )
-  IF (use_sirius) THEN
-     CALL sirius_initialize(call_mpi_init=.false.)
-  ENDIF
+#if defined(__SIRIUS)
+  CALL sirius_initialize(call_mpi_init=.false.)
+#endif
   !
   !
   CALL environment_start( 'PWSCF' )
