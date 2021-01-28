@@ -2,438 +2,14 @@ MODULE mod_sirius
 USE input_parameters, ONLY : use_sirius, sirius_cfg, use_sirius_scf
 USE sirius
 USE funct
+USE mod_sirius_callbacks
+USE mod_sirius_base
 IMPLICIT NONE
-
-! use SIRIUS to solve KS equations
-LOGICAL :: use_sirius_ks_solver               = .TRUE.
-! use SIRIUS to generate density
-LOGICAL :: use_sirius_density                 = .TRUE.
-! use SIRIUS to generate effective potential; WARNING: currently must be always set to .false.
-LOGICAL :: use_sirius_potential               = .FALSE.
-! use SIRIUS to generate density matrix ('bec' thing in QE) WARNING: currently must be set to the value of use_sirius_density
-LOGICAL :: use_sirius_density_matrix          = .TRUE.
-! use SIRIUS to compute local part of pseudopotential
-LOGICAL :: use_sirius_vloc                    = .TRUE.
-! use SIRIUS to compute core charge density
-LOGICAL :: use_sirius_rho_core                = .TRUE.
-! use SIRIUS to compute plane-wave coefficients of atomic charge density
-LOGICAL :: use_sirius_rho_atomic              = .TRUE.
-! use SIRIUS to compute forces
-LOGICAL :: use_sirius_forces                  = .TRUE.
-! use SIRIUS to compute stress tensor
-LOGICAL :: use_sirius_stress                  = .TRUE.
-
-! inverse of the reciprocal lattice vectors matrix
-REAL(8) bg_inv(3,3)
-! total number of k-points
-INTEGER num_kpoints
-REAL(8), ALLOCATABLE :: kpoints(:,:)
-REAL(8), ALLOCATABLE :: wkpoints(:)
-REAL(8), ALLOCATABLE :: beta_ri_tab(:,:,:)
-REAL(8), ALLOCATABLE :: aug_ri_tab(:,:,:,:)
-
-TYPE atom_type_t
-  ! atom label
-  CHARACTER(len=100, kind=C_CHAR) :: label
-  ! nh(iat) in the QE notation
-  INTEGER                 :: num_beta_projectors
-  ! lmax for beta-projectors
-  INTEGER                 :: lmax
-  ! plane-wave coefficients of Q-operator
-  COMPLEX(8), ALLOCATABLE :: qpw(:, :)
-END TYPE atom_type_t
-
-TYPE(atom_type_t), ALLOCATABLE :: atom_type(:)
-
-TYPE(C_PTR) :: sctx = C_NULL_PTR
-TYPE(C_PTR) :: gs_handler = C_NULL_PTR
-TYPE(C_PTR) :: ks_handler = C_NULL_PTR
 
 CONTAINS
 
-! A callback function to compute band occupancies is SIRIUS using QE
-! TODO: merge to a single function with argments (energies in, occupancies out)
-SUBROUTINE calc_band_occupancies() BIND(C)
-USE ISO_C_BINDING
-IMPLICIT NONE
-!
-CALL get_band_energies_from_sirius()
-CALL weights()
-CALL put_band_occupancies_to_sirius()
-!
-END SUBROUTINE calc_band_occupancies
-
-
-! A callback function to compute radial integrals of Vloc(r)
-SUBROUTINE calc_vloc_radial_integrals(iat, nq, q, vloc_ri) BIND(C)
-USE ISO_C_BINDING
-USE kinds
-USE atom
-USE constants
-USE esm
-USE Coul_cut_2D
-USE uspp_param, ONLY : upf
-IMPLICIT NONE
-!
-INTEGER(KIND=c_int), INTENT(IN), VALUE :: iat
-INTEGER(KIND=c_int), INTENT(IN), VALUE :: nq
-REAL(KIND=c_double), INTENT(IN)  :: q(nq)
-REAL(KIND=c_double), INTENT(OUT) :: vloc_ri(nq)
-!
-REAL(DP) :: aux(rgrid(iat)%mesh), aux1(rgrid(iat)%mesh), r, q2
-INTEGER :: iq, ir, nr
-!
-REAL(DP), EXTERNAL :: qe_erf
-! number of points to the effective infinity (~10 a.u. hardcoded somewhere in the code)
-nr = msh(iat)
-! q-independent radial function
-DO ir = 1, nr
-  r = rgrid(iat)%r(ir)
-  aux1(ir) = r * upf(iat)%vloc(ir) + upf(iat)%zp * e2 * qe_erf(r)
-END DO
-! loop over q-points
-DO iq = 1, nq
-  IF (q(iq) < eps8) THEN ! q=0 case
-    !
-    ! first the G=0 term
-    !
-    IF ((do_comp_esm .AND. (esm_bc .NE. 'pbc')) .OR. do_cutoff_2D) THEN
-      !
-      ! ... temporarily redefine term for ESM calculation
-      !
-      DO ir = 1, nr
-        r = rgrid(iat)%r(ir)
-        aux(ir) = r * (r * upf(iat)%vloc(ir) + upf(iat)%zp * e2 * qe_erf(r))
-      END DO
-      IF (do_cutoff_2D .AND. rgrid(iat)%r(nr) > lz) THEN
-        CALL errore('vloc_of_g','2D cutoff is smaller than pseudo cutoff radius: &
-          & increase interlayer distance (or see Modules/read_pseudo.f90)',1)
-      END IF
-    ELSE
-      DO ir = 1, nr
-        r = rgrid(iat)%r(ir)
-        aux(ir) = r * (r * upf(iat)%vloc(ir) + upf(iat)%zp * e2)
-      END DO
-    END IF
-    CALL simpson(nr, aux, rgrid(iat)%rab(1), vloc_ri(iq))
-  ELSE ! q > 0 case
-    DO ir = 1, nr
-      r = rgrid(iat)%r(ir)
-      aux(ir) = aux1(ir) * SIN(q(iq) * r) / q(iq)
-    END DO
-    CALL simpson(nr, aux, rgrid(iat)%rab(1), vloc_ri(iq))
-    IF ((.NOT.do_comp_esm) .OR. (esm_bc .EQ. 'pbc')) THEN
-      !
-      !   here we re-add the analytic fourier transform of the erf function
-      !
-      IF (.NOT. do_cutoff_2D) THEN
-        q2 = q(iq) * q(iq)
-        vloc_ri(iq) = vloc_ri(iq) - upf(iat)%zp * e2 * EXP(-q2 * 0.25d0) / q2
-      END IF
-    END IF
-  END IF
-  ! convert to Ha
-  vloc_ri(iq) = vloc_ri(iq) / 2.0
-END DO
-
-END SUBROUTINE calc_vloc_radial_integrals
-
-
-! A callback function to compute radial integrals of Vloc(r) with
-! derivatives of Bessel functions
-SUBROUTINE calc_vloc_dj_radial_integrals(iat, nq, q, vloc_dj_ri) BIND(C)
-USE ISO_C_BINDING
-USE kinds
-USE atom
-USE constants
-USE esm
-USE Coul_cut_2D
-USE uspp_param, ONLY : upf
-IMPLICIT NONE
-!
-INTEGER(KIND=c_int), INTENT(IN), VALUE :: iat
-INTEGER(KIND=c_int), INTENT(IN), VALUE :: nq
-REAL(KIND=c_double), INTENT(IN)  :: q(nq)
-REAL(KIND=c_double), INTENT(OUT) :: vloc_dj_ri(nq)
-!
-REAL(DP) :: aux(rgrid(iat)%mesh), aux1(rgrid(iat)%mesh), r, q2
-INTEGER :: iq, ir, nr
-!
-REAL(DP), EXTERNAL :: qe_erf
-! number of points to the effective infinity (~10 a.u. hardcoded somewhere in the code)
-nr = msh(iat)
-! q-independent radial function
-DO ir = 1, nr
-  r = rgrid(iat)%r(ir)
-  aux1(ir) = r * upf(iat)%vloc(ir) + upf(iat)%zp * e2 * qe_erf(r)
-END DO
-! loop over q-points
-DO iq = 1, nq
-  IF (q(iq) < eps8) THEN ! q=0 case
-    vloc_dj_ri(iq) = 0.d0
-  ELSE ! q > 0 case
-    DO ir = 1, nr
-      r = rgrid(iat)%r(ir)
-      aux(ir) = aux1(ir) * (SIN(q(iq) * r) / q(iq)**2 - r * COS(q(iq) * r) / q(iq))
-    END DO
-    CALL simpson(nr, aux, rgrid(iat)%rab(1), vloc_dj_ri(iq))
-    vloc_dj_ri(iq) = vloc_dj_ri(iq) / q(iq)
-    IF ((.NOT.do_comp_esm) .OR. (esm_bc .EQ. 'pbc')) THEN
-      IF (.NOT. do_cutoff_2D) THEN
-        q2 = q(iq) * q(iq)
-        vloc_dj_ri(iq) = vloc_dj_ri(iq) - upf(iat)%zp * e2 * &
-          &EXP(-q2 * 0.25d0) * (q2 + 4) / 2 / q2 / q2
-      END IF
-    END IF
-  END IF
-  ! convert to Ha
-  vloc_dj_ri(iq) = vloc_dj_ri(iq) / 2.0
-END DO
-
-END SUBROUTINE calc_vloc_dj_radial_integrals
-
-
-! A callback function to compute radial integrals of rho_core(r)
-SUBROUTINE calc_rhoc_radial_integrals(iat, nq, q, rhoc_ri) BIND(C)
-USE ISO_C_BINDING
-USE kinds
-USE atom
-USE constants
-USE uspp_param, ONLY : upf
-IMPLICIT NONE
-!
-INTEGER(KIND=c_int), INTENT(IN), VALUE :: iat
-INTEGER(KIND=c_int), INTENT(IN), VALUE :: nq
-REAL(KIND=c_double), INTENT(IN)  :: q(nq)
-REAL(KIND=c_double), INTENT(OUT) :: rhoc_ri(nq)
-!
-REAL(DP) :: aux(rgrid(iat)%mesh), r
-INTEGER :: iq, ir, nr
-! number of points to the effective infinity (~10 a.u. hardcoded somewhere in the code)
-nr = msh(iat)
-! loop over q-points
-DO iq = 1, nq
-  IF (q(iq) < eps8) THEN ! q=0 case
-    DO ir = 1, nr
-      r = rgrid(iat)%r(ir)
-      aux(ir) = r**2 * upf(iat)%rho_atc(ir)
-    ENDDO
-  ELSE
-    CALL sph_bes(nr, rgrid(iat)%r(1), q(iq), 0, aux)
-    DO ir = 1, nr
-      r = rgrid(iat)%r(ir)
-      aux(ir) = r**2 * upf(iat)%rho_atc(ir) * aux(ir)
-    ENDDO
-  END IF
-  CALL simpson(nr, aux, rgrid(iat)%rab(1), rhoc_ri(iq))
-END DO
-
-END SUBROUTINE calc_rhoc_radial_integrals
-
-
-! A callbacl function to compute radial integrals or rho_core(r) with
-! the derivatives of Bessel functions
-SUBROUTINE calc_rhoc_dj_radial_integrals(iat, nq, q, rhoc_dj_ri) BIND(C)
-USE ISO_C_BINDING
-USE kinds
-USE atom
-USE constants
-USE uspp_param, ONLY : upf
-IMPLICIT NONE
-!
-INTEGER(KIND=c_int), INTENT(IN), VALUE :: iat
-INTEGER(KIND=c_int), INTENT(IN), VALUE :: nq
-REAL(KIND=c_double), INTENT(IN)  :: q(nq)
-REAL(KIND=c_double), INTENT(OUT) :: rhoc_dj_ri(nq)
-!
-REAL(DP) :: aux(rgrid(iat)%mesh), r
-INTEGER :: iq, ir, nr
-! number of points to the effective infinity (~10 a.u. hardcoded somewhere in the code)
-nr = msh(iat)
-! loop over q-points
-DO iq = 1, nq
-  IF (q(iq) < eps8) THEN ! q=0 case
-    rhoc_dj_ri(iq) = 0.d0
-  ELSE
-    DO ir = 1, nr
-      r = rgrid(iat)%r(ir)
-      aux(ir) = r * upf(iat)%rho_atc(ir) * &
-        &(r * COS(q(iq) * r) / q(iq) - SIN(q(iq) * r) / q(iq)**2)
-    ENDDO
-    CALL simpson(nr, aux, rgrid(iat)%rab(1), rhoc_dj_ri(iq))
-  END IF
-END DO
-
-END SUBROUTINE calc_rhoc_dj_radial_integrals
-
-
-SUBROUTINE calc_beta_radial_integrals(iat, q, beta_ri, ld) BIND(C)
-USE iso_c_binding
-USE us,           ONLY : dq, tab
-USE uspp_param,   ONLY : upf
-IMPLICIT NONE
-!
-INTEGER(kind=c_int), INTENT(in), VALUE :: iat
-REAL(kind=c_double), INTENT(in), VALUE :: q
-INTEGER(kind=c_int), INTENT(in), VALUE :: ld
-REAL(kind=c_double), INTENT(out) :: beta_ri(ld)
-!
-REAL(8) :: px, ux, vx, wx
-INTEGER :: i0, i1, i2, i3, ib
-!
-IF (ld.LT.upf(iat)%nbeta) THEN
-  WRITE(*,*)'not enough space to store all beta projectors, ld=',ld,' nbeta=',upf(iat)%nbeta
-  STOP
-ENDIF
-IF (.NOT.ALLOCATED(tab)) THEN
-  WRITE(*,*)'tab array is not allocated'
-  STOP
-ENDIF
-
-px = q / dq - INT(q / dq)
-ux = 1.d0 - px
-vx = 2.d0 - px
-wx = 3.d0 - px
-i0 = INT(q / dq) + 1
-i1 = i0 + 1
-i2 = i0 + 2
-i3 = i0 + 3
-DO ib = 1, upf(iat)%nbeta
-  beta_ri(ib) = beta_ri_tab(i0, ib, iat) * ux * vx * wx / 6.d0 + &
-                beta_ri_tab(i1, ib, iat) * px * vx * wx / 2.d0 - &
-                beta_ri_tab(i2, ib, iat) * px * ux * wx / 2.d0 + &
-                beta_ri_tab(i3, ib, iat) * px * ux * vx / 6.d0
-ENDDO
-
-END SUBROUTINE calc_beta_radial_integrals
-
-
-SUBROUTINE calc_beta_dj_radial_integrals(iat, q, beta_ri, ld) BIND(C)
-USE iso_c_binding
-USE us,           ONLY : dq, tab
-USE uspp_param,   ONLY : upf
-IMPLICIT NONE
-!
-INTEGER(kind=c_int), INTENT(in), VALUE :: iat
-REAL(kind=c_double), INTENT(in), VALUE :: q
-INTEGER(kind=c_int), INTENT(in), VALUE :: ld
-REAL(kind=c_double), INTENT(out) :: beta_ri(ld)
-!
-REAL(8) :: px, ux, vx, wx
-INTEGER :: i0, i1, i2, i3, ib
-!
-IF (ld.LT.upf(iat)%nbeta) THEN
-  WRITE(*,*)'not enough space to store all beta projectors, ld=',ld,' nbeta=',upf(iat)%nbeta
-  STOP
-ENDIF
-IF (.NOT.ALLOCATED(tab)) THEN
-  WRITE(*,*)'tab array is not allocated'
-  STOP
-ENDIF
-
-px = q / dq - INT(q / dq)
-ux = 1.d0 - px
-vx = 2.d0 - px
-wx = 3.d0 - px
-i0 = INT(q / dq) + 1
-i1 = i0 + 1
-i2 = i0 + 2
-i3 = i0 + 3
-DO ib = 1, upf(iat)%nbeta
-  beta_ri(ib) = beta_ri_tab(i0, ib, iat) * (-vx*wx-ux*wx-ux*vx)/6.d0 + &
-                beta_ri_tab(i1, ib, iat) * (+vx*wx-px*wx-px*vx)/2.d0 - &
-                beta_ri_tab(i2, ib, iat) * (+ux*wx-px*wx-px*ux)/2.d0 + &
-                beta_ri_tab(i3, ib, iat) * (+ux*vx-px*vx-px*ux)/6.d0
-  beta_ri(ib) = beta_ri(ib) / dq
-ENDDO
-
-END SUBROUTINE calc_beta_dj_radial_integrals
-
-
-SUBROUTINE calc_aug_radial_integrals(iat, q, aug_ri, ld1, ld2) BIND(C)
-USE iso_c_binding
-USE us,           ONLY : dq, qrad
-USE uspp_param,   ONLY : upf
-IMPLICIT NONE
-!
-INTEGER(kind=c_int), INTENT(in), VALUE :: iat
-REAL(kind=c_double), INTENT(in), VALUE :: q
-INTEGER(kind=c_int), INTENT(in), VALUE :: ld1
-INTEGER(kind=c_int), INTENT(in), VALUE :: ld2
-REAL(kind=c_double), INTENT(out) :: aug_ri(ld1, ld2)
-!
-REAL(8) :: px, ux, vx, wx
-INTEGER :: i0, i1, i2, i3, l, nb, mb, ijv
-!
-IF (upf(iat)%tvanp) THEN
-  px = q / dq - INT(q / dq)
-  ux = 1.d0 - px
-  vx = 2.d0 - px
-  wx = 3.d0 - px
-  i0 = INT(q / dq) + 1
-  i1 = i0 + 1
-  i2 = i0 + 2
-  i3 = i0 + 3
-  DO l = 1, 2 * atom_type(iat)%lmax + 1
-    DO nb = 1, upf(iat)%nbeta
-      DO mb = nb, upf(iat)%nbeta
-        ijv = mb * (mb-1) / 2 + nb
-        aug_ri(ijv, l) = aug_ri_tab(i0, ijv, l, iat) * ux * vx * wx / 6.d0 + &
-                         aug_ri_tab(i1, ijv, l, iat) * px * vx * wx / 2.d0 - &
-                         aug_ri_tab(i2, ijv, l, iat) * px * ux * wx / 2.d0 + &
-                         aug_ri_tab(i3, ijv, l, iat) * px * ux * vx / 6.d0
-      ENDDO
-    ENDDO
-  ENDDO
-ENDIF
-
-END SUBROUTINE calc_aug_radial_integrals
-
-
-SUBROUTINE calc_aug_dj_radial_integrals(iat, q, aug_ri, ld1, ld2) BIND(C)
-USE iso_c_binding
-USE us,           ONLY : dq, qrad
-USE uspp_param,   ONLY : upf
-IMPLICIT NONE
-!
-INTEGER(kind=c_int), INTENT(in), VALUE :: iat
-REAL(kind=c_double), INTENT(in), VALUE :: q
-INTEGER(kind=c_int), INTENT(in), VALUE :: ld1
-INTEGER(kind=c_int), INTENT(in), VALUE :: ld2
-REAL(kind=c_double), INTENT(out) :: aug_ri(ld1, ld2)
-!
-REAL(8) :: px, ux, vx, wx
-INTEGER :: i0, i1, i2, i3, l, nb, mb, ijv
-!
-IF (upf(iat)%tvanp) THEN
-  px = q / dq - INT(q / dq)
-  ux = 1.d0 - px
-  vx = 2.d0 - px
-  wx = 3.d0 - px
-  i0 = INT(q / dq) + 1
-  i1 = i0 + 1
-  i2 = i0 + 2
-  i3 = i0 + 3
-  DO l = 1, 2 * atom_type(iat)%lmax + 1
-    DO nb = 1, upf(iat)%nbeta
-      DO mb = nb, upf(iat)%nbeta
-        ijv = mb * (mb-1) / 2 + nb
-        aug_ri(ijv, l) = - aug_ri_tab(i0, ijv, l, iat) * (ux*vx + vx*wx + ux*wx) / 6.d0 &
-                         + aug_ri_tab(i1, ijv, l, iat) * (wx*vx - px*wx - px*vx) * 0.5d0 &
-                         - aug_ri_tab(i2, ijv, l, iat) * (wx*ux - px*wx - px*ux) * 0.5d0 &
-                         + aug_ri_tab(i3, ijv, l, iat) * (ux*vx - px*ux - px*vx) / 6.d0
-        aug_ri(ijv, l) = aug_ri(ijv, l) / dq
-      ENDDO
-    ENDDO
-  ENDDO
-ENDIF
-
-END SUBROUTINE calc_aug_dj_radial_integrals
-
-
 SUBROUTINE setup_sirius()
 USE cell_base, ONLY : alat, at, bg
-USE funct, ONLY : get_iexch, get_icorr, get_inlc, get_meta, get_igcc, get_igcx
 USE ions_base, ONLY : tau, nsp, atm, zv, amass, ityp, nat
 USE uspp_param, ONLY : upf, nhm, nh
 USE atom, ONLY : rgrid, msh
@@ -494,7 +70,7 @@ ENDDO
 CALL sirius_create_context(intra_image_comm, sctx)
 ! create initial configuration dictionary in JSON
 WRITE(conf_str, 10)diago_david_ndim, mixing_beta, nmix
-10 FORMAT('{"parameters" : {"electronic_structure_method" : "pseudopotential"}, &
+10 FORMAT('{"parameters" : {"electronic_structure_method" : "pseudopotential", "use_scf_correction" : true}, &
            &"iterative_solver" : {"residual_tolerance" : 1e-6, "subspace_size" : ',I4,'}, &
            &"mixer" : {"beta" : ', F12.6, ', "max_history" : ', I4, ', "use_hartree" : true},&
            &"settings" : {"itsol_tol_scale" : [0.1, 0.95]}}')
@@ -1160,6 +736,10 @@ SUBROUTINE get_density_from_sirius
   USE lsda_mod,   ONLY : nspin
   USE ions_base,  ONLY : nat, nsp, ityp
   USE uspp_param, ONLY : nhm, nh
+  USE fft_base,             ONLY : dfftp
+  USE fft_interfaces,       ONLY : invfft
+  USE wavefunctions, ONLY : psic
+  USE control_flags,        ONLY : gamma_only
   USE sirius
   !
   IMPLICIT NONE
@@ -1186,6 +766,11 @@ SUBROUTINE get_density_from_sirius
   ENDIF
   ! get density matrix
   CALL get_density_matrix_from_sirius
+  psic(:) = 0.d0
+  psic(dfftp%nl(:)) = rho%of_g(:, 1)
+  IF (gamma_only) psic(dfftp%nlm(:)) = CONJG(rho%of_g(:, 1))
+  CALL invfft('Rho', psic, dfftp)
+  rho%of_r(:,1) = psic(:)
 END SUBROUTINE get_density_from_sirius
 
 
@@ -1706,18 +1291,23 @@ END SUBROUTINE get_wave_functions_from_sirius
 !end subroutine get_density_matrix_from_sirius
 
 SUBROUTINE put_xc_functional_to_sirius
+USE xc_lib
 IMPLICIT NONE
+INTEGER :: iexch, icorr, igcx, igcc, imeta, imetac
 
-  IF (get_meta().NE.0.OR.get_inlc().NE.0) THEN
-   WRITE(*,*)get_igcx()
-   WRITE(*,*)get_igcc()
-   WRITE(*,*)get_meta()
-   WRITE(*,*)get_inlc()
-   STOP ("interface for this XC functional is not implemented")
+  iexch  = xclib_get_id( 'LDA', 'EXCH' )
+  icorr  = xclib_get_id( 'LDA', 'CORR' )
+  igcx   = xclib_get_id( 'GGA', 'EXCH' )
+  igcc   = xclib_get_id( 'GGA', 'CORR' )
+  imeta  = xclib_get_id( 'MGGA','EXCH' )
+  imetac = xclib_get_id( 'MGGA','CORR' )
+
+  IF (imeta.NE.0.OR.imetac.NE.0) THEN
+   STOP ("interface for meta-XC functional is not implemented")
   ENDIF
 
-  IF (get_iexch().NE.0.AND.get_igcx().EQ.0) THEN
-   SELECT CASE(get_iexch())
+  IF (iexch.NE.0.AND.igcx.EQ.0) THEN
+   SELECT CASE(iexch)
    CASE(0)
    CASE(1)
      CALL sirius_add_xc_functional(sctx, "XC_LDA_X")
@@ -1726,8 +1316,8 @@ IMPLICIT NONE
    END SELECT
   ENDIF
 
-  IF (get_iexch().NE.0.AND.get_igcx().NE.0) THEN
-   SELECT CASE(get_igcx())
+  IF (iexch.NE.0.AND.igcx.NE.0) THEN
+   SELECT CASE(igcx)
    CASE(0)
    CASE(2)
      CALL sirius_add_xc_functional(sctx, "XC_GGA_X_PW91")
@@ -1736,13 +1326,13 @@ IMPLICIT NONE
    CASE(10)
      CALL sirius_add_xc_functional(sctx, "XC_GGA_X_PBE_SOL")
    CASE default
-     WRITE(*,*)get_igcx()
+     WRITE(*,*)igcx
      STOP ("interface for this gradient exchange functional is not implemented")
    END SELECT
   ENDIF
 
-  IF (get_icorr().NE.0.AND.get_igcc().EQ.0) THEN
-   SELECT CASE(get_icorr())
+  IF (icorr.NE.0.AND.igcc.EQ.0) THEN
+   SELECT CASE(icorr)
    CASE(0)
    CASE(1)
      CALL sirius_add_xc_functional(sctx, "XC_LDA_C_PZ")
@@ -1753,8 +1343,8 @@ IMPLICIT NONE
    END SELECT
   ENDIF
 
-  IF (get_icorr().NE.0.AND.get_igcc().NE.0) THEN
-   SELECT CASE(get_igcc())
+  IF (icorr.NE.0.AND.igcc.NE.0) THEN
+   SELECT CASE(igcc)
    CASE(0)
    CASE(2)
      CALL sirius_add_xc_functional(sctx, "XC_GGA_C_PW91")
@@ -1772,70 +1362,72 @@ END SUBROUTINE put_xc_functional_to_sirius
 SUBROUTINE insert_xc_functional_to_sirius
   IMPLICIT NONE
 
-  IF (get_meta().NE.0.OR.get_inlc().NE.0) THEN
-    WRITE(*,*)get_igcx()
-    WRITE(*,*)get_igcc()
-    WRITE(*,*)get_meta()
-    WRITE(*,*)get_inlc()
-    STOP ("interface for this XC functional is not implemented")
-  ENDIF
+  STOP 'discuss with Simon P.'
 
-  IF (get_iexch().NE.0.AND.get_igcx().EQ.0) THEN
-    SELECT CASE(get_iexch())
-    CASE(0)
-    CASE(1)
-      CALL sirius_insert_xc_functional(gs_handler, "XC_LDA_X")
-    CASE default
-      STOP ("interface for this exchange functional is not implemented")
-    END SELECT
-  ENDIF
+  !IF (get_meta().NE.0.OR.get_inlc().NE.0) THEN
+  !  WRITE(*,*)get_igcx()
+  !  WRITE(*,*)get_igcc()
+  !  WRITE(*,*)get_meta()
+  !  WRITE(*,*)get_inlc()
+  !  STOP ("interface for this XC functional is not implemented")
+  !ENDIF
 
-  IF (get_iexch().NE.0.AND.get_igcx().NE.0) THEN
-    SELECT CASE(get_igcx())
-    CASE(0)
-    CASE(2)
-      CALL sirius_insert_xc_functional(gs_handler, "XC_GGA_X_PW91")
-    CASE(3)
-      CALL sirius_insert_xc_functional(gs_handler, "XC_GGA_X_PBE")
-    CASE(10)
-      CALL sirius_insert_xc_functional(gs_handler, "XC_GGA_X_PBE_SOL")
-    CASE(21)
-      CALL sirius_insert_xc_functional(gs_handler, "XC_GGA_X_PW86")
-    CASE(22)
-      CALL sirius_insert_xc_functional(gs_handler, "XC_GGA_X_B86")
-    CASE default
-      WRITE(*,*)get_igcx()
-      STOP ("interface for this gradient exchange functional is not implemented")
-    END SELECT
-  ENDIF
+  !IF (get_iexch().NE.0.AND.get_igcx().EQ.0) THEN
+  !  SELECT CASE(get_iexch())
+  !  CASE(0)
+  !  CASE(1)
+  !    CALL sirius_insert_xc_functional(gs_handler, "XC_LDA_X")
+  !  CASE default
+  !    STOP ("interface for this exchange functional is not implemented")
+  !  END SELECT
+  !ENDIF
 
-  IF (get_icorr().NE.0.AND.get_igcc().EQ.0) THEN
-    SELECT CASE(get_icorr())
-    CASE(0)
-    CASE(1)
-      CALL sirius_insert_xc_functional(gs_handler, "XC_LDA_C_PZ")
-    CASE(4)
-      CALL sirius_insert_xc_functional(gs_handler, "XC_LDA_C_PW")
-    CASE default
-      STOP ("interface for this correlation functional is not implemented")
-    END SELECT
-  ENDIF
+  !IF (get_iexch().NE.0.AND.get_igcx().NE.0) THEN
+  !  SELECT CASE(get_igcx())
+  !  CASE(0)
+  !  CASE(2)
+  !    CALL sirius_insert_xc_functional(gs_handler, "XC_GGA_X_PW91")
+  !  CASE(3)
+  !    CALL sirius_insert_xc_functional(gs_handler, "XC_GGA_X_PBE")
+  !  CASE(10)
+  !    CALL sirius_insert_xc_functional(gs_handler, "XC_GGA_X_PBE_SOL")
+  !  CASE(21)
+  !    CALL sirius_insert_xc_functional(gs_handler, "XC_GGA_X_PW86")
+  !  CASE(22)
+  !    CALL sirius_insert_xc_functional(gs_handler, "XC_GGA_X_B86")
+  !  CASE default
+  !    WRITE(*,*)get_igcx()
+  !    STOP ("interface for this gradient exchange functional is not implemented")
+  !  END SELECT
+  !ENDIF
 
-  IF (get_icorr().NE.0.AND.get_igcc().NE.0) THEN
-    SELECT CASE(get_igcc())
-    CASE(0)
-    CASE(1)
-      CALL sirius_insert_xc_functional(gs_handler, "XC_GGA_C_PW86")
-    CASE(2)
-      CALL sirius_insert_xc_functional(gs_handler, "XC_GGA_C_PW91")
-    CASE(4)
-      CALL sirius_insert_xc_functional(gs_handler, "XC_GGA_C_PBE")
-    CASE(8)
-      CALL sirius_insert_xc_functional(gs_handler, "XC_GGA_C_PBE_SOL")
-    CASE default
-      STOP ("interface for this gradient correlation functional is not implemented")
-    END SELECT
-  ENDIF
+  !IF (get_icorr().NE.0.AND.get_igcc().EQ.0) THEN
+  !  SELECT CASE(get_icorr())
+  !  CASE(0)
+  !  CASE(1)
+  !    CALL sirius_insert_xc_functional(gs_handler, "XC_LDA_C_PZ")
+  !  CASE(4)
+  !    CALL sirius_insert_xc_functional(gs_handler, "XC_LDA_C_PW")
+  !  CASE default
+  !    STOP ("interface for this correlation functional is not implemented")
+  !  END SELECT
+  !ENDIF
+
+  !IF (get_icorr().NE.0.AND.get_igcc().NE.0) THEN
+  !  SELECT CASE(get_igcc())
+  !  CASE(0)
+  !  CASE(1)
+  !    CALL sirius_insert_xc_functional(gs_handler, "XC_GGA_C_PW86")
+  !  CASE(2)
+  !    CALL sirius_insert_xc_functional(gs_handler, "XC_GGA_C_PW91")
+  !  CASE(4)
+  !    CALL sirius_insert_xc_functional(gs_handler, "XC_GGA_C_PBE")
+  !  CASE(8)
+  !    CALL sirius_insert_xc_functional(gs_handler, "XC_GGA_C_PBE_SOL")
+  !  CASE default
+  !    STOP ("interface for this gradient correlation functional is not implemented")
+  !  END SELECT
+  !ENDIF
 END SUBROUTINE insert_xc_functional_to_sirius
 
 
