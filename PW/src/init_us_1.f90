@@ -71,15 +71,14 @@ subroutine init_us_1
   !
   call start_clock ('init_us_1')
   !
-  IF (use_sirius) THEN
-    IF (ALLOCATED(beta_ri_tab)) DEALLOCATE(beta_ri_tab)
-    ALLOCATE(beta_ri_tab(nqx, nbetam, ntyp))
-    beta_ri_tab = 0.d0
-    IF (ALLOCATED(aug_ri_tab)) DEALLOCATE(aug_ri_tab)
-    ALLOCATE(aug_ri_tab(nqxq, nbetam*(nbetam+1)/2, lmaxq, ntyp))
-    aug_ri_tab = 0.d0
-  ENDIF
-
+#if defined(__SIRIUS)
+  IF (ALLOCATED(beta_ri_tab)) DEALLOCATE(beta_ri_tab)
+  ALLOCATE(beta_ri_tab(nqx, nbetam, ntyp))
+  beta_ri_tab = 0.d0
+  IF (ALLOCATED(aug_ri_tab)) DEALLOCATE(aug_ri_tab)
+  ALLOCATE(aug_ri_tab(nqxq, nbetam*(nbetam+1)/2, lmaxq, ntyp))
+  aug_ri_tab = 0.d0
+#endif
   !
   !    Initialization of the variables
   !
@@ -341,9 +340,9 @@ subroutine init_us_1
            enddo
            call simpson (upf(nt)%kkbeta, aux, rgrid(nt)%rab, vqint)
            tab (iq, nb, nt) = vqint * pref
-           IF (use_sirius) THEN
-             beta_ri_tab(iq, nb, nt) = vqint
-           ENDIF
+#if defined(__SIRIUS)
+           beta_ri_tab(iq, nb, nt) = vqint
+#endif
         enddo
      enddo
   enddo
@@ -351,9 +350,9 @@ subroutine init_us_1
   deallocate (aux)
 
   call mp_sum(  tab, intra_bgrp_comm )
-  IF (use_sirius) THEN
-    CALL mp_sum(  beta_ri_tab, intra_bgrp_comm )
-  ENDIF
+#if defined(__SIRIUS)
+  CALL mp_sum( beta_ri_tab, intra_bgrp_comm )
+#endif
 
   ! initialize spline interpolation
   if (spline_ps) then
@@ -448,45 +447,45 @@ SUBROUTINE compute_qrad ( )
               ENDDO
               ! igl
            ENDDO
-           IF (use_sirius) THEN
-             DO iq = startq, lastq
-                !
-                q = (iq - 1) * dq
-                !
-                !     here we compute the spherical bessel function for each q_i
-                !
-                CALL sph_bes ( upf(nt)%kkbeta, rgrid(nt)%r, q, l, besr)
-                !
-                DO nb = 1, upf(nt)%nbeta
-                   !
-                   !    the Q are symmetric with respect to indices
-                   !
-                   DO mb = nb, upf(nt)%nbeta
-                      ijv = mb * (mb - 1) / 2 + nb
-                      IF ( ( l >= abs(upf(nt)%lll(nb) - upf(nt)%lll(mb)) ) .AND. &
-                           ( l <=     upf(nt)%lll(nb) + upf(nt)%lll(mb)  ) .AND. &
-                           (mod(l+upf(nt)%lll(nb)+upf(nt)%lll(mb),2)==0) ) THEN
-                         DO ir = 1, upf(nt)%kkbeta
-                            aux  (ir) = besr (ir) * upf(nt)%qfuncl(ir,ijv,l)
-                         ENDDO
-                         !
-                         !   and then we integrate with all the Q functions
-                         !
-                         CALL simpson ( upf(nt)%kkbeta, aux, rgrid(nt)%rab, &
-                                       aug_ri_tab(iq, ijv, l + 1, nt))
-                      ENDIF
-                   ENDDO
-                ENDDO
-                ! igl
-             ENDDO
-           ENDIF
+#if defined(__SIRIUS)
+           DO iq = startq, lastq
+              !
+              q = (iq - 1) * dq
+              !
+              !     here we compute the spherical bessel function for each q_i
+              !
+              CALL sph_bes ( upf(nt)%kkbeta, rgrid(nt)%r, q, l, besr)
+              !
+              DO nb = 1, upf(nt)%nbeta
+                 !
+                 !    the Q are symmetric with respect to indices
+                 !
+                 DO mb = nb, upf(nt)%nbeta
+                    ijv = mb * (mb - 1) / 2 + nb
+                    IF ( ( l >= abs(upf(nt)%lll(nb) - upf(nt)%lll(mb)) ) .AND. &
+                         ( l <=     upf(nt)%lll(nb) + upf(nt)%lll(mb)  ) .AND. &
+                         (mod(l+upf(nt)%lll(nb)+upf(nt)%lll(mb),2)==0) ) THEN
+                       DO ir = 1, upf(nt)%kkbeta
+                          aux  (ir) = besr (ir) * upf(nt)%qfuncl(ir,ijv,l)
+                       ENDDO
+                       !
+                       !   and then we integrate with all the Q functions
+                       !
+                       CALL simpson ( upf(nt)%kkbeta, aux, rgrid(nt)%rab, &
+                                     aug_ri_tab(iq, ijv, l + 1, nt))
+                    ENDIF
+                 ENDDO
+              ENDDO
+              ! igl
+           ENDDO
+#endif
            ! l
         ENDDO
         qrad (:, :, :, nt) = qrad (:, :, :, nt)*prefr
         CALL mp_sum ( qrad (:, :, :, nt), intra_bgrp_comm )
-        IF (use_sirius) THEN
-          CALL mp_sum ( aug_ri_tab(:, :, :, nt), intra_bgrp_comm )
-        ENDIF
+#if defined(__SIRIUS)
+        CALL mp_sum ( aug_ri_tab(:, :, :, nt), intra_bgrp_comm )
+#endif
      ENDIF
      ! ntyp
   ENDDO
