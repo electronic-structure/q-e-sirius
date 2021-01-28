@@ -129,6 +129,8 @@ set(src_pw
    src/lchk_tauxk.f90 
    src/ldaU.f90 
    src/make_pointlists.f90 
+   src/mod_sirius_base.f90
+   src/mod_sirius_callbacks.f90
    src/mod_sirius.f90
    src/makov_payne.f90 
    src/manypw.f90 
@@ -259,8 +261,10 @@ qe_enable_cuda_fortran("${src_pw}")
     
 qe_add_library(qe_pw ${src_pw})
 
-get_property(_sirius_include_dirs TARGET sirius::sirius PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
-target_include_directories(qe_pw PRIVATE ${_sirius_include_dirs})
+if(QE_ENABLE_SIRIUS)
+  get_property(_sirius_include_dirs TARGET sirius::sirius PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
+  target_include_directories(qe_pw PRIVATE ${_sirius_include_dirs})
+endif(QE_ENABLE_SIRIUS)
 
 target_link_libraries(qe_pw
     PRIVATE
@@ -278,14 +282,18 @@ target_link_libraries(qe_pw
         qe_dftd3
         qe_openmp_fortran
         qe_mpi_fortran
-        qe_xclib
-        sirius::sirius)
+        qe_xclib)
 if(QE_ENABLE_CUDA)
     target_link_libraries(qe_pw
         PRIVATE
             qe_devxlib
             CUDA::cublas)
 endif()
+if(QE_ENABLE_SIRIUS)
+    target_link_libraries(qe_pw
+        PRIVATE
+            sirius::sirius)
+endif(QE_ENABLE_SIRIUS)
 
 ###########################################################
 # pw.x
@@ -302,8 +310,7 @@ target_link_libraries(qe_pw_exe
         qe_modules
         qe_lax
         qe_lapack
-        qe_upflib
-        sirius::sirius)
+        qe_upflib)
 
 ###########################################################
 # ibrav2cell.x
@@ -317,8 +324,7 @@ target_link_libraries(qe_pw_tools_ibrav2cell_exe
     PRIVATE
         qe_pw
         qe_modules
-        qe_lapack
-        sirius::sirius)
+        qe_lapack)
 
 ###########################################################
 # cell2ibrav.x
@@ -332,8 +338,7 @@ target_link_libraries(qe_pw_tools_cell2ibrav_exe
     PRIVATE
         qe_pw
         qe_modules
-        qe_lapack
-        sirius::sirius)
+        qe_lapack)
 
 ###########################################################
 # ev.x
@@ -347,8 +352,7 @@ target_link_libraries(qe_pw_tools_ev_exe
     PRIVATE
         qe_pw
         qe_modules
-        qe_lapack
-        sirius::sirius)
+        qe_lapack)
 
 ###########################################################
 # kpoints.x
@@ -362,8 +366,7 @@ target_link_libraries(qe_pw_tools_kpoints_exe
     PRIVATE
         qe_pw
         qe_modules
-        qe_lapack
-        sirius::sirius)
+        qe_lapack)
 
 ###########################################################
 # pwi2xsf.x
@@ -377,8 +380,7 @@ target_link_libraries(qe_pw_tools_pwi2xsf_exe
     PRIVATE
         qe_pw
         qe_modules
-        qe_lapack
-        sirius::sirius)
+        qe_lapack)
 
 ###########################################################
 

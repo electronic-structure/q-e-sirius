@@ -77,6 +77,8 @@ else()
     option(QE_ENABLE_OPENMP
         "enable distributed execution support via OpenMP" OFF)
 endif()
+option(QE_ENABLE_SIRIUS
+    "enable SIRIUS interface" OFF)
 option(QE_ENABLE_MPI
     "enable distributed execution support via MPI" ON)
 option(QE_ENABLE_TEST
@@ -392,6 +394,10 @@ if(QE_ENABLE_HDF5)
         INTERFACE
             ${HDF5_C_DEFINITIONS})
 endif(QE_ENABLE_HDF5)
+
+if(QE_ENABLE_SIRIUS)
+    qe_add_global_compile_definitions(__SIRIUS)
+endif(QE_ENABLE_SIRIUS)
 
 ###########################################################
 # Tests
