@@ -58,6 +58,10 @@ SUBROUTINE stress( sigma )
   REAL(DP) :: latvecs(3,3)
   REAL(DP), ALLOCATABLE :: force_d3(:,:)
   !
+  REAL(DP) :: tmp(3, 3)
+  INTEGER :: idx(2, 3)
+  REAL(DP) :: d1
+  !
   WRITE( stdout, '(//5x,"Computing stress (Cartesian axis) and pressure"/)' )
   !
   IF ( lelfield .AND. okvan ) THEN
@@ -68,6 +72,49 @@ SUBROUTINE stress( sigma )
   CALL sirius_start_timer("qe|stress")
   !
   CALL start_clock( 'stress' )
+  !
+  IF (use_sirius_scf) THEN
+    sigmakin = 0.d0
+    sigmaloc = 0.d0
+    sigmahar = 0.d0
+    sigmaxc = 0.d0
+    sigmaxcc = 0.d0
+    sigmaewa = 0.d0
+    sigmanlc = 0.d0
+    sigmabare = 0.d0
+    sigmah = 0.d0
+    sigmael = 0.d0
+    sigmaion = 0.d0
+    sigmad23 = 0.d0
+    sigmaxdm = 0.d0
+    sigma_ts = 0.d0
+    sigma_nonloc_dft = 0.d0
+    sigmaexx = 0.d0
+    sigmaloclong = 0.d0
+
+    CALL sirius_get_stress_tensor(gs_handler, "kin", sigmakin)
+    sigmakin = -sigmakin * 2 ! convert to Ha
+    CALL sirius_get_stress_tensor(gs_handler, "nonloc", sigmanlc)
+    sigmanlc = -sigmanlc * 2 ! convert to Ha
+    ! add ultrasoft term
+    CALL sirius_get_stress_tensor(gs_handler, "us", tmp)
+    sigmanlc = sigmanlc - 2 * tmp
+    CALL sirius_get_stress_tensor(gs_handler, "vloc", sigmaloc)
+    sigmaloc = -sigmaloc * 2 ! convert to Ry
+    CALL sirius_get_stress_tensor(gs_handler, "har", sigmahar)
+    sigmahar = -sigmahar * 2 ! convert to Ry
+    CALL sirius_get_stress_tensor(gs_handler, "xc", sigmaxc)
+    sigmaxc = -sigmaxc * 2 ! convert to Ry
+    CALL sirius_get_stress_tensor(gs_handler, "core", sigmaxcc)
+    sigmaxcc = -sigmaxcc * 2 ! convert to Ry
+    CALL sirius_get_stress_tensor(gs_handler, "ewald", sigmaewa)
+    sigmaewa = -sigmaewa * 2 ! convert to Ry
+    IF ( lda_plus_u .AND. U_projection /= 'pseudo' ) THEN
+      CALL sirius_get_stress_tensor(gs_handler, "hubbard", sigmah)
+      sigmah = -sigmah * 2 ! convert to Ry
+    ENDIF
+
+  ELSE
   !
   !   contribution from local potential
   !
@@ -184,6 +231,8 @@ SUBROUTINE stress( sigma )
   sigma_nonloc_dft(:,:) = 0.d0
   CALL stres_nonloc_dft( rho%of_r, rho_core, nspin, sigma_nonloc_dft )
   !
+  END IF ! use_sirius_scf
+  !
   ! SUM
   !
   sigma(:,:) = sigmakin(:,:) + sigmaloc(:,:) + sigmahar(:,:) +  &
@@ -199,6 +248,7 @@ SUBROUTINE stress( sigma )
   ELSE
      sigmaexx = 0.d0
   ENDIF
+  !
   ! Resymmetrize the total stress. This should not be strictly necessary,
   ! but prevents loss of symmetry in long vc-bfgs runs
 

@@ -493,7 +493,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
   CALL memstat( kilobytes )
   IF ( kilobytes > 0 ) WRITE( stdout, 9001 ) kilobytes/1000.0
   !
-  IF (use_sirius.AND.use_sirius_scf) THEN
+  IF (use_sirius_scf) THEN
     write(*,*)''
     write(*,*)'============================'
     write(*,*)'* running DFT ground state *'

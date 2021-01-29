@@ -144,6 +144,7 @@ CALL sirius_set_callback_function(sctx, "vloc_ri", C_FUNLOC(calc_vloc_radial_int
 CALL sirius_set_callback_function(sctx, "vloc_ri_djl", C_FUNLOC(calc_vloc_dj_radial_integrals))
 CALL sirius_set_callback_function(sctx, "rhoc_ri", C_FUNLOC(calc_rhoc_radial_integrals))
 CALL sirius_set_callback_function(sctx, "rhoc_ri_djl", C_FUNLOC(calc_rhoc_dj_radial_integrals))
+CALL sirius_set_callback_function(sctx, "ps_rho_ri", C_FUNLOC(calc_ps_rho_radial_integrals))
 !CALL sirius_set_callback_function(sctx, "band_occ", C_FUNLOC(calc_band_occupancies))
 
 ! set lattice vectors of the unit cell (length is in [a.u.])

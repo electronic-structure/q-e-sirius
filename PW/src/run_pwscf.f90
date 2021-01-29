@@ -176,7 +176,7 @@ SUBROUTINE run_pwscf( exit_status )
      WRITE(stdout,'("     evp_work_count     : ", I10)')int(evp_work_count)
      WRITE(stdout,'("     num_loc_op_applied : ", I10)')num_loc_op_applied
      IF (use_sirius.AND.use_sirius_ks_solver) THEN
-       CALL get_wave_functions_from_sirius
+       CALL get_wave_functions_from_sirius ! TODO: move to electrons
      ENDIF
      !
      ! ... code stopped by user or not converged
@@ -197,12 +197,12 @@ SUBROUTINE run_pwscf( exit_status )
         CALL pw2casino( 0 )
      END IF
 
-     IF (use_sirius) THEN
-        CALL put_density_to_sirius
-        IF (.NOT.use_sirius_density_matrix) THEN
-           CALL put_density_matrix_to_sirius
-        ENDIF
-     ENDIF
+     !IF (use_sirius) THEN
+     !   CALL put_density_to_sirius
+     !   IF (.NOT.use_sirius_density_matrix) THEN
+     !      CALL put_density_matrix_to_sirius
+     !   ENDIF
+     !ENDIF
 
      !
      ! ... ionic section starts here

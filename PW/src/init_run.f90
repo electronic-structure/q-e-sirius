@@ -12,7 +12,7 @@ SUBROUTINE init_run()
   USE klist,              ONLY : nkstot
   USE symme,              ONLY : sym_rho_init
   USE wvfct,              ONLY : nbnd, et, wg, btype
-  USE control_flags,      ONLY : lmd, gamma_only, smallmem, ts_vdw, mbd_vdw
+  USE control_flags,      ONLY : lmd, gamma_only, smallmem, ts_vdw, mbd_vdw, io_level
   USE gvect,              ONLY : g, gg, mill, gcutm, ig_l2g, ngm, ngm_g, &
                                  gshells, gstart ! to be comunicated to the Solvers if gamma_only
   USE gvecs,              ONLY : gcutms, ngms
@@ -34,6 +34,8 @@ SUBROUTINE init_run()
   USE Coul_cut_2D,        ONLY : do_cutoff_2D, cutoff_fact 
   USE lsda_mod,           ONLY : nspin
   USE xc_lib,             ONLY : xclib_dft_is_libxc, xclib_init_libxc
+  USE buffers,            ONLY : open_buffer
+  USE io_files,           ONLY : iunwfc, nwordwfc
   USE mod_sirius
   !
   IMPLICIT NONE
@@ -114,7 +116,7 @@ SUBROUTINE init_run()
   CALL allocate_wfc_k()
   CALL openfil()
   !
-  IF (use_sirius) THEN
+  IF (use_sirius.OR.always_setup_sirius) THEN
     CALL init_us_1()
     ! at this point FFT dimensions are known and we can pass them to SIRIUS
     CALL clear_sirius
@@ -131,7 +133,7 @@ SUBROUTINE init_run()
   !
   CALL newd()
   !
-  IF (use_sirius) THEN
+  IF (use_sirius.OR.use_sirius_scf.OR.always_setup_sirius) THEN
     CALL sirius_initialize_kset(ks_handler)
   ENDIF
 

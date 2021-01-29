@@ -150,6 +150,25 @@ SUBROUTINE forces()
   forceh(:,:)   = 0.D0
   force(:,:)    = 0.D0
   !
+  IF (use_sirius_scf) THEN
+    forcenl = 0.d0
+    forcelc = 0.d0
+    forcecc = 0.d0
+    forceh = 0.d0
+    forceion = 0.d0
+    forcescc = 0.d0
+    CALL sirius_get_forces(gs_handler, "usnl", forcenl)
+    forcenl = forcenl * 2 ! convert to Ry
+    CALL sirius_get_forces(gs_handler,"vloc", forcelc)
+    forcelc = forcelc * 2 ! convert to Ry
+    CALL sirius_get_forces(gs_handler, "core", forcecc)
+    forcecc = forcecc * 2 ! convert to Ry
+    CALL sirius_get_forces(gs_handler, "ewald", forceion)
+    forceion = forceion * 2 ! convert to Ry
+    CALL sirius_get_forces(gs_handler, "scf_corr", forcescc)
+    forcescc = forcescc * 2 ! convert to Ry
+  ELSE
+  !
   ! ... The nonlocal contribution is computed here
   !
   CALL sirius_start_timer("qe|force|us")
@@ -254,6 +273,8 @@ SUBROUTINE forces()
         ENDDO
      ENDIF
   ENDIF
+  !
+  ENDIF !use_sirius_scf
   !
   ! ... here we sum all the contributions and compute the total force acting
   ! ... on the crystal
