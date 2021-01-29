@@ -31,7 +31,7 @@ SUBROUTINE forces()
   USE cell_base,         ONLY : at, bg, alat, omega  
   USE ions_base,         ONLY : nat, ntyp => nsp, ityp, tau, zv, amass, extfor, atm
   USE fft_base,          ONLY : dfftp
-  USE gvect,             ONLY : ngm, gstart, ngl, igtongl, g, gg, gcutm
+  USE gvect,             ONLY : ngm, gstart, ngl, igtongl, igtongl_d, g,  gg, gcutm
   USE lsda_mod,          ONLY : nspin
   USE symme,             ONLY : symvector
   USE vlocal,            ONLY : strf, vloc
@@ -40,7 +40,7 @@ SUBROUTINE forces()
   USE ions_base,         ONLY : if_pos
   USE ldaU,              ONLY : lda_plus_u, U_projection
   USE extfield,          ONLY : tefield, forcefield, gate, forcegate, relaxz
-  USE control_flags,     ONLY : gamma_only, remove_rigid_rot, textfor,  &
+  USE control_flags,     ONLY : gamma_only, remove_rigid_rot, textfor, &
                                 iverbosity, llondon, ldftd3, lxdm, ts_vdw
   USE plugin_flags
   USE bp,                ONLY : lelfield, gdir, l3dstring, efield_cart, &
@@ -55,12 +55,11 @@ SUBROUTINE forces()
   USE tsvdw_module,      ONLY : FtsvdW
   USE esm,               ONLY : do_comp_esm, esm_bc, esm_force_ew
   USE qmmm,              ONLY : qmmm_mode
-  USE wavefunctions,     ONLY : psic
-  USE scf,               ONLY : vnew, rho_core, rhog_core
-  USE ener,              ONLY : etxc, vtxc
-  USE mp_bands,          ONLY : intra_bgrp_comm
-  USE fft_interfaces,    ONLY : fwfft
-  USE gvect,             ONLY : mill
+  !
+  USE control_flags,     ONLY : use_gpu
+  USE device_fbuff_m,          ONLY : dev_buf
+  USE gvect_gpum,        ONLY : g_d
+  USE device_memcpy_m,     ONLY : dev_memcpy
   USE mod_sirius
   !
   IMPLICIT NONE
@@ -92,56 +91,20 @@ SUBROUTINE forces()
   REAL(DP) :: latvecs(3,3)
   INTEGER :: atnum(1:nat)
   REAL(DP) :: stress_dftd3(3,3)
-  REAL(DP), ALLOCATABLE :: vxc(:, :)
-  COMPLEX(DP), ALLOCATABLE :: vxc_g(:)
-  INTEGER  :: ig
+  !
+  ! TODO: get rid of this !!!! Use standard method for duplicated global data
+  REAL(DP), POINTER :: vloc_d (:, :)
+  INTEGER :: ierr
+#if defined(__CUDA)
+  attributes(DEVICE) :: vloc_d
+#endif
   !
   !
-  CALL sirius_start_timer("qe|forces")
-  !
-  !IF (use_sirius) THEN
-  !  ! recalculate the exchange-correlation potential
-  !  ALLOCATE(vxc(dfftp%nnr, nspin))
-  !  !
-  !  CALL v_xc (rho, rho_core, rhog_core, etxc, vtxc, vxc)
-  !  !
-  !  psic = (0.0_DP,0.0_DP)
-  !  IF (nspin == 1 .OR. nspin == 4) THEN
-  !     psic(:) = vxc(:, 1)
-  !  ELSE
-  !     psic(:) = (vxc(:, 1) + vxc(:, 2)) * 0.5d0
-  !  ENDIF
-  !  DEALLOCATE(vxc)
-  !  CALL fwfft('Rho', psic, dfftp)
-  !  !
-  !  ! psic contains now Vxc(G)
-  !  !
-  !  ALLOCATE(vxc_g(ngm))
-  !  DO ig = 1, ngm
-  !     vxc_g(ig) = psic(dfftp%nl(ig)) * 0.5d0 ! convert to Ha
-  !  ENDDO
-  !  ! set XC potential
-  !  CALL sirius_set_pw_coeffs(gs_handler, string("vxc"), vxc_g(1), bool(.true.), ngm, mill(1, 1), intra_bgrp_comm)
-
-  !  !
-  !  ! vnew is V_out - V_in, psic is the temp space
-  !  !
-  !  IF (nspin == 1 .OR. nspin == 4) THEN
-  !     psic(:) = vnew%of_r(:, 1)
-  !  ELSE
-  !     psic(:) = (vnew%of_r(:, 1) + vnew%of_r(:, 2)) * 0.5d0
-  !  ENDIF
-  !  CALL fwfft ('Rho', psic, dfftp)
-
-  !  DO ig = 1, ngm
-  !     vxc_g(ig) = psic(dfftp%nl(ig)) * 0.5d0 ! convert to Ha
-  !  ENDDO
-  !  ! set XC potential
-  !  CALL sirius_set_pw_coeffs(gs_handler, string("dveff"), vxc_g(1), bool(.true.), ngm, mill(1, 1), intra_bgrp_comm)
-
-  !  DEALLOCATE(vxc_g)
-  !ENDIF
   CALL start_clock( 'forces' )
+  !
+  ! Cleanup scratch space used in previous SCF iterations. This will reduce memory footprint.
+  CALL dev_buf%reinit(ierr)
+  IF (ierr .ne. 0) CALL errore('forces', 'Cannot reset GPU buffers! Buffers still locked: ', abs(ierr))
   !
   ALLOCATE( forcenl(3,nat), forcelc(3,nat), forcecc(3,nat), &
             forceh(3,nat), forceion(3,nat), forcescc(3,nat) )
@@ -171,39 +134,55 @@ SUBROUTINE forces()
   !
   ! ... The nonlocal contribution is computed here
   !
-  CALL sirius_start_timer("qe|force|us")
-  CALL force_us( forcenl )
-  CALL sirius_stop_timer("qe|force|us")
+  call start_clock('frc_us') 
+  IF (.not. use_gpu) CALL force_us( forcenl )
+  IF (      use_gpu) CALL force_us_gpu( forcenl )
+  call stop_clock('frc_us') 
   !
   ! ... The local contribution
   !
-  CALL sirius_start_timer("qe|force|local")
-  CALL force_lc( nat, tau, ityp, alat, omega, ngm, ngl, igtongl,       &
+  CALL start_clock('frc_lc') 
+  IF (.not. use_gpu) & ! On the CPU
+     CALL force_lc( nat, tau, ityp, alat, omega, ngm, ngl, igtongl, &
                  g, rho%of_r(:,1), dfftp%nl, gstart, gamma_only, vloc, &
                  forcelc )
-  CALL sirius_stop_timer("qe|force|local")
+  IF (      use_gpu) THEN ! On the GPU
+     ! move these data to the GPU
+     CALL dev_buf%lock_buffer(vloc_d, (/ ngl, ntyp /) , ierr)
+     IF (ierr /= 0) CALL errore( 'forces', 'cannot allocate buffers', -1 )
+     CALL dev_memcpy(vloc_d, vloc)
+     CALL force_lc_gpu( nat, tau, ityp, alat, omega, ngm, ngl, igtongl_d, &
+                   g_d, rho%of_r(:,1), dfftp%nl_d, gstart, gamma_only, vloc_d, &
+                   forcelc )
+     CALL dev_buf%release_buffer(vloc_d, ierr)
+  END IF
+  call stop_clock('frc_lc') 
   !
   ! ... The NLCC contribution
   !
-  CALL sirius_start_timer("qe|force|cc")
-  CALL force_cc( forcecc )
-  CALL sirius_stop_timer("qe|force|cc")
+  call start_clock('frc_cc') 
+  IF (.not. use_gpu) CALL force_cc( forcecc )
+  IF (      use_gpu) CALL force_cc_gpu( forcecc )
   !
+  call stop_clock('frc_cc') 
+
   ! ... The Hubbard contribution
   !     (included by force_us if using beta as local projectors)
   !
-  IF ( lda_plus_u .AND. U_projection.NE.'pseudo' ) CALL force_hub( forceh )
+  IF (.not. use_gpu) THEN
+     IF ( lda_plus_u .AND. U_projection.NE.'pseudo' ) CALL force_hub( forceh )
+  ELSE
+     IF ( lda_plus_u .AND. U_projection.NE.'pseudo' ) CALL force_hub_gpu( forceh )
+  ENDIF
   !
   ! ... The ionic contribution is computed here
   !
-  CALL sirius_start_timer("qe|force|ewald")
   IF( do_comp_esm ) THEN
      CALL esm_force_ew( forceion )
   ELSE
      CALL force_ew( alat, nat, ntyp, ityp, zv, at, bg, tau, omega, g, &
                     gg, ngm, gstart, gamma_only, gcutm, strf, forceion )
   ENDIF
-  CALL sirius_stop_timer("qe|force|ewald")
   !
   ! ... the semi-empirical dispersion correction
   !
@@ -239,9 +218,15 @@ SUBROUTINE forces()
   !
   ! ... The SCF contribution
   !
-  CALL sirius_start_timer("qe|force|scf")
-  CALL force_corr( forcescc )
-  CALL sirius_stop_timer("qe|force|scf")
+  call start_clock('frc_scc')
+  ! Cleanup scratch space again, next subroutines uses a lot of memory.
+  ! In an ideal world this should be done only if really needed (TODO).
+  CALL dev_buf%reinit(ierr)
+  IF (ierr .ne. 0) CALL errore('forces', 'Cannot reset GPU buffers! Buffers still locked: ', abs(ierr))
+  !
+  IF ( .not. use_gpu ) CALL force_corr( forcescc )
+  IF (       use_gpu ) CALL force_corr_gpu( forcescc )
+  call stop_clock('frc_scc') 
   !
   IF (do_comp_mt) THEN
     !
@@ -274,7 +259,7 @@ SUBROUTINE forces()
      ENDIF
   ENDIF
   !
-  ENDIF !use_sirius_scf
+  ENDIF ! if (use_sirius_scf)
   !
   ! ... here we sum all the contributions and compute the total force acting
   ! ... on the crystal
@@ -494,8 +479,6 @@ SUBROUTINE forces()
                    &  "reduce conv_thr to get better values")')
   !
   IF(ALLOCATED(force_mt))   DEALLOCATE( force_mt )
-
-  CALL sirius_stop_timer("qe|forces")
 
   RETURN
   !

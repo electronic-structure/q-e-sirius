@@ -38,17 +38,13 @@ write_upf_new.o \
 xmltools.o \
 ylmr2.o
 
-TLDEPS=libfox
+-include make.gpu
 
 all : libupf.a virtual_v2.x upfconv.x
 
 libupf.a: $(MODULES) $(OBJS)
 	$(AR) $(ARFLAGS) $@ $?       
 	$(RANLIB) $@    
-
-tldeps :
-	if test -n "$(TLDEPS)" ; then \
-	( cd ../.. ; $(MAKE) $(TLDEPS) || exit 1 ) ; fi
 
 virtual_v2.x : virtual_v2.o $(QEMODS) 
 	$(LD) $(LDFLAGS) -o $@ virtual_v2.o $(QEMODS) $(LAPACK_LIBS) $(BLAS_LIBS)

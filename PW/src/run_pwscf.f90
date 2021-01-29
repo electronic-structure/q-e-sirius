@@ -70,6 +70,8 @@ SUBROUTINE run_pwscf( exit_status )
     & nlcg_kappa, nlcg_maxiter, nlcg_restart, nlcg_smearing,&
     & nlcg_processing_unit
   !
+  USE device_fbuff_m,             ONLY : dev_buf
+  !
   IMPLICIT NONE
   !
   INTEGER, INTENT(OUT) :: exit_status
@@ -87,6 +89,9 @@ SUBROUTINE run_pwscf( exit_status )
   ! ions_status =  2  converged, restart with nonzero magnetization
   ! ions_status =  1  converged, final step with current cell needed
   ! ions_status =  0  converged, exiting
+  !
+  INTEGER :: ierr
+  ! collect error codes
   !
   ions_status = 3
   exit_status = 0
@@ -337,6 +342,9 @@ SUBROUTINE run_pwscf( exit_status )
      IF (use_sirius) THEN
         ethr = 1.0D-2
      ENDIF
+     !
+     CALL dev_buf%reinit( ierr )
+     IF ( ierr .ne. 0 ) CALL errore( 'run_pwscf', 'Cannot reset GPU buffers! Buffers still locked: ', abs(ierr) )
      !
   ENDDO main_loop
   ! write basic results to a JSON file

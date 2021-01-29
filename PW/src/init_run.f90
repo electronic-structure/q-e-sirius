@@ -38,6 +38,12 @@ SUBROUTINE init_run()
   USE io_files,           ONLY : iunwfc, nwordwfc
   USE mod_sirius
   !
+  USE control_flags,      ONLY : use_gpu
+  USE dfunct_gpum,        ONLY : newd_gpu
+  USE wvfct_gpum,         ONLY : using_et, using_wg, using_wg_d
+  USE gvect_gpum,         ONLY : using_g, using_gg, using_g_d, using_gg_d, &
+                                 using_mill, using_mill_d
+  !
   IMPLICIT NONE
   LOGICAL exst_file,exst_mem
   !
@@ -75,6 +81,14 @@ SUBROUTINE init_run()
      ! ... Solvers need to know gstart
      call export_gstart_2_solvers(gstart)
   END IF
+
+#if defined(__CUDA)
+  ! All these variables are actually set by ggen which has intent out
+  CALL using_mill(2); CALL using_mill_d(0); ! updates mill indices,
+  CALL using_g(2);    CALL using_g_d(0);    ! g and gg that are used almost only after
+  CALL using_gg(2);   CALL using_gg_d(0)    ! a single initialization .
+                                            ! This is a trick to avoid checking for sync everywhere.
+#endif
   !
   IF (do_comp_esm) CALL esm_init()
   !
@@ -104,7 +118,14 @@ SUBROUTINE init_run()
   ALLOCATE( et( nbnd, nkstot ) , wg( nbnd, nkstot ), btype( nbnd, nkstot ) )
   !
   et(:,:) = 0.D0
+  CALL using_et(2)
+  !
   wg(:,:) = 0.D0
+  CALL using_wg(2)
+#if defined(__CUDA)
+  ! Sync here. Shouldn't be done and will be removed ASAP.
+  CALL using_wg_d(0)
+#endif
   !
   btype(:,:) = 1
   !
@@ -131,18 +152,28 @@ SUBROUTINE init_run()
   !
   CALL potinit()
   !
-  CALL newd()
-  !
   IF (use_sirius.OR.use_sirius_scf.OR.always_setup_sirius) THEN
     CALL sirius_initialize_kset(ks_handler)
   ENDIF
-
-  IF (use_sirius.AND.use_sirius_ks_solver) THEN
-    CALL sirius_initialize_subspace(gs_handler, ks_handler)
-    CALL open_buffer( iunwfc, 'wfc', nwordwfc, io_level, exst_mem, exst_file )
+  !
+  IF ( use_gpu ) THEN
+    !
+    CALL newd_gpu()
+    !
+    CALL wfcinit_gpu()
+    !
   ELSE
-  CALL wfcinit()
-  ENDIF
+    !
+    CALL newd()
+    !
+    IF (use_sirius.AND.use_sirius_ks_solver) THEN
+      CALL sirius_initialize_subspace(gs_handler, ks_handler)
+      CALL open_buffer( iunwfc, 'wfc', nwordwfc, io_level, exst_mem, exst_file )
+    ELSE
+    CALL wfcinit()
+    ENDIF
+    !
+  END IF
   !
   IF(use_wannier) CALL wannier_init()
   !

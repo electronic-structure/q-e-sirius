@@ -16,6 +16,7 @@ CONTAINS
 !!
 !END SUBROUTINE calc_band_occupancies
 
+! A callback function to compute radial integals of the free atomic density
 SUBROUTINE calc_ps_rho_radial_integrals(iat, nq, q, ps_rho_ri) BIND(C)
 USE ISO_C_BINDING
 USE kinds
@@ -39,12 +40,12 @@ nr = msh(iat)
 DO iq = 1, nq
   CALL sph_bes(nr, rgrid(iat)%r(1), q(iq), 0, aux)
   DO ir = 1, nr
-    aux(ir) = aux(ir) * upf(iat)%rho_at(ir) / 12.566370614359172954d0
+    aux(ir) = aux(ir) * upf(iat)%rho_at(ir)
   ENDDO
   CALL simpson(nr, aux, rgrid(iat)%rab(1), ps_rho_ri(iq))
+  ps_rho_ri(iq) = ps_rho_ri(iq) / 12.566370614359172954d0
 ENDDO
 END SUBROUTINE calc_ps_rho_radial_integrals
-
 
 ! A callback function to compute radial integrals of Vloc(r)
 SUBROUTINE calc_vloc_radial_integrals(iat, nq, q, vloc_ri) BIND(C)
