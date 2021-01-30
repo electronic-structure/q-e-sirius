@@ -40,7 +40,6 @@ SUBROUTINE stres_hub ( sigmah )
    USE noncollin_module, ONLY : noncolin
    USE force_mod,        ONLY : eigenval, eigenvect, overlap_inv, at_dy, at_dj, &
                                 us_dy, us_dj
-   USE mod_sirius
    !
    USE wavefunctions_gpum, ONLY : using_evc
    USE becmod_subs_gpum,   ONLY : using_becp_auto
@@ -79,14 +78,6 @@ SUBROUTINE stres_hub ( sigmah )
    IF (noncolin) CALL errore ("forceh","Noncollinear case is not supported",1)
    !
    sigmah(:,:) = 0.d0
-   !
-   IF (use_sirius) THEN
-     CALL sirius_get_stress_tensor(gs_handler, "hubbard", sigmah)
-     sigmah = sigmah * 2.d0 ! convert to Ry
-     CALL symmatrix ( sigmah )
-     CALL stop_clock( 'stres_hub' )
-     RETURN
-   ENDIF
    !
    ALLOCATE (spsi(npwx,nbnd))
    ALLOCATE (wfcatom(npwx,natomwfc))

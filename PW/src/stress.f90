@@ -112,7 +112,7 @@ SUBROUTINE stress( sigma )
     sigmaewa = -sigmaewa * 2 ! convert to Ry
     IF ( lda_plus_u .AND. U_projection /= 'pseudo' ) THEN
       CALL sirius_get_stress_tensor(gs_handler, "hubbard", sigmah)
-      sigmah = -sigmah * 2 ! convert to Ry
+      sigmah = sigmah * 2 ! convert to Ry
     ENDIF
 
   ELSE
