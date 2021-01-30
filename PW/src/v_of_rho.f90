@@ -28,7 +28,6 @@ SUBROUTINE v_of_rho( rho, rho_core, rhog_core, &
   USE control_flags,    ONLY : ts_vdw, mbd_vdw
   USE tsvdw_module,     ONLY : tsvdw_calculate, UtsvdW
   USE libmbd_interface, ONLY : mbd_interface
-  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -61,7 +60,6 @@ SUBROUTINE v_of_rho( rho, rho_core, rhog_core, &
   INTEGER :: is, ir
   !
   CALL start_clock( 'v_of_rho' )
-  CALL sirius_start_timer("qe|v_of_rho")
   !
   ! ... calculate exchange-correlation potential
   !
@@ -117,11 +115,6 @@ SUBROUTINE v_of_rho( rho, rho_core, rhog_core, &
         !
      ENDIF
      !
-     IF (use_sirius) THEN
-        CALL qe_sirius_set_hubbard_potential(v)
-        CALL qe_sirius_set_hubbard_occupancy(rho)
-     ENDIF
-     !
   ENDIF
   !
   ! ... add an electric field
@@ -146,10 +139,6 @@ SUBROUTINE v_of_rho( rho, rho_core, rhog_core, &
   END IF
   !
   CALL stop_clock( 'v_of_rho' )
-  IF (use_sirius.AND.use_sirius_ks_solver) THEN
-    CALL put_potential_to_sirius
-  ENDIF
-  CALL sirius_stop_timer("qe|v_of_rho")
   !
   RETURN
   !
