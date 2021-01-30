@@ -357,7 +357,7 @@ SUBROUTINE run_pwscf( exit_status )
   CALL qexsd_set_status( exit_status )
   IF ( lensemb ) CALL beef_energies( )
   CALL sirius_start_timer("qe|punch")
-  IF ( io_level > -1 ) CALL punch( 'all' )
+  IF ( io_level > -2 ) CALL punch( 'all' )
   CALL sirius_stop_timer("qe|punch")
   !
   CALL qmmm_shutdown()
