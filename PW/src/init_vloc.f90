@@ -21,19 +21,13 @@ SUBROUTINE init_vloc()
   USE vlocal,         ONLY : vloc
   USE gvect,          ONLY : ngl, gl
   USE Coul_cut_2D,    ONLY : do_cutoff_2D, cutoff_lr_Vloc
-  USE mp_bands,       ONLY : intra_bgrp_comm
-  USE gvect,          ONLY : ngm, mill, igtongl
-  USE mod_sirius
   !
   IMPLICIT NONE
   !
   INTEGER :: nt
-  REAL(8), ALLOCATABLE :: tmp(:)
-  INTEGER :: i
   ! counter on atomic types
   !
   CALL start_clock( 'init_vloc' )
-  CALL sirius_start_timer("qe|init_vloc")
   !
   vloc(:,:) = 0._DP
   !
@@ -57,18 +51,9 @@ SUBROUTINE init_vloc()
         !
         ! normal case
         !
-        !IF (use_sirius.AND.use_sirius_vloc) THEN
-        !  ALLOCATE(tmp(ngm))
-        !  CALL sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, "vloc", tmp, ngm, mill, intra_bgrp_comm)
-        !  DO i = 1, ngm
-        !    vloc(igtongl(i), nt) = tmp(i) * 2 ! convert to Ry
-        !  ENDDO
-        !  DEALLOCATE(tmp)
-        !ELSE
         CALL vloc_of_g( rgrid(nt)%mesh, msh(nt), rgrid(nt)%rab, rgrid(nt)%r, &
                         upf(nt)%vloc(1), upf(nt)%zp, tpiba2, ngl, gl, omega, &
                         vloc(1,nt) )
-        !ENDIF ! sirius
         !
      ENDIF
      !
@@ -83,7 +68,6 @@ SUBROUTINE init_vloc()
   !
   IF (do_cutoff_2D) CALL cutoff_lr_Vloc() 
   !
-  CALL sirius_stop_timer("qe|init_vloc")
   CALL stop_clock( 'init_vloc' )
   !
   RETURN
