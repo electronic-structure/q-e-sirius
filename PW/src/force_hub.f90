@@ -47,7 +47,6 @@ SUBROUTINE force_hub( forceh )
    USE mp_bands,             ONLY : use_bgrp_in_hpsi
    USE noncollin_module,     ONLY : noncolin
    USE force_mod,            ONLY : eigenval, eigenvect, overlap_inv
-   USE mod_sirius
    !
    USE wavefunctions_gpum, ONLY : using_evc
    USE uspp_gpum,                 ONLY : using_vkb, using_indv_ijkb0
@@ -84,13 +83,6 @@ SUBROUTINE force_hub( forceh )
                    " forces in full LDA+U scheme are not yet implemented", 1 )
    !
    IF (noncolin) CALL errore ("forceh","Noncollinear case is not supported",1)
-   !
-   IF (use_sirius) THEN
-      CALL sirius_get_forces(gs_handler, "hubbard", forceh)
-      forceh(:,:) = 2.0d0 * forceh(:,:);
-      CALL symvector( nat, forceh )
-      RETURN
-   END IF
    !
    IF (lda_plus_u_kind.EQ.0) THEN
       ! DFT+U
