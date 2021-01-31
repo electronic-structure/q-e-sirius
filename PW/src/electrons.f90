@@ -555,6 +555,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
     IF ( lsda .OR. noncolin ) CALL compute_magnetization()
     CALL print_energies ( printout )
     conv_elec = .TRUE.
+    WRITE( stdout, 9110 ) 1
     RETURN
   ENDIF
   CALL start_clock( 'electrons' )
