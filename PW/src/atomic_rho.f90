@@ -31,9 +31,6 @@ SUBROUTINE atomic_rho_g( rhocg, nspina )
   USE vlocal,               ONLY : starting_charge, strf
   USE noncollin_module,     ONLY : angle1, angle2
   USE uspp_param,           ONLY : upf
-  USE mp_bands,             ONLY : intra_bgrp_comm
-  USE mod_sirius
-  USE gvect,                ONLY : ngm, mill
   !
   IMPLICIT NONE
   !
@@ -49,53 +46,8 @@ SUBROUTINE atomic_rho_g( rhocg, nspina )
   !
   REAL(DP) :: rhoneg, rhoima, rhoscale, gx
   REAL(DP), ALLOCATABLE :: rhocgnt(:), aux(:)
-  REAL(DP), ALLOCATABLE :: rho_g(:)
   REAL(DP) :: angular(nspina)
   INTEGER :: ir, is, ig, igl, nt, ndm
-  !
-  CALL sirius_start_timer("qe|atomic_rho_g")
-  !
-!  IF (use_sirius.AND.use_sirius_rho_atomic) THEN
-!     rhocg(:,:) = (0.0_dp,0.0_dp)
-!     ALLOCATE(rho_g(ngm))
-!     DO nt = 1, ntyp
-!        CALL sirius_get_pw_coeffs_real(sctx, atom_type(nt)%label, "rho", rho_g, ngm, mill, intra_bgrp_comm)
-!        !rho_g(:) = rho_g(:) * omega
-!        IF (upf(nt)%zp > eps8) THEN
-!           rhoscale = MAX(0.0_dp, upf(nt)%zp - starting_charge(nt)) / upf(nt)%zp
-!        ELSE
-!           rhoscale = 1.0_dp
-!        ENDIF
-!!$OMP PARALLEL DO
-!        DO ig = 1, ngm
-!           rhocg(ig,1) = rhocg(ig,1) + strf(ig,nt) * rhoscale * rho_g(ig)
-!        ENDDO
-!!$OMP END PARALLEL DO
-!        IF ( nspina >= 2 ) THEN
-!           !
-!           angular(1) = 1._dp
-!           IF ( nspina == 4 ) THEN
-!              angular(1) = sin(angle1(nt))*cos(angle2(nt))
-!              angular(2) = sin(angle1(nt))*sin(angle2(nt))
-!              angular(3) = cos(angle1(nt))
-!           ENDIF
-!           !
-!           DO is = 2, nspina
-!!$OMP PARALLEL DO
-!              DO ig = 1, ngm
-!                 rhocg(ig,is) = rhocg(ig,is) + &
-!                               starting_magnetization(nt) * angular(is-1) * &
-!                               strf(ig,nt) * rhoscale * rho_g(ig)
-!              ENDDO
-!!$OMP END PARALLEL DO
-!           ENDDO
-!        ENDIF ! nspina
-!     ENDDO !nt
-!     DEALLOCATE(rho_g)
-!     CALL sirius_stop_timer("qe|atomic_rho_g")
-!     RETURN
-!  ENDIF
-
   !
   ! allocate work space 
   !
@@ -183,8 +135,6 @@ SUBROUTINE atomic_rho_g( rhocg, nspina )
 !$omp end parallel
 
   DEALLOCATE (rhocgnt)
-
-  CALL sirius_stop_timer("qe|atomic_rho_g")
 
 END SUBROUTINE atomic_rho_g
 !
