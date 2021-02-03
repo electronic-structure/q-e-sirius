@@ -547,10 +547,11 @@ SUBROUTINE electrons_scf ( printout, exxen )
     CALL sirius_get_energy(gs_handler, "demet", demet)
     demet = demet * 2.d0 ! convert to Ry
 
-    etot = eband + ( etxc - etxcc ) + ewld + ehart + deband + demet + descf
-
     etot_cmp_paw = 0.d0
-    epaw = 0.d0
+    CALL sirius_get_energy(gs_handler, "paw", epaw)
+    epaw = epaw * 2.d0 ! convert to Ry
+
+    etot = eband + ( etxc - etxcc ) + ewld + ehart + deband + demet + descf + epaw
 
     IF ( lsda .OR. noncolin ) CALL compute_magnetization()
     CALL print_energies ( printout )
