@@ -237,7 +237,6 @@ add_library(qe_lapack INTERFACE)
 qe_install_targets(qe_lapack)
 ###########################################################
 if(NOT QE_LAPACK_INTERNAL)
-
     if(NOT BLA_VENDOR)
         if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64.*")
             message(STATUS "Trying to find LAPACK from Intel MKL")
