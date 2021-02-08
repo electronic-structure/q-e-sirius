@@ -1,14 +1,29 @@
 include(FindPackageHandleStandardArgs)
 
 if(${CMAKE_Fortran_COMPILER_ID} STREQUAL "GNU")
-  set(_sciname "sci_gnu_mpi_mp")
+  set(_sciname_pe "gnu")
 elseif(${CMAKE_Fortran_COMPILER_ID} STREQUAL "Intel")
-  set(_sciname "sci_intel_mpi_mp")
+  set(_sciname_pe "intel")
 elseif(${CMAKE_Fortran_COMPILER_ID} STREQUAL "Cray")
-  set(_sciname "sci_cray_mpi_mp")
+  set(_sciname_pe "cray")
 else()
   message(${CMAKE_Fortran_COMPILER_ID})
   message(FATAL_ERROR "Unknown compiler. When using libsci use either GNU or INTEL compiler")
+endif()
+
+if (QE_ENABLE_MPI)
+  if (QE_ENABLE_OPEMP)
+    set(_sciname "sci_${_sciname_pe}_mpi_mp")
+  else()
+    set(_sciname "sci_${_sciname_pe}_mpi")
+  endif()
+else()
+  # no MPI
+  if (QE_ENABLE_OPEMP)
+    set(_sciname "sci_${_sciname_pe}_mp")
+  else()
+    set(_sciname "sci_${_sciname_pe}")
+  endif()
 endif()
 
 find_library(CRAY_LIBSCI_LIBRARIES SHARED
