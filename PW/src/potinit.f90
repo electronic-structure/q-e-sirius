@@ -157,9 +157,6 @@ SUBROUTINE potinit()
         ELSEIF (lda_plus_u_kind == 2) THEN
            CALL init_nsg()
         ENDIF
-        IF (use_sirius) THEN
-           CALL qe_sirius_set_hubbard_occupancy(rho)
-        ENDIF
         !
      ENDIF
 

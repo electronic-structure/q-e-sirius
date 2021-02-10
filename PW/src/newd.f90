@@ -208,7 +208,6 @@ SUBROUTINE newd( )
   USE realus,               ONLY : newq_r
   USE control_flags,        ONLY : tqr
   USE ldaU,                 ONLY : lda_plus_U, U_projection
-  USE mod_sirius
   !
   USE uspp_gpum,     ONLY : using_deeq, using_deeq_nc
   !
@@ -219,15 +218,6 @@ SUBROUTINE newd( )
   !   atoms, spin, aux, aux, beta func x2 (again)
   !
   !
-  IF (use_sirius.AND.use_sirius_density) THEN
-    CALL sirius_start_timer("qe|newd")
-    CALL sirius_generate_d_operator_matrix(gs_handler)
-    CALL get_d_matrix_from_sirius
-    CALL add_paw_to_deeq(deeq)
-    CALL put_d_matrix_to_sirius
-    CALL sirius_stop_timer("qe|newd")
-    RETURN
-  ENDIF
   IF ( .NOT. okvan ) THEN
      ! Sync
      IF ( lspinorb .or. noncolin ) THEN
