@@ -1,5 +1,5 @@
 MODULE mod_sirius
-USE input_parameters, ONLY : use_sirius, sirius_cfg, use_sirius_scf
+USE input_parameters, ONLY : sirius_cfg, use_sirius_scf, use_sirius_nlcg
 USE sirius
 USE funct
 USE mod_sirius_callbacks
@@ -46,13 +46,6 @@ INTEGER :: ih, jh, ijh, lmax_beta
 CHARACTER(LEN=1024) :: conf_str
 INTEGER, EXTERNAL :: set_hubbard_l,set_hubbard_n
 REAL(8), EXTERNAL :: hubbard_occ
-
-
-! TODO: check if this is necessary now, them radial integrals of vloc are
-! computed by QE
-IF (do_cutoff_2D) THEN
-  use_sirius_vloc = .FALSE.
-ENDIF
 
 ALLOCATE(atom_type(nsp))
 
@@ -265,7 +258,7 @@ DO iat = 1, nsp
   ENDIF
 
   ! set non-linear core correction
-  IF (.TRUE.) THEN !use_sirius_rho_core) THEN
+  IF (.TRUE.) THEN
     ALLOCATE(vloc(upf(iat)%mesh))
     vloc = 0.d0
     IF (ALLOCATED(upf(iat)%rho_atc)) THEN
@@ -283,7 +276,7 @@ DO iat = 1, nsp
                                            &upf(iat)%rho_at, upf(iat)%mesh)
 
   ! the hack is done in Modules/readpp.f90
-  IF (.TRUE.) THEN !use_sirius_vloc) THEN
+  IF (.TRUE.) THEN
     ALLOCATE(vloc(upf(iat)%mesh))
     DO i = 1, msh(iat)
       vloc(i) = upf(iat)%vloc(i)

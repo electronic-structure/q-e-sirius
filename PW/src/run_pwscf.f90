@@ -66,7 +66,7 @@ SUBROUTINE run_pwscf( exit_status )
   USE mod_sirius
   USE mp_bands_util, ONLY : evp_work_count, num_loc_op_applied
   USE ldaU,                 ONLY : lda_plus_u
-  USE input_parameters,     ONLY : use_nlcg, nlcg_T, nlcg_tau, nlcg_tol,&
+  USE input_parameters,     ONLY : use_sirius_nlcg, nlcg_T, nlcg_tau, nlcg_tol,&
     & nlcg_kappa, nlcg_maxiter, nlcg_restart, nlcg_smearing,&
     & nlcg_processing_unit
   !
@@ -163,7 +163,7 @@ SUBROUTINE run_pwscf( exit_status )
      ELSE
         CALL electrons()
      END IF
-     IF ( use_nlcg ) THEN
+     IF ( use_sirius_nlcg ) THEN
        CALL insert_xc_functional_to_sirius
        CALL sirius_nlcg_params(gs_handler, ks_handler, nlcg_T, TRIM(ADJUSTL(nlcg_smearing))&
          &, nlcg_kappa, nlcg_tau, nlcg_tol, nlcg_maxiter, nlcg_restart,&
@@ -173,14 +173,14 @@ SUBROUTINE run_pwscf( exit_status )
      ENDIF
 
      CALL sirius_stop_timer("qe|KS")
-     IF (use_sirius) THEN
+     IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
        CALL sirius_get_parameters(sctx, evp_work_count=evp_work_count)
        CALL sirius_get_parameters(sctx, num_loc_op_applied=num_loc_op_applied)
      ENDIF
      WRITE(stdout, *)
      WRITE(stdout,'("     evp_work_count     : ", I10)')int(evp_work_count)
      WRITE(stdout,'("     num_loc_op_applied : ", I10)')num_loc_op_applied
-     IF (use_sirius.AND.use_sirius_ks_solver) THEN
+     IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
        CALL get_wave_functions_from_sirius ! TODO: move to electrons
      ENDIF
      !
@@ -240,7 +240,7 @@ SUBROUTINE run_pwscf( exit_status )
         ! ... ionic step (for molecular dynamics or optimization)
         !
         CALL move_ions ( idone, ions_status )
-        IF (use_sirius) THEN
+        IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
           CALL update_sirius
         ENDIF
         conv_ions = ( ions_status == 0 ) .OR. &
@@ -305,7 +305,7 @@ SUBROUTINE run_pwscf( exit_status )
               CALL reset_gvectors ( )
               !
            ELSE
-              IF (use_sirius) THEN
+              IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
                  CALL sirius_start_timer("qe|update")
                  IF ( lmovecell ) THEN
                    CALL scale_h()
@@ -339,7 +339,7 @@ SUBROUTINE run_pwscf( exit_status )
      ! ... the first scf iteration of each ionic step (after the first)
      !
      ethr = 1.0D-6
-     IF (use_sirius) THEN
+     IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
         ethr = 1.0D-2
      ENDIF
      !

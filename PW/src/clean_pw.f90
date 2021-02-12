@@ -85,7 +85,7 @@ SUBROUTINE clean_pw( lflag )
   !
   INTEGER :: nt, nr1, nr2, nr3
   !
-  IF (use_sirius) THEN
+  IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
     CALL clear_sirius
   ENDIF
 

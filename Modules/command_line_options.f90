@@ -29,7 +29,7 @@ MODULE command_line_options
   USE mp,        ONLY : mp_bcast
   USE mp_world,  ONLY : root, world_comm
   USE io_global, ONLY : meta_ionode
-  USE input_parameters, ONLY : use_nlcg, use_sirius, use_sirius_scf, sirius_cfg
+  USE input_parameters, ONLY : use_sirius_nlcg, use_sirius_scf, sirius_cfg
   !
   IMPLICIT NONE
   !
@@ -151,13 +151,9 @@ CONTAINS
               ENDIF
               READ ( arg, *, ERR = 15, END = 15) ndiag_
               narg = narg + 1
-           CASE ( '-sirius' )
-              use_sirius = .true.
            CASE ( '-sirius_nlcg' )
-              use_sirius = .true.
-              use_nlcg = .true.
+              use_sirius_nlcg = .true.
            CASE ( '-sirius_scf' )
-              use_sirius = .true.
               use_sirius_scf = .true.
            CASE ( '-sirius_cfg')
               IF (read_string) THEN
@@ -196,9 +192,8 @@ CONTAINS
      CALL mp_bcast( nyfft_ , root, world_comm ) 
      CALL mp_bcast( nband_ , root, world_comm ) 
      CALL mp_bcast( ndiag_ , root, world_comm ) 
-     CALL mp_bcast( use_sirius, root, world_comm )
      CALL mp_bcast( use_sirius_scf, root, world_comm )
-     CALL mp_bcast( use_nlcg, root, world_comm )
+     CALL mp_bcast( use_sirius_nlcg, root, world_comm )
      CALL mp_bcast( sirius_cfg, root, world_comm )
      CALL mp_bcast( pencil_decomposition_ , root, world_comm )
      

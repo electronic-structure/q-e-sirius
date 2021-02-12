@@ -2177,7 +2177,7 @@ MODULE read_namelists_module
        !
        ! ... NLCG namelist
        !
-       IF ( use_nlcg ) THEN
+       IF ( use_sirius_nlcg ) THEN
          ios = 0
          IF( ionode ) THEN
            READ( unit_loc, nlcg, iostat = ios )
@@ -2206,7 +2206,7 @@ MODULE read_namelists_module
              ! presumably, not found: rewind the file pointer to the location
              ! of the previous present section, in this case electrons
              REWIND( unit_loc )
-             IF ( use_nlcg ) THEN
+             IF ( use_sirius_nlcg ) THEN
                READ( unit_loc, nlcg, iostat = ios )
              ELSE
                READ( unit_loc, electrons, iostat = ios )

@@ -2,26 +2,8 @@ MODULE mod_sirius_base
 USE ISO_C_BINDING
 IMPLICIT NONE
 
-! use SIRIUS to solve KS equations
-LOGICAL :: use_sirius_ks_solver               = .TRUE.
-! use SIRIUS to generate density
-LOGICAL :: use_sirius_density                 = .TRUE.
-! use SIRIUS to generate effective potential; WARNING: currently must be always set to .false.
-LOGICAL :: use_sirius_potential               = .FALSE.
-! use SIRIUS to generate density matrix ('bec' thing in QE) WARNING: currently must be set to the value of use_sirius_density
-LOGICAL :: use_sirius_density_matrix          = .TRUE.
-! use SIRIUS to compute local part of pseudopotential
-LOGICAL :: use_sirius_vloc                    = .TRUE.
-! use SIRIUS to compute core charge density
-LOGICAL :: use_sirius_rho_core                = .TRUE.
-! use SIRIUS to compute plane-wave coefficients of atomic charge density
-LOGICAL :: use_sirius_rho_atomic              = .TRUE.
-! use SIRIUS to compute forces
-LOGICAL :: use_sirius_forces                  = .TRUE.
-! use SIRIUS to compute stress tensor
-LOGICAL :: use_sirius_stress                  = .TRUE.
 ! Setup simulation context even if SIRIUS is not used (default is False)
-LOGICAL :: always_setup_sirius                = .TRUE.
+LOGICAL :: always_setup_sirius                = .FALSE.
 
 ! inverse of the reciprocal lattice vectors matrix
 REAL(8) bg_inv(3,3)

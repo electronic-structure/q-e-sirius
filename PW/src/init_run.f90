@@ -137,7 +137,7 @@ SUBROUTINE init_run()
   CALL allocate_wfc_k()
   CALL openfil()
   !
-  IF (use_sirius.OR.always_setup_sirius) THEN
+  IF (use_sirius_scf.OR.always_setup_sirius) THEN
     CALL init_us_1()
     ! at this point FFT dimensions are known and we can pass them to SIRIUS
     CALL clear_sirius
@@ -152,7 +152,7 @@ SUBROUTINE init_run()
   !
   CALL potinit()
   !
-  IF (use_sirius.OR.use_sirius_scf.OR.always_setup_sirius) THEN
+  IF (use_sirius_scf.OR.always_setup_sirius) THEN
     CALL sirius_initialize_kset(ks_handler)
   ENDIF
   !
@@ -166,7 +166,7 @@ SUBROUTINE init_run()
     !
     CALL newd()
     !
-    IF (use_sirius.AND.use_sirius_ks_solver) THEN
+    IF (use_sirius_scf) THEN
       CALL sirius_initialize_subspace(gs_handler, ks_handler)
       CALL open_buffer( iunwfc, 'wfc', nwordwfc, io_level, exst_mem, exst_file )
     ELSE
@@ -179,9 +179,9 @@ SUBROUTINE init_run()
   !
 #if defined(__MPI)
   ! Cleanup PAW arrays that are only used for init
-  IF (.NOT.use_sirius) THEN
+  !IF (.NOT.(use_sirius_scf.OR.use_sirius_nlcg)) THEN
   IF (okpaw) CALL paw_post_init() ! only parallel!
-  ENDIF
+  !ENDIF
 #endif
   !
   IF ( lmd ) CALL allocate_dyn_vars()
