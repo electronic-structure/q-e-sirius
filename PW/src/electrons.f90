@@ -433,10 +433,13 @@ SUBROUTINE electrons_scf ( printout, exxen )
   USE plugin_variables,     ONLY : plugin_etot
   USE libmbd_interface,     ONLY : EmbdvdW
   USE mod_sirius
+  USE mp_bands_util, ONLY : evp_work_count, num_loc_op_applied
+  USE input_parameters,     ONLY : nlcg_T, nlcg_tau, nlcg_tol, nlcg_kappa, nlcg_maxiter,&
+                                 & nlcg_restart, nlcg_smearing, nlcg_processing_unit
   !
   USE wvfct_gpum,           ONLY : using_et
   USE scf_gpum,             ONLY : using_vrs
-  USE device_fbuff_m,             ONLY : dev_buf, pin_buf
+  USE device_fbuff_m,       ONLY : dev_buf, pin_buf
   !
   IMPLICIT NONE
   !
@@ -491,6 +494,8 @@ SUBROUTINE electrons_scf ( printout, exxen )
   INTEGER:: atnum(1:nat), na
   !! auxiliary variables for grimme-d3
   LOGICAL :: lhb
+  REAL(DP) :: tmp
+  INTEGER :: ir
   !! if .TRUE. then background states are present (DFT+U)
   !
   lhb = .FALSE.
@@ -511,10 +516,10 @@ SUBROUTINE electrons_scf ( printout, exxen )
   IF ( kilobytes > 0 ) WRITE( stdout, 9001 ) kilobytes/1000.0
   !
   IF (use_sirius_scf) THEN
-    write(*,*)''
-    write(*,*)'============================'
-    write(*,*)'* running DFT ground state *'
-    write(*,*)'============================'
+    WRITE(*,*)''
+    WRITE(*,*)'============================'
+    WRITE(*,*)'* running SCF ground state *'
+    WRITE(*,*)'============================'
     IF ( do_comp_esm ) THEN
       ewld = esm_ewald()
     ELSE
@@ -526,20 +531,45 @@ SUBROUTINE electrons_scf ( printout, exxen )
     CALL sirius_find_ground_state(gs_handler, density_tol=sqrt(tr2), energy_tol=1d-4, niter=niter, save_state=.false.)
     CALL stop_clock( 'electrons' )
 
-    !CALL sirius_get_energy(gs_handler, "total", etot)
-    !etot = etot * 2.d0 ! convert to Ry
-
     CALL sirius_get_energy(gs_handler, "evalsum", eband)
     eband = eband * 2.d0 ! convert to Ry
 
-    ! Vha should be multiplied by 2 to convert to Ry and divided by 2 to get Eha = 1/2 <Vha|rho>
-    CALL sirius_get_energy(gs_handler, "vha", ehart)
+    IF (.NOT.use_veff_callback) THEN
+        ! Vha should be multiplied by 2 to convert to Ry and divided by 2 to get Eha = 1/2 <Vha|rho>
+        CALL sirius_get_energy(gs_handler, "vha", ehart)
 
-    CALL sirius_get_energy(gs_handler, "exc", etxc)
-    etxc = etxc * 2.d0 ! convert to Ry
+        CALL sirius_get_energy(gs_handler, "exc", etxc)
+        etxc = etxc * 2.d0 ! convert to Ry
 
-    CALL sirius_get_energy(gs_handler, "one-el", deband)
-    deband = -deband * 2.d0 ! convert to Ry
+        CALL sirius_get_energy(gs_handler, "one-el", deband)
+        deband = -deband * 2.d0 ! convert to Ry
+
+    ELSE
+
+       deband = 0._DP
+       IF ( nspin==2 ) THEN
+          !
+          DO ir = 1,dfftp%nnr
+            deband = deband - ( rho%of_r(ir,1) + rho%of_r(ir,2) ) * v%of_r(ir,1) &  ! up
+                              - ( rho%of_r(ir,1) - rho%of_r(ir,2) ) * v%of_r(ir,2)    ! dw
+          ENDDO 
+          deband = 0.5_DP*deband
+          !
+       ELSE
+          deband = - SUM( rho%of_r(:,:)*v%of_r(:,:) )
+       ENDIF
+       !
+       !IF ( xclib_dft_is('meta') ) &
+       !   deband = deband - SUM( rho%kin_r(:,:)*v%kin_r(:,:) )
+       !
+       deband = omega * deband / ( dfftp%nr1*dfftp%nr2*dfftp%nr3 )
+       !
+       CALL mp_sum( deband, intra_bgrp_comm )
+
+       CALL sirius_get_energy(gs_handler, "paw-one-el", tmp)
+       deband = deband - 2.d0 * tmp
+
+    ENDIF
 
     CALL sirius_get_energy(gs_handler, "descf", descf)
     descf = descf * 2.d0 ! convert to Ry
@@ -559,6 +589,28 @@ SUBROUTINE electrons_scf ( printout, exxen )
     WRITE( stdout, 9110 ) 1
     RETURN
   ENDIF
+  !
+  IF (use_sirius_nlcg) THEN
+    WRITE(*,*)''
+    WRITE(*,*)'============================='
+    WRITE(*,*)'* running NLCG ground state *'
+    WRITE(*,*)'============================='
+
+    !CALL insert_xc_functional_to_sirius
+    CALL sirius_nlcg_params(gs_handler, ks_handler, nlcg_T, TRIM(ADJUSTL(nlcg_smearing))&
+      &, nlcg_kappa, nlcg_tau, nlcg_tol, nlcg_maxiter, nlcg_restart,&
+      & TRIM(ADJUSTL(nlcg_processing_unit)))
+    CALL get_band_occupancies_from_sirius
+    ! todo also retrieve  occupation numbers
+  ENDIF
+  !
+  IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
+    CALL sirius_get_parameters(sctx, evp_work_count=evp_work_count)
+    CALL sirius_get_parameters(sctx, num_loc_op_applied=num_loc_op_applied)
+    CALL get_wave_functions_from_sirius
+    RETURN
+  ENDIF
+  !
   CALL start_clock( 'electrons' )
   !
   FLUSH( stdout )
@@ -1196,7 +1248,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
           DO i = 1, 3
              !
              magtot_nc(i) = magtot_nc(i) * omega / ( dfftp%nr1*dfftp%nr2*dfftp%nr3 )
-             !
+           !
           ENDDO
           !
           absmag = absmag * omega / ( dfftp%nr1*dfftp%nr2*dfftp%nr3 )

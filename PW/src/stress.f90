@@ -93,6 +93,49 @@ SUBROUTINE stress( sigma )
     sigmaexx = 0.d0
     sigmaloclong = 0.d0
 
+    IF (use_veff_callback) THEN
+      CALL stres_loc( sigmaloc )
+      IF ( do_comp_esm .AND. ( esm_bc /= 'pbc' ) ) THEN
+         ! In ESM, sigmaloc has only short-range term: add long-range term
+         CALL esm_stres_loclong( sigmaloclong, rho%of_g(:,1) )
+         sigmaloc(:,:) = sigmaloc(:,:) + sigmaloclong(:,:)
+      END IF
+      !
+      IF ( do_comp_esm .AND. ( esm_bc /= 'pbc' ) )  THEN ! for ESM stress
+         CALL esm_stres_har( sigmahar, rho%of_g(:,1) )
+      ELSE
+         CALL stres_har( sigmahar )
+      END IF
+      !
+      sigmaxc(:,:) = 0.d0
+      DO l = 1, 3
+         sigmaxc (l, l) = - (etxc - vtxc) / omega
+      ENDDO
+      !
+      !  xc contribution: add gradient corrections (non diagonal)
+      !
+      CALL stres_gradcorr( rho%of_r, rho%of_g, rho_core, rhog_core, rho%kin_r, &
+           nspin, dfftp, g, alat, omega, sigmaxc )
+      !
+      IF ( do_comp_esm .AND. ( esm_bc /= 'pbc' ) ) THEN ! for ESM stress
+         CALL esm_stres_ewa( sigmaewa )
+      ELSE
+         CALL stres_ewa( alat, nat, ntyp, ityp, zv, at,      &
+                         bg, tau, omega, g, gg, ngm, gstart, &
+                         gamma_only, gcutm, sigmaewa )
+      ENDIF
+
+    ELSE
+      CALL sirius_get_stress_tensor(gs_handler, "vloc", sigmaloc)
+      sigmaloc = -sigmaloc * 2 ! convert to Ry
+      CALL sirius_get_stress_tensor(gs_handler, "har", sigmahar)
+      sigmahar = -sigmahar * 2 ! convert to Ry
+      CALL sirius_get_stress_tensor(gs_handler, "xc", sigmaxc)
+      sigmaxc = -sigmaxc * 2 ! convert to Ry
+      CALL sirius_get_stress_tensor(gs_handler, "ewald", sigmaewa)
+      sigmaewa = -sigmaewa * 2 ! convert to Ry
+    ENDIF
+
     CALL sirius_get_stress_tensor(gs_handler, "kin", sigmakin)
     sigmakin = -sigmakin * 2 ! convert to Ha
     CALL sirius_get_stress_tensor(gs_handler, "nonloc", sigmanlc)
@@ -100,16 +143,8 @@ SUBROUTINE stress( sigma )
     ! add ultrasoft term
     CALL sirius_get_stress_tensor(gs_handler, "us", tmp)
     sigmanlc = sigmanlc - 2 * tmp
-    CALL sirius_get_stress_tensor(gs_handler, "vloc", sigmaloc)
-    sigmaloc = -sigmaloc * 2 ! convert to Ry
-    CALL sirius_get_stress_tensor(gs_handler, "har", sigmahar)
-    sigmahar = -sigmahar * 2 ! convert to Ry
-    CALL sirius_get_stress_tensor(gs_handler, "xc", sigmaxc)
-    sigmaxc = -sigmaxc * 2 ! convert to Ry
     CALL sirius_get_stress_tensor(gs_handler, "core", sigmaxcc)
     sigmaxcc = -sigmaxcc * 2 ! convert to Ry
-    CALL sirius_get_stress_tensor(gs_handler, "ewald", sigmaewa)
-    sigmaewa = -sigmaewa * 2 ! convert to Ry
     IF ( lda_plus_u .AND. U_projection /= 'pseudo' ) THEN
       CALL sirius_get_stress_tensor(gs_handler, "hubbard", sigmah)
       sigmah = sigmah * 2 ! convert to Ry

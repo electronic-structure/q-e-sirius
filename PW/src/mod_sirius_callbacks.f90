@@ -16,6 +16,24 @@ CONTAINS
 !!
 !END SUBROUTINE calc_band_occupancies
 
+SUBROUTINE calc_veff() BIND(C)
+USE ISO_C_BINDING
+USE scf, ONLY : rho, rho_core, rhog_core, v
+USE ener, ONLY : ehart, vtxc, etxc
+USE ldaU, ONLY : eth
+USE extfield, ONLY : tefield, etotefield
+IMPLICIT NONE
+REAL(8) :: charge
+!
+write(*,*)'QE: calc_veff'
+CALL get_density_from_sirius
+CALL v_of_rho( rho, rho_core, rhog_core, &
+    ehart, etxc, vtxc, eth, etotefield, charge, v)
+!CALL put_density_to_sirius
+CALL put_potential_to_sirius
+!
+END SUBROUTINE calc_veff
+
 ! A callback function to compute radial integals of the free atomic density
 SUBROUTINE calc_ps_rho_radial_integrals(iat, nq, q, ps_rho_ri) BIND(C)
 USE ISO_C_BINDING
