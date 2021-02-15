@@ -125,6 +125,7 @@ SUBROUTINE stress( sigma )
                          gamma_only, gcutm, sigmaewa )
       ENDIF
 
+      CALL stres_cc( sigmaxcc )
     ELSE
       CALL sirius_get_stress_tensor(gs_handler, "vloc", sigmaloc)
       sigmaloc = -sigmaloc * 2 ! convert to Ry
@@ -134,6 +135,8 @@ SUBROUTINE stress( sigma )
       sigmaxc = -sigmaxc * 2 ! convert to Ry
       CALL sirius_get_stress_tensor(gs_handler, "ewald", sigmaewa)
       sigmaewa = -sigmaewa * 2 ! convert to Ry
+      CALL sirius_get_stress_tensor(gs_handler, "core", sigmaxcc)
+      sigmaxcc = -sigmaxcc * 2 ! convert to Ry
     ENDIF
 
     CALL sirius_get_stress_tensor(gs_handler, "kin", sigmakin)
@@ -143,8 +146,6 @@ SUBROUTINE stress( sigma )
     ! add ultrasoft term
     CALL sirius_get_stress_tensor(gs_handler, "us", tmp)
     sigmanlc = sigmanlc - 2 * tmp
-    CALL sirius_get_stress_tensor(gs_handler, "core", sigmaxcc)
-    sigmaxcc = -sigmaxcc * 2 ! convert to Ry
     IF ( lda_plus_u .AND. U_projection /= 'pseudo' ) THEN
       CALL sirius_get_stress_tensor(gs_handler, "hubbard", sigmah)
       sigmah = sigmah * 2 ! convert to Ry
