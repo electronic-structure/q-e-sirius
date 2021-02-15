@@ -755,22 +755,24 @@ END SUBROUTINE put_q_operator_matrix_to_sirius
 
 
 SUBROUTINE get_wave_functions_from_sirius
-USE klist, ONLY : nkstot, nks, ngk, igk_k
-USE gvect, ONLY : mill
-USE buffers, ONLY : save_buffer
-USE io_files, ONLY : iunwfc, nwordwfc
-USE bp, ONLY : lelfield
+USE klist,            ONLY : nkstot, nks, ngk, igk_k
+USE gvect,            ONLY : mill
+USE buffers,          ONLY : save_buffer, open_buffer
+USE io_files,         ONLY : iunwfc, nwordwfc
+USE control_flags,    ONLY : io_level
+USE bp,               ONLY : lelfield
 USE noncollin_module, ONLY : npol
-USE wvfct, ONLY : npwx, nbnd
-USE wavefunctions, ONLY : evc
-USE lsda_mod, ONLY : isk, lsda
-USE mp_pools, ONLY : inter_pool_comm
+USE wvfct,            ONLY : npwx, nbnd
+USE wavefunctions,    ONLY : evc
+USE lsda_mod,         ONLY : isk, lsda
+USE mp_pools,         ONLY : inter_pool_comm
 USE parallel_include
 IMPLICIT NONE
 INTEGER, EXTERNAL :: global_kpoint_index
 INTEGER, ALLOCATABLE :: gvl(:,:)
 INTEGER ig, ik, ik_, i, j, ispn, rank, ierr, nksmax
 COMPLEX(8) z1
+LOGICAL exst_file,exst_mem
 
 ! rank of communicator that distributes k-points
 CALL mpi_comm_rank(inter_pool_comm, rank, ierr)

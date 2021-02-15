@@ -166,7 +166,7 @@ SUBROUTINE init_run()
     !
     CALL newd()
     !
-    IF (use_sirius_scf) THEN
+    IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
       CALL sirius_initialize_subspace(gs_handler, ks_handler)
       CALL open_buffer( iunwfc, 'wfc', nwordwfc, io_level, exst_mem, exst_file )
     ELSE

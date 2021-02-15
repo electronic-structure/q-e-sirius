@@ -587,7 +587,6 @@ SUBROUTINE electrons_scf ( printout, exxen )
     CALL print_energies ( printout )
     conv_elec = .TRUE.
     WRITE( stdout, 9110 ) 1
-    RETURN
   ENDIF
   !
   IF (use_sirius_nlcg) THEN
