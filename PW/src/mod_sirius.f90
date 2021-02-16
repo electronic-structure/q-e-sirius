@@ -113,11 +113,6 @@ SELECT CASE(ngauss)
     CALL sirius_set_parameters(sctx, smearing="fermi_dirac")
 END SELECT
 
-! check if this is requred now then radial integrals of Vloc are computed by QE
-!IF (do_comp_esm) THEN
-!  CALL sirius_set_parameters(sctx, esm_bc=esm_bc)
-!ENDIF
-
 num_ranks_k = nproc_image / npool
 i = SQRT(DBLE(num_ranks_k) + 1d-10)
 IF (i * i .NE. num_ranks_k) THEN
