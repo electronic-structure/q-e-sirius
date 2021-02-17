@@ -311,13 +311,6 @@ SUBROUTINE get_density_from_sirius
   CALL sirius_get_pw_coeffs(gs_handler, "rho", rho%of_g(:, 1), ngm, mill, intra_bgrp_comm)
   IF (nspin.EQ.2) THEN
     CALL sirius_get_pw_coeffs(gs_handler, "magz", rho%of_g(:, 2), ngm, mill, intra_bgrp_comm)
-    !! convert to rho_{up}, rho_{dn}
-    !do ig = 1, ngm
-    !  z1 = rho%of_g(ig, 1)
-    !  z2 = rho%of_g(ig, 2)
-    !  rho%of_g(ig, 1) = 0.5 * (z1 + z2)
-    !  rho%of_g(ig, 2) = 0.5 * (z1 - z2)
-    !enddo
   ENDIF
   IF (nspin.EQ.4) THEN
     CALL sirius_get_pw_coeffs(gs_handler, "magx", rho%of_g(:, 2), ngm, mill, intra_bgrp_comm)
@@ -325,12 +318,14 @@ SUBROUTINE get_density_from_sirius
     CALL sirius_get_pw_coeffs(gs_handler, "magz", rho%of_g(:, 4), ngm, mill, intra_bgrp_comm)
   ENDIF
   ! get density matrix
-  CALL get_density_matrix_from_sirius
-  psic(:) = 0.d0
-  psic(dfftp%nl(:)) = rho%of_g(:, 1)
-  IF (gamma_only) psic(dfftp%nlm(:)) = CONJG(rho%of_g(:, 1))
-  CALL invfft('Rho', psic, dfftp)
-  rho%of_r(:,1) = psic(:)
+  !CALL get_density_matrix_from_sirius
+  DO ispn = 1, nspin
+    psic(:) = 0.d0
+    psic(dfftp%nl(:)) = rho%of_g(:, ispn)
+    IF (gamma_only) psic(dfftp%nlm(:)) = CONJG(rho%of_g(:, ispn))
+    CALL invfft('Rho', psic, dfftp)
+    rho%of_r(:,ispn) = psic(:)
+  ENDDO
 END SUBROUTINE get_density_from_sirius
 
 
