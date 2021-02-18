@@ -17,7 +17,8 @@ SUBROUTINE hinit0()
   USE cell_base,        ONLY : alat, at, bg, omega
   USE cellmd,           ONLY : omega_old, at_old, lmovecell
   USE fft_base,         ONLY : dfftp
-  USE gvect,            ONLY : ngm, g, eigts1, eigts2, eigts3
+  USE gvect,            ONLY : ecutrho, ngm, g, gg, eigts1, eigts2, eigts3
+  USE gvecw,            ONLY : ecutwfc
   USE vlocal,           ONLY : strf
   USE realus,           ONLY : generate_qpointlist, betapointlist, &
                                init_realspace_vars, real_space
@@ -26,6 +27,7 @@ SUBROUTINE hinit0()
   USE io_global,        ONLY : stdout
   USE noncollin_module, ONLY : report
   USE mod_sirius
+  USE mp_bands,         ONLY : intra_bgrp_comm
   !
   USE gvect_gpum,   ONLY : using_eigts1, using_eigts2, using_eigts3, &
                            using_eigts1_D, using_eigts2_d, using_eigts3_d
@@ -41,14 +43,14 @@ SUBROUTINE hinit0()
   !
   ! ... k-point independent parameters of non-local pseudopotentials
   !
-  IF (tbeta_smoothing) CALL init_us_b0()
-  IF (tq_smoothing) CALL init_us_0()
+  IF (tbeta_smoothing) CALL init_us_b0(ecutwfc,intra_bgrp_comm)
+  IF (tq_smoothing) CALL init_us_0(ecutrho,intra_bgrp_comm)
   CALL sirius_start_timer("qe|init_run|hinit0|init_us_1")
-  CALL init_us_1()
+  CALL init_us_1(omega,ngm,g,gg,intra_bgrp_comm)
   CALL sirius_stop_timer("qe|init_run|hinit0|init_us_1")
   IF ( lda_plus_U .AND. ( U_projection == 'pseudo' ) ) CALL init_q_aeps()
   CALL sirius_start_timer("qe|init_run|hinit0|init_at_1")
-  CALL init_at_1()
+  CALL init_at_1(omega,intra_bgrp_comm)
   CALL sirius_stop_timer("qe|init_run|hinit0|init_at_1")
   !
   IF ( restart .AND. startingconfig == 'file' ) THEN
