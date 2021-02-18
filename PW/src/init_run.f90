@@ -137,20 +137,18 @@ SUBROUTINE init_run()
   CALL allocate_wfc_k()
   CALL openfil()
   !
-  IF (use_sirius_scf.OR.always_setup_sirius) THEN
-    CALL init_us_1()
-    ! at this point FFT dimensions are known and we can pass them to SIRIUS
-    CALL clear_sirius
-    CALL sirius_start_timer("qe|init_run|setup_sirius")
-    CALL setup_sirius
-    CALL sirius_stop_timer("qe|init_run|setup_sirius")
-  ENDIF
-  !
   IF (xclib_dft_is_libxc('ANY')) CALL xclib_init_libxc( nspin )
   !
   CALL hinit0()
   !
   CALL potinit()
+  !
+  IF (use_sirius_scf.OR.always_setup_sirius) THEN
+    CALL clear_sirius
+    CALL sirius_start_timer("qe|init_run|setup_sirius")
+    CALL setup_sirius
+    CALL sirius_stop_timer("qe|init_run|setup_sirius")
+  ENDIF
   !
   IF (use_sirius_scf.OR.always_setup_sirius) THEN
     CALL sirius_initialize_kset(ks_handler)

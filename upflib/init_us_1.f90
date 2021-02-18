@@ -487,43 +487,14 @@ SUBROUTINE compute_qrad (omega,intra_bgrp_comm)
                        !
                        CALL simpson ( upf(nt)%kkbeta, aux, rgrid(nt)%rab, &
                                      qrad(iq,ijv,l+1, nt) )
-                    ENDIF
-                 ENDDO
-              ENDDO
-              ! igl
-           ENDDO
 #if defined(__SIRIUS)
-           DO iq = startq, lastq
-              !
-              q = (iq - 1) * dq
-              !
-              !     here we compute the spherical bessel function for each q_i
-              !
-              CALL sph_bes ( upf(nt)%kkbeta, rgrid(nt)%r, q, l, besr)
-              !
-              DO nb = 1, upf(nt)%nbeta
-                 !
-                 !    the Q are symmetric with respect to indices
-                 !
-                 DO mb = nb, upf(nt)%nbeta
-                    ijv = mb * (mb - 1) / 2 + nb
-                    IF ( ( l >= abs(upf(nt)%lll(nb) - upf(nt)%lll(mb)) ) .AND. &
-                         ( l <=     upf(nt)%lll(nb) + upf(nt)%lll(mb)  ) .AND. &
-                         (mod(l+upf(nt)%lll(nb)+upf(nt)%lll(mb),2)==0) ) THEN
-                       DO ir = 1, upf(nt)%kkbeta
-                          aux  (ir) = besr (ir) * upf(nt)%qfuncl(ir,ijv,l)
-                       ENDDO
-                       !
-                       !   and then we integrate with all the Q functions
-                       !
-                       CALL simpson ( upf(nt)%kkbeta, aux, rgrid(nt)%rab, &
-                                     aug_ri_tab(iq, ijv, l + 1, nt))
+                       aug_ri_tab(iq, ijv, l + 1, nt) = qrad(iq,ijv,l+1, nt)
+#endif
                     ENDIF
                  ENDDO
               ENDDO
               ! igl
            ENDDO
-#endif
            ! l
         ENDDO
         qrad (:, :, :, nt) = qrad (:, :, :, nt)*prefr
