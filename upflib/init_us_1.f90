@@ -37,7 +37,9 @@ subroutine init_us_1(omega,ngm,g,gg,intra_bgrp_comm)
   USE upf_spinorb,  ONLY : lspinorb, rot_ylm, fcoef, lmaxx
   USE paw_variables,ONLY : okpaw
   USE mp,           ONLY : mp_sum
-  USE mod_sirius
+#if defined(__SIRIUS)
+  USE uspp_data,    ONLY : beta_ri_tab, aug_ri_tab
+#endif
   USE uspp_param,   ONLY : nbetam
   !
   USE uspp_gpum,    ONLY : using_indv_ijkb0, using_indv_ijkb0_d, &
@@ -424,7 +426,9 @@ SUBROUTINE compute_qrad (omega,intra_bgrp_comm)
   USE uspp_param,   ONLY : upf, lmaxq, nbetam, nh, nhm, lmaxkb
   USE uspp_data,    ONLY : nqxq, dq, qrad
   USE mp,           ONLY : mp_sum
-  USE mod_sirius
+#if defined(__SIRIUS)
+  USE uspp_data,    ONLY : aug_ri_tab
+#endif
   !
   USE us_gpum,      ONLY : using_qrad
   !

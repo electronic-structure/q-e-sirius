@@ -270,7 +270,7 @@ END SUBROUTINE calc_rhoc_dj_radial_integrals
 
 SUBROUTINE calc_beta_radial_integrals(iat, q, beta_ri, ld) BIND(C)
 USE iso_c_binding
-USE us,           ONLY : dq, tab
+USE uspp_data,    ONLY : dq, tab, beta_ri_tab
 USE uspp_param,   ONLY : upf
 IMPLICIT NONE
 !
@@ -311,7 +311,7 @@ END SUBROUTINE calc_beta_radial_integrals
 
 SUBROUTINE calc_beta_dj_radial_integrals(iat, q, beta_ri, ld) BIND(C)
 USE iso_c_binding
-USE us,           ONLY : dq, tab
+USE uspp_data,    ONLY : dq, tab, beta_ri_tab
 USE uspp_param,   ONLY : upf
 IMPLICIT NONE
 !
@@ -353,7 +353,7 @@ END SUBROUTINE calc_beta_dj_radial_integrals
 
 SUBROUTINE calc_aug_radial_integrals(iat, q, aug_ri, ld1, ld2) BIND(C)
 USE iso_c_binding
-USE us,           ONLY : dq, qrad
+USE uspp_data,    ONLY : dq, qrad, aug_ri_tab
 USE uspp_param,   ONLY : upf
 IMPLICIT NONE
 !
@@ -393,7 +393,7 @@ END SUBROUTINE calc_aug_radial_integrals
 
 SUBROUTINE calc_aug_dj_radial_integrals(iat, q, aug_ri, ld1, ld2) BIND(C)
 USE iso_c_binding
-USE us,           ONLY : dq, qrad
+USE uspp_data,    ONLY : dq, qrad, aug_ri_tab
 USE uspp_param,   ONLY : upf
 IMPLICIT NONE
 !

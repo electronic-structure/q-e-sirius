@@ -1614,6 +1614,7 @@ mod_sirius_callbacks.o : ../../Modules/constants.o
 mod_sirius_callbacks.o : ../../Modules/kind.o
 mod_sirius_callbacks.o : ../../upflib/atom.o
 mod_sirius_callbacks.o : ../../upflib/uspp.o
+mod_sirius_callbacks.o : @us@
 mod_sirius_callbacks.o : Coul_cut_2D.o
 mod_sirius_callbacks.o : esm.o
 mod_sirius_callbacks.o : extfield.o

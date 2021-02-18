@@ -15,8 +15,6 @@ REAL(8) bg_inv(3,3)
 INTEGER num_kpoints
 REAL(8), ALLOCATABLE :: kpoints(:,:)
 REAL(8), ALLOCATABLE :: wkpoints(:)
-REAL(8), ALLOCATABLE :: beta_ri_tab(:,:,:)
-REAL(8), ALLOCATABLE :: aug_ri_tab(:,:,:,:)
 
 TYPE atom_type_t
   ! atom label

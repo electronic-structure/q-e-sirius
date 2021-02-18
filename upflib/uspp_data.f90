@@ -14,7 +14,7 @@ MODULE uspp_data
   !
   SAVE
   PRIVATE
-  PUBLIC :: nqxq, nqx, dq, qrad, tab, tab_at, tab_d2y, spline_ps
+  PUBLIC :: nqxq, nqx, dq, qrad, tab, tab_at, tab_d2y, spline_ps, beta_ri_tab, aug_ri_tab
   !
   INTEGER :: nqxq
   !! size of interpolation table
@@ -32,5 +32,8 @@ MODULE uspp_data
   REAL(DP), ALLOCATABLE :: tab_d2y(:,:,:)
   !! for cubic splines
   !
+  REAL(DP), ALLOCATABLE :: beta_ri_tab(:,:,:)
+  REAL(DP), ALLOCATABLE :: aug_ri_tab(:,:,:,:)
+
 END MODULE uspp_data
 
