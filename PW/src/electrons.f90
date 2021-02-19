@@ -433,6 +433,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
   USE plugin_variables,     ONLY : plugin_etot
   USE libmbd_interface,     ONLY : EmbdvdW
   USE mod_sirius
+  USE input_parameters,     ONLY : diago_thr_init
   USE mp_bands_util, ONLY : evp_work_count, num_loc_op_applied
   USE input_parameters,     ONLY : nlcg_T, nlcg_tau, nlcg_tol, nlcg_kappa, nlcg_maxiter,&
                                  & nlcg_restart, nlcg_smearing, nlcg_processing_unit
@@ -527,6 +528,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
                    omega, g, gg, ngm, gcutm, gstart, gamma_only, strf )
     ENDIF
     CALL start_clock( 'electrons' )
+    CALL sirius_set_parameters(sctx, iter_solver_tol=ethr)
     ! look only for the convergence of the density; converge total energy only to 10^-4
     CALL sirius_find_ground_state(gs_handler, density_tol=sqrt(tr2), energy_tol=1d-4, niter=niter, save_state=.false.)
     CALL stop_clock( 'electrons' )
