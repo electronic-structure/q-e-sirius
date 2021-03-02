@@ -4,7 +4,7 @@ USE sirius
 IMPLICIT NONE
 
 ! If true, the effective potential (Vha + Vxc + Vloc) is computed by QE
-LOGICAL :: use_veff_callback = .TRUE.
+LOGICAL :: use_veff_callback = .FALSE.
 
 ! Setup simulation context even if SIRIUS is not used (default is False)
 LOGICAL :: always_setup_sirius = .FALSE.

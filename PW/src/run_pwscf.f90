@@ -154,13 +154,11 @@ SUBROUTINE run_pwscf( exit_status )
      !
      ! ... electronic self-consistency or band structure calculation
      !
-     CALL sirius_start_timer("qe|KS")
      IF ( .NOT. lscf) THEN
         CALL non_scf()
      ELSE
         CALL electrons()
      END IF
-     CALL sirius_stop_timer("qe|KS")
      WRITE(stdout, *)
      WRITE(stdout,'("     evp_work_count     : ", I10)')int(evp_work_count)
      WRITE(stdout,'("     num_loc_op_applied : ", I10)')num_loc_op_applied
@@ -194,7 +192,6 @@ SUBROUTINE run_pwscf( exit_status )
      ! ... ionic section starts here
      !
      CALL start_clock( 'ions' ); !write(*,*)' start ions' ; FLUSH(6)
-     CALL sirius_start_timer("qe|ions")
      conv_ions = .TRUE.
      !
      ! ... force calculation
@@ -238,7 +235,6 @@ SUBROUTINE run_pwscf( exit_status )
         !
      END IF
      !
-     CALL sirius_stop_timer("qe|ions")
      CALL stop_clock( 'ions' ); !write(*,*)' stop ions' ; FLUSH(6)
      !
      ! ... send out forces to MM code in QM/MM run
@@ -320,9 +316,9 @@ SUBROUTINE run_pwscf( exit_status )
      ! ... the first scf iteration of each ionic step (after the first)
      !
      ethr = 1.0D-6
-     IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
-        ethr = 1.0D-2
-     ENDIF
+     !IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
+     !   ethr = 1.0D-2
+     !ENDIF
      !
      CALL dev_buf%reinit( ierr )
      IF ( ierr .ne. 0 ) CALL errore( 'run_pwscf', 'Cannot reset GPU buffers! Buffers still locked: ', abs(ierr) )

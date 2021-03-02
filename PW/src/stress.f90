@@ -70,8 +70,6 @@ SUBROUTINE stress( sigma )
      RETURN
   END IF
   !
-  CALL sirius_start_timer("qe|stress")
-  !
   CALL start_clock( 'stress' )
   !
   IF (use_sirius_scf) THEN
@@ -329,8 +327,6 @@ SUBROUTINE stress( sigma )
   ENDIF
   !
   CALL stop_clock( 'stress' )
-  !
-  CALL sirius_stop_timer("qe|stress")
   !
   RETURN
 9000 format (10x,'total   stress  (Ry/bohr**3) ',18x,'(kbar)', &

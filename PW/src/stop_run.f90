@@ -58,6 +58,7 @@ SUBROUTINE stop_run( exit_status )
   CALL sirius_finalize(call_mpi_fin=.false.)
   !WRITE(tname,'("timer",I4.4,".json")')mpime
   IF (mpime.eq.0) THEN
+    CALL sirius_print_timers(.false.)
     CALL sirius_print_timers(.true.)
     CALL sirius_serialize_timers("timers.json")
   ENDIF
