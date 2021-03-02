@@ -84,13 +84,12 @@ REAL(KIND=c_double), INTENT(OUT) :: vloc_ri(nq)
 REAL(DP) :: aux(rgrid(iat)%mesh), aux1(rgrid(iat)%mesh), r, q2
 INTEGER :: iq, ir, nr
 !
-REAL(DP), EXTERNAL :: qe_erf
 ! number of points to the effective infinity (~10 a.u. hardcoded somewhere in the code)
 nr = msh(iat)
 ! q-independent radial function
 DO ir = 1, nr
   r = rgrid(iat)%r(ir)
-  aux1(ir) = r * upf(iat)%vloc(ir) + upf(iat)%zp * e2 * qe_erf(r)
+  aux1(ir) = r * upf(iat)%vloc(ir) + upf(iat)%zp * e2 * erf(r)
 END DO
 ! loop over q-points
 DO iq = 1, nq
@@ -104,7 +103,7 @@ DO iq = 1, nq
       !
       DO ir = 1, nr
         r = rgrid(iat)%r(ir)
-        aux(ir) = r * (r * upf(iat)%vloc(ir) + upf(iat)%zp * e2 * qe_erf(r))
+        aux(ir) = r * (r * upf(iat)%vloc(ir) + upf(iat)%zp * e2 * erf(r))
       END DO
       IF (do_cutoff_2D .AND. rgrid(iat)%r(nr) > lz) THEN
         CALL errore('vloc_of_g','2D cutoff is smaller than pseudo cutoff radius: &
@@ -160,13 +159,12 @@ REAL(KIND=c_double), INTENT(OUT) :: vloc_dj_ri(nq)
 REAL(DP) :: aux(rgrid(iat)%mesh), aux1(rgrid(iat)%mesh), r, q2
 INTEGER :: iq, ir, nr
 !
-REAL(DP), EXTERNAL :: qe_erf
 ! number of points to the effective infinity (~10 a.u. hardcoded somewhere in the code)
 nr = msh(iat)
 ! q-independent radial function
 DO ir = 1, nr
   r = rgrid(iat)%r(ir)
-  aux1(ir) = r * upf(iat)%vloc(ir) + upf(iat)%zp * e2 * qe_erf(r)
+  aux1(ir) = r * upf(iat)%vloc(ir) + upf(iat)%zp * e2 * erf(r)
 END DO
 ! loop over q-points
 DO iq = 1, nq
