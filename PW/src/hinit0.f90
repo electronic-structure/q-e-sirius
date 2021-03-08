@@ -26,7 +26,6 @@ SUBROUTINE hinit0()
   USE control_flags,    ONLY : tqr, tq_smoothing, tbeta_smoothing, restart
   USE io_global,        ONLY : stdout
   USE noncollin_module, ONLY : report
-  USE mod_sirius
   USE mp_bands,         ONLY : intra_bgrp_comm
   !
   USE gvect_gpum,   ONLY : using_eigts1, using_eigts2, using_eigts3, &
@@ -45,13 +44,9 @@ SUBROUTINE hinit0()
   !
   IF (tbeta_smoothing) CALL init_us_b0(ecutwfc,intra_bgrp_comm)
   IF (tq_smoothing) CALL init_us_0(ecutrho,intra_bgrp_comm)
-  CALL sirius_start_timer("qe|init_run|hinit0|init_us_1")
   CALL init_us_1(omega,ngm,g,gg,intra_bgrp_comm)
-  CALL sirius_stop_timer("qe|init_run|hinit0|init_us_1")
   IF ( lda_plus_U .AND. ( U_projection == 'pseudo' ) ) CALL init_q_aeps()
-  CALL sirius_start_timer("qe|init_run|hinit0|init_at_1")
   CALL init_at_1(omega,intra_bgrp_comm)
-  CALL sirius_stop_timer("qe|init_run|hinit0|init_at_1")
   !
   IF ( restart .AND. startingconfig == 'file' ) THEN
      !
