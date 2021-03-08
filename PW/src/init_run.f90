@@ -48,7 +48,6 @@ SUBROUTINE init_run()
   LOGICAL exst_file,exst_mem
   !
   CALL start_clock( 'init_run' )
-  CALL sirius_start_timer("qe|init_run")
   !
   ! ... calculate limits of some indices, used in subsequent allocations
   !
@@ -145,9 +144,7 @@ SUBROUTINE init_run()
   !
   IF (use_sirius_scf.OR.always_setup_sirius) THEN
     CALL clear_sirius
-    CALL sirius_start_timer("qe|init_run|setup_sirius")
     CALL setup_sirius
-    CALL sirius_stop_timer("qe|init_run|setup_sirius")
   ENDIF
   !
   IF (use_sirius_scf.OR.always_setup_sirius) THEN
@@ -185,7 +182,6 @@ SUBROUTINE init_run()
   IF ( lmd ) CALL allocate_dyn_vars()
   !
   CALL stop_clock( 'init_run' )
-  CALL sirius_stop_timer("qe|init_run")
   !
   RETURN
   !

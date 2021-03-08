@@ -48,6 +48,7 @@ CHARACTER(LEN=1024) :: conf_str
 INTEGER, EXTERNAL :: set_hubbard_l,set_hubbard_n
 REAL(8), EXTERNAL :: hubbard_occ
 
+CALL sirius_start_timer("setup_sirius")
 
 IF (do_cutoff_2D.OR.do_comp_esm) THEN
   use_veff_callback = .TRUE.
@@ -404,6 +405,8 @@ CALL sirius_create_kset(sctx, num_kpoints, kpoints, wkpoints, .FALSE., ks_handle
 
 ! create ground-state class
 CALL sirius_create_ground_state(ks_handler, gs_handler)
+
+CALL sirius_stop_timer("setup_sirius")
 
 END SUBROUTINE setup_sirius
 
