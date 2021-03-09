@@ -78,10 +78,10 @@ subroutine init_us_1( nat, ityp, omega, ngm, g, gg, intra_bgrp_comm )
   !
 #if defined(__SIRIUS)
   IF (ALLOCATED(beta_ri_tab)) DEALLOCATE(beta_ri_tab)
-  ALLOCATE(beta_ri_tab(nqx, nbetam, ntyp))
+  ALLOCATE(beta_ri_tab(nqx, nbetam, nsp))
   beta_ri_tab = 0.d0
   IF (ALLOCATED(aug_ri_tab)) DEALLOCATE(aug_ri_tab)
-  ALLOCATE(aug_ri_tab(nqxq, nbetam*(nbetam+1)/2, lmaxq, ntyp))
+  ALLOCATE(aug_ri_tab(nqxq, nbetam*(nbetam+1)/2, lmaxq, nsp))
   aug_ri_tab = 0.d0
 #endif
   !    NB: duplicated modules' variables are syncronized at the end. This
