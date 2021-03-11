@@ -316,9 +316,9 @@ SUBROUTINE run_pwscf( exit_status )
      ! ... the first scf iteration of each ionic step (after the first)
      !
      ethr = 1.0D-6
-     !IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
-     !   ethr = 1.0D-2
-     !ENDIF
+     IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
+        ethr = 1.0D-2
+     ENDIF
      !
      CALL dev_buf%reinit( ierr )
      IF ( ierr .ne. 0 ) CALL errore( 'run_pwscf', 'Cannot reset GPU buffers! Buffers still locked: ', abs(ierr) )

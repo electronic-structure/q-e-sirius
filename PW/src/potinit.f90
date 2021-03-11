@@ -71,7 +71,6 @@ SUBROUTINE potinit()
   COMPLEX (DP), ALLOCATABLE :: work(:,:)
   !
   CALL start_clock('potinit')
-  CALL sirius_start_timer("qe|potinit")
   !
   filename = TRIM (restart_dir( )) // 'charge-density'
 #if defined __HDF5
@@ -275,7 +274,6 @@ SUBROUTINE potinit()
   IF ( report /= 0 .AND. &
        noncolin .AND. domag .AND. lscf ) CALL report_mag()
   !
-  CALL sirius_stop_timer("qe|potinit")
   CALL stop_clock('potinit')
   !
   RETURN
