@@ -29,6 +29,7 @@ SUBROUTINE scale_h
   USE mp,             ONLY : mp_max
   USE mp_bands,       ONLY : intra_bgrp_comm
   USE gvect_gpum,     ONLY : using_g, using_g_d, using_gg, using_gg_d
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -91,7 +92,11 @@ SUBROUTINE scale_h
   !
   ! recalculate the local part of the pseudopotential
   !
+  IF ((use_sirius_scf.OR.use_sirius_nlcg).AND.use_veff_callback) THEN
+    CONTINUE
+  ELSE
   CALL init_vloc( )
+  END IF
   !
   ! for hybrid functionals
   !

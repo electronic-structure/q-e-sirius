@@ -287,12 +287,15 @@ SUBROUTINE run_pwscf( exit_status )
                  IF ( lmovecell ) THEN
                    CALL scale_h()
                  ENDIF
+                 ! structure factors are needed to compute Ewald energy contribution
                  CALL struc_fact( nat, tau, nsp, ityp, ngm, g, bg, &
                                   dfftp%nr1, dfftp%nr2, dfftp%nr3, strf, eigts1, eigts2, eigts3 )
-                 CALL setlocal()
-                 CALL set_rhoc()
-                 CALL potinit
-                 CALL newd
+                 IF (use_veff_callback) THEN
+                   CALL setlocal()
+                   CALL set_rhoc()
+                   CALL potinit
+                   CALL newd
+                 END IF
                  CALL sirius_initialize_subspace(gs_handler, ks_handler)
                  CALL sirius_stop_timer("qe|update")
               ELSE
