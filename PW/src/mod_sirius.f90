@@ -28,7 +28,7 @@ USE input_parameters, ONLY : sirius_cfg, diago_david_ndim
 USE noncollin_module, ONLY : noncolin, npol, angle1, angle2
 USE lsda_mod, ONLY : lsda, nspin, starting_magnetization
 USE cell_base, ONLY : omega
-USE symm_base,            ONLY : nosym
+USE symm_base,            ONLY : nosym, nsym
 USE spin_orb,             ONLY : lspinorb
 USE ldaU,                 ONLY : lda_plus_U, Hubbard_J, Hubbard_U, Hubbard_alpha, &
                                & Hubbard_beta, is_Hubbard, lda_plus_u_kind, &
@@ -36,6 +36,7 @@ USE ldaU,                 ONLY : lda_plus_U, Hubbard_J, Hubbard_U, Hubbard_alpha
 USE esm,                  ONLY : do_comp_esm
 USE control_flags,        ONLY : iverbosity
 USE Coul_cut_2D,          ONLY : do_cutoff_2D
+USE mp_world, ONLY: mpime
 IMPLICIT NONE
 !
 INTEGER :: dims(3), i, ia, iat, rank, ierr, ijv, li, lj, mb, nb, j, l,&
@@ -43,10 +44,11 @@ INTEGER :: dims(3), i, ia, iat, rank, ierr, ijv, li, lj, mb, nb, j, l,&
 REAL(8) :: a1(3), a2(3), a3(3), vlat(3, 3), vlat_inv(3, 3), v1(3), v2(3), tmp
 REAL(8), ALLOCATABLE :: dion(:, :), qij(:,:,:), vloc(:), wk_tmp(:), xk_tmp(:,:)
 INTEGER, ALLOCATABLE :: nk_loc(:)
-INTEGER :: ih, jh, ijh, lmax_beta
+INTEGER :: ih, jh, ijh, lmax_beta, nsymop
 CHARACTER(LEN=1024) :: conf_str
 INTEGER, EXTERNAL :: set_hubbard_l,set_hubbard_n
 REAL(8), EXTERNAL :: hubbard_occ
+REAL(8), PARAMETER :: spglib_tol=1e-4
 
 CALL sirius_start_timer("setup_sirius")
 
@@ -98,10 +100,10 @@ dims(3) = dfftp%nr3
 ! set |G+k| cutoff for the wave-functions: onvert from |G+k|^2/2 Rydbergs to |G+k| in [a.u.^-1]
 ! use symmetrization either on SIRIUS or QE side
 CALL sirius_set_parameters(sctx, num_bands=nbnd, num_mag_dims=nmagd, gamma_point=gamma_only,&
-  &use_symmetry=use_sirius_scf.AND..NOT.nosym, so_correction=lspinorb,&
+  &use_symmetry=(use_sirius_scf.OR.use_sirius_nlcg).AND..NOT.nosym, so_correction=lspinorb,&
   &pw_cutoff=SQRT(ecutrho), gk_cutoff=SQRT(ecutwfc),&
   &hubbard_correction=lda_plus_U, hubbard_correction_kind=lda_plus_u_kind,&
-  &hubbard_orbitals=TRIM(ADJUSTL(U_projection)),fft_grid_size=dims)
+  &hubbard_orbitals=TRIM(ADJUSTL(U_projection)),fft_grid_size=dims, spglib_tol=spglib_tol)
 
 ! degauss is converted to Ha units
 CALL sirius_set_parameters(sctx, smearing_width=degauss/2.d0)
@@ -334,6 +336,19 @@ CALL sirius_initialize_context(sctx)
 DO iat = 1, nsp
   CALL sirius_get_num_beta_projectors(sctx, atom_type(iat)%label, atom_type(iat)%num_beta_projectors)
 ENDDO
+
+CALL sirius_get_parameters(sctx, num_sym_op=nsymop)
+IF (nsymop .NE. nsym) THEN
+  WRITE(*,*)
+  WRITE(*,'("WARNING! Different number of symmetry operations: ", I4, " QE ", I4," spglib")')nsym, nsymop
+  WRITE(*,*)
+ENDIF
+
+IF (mpime.eq.0) THEN
+  CALL sirius_dump_runtime_setup(sctx, "setup.json");
+ENDIF
+
+
 
 !! get number of g-vectors of the dense fft grid
 !call sirius_get_num_gvec(num_gvec)
