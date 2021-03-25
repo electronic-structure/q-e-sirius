@@ -113,7 +113,7 @@ SUBROUTINE forces()
   forceh(:,:)   = 0.D0
   force(:,:)    = 0.D0
   !
-  IF (use_sirius_scf) THEN
+  IF (use_sirius_scf .OR. use_sirius_nlcg) THEN
     forcenl = 0.d0
     forcelc = 0.d0
     forcecc = 0.d0
@@ -331,7 +331,9 @@ SUBROUTINE forces()
   !
   ! ... resymmetrize (should not be needed, but ...)
   !
+  IF (.NOT. (use_sirius_scf .OR. use_sirius_nlcg)) THEN
   CALL symvector( nat, force )
+  END IF
   !
   IF ( remove_rigid_rot ) &
      CALL remove_tot_torque( nat, tau, amass(ityp(:)), force  )
