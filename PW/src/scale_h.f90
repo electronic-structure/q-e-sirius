@@ -92,7 +92,7 @@ SUBROUTINE scale_h
   !
   ! recalculate the local part of the pseudopotential
   !
-  IF ((use_sirius_scf.OR.use_sirius_nlcg).AND.use_veff_callback) THEN
+  IF ((use_sirius_scf.OR.use_sirius_nlcg).AND..NOT.use_veff_callback) THEN
     CONTINUE
   ELSE
   CALL init_vloc( )
