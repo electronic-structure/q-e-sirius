@@ -83,6 +83,13 @@ CALL sirius_set_parameters(sctx, verbosity=MIN(1, iverbosity))
 ! import config file
 CALL sirius_import_parameters(sctx, TRIM(ADJUSTL(sirius_cfg)))
 
+CALL sirius_get_parameters(sctx, electronic_structure_method=conf_str)
+IF (TRIM(ADJUSTL(conf_str)) .EQ. "pseudopotential") THEN
+  sirius_pwpp = .TRUE.
+ELSE
+  sirius_pwpp = .FALSE.
+END IF
+
 ! derive the number of magnetic dimensions
 nmagd = 0
 IF (nspin.EQ.2) THEN
@@ -163,142 +170,151 @@ CALL invert_mtrx(bg, bg_inv)
 ! get MPI rank associated with the distribution of k-points
 CALL mpi_comm_rank(inter_pool_comm, rank, ierr)
 
-! initialize atom types
-DO iat = 1, nsp
+IF (sirius_pwpp) THEN
 
-  ! add new atom type
-   CALL sirius_add_atom_type(sctx, atom_type(iat)%label, &
-        & zn=NINT(zv(iat)+0.001d0), &
-        & mass=amass(iat), &
-        & spin_orbit=upf(iat)%has_so)
-
-
-  ! set radial grid
-  CALL sirius_set_atom_type_radial_grid(sctx, atom_type(iat)%label, upf(iat)%mesh, upf(iat)%r)
-
-  ! set beta-projectors
-  DO i = 1, upf(iat)%nbeta
-    l = upf(iat)%lll(i);
-    IF (upf(iat)%has_so) THEN
-      IF (upf(iat)%jjj(i) .LE. upf(iat)%lll(i)) THEN
-        l = - upf(iat)%lll(i)
+  ! initialize atom types
+  DO iat = 1, nsp
+  
+    ! add new atom type
+     CALL sirius_add_atom_type(sctx, TRIM(atom_type(iat)%label), &
+          & zn=NINT(zv(iat)+0.001d0), &
+          & mass=amass(iat), &
+          & spin_orbit=upf(iat)%has_so)
+  
+  
+    ! set radial grid
+    CALL sirius_set_atom_type_radial_grid(sctx, TRIM(atom_type(iat)%label), upf(iat)%mesh, upf(iat)%r)
+  
+    ! set beta-projectors
+    DO i = 1, upf(iat)%nbeta
+      l = upf(iat)%lll(i);
+      IF (upf(iat)%has_so) THEN
+        IF (upf(iat)%jjj(i) .LE. upf(iat)%lll(i)) THEN
+          l = - upf(iat)%lll(i)
+        ENDIF
       ENDIF
-    ENDIF
-    CALL sirius_add_atom_type_radial_function(sctx, atom_type(iat)%label, "beta", &
-         & upf(iat)%beta(1:upf(iat)%kbeta(i), i), upf(iat)%kbeta(i), l=l)
-  ENDDO
-
-  ! set the atomic radial functions
-  DO iwf = 1, upf(iat)%nwfc
-    l = upf(iat)%lchi(iwf)
-    IF (upf(iat)%has_so) THEN
-      IF (upf(iat)%jchi(iwf) < l) THEN
-        l = -l
+      CALL sirius_add_atom_type_radial_function(sctx, TRIM(atom_type(iat)%label), "beta", &
+           & upf(iat)%beta(1:upf(iat)%kbeta(i), i), upf(iat)%kbeta(i), l=l)
+    ENDDO
+  
+    ! set the atomic radial functions
+    DO iwf = 1, upf(iat)%nwfc
+      l = upf(iat)%lchi(iwf)
+      IF (upf(iat)%has_so) THEN
+        IF (upf(iat)%jchi(iwf) < l) THEN
+          l = -l
+        ENDIF
       ENDIF
+      IF (ALLOCATED(upf(iat)%nchi)) THEN
+        i = upf(iat)%nchi(iwf)
+      ELSE
+        i = -1
+      ENDIF
+      CALL sirius_add_atom_type_radial_function(sctx, TRIM(atom_type(iat)%label), "ps_atomic_wf", &
+           & upf(iat)%chi(1:msh(iat), iwf), msh(iat), l=l, occ=upf(iat)%oc(iwf), n=i)
+    ENDDO
+  
+    IF (is_hubbard(iat)) THEN
+       CALL sirius_set_atom_type_hubbard(sctx, &
+            & TRIM(atom_type(iat)%label), &
+            & Hubbard_l(iat), &
+            & set_hubbard_n(upf(iat)%psd), &
+            & hubbard_occ ( upf(iat)%psd ), &
+            & Hubbard_U(iat), &
+            & Hubbard_J(1,iat), &
+            & Hubbard_alpha(iat), &
+            & Hubbard_beta(iat), &
+            & Hubbard_J0(iat))
     ENDIF
-    IF (ALLOCATED(upf(iat)%nchi)) THEN
-      i = upf(iat)%nchi(iwf)
-    ELSE
-      i = -1
-    ENDIF
-    CALL sirius_add_atom_type_radial_function(sctx, atom_type(iat)%label, "ps_atomic_wf", &
-         & upf(iat)%chi(1:msh(iat), iwf), msh(iat), l=l, occ=upf(iat)%oc(iwf), n=i)
-  ENDDO
-
-  IF (is_hubbard(iat)) THEN
-     CALL sirius_set_atom_type_hubbard(sctx, &
-          & atom_type(iat)%label, &
-          & Hubbard_l(iat), &
-          & set_hubbard_n(upf(iat)%psd), &
-          & hubbard_occ ( upf(iat)%psd ), &
-          & Hubbard_U(iat), &
-          & Hubbard_J(1,iat), &
-          & Hubbard_alpha(iat), &
-          & Hubbard_beta(iat), &
-          & Hubbard_J0(iat))
-  ENDIF
-
-  ALLOCATE(dion(upf(iat)%nbeta, upf(iat)%nbeta))
-  ! convert to hartree
-  DO i = 1, upf(iat)%nbeta
-    DO j = 1, upf(iat)%nbeta
-      dion(i, j) = upf(iat)%dion(i, j) / 2.d0
+  
+    ALLOCATE(dion(upf(iat)%nbeta, upf(iat)%nbeta))
+    ! convert to hartree
+    DO i = 1, upf(iat)%nbeta
+      DO j = 1, upf(iat)%nbeta
+        dion(i, j) = upf(iat)%dion(i, j) / 2.d0
+      END DO
     END DO
-  END DO
-  ! sed d^{ion}_{i,j}
-  CALL sirius_set_atom_type_dion(sctx, atom_type(iat)%label, upf(iat)%nbeta, dion(1, 1))
-  DEALLOCATE(dion)
-
-  ! get lmax_beta for this atom type
-  lmax_beta = -1
-  DO i = 1, upf(iat)%nbeta
-    lmax_beta = MAX(lmax_beta, upf(iat)%lll(i))
-  ENDDO
-
-  ! set radial function of augmentation charge
-  IF (upf(iat)%tvanp) THEN
-    !do l = 0, upf(iat)%nqlc - 1
-    DO l = 0, 2 * lmax_beta
-      DO i = 0, upf(iat)%nbeta - 1
-        DO j = i, upf(iat)%nbeta - 1
-          ijv = j * (j + 1) / 2 + i + 1
-          CALL sirius_add_atom_type_radial_function(sctx, atom_type(iat)%label, "q_aug",&
-                                                   &upf(iat)%qfuncl(1:upf(iat)%kkbeta, ijv, l), upf(iat)%kkbeta,&
-                                                   &l=l, idxrf1=i, idxrf2=j)
+    ! sed d^{ion}_{i,j}
+    CALL sirius_set_atom_type_dion(sctx, TRIM(atom_type(iat)%label), upf(iat)%nbeta, dion(1, 1))
+    DEALLOCATE(dion)
+  
+    ! get lmax_beta for this atom type
+    lmax_beta = -1
+    DO i = 1, upf(iat)%nbeta
+      lmax_beta = MAX(lmax_beta, upf(iat)%lll(i))
+    ENDDO
+  
+    ! set radial function of augmentation charge
+    IF (upf(iat)%tvanp) THEN
+      !do l = 0, upf(iat)%nqlc - 1
+      DO l = 0, 2 * lmax_beta
+        DO i = 0, upf(iat)%nbeta - 1
+          DO j = i, upf(iat)%nbeta - 1
+            ijv = j * (j + 1) / 2 + i + 1
+            CALL sirius_add_atom_type_radial_function(sctx, TRIM(atom_type(iat)%label), "q_aug",&
+                                                     &upf(iat)%qfuncl(1:upf(iat)%kkbeta, ijv, l), upf(iat)%kkbeta,&
+                                                     &l=l, idxrf1=i, idxrf2=j)
+          ENDDO
         ENDDO
       ENDDO
-    ENDDO
-  ENDIF
-
-  IF (upf(iat)%tpawp) THEN
-    DO i = 1, upf(iat)%nbeta
-      CALL sirius_add_atom_type_radial_function(sctx, atom_type(iat)%label, "ae_paw_wf",&
-                                               &upf(iat)%aewfc(1:upf(iat)%paw%iraug,i), upf(iat)%paw%iraug)
-      CALL sirius_add_atom_type_radial_function(sctx, atom_type(iat)%label, "ps_paw_wf",&
-                                               &upf(iat)%pswfc(1:upf(iat)%paw%iraug,i), upf(iat)%paw%iraug)
-    ENDDO
-    CALL sirius_add_atom_type_radial_function(sctx, atom_type(iat)%label, "ae_paw_core",&
-                                             &upf(iat)%paw%ae_rho_atc, upf(iat)%mesh)
-
-    CALL sirius_set_atom_type_paw(sctx, atom_type(iat)%label, upf(iat)%paw%core_energy / 2,&
-                                 &upf(iat)%paw%oc, upf(iat)%nbeta)
-  ENDIF
-
-  ! set non-linear core correction
-  IF (.TRUE.) THEN
-    ALLOCATE(vloc(upf(iat)%mesh))
-    vloc = 0.d0
-    IF (ALLOCATED(upf(iat)%rho_atc)) THEN
-      DO i = 1, msh(iat)
-        vloc(i) = upf(iat)%rho_atc(i)
-      ENDDO
     ENDIF
-    CALL sirius_add_atom_type_radial_function(sctx, atom_type(iat)%label, "ps_rho_core",&
-                                             &vloc, upf(iat)%mesh)
-    DEALLOCATE(vloc)
-  ENDIF
-
-  ! set total charge density of a free atom (to compute initial rho(r))
-  CALL sirius_add_atom_type_radial_function(sctx, atom_type(iat)%label, "ps_rho_total",&
-                                           &upf(iat)%rho_at, upf(iat)%mesh)
-
-  ! the hack is done in Modules/readpp.f90
-  IF (.TRUE.) THEN
-    ALLOCATE(vloc(upf(iat)%mesh))
-    DO i = 1, msh(iat)
-      vloc(i) = upf(iat)%vloc(i)
-    ENDDO
-    ! convert to Hartree
-    vloc = vloc / 2.d0
-    ! add a correct tail
-    DO i = msh(iat) + 1, upf(iat)%mesh
-      vloc(i) = -zv(iat) / upf(iat)%r(i)
-    ENDDO
-    ! set local part of pseudo-potential
-    CALL sirius_add_atom_type_radial_function(sctx, atom_type(iat)%label, "vloc", vloc, upf(iat)%mesh)
-    DEALLOCATE(vloc)
-  ENDIF
-ENDDO
+  
+    IF (upf(iat)%tpawp) THEN
+      DO i = 1, upf(iat)%nbeta
+        CALL sirius_add_atom_type_radial_function(sctx, TRIM(atom_type(iat)%label), "ae_paw_wf",&
+                                                 &upf(iat)%aewfc(1:upf(iat)%paw%iraug,i), upf(iat)%paw%iraug)
+        CALL sirius_add_atom_type_radial_function(sctx, TRIM(atom_type(iat)%label), "ps_paw_wf",&
+                                                 &upf(iat)%pswfc(1:upf(iat)%paw%iraug,i), upf(iat)%paw%iraug)
+      ENDDO
+      CALL sirius_add_atom_type_radial_function(sctx, TRIM(atom_type(iat)%label), "ae_paw_core",&
+                                               &upf(iat)%paw%ae_rho_atc, upf(iat)%mesh)
+  
+      CALL sirius_set_atom_type_paw(sctx, TRIM(atom_type(iat)%label), upf(iat)%paw%core_energy / 2,&
+                                   &upf(iat)%paw%oc, upf(iat)%nbeta)
+    ENDIF
+  
+    ! set non-linear core correction
+    IF (.TRUE.) THEN
+      ALLOCATE(vloc(upf(iat)%mesh))
+      vloc = 0.d0
+      IF (ALLOCATED(upf(iat)%rho_atc)) THEN
+        DO i = 1, msh(iat)
+          vloc(i) = upf(iat)%rho_atc(i)
+        ENDDO
+      ENDIF
+      CALL sirius_add_atom_type_radial_function(sctx, TRIM(atom_type(iat)%label), "ps_rho_core",&
+                                               &vloc, upf(iat)%mesh)
+      DEALLOCATE(vloc)
+    ENDIF
+  
+    ! set total charge density of a free atom (to compute initial rho(r))
+    CALL sirius_add_atom_type_radial_function(sctx, TRIM(atom_type(iat)%label), "ps_rho_total",&
+                                             &upf(iat)%rho_at, upf(iat)%mesh)
+  
+    ! the hack is done in Modules/readpp.f90
+    IF (.TRUE.) THEN
+      ALLOCATE(vloc(upf(iat)%mesh))
+      DO i = 1, msh(iat)
+        vloc(i) = upf(iat)%vloc(i)
+      ENDDO
+      ! convert to Hartree
+      vloc = vloc / 2.d0
+      ! add a correct tail
+      DO i = msh(iat) + 1, upf(iat)%mesh
+        vloc(i) = -zv(iat) / upf(iat)%r(i)
+      ENDDO
+      ! set local part of pseudo-potential
+      CALL sirius_add_atom_type_radial_function(sctx, TRIM(atom_type(iat)%label), "vloc", vloc, upf(iat)%mesh)
+      DEALLOCATE(vloc)
+    ENDIF
+  ENDDO ! iat
+ELSE
+  ! initialize atom types with FP-LAPW species
+  DO iat = 1, nsp
+    ! add new atom type
+     CALL sirius_add_atom_type(sctx, TRIM(atom_type(iat)%label), fname=TRIM(atom_type(iat)%label)//'.json')
+  END DO
+END IF
 
 ! add atoms to the unit cell
 ! WARNING: sirius accepts only fractional coordinates;
@@ -320,7 +336,7 @@ DO ia = 1, nat
     v1 = 0
     v1(3) = zv(iat) * starting_magnetization(iat)
   ENDIF
-  CALL sirius_add_atom(sctx, atom_type(iat)%label, v2, v1)
+  CALL sirius_add_atom(sctx, TRIM(atom_type(iat)%label), v2, v1)
 ENDDO
 
 CALL put_xc_functional_to_sirius()
@@ -333,9 +349,11 @@ write(*,*)'=========================================='
 ! initialize global variables/indices/arrays/etc. of the simulation
 CALL sirius_initialize_context(sctx)
 
-DO iat = 1, nsp
-  CALL sirius_get_num_beta_projectors(sctx, atom_type(iat)%label, atom_type(iat)%num_beta_projectors)
-ENDDO
+IF (sirius_pwpp) THEN
+  DO iat = 1, nsp
+    CALL sirius_get_num_beta_projectors(sctx, TRIM(atom_type(iat)%label), atom_type(iat)%num_beta_projectors)
+  ENDDO
+END IF
 
 CALL sirius_get_parameters(sctx, num_sym_op=nsymop)
 IF (nsymop .NE. nsym) THEN
@@ -497,7 +515,7 @@ DO iat = 1, nsp
     DO ih = 1, atom_type(iat)%num_beta_projectors
       DO jh = ih, atom_type(iat)%num_beta_projectors
         ijh = ijh + 1
-        CALL sirius_get_q_operator(sctx, atom_type(iat)%label, ih, jh, ngm, mill, atom_type(iat)%qpw(:, ijh))
+        CALL sirius_get_q_operator(sctx, TRIM(atom_type(iat)%label), ih, jh, ngm, mill, atom_type(iat)%qpw(:, ijh))
       ENDDO
     ENDDO
   ENDIF
@@ -525,7 +543,7 @@ DO iat = 1, nsp
     DO ih = 1, atom_type(iat)%num_beta_projectors
       DO jh = ih, atom_type(iat)%num_beta_projectors
         ijh = ijh + 1
-        CALL sirius_get_q_operator_matrix(sctx, atom_type(iat)%label, qq_nt(1, 1, iat), nhm)
+        CALL sirius_get_q_operator_matrix(sctx, TRIM(atom_type(iat)%label), qq_nt(1, 1, iat), nhm)
       ENDDO
     ENDDO
   ENDIF
@@ -760,7 +778,7 @@ INTEGER iat
 
 DO iat = 1, nsp
   IF (upf(iat)%tvanp) THEN
-    CALL sirius_set_q_operator_matrix(sctx, atom_type(iat)%label, qq_nt(1, 1, iat), nhm)
+    CALL sirius_set_q_operator_matrix(sctx, TRIM(atom_type(iat)%label), qq_nt(1, 1, iat), nhm)
   ENDIF
 ENDDO
 

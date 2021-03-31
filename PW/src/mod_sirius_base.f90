@@ -9,6 +9,8 @@ LOGICAL :: use_veff_callback = .FALSE.
 ! Setup simulation context even if SIRIUS is not used (default is False)
 LOGICAL :: always_setup_sirius = .FALSE.
 
+LOGICAL :: sirius_pwpp = .TRUE.
+
 ! inverse of the reciprocal lattice vectors matrix
 REAL(8) bg_inv(3,3)
 ! total number of k-points
