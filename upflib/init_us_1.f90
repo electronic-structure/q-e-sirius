@@ -37,7 +37,8 @@ subroutine init_us_1( nat, ityp, omega, ngm, g, gg, intra_bgrp_comm )
   USE paw_variables,ONLY : okpaw
   USE mp,           ONLY : mp_sum
 #if defined(__SIRIUS)
-  USE uspp_data,    ONLY : beta_ri_tab, aug_ri_tab
+  USE uspp_data,    ONLY : beta_ri_tab, aug_ri_tab, nqx, nqxq
+  USE uspp_param,   ONLY : upf, lmaxq, nbetam, nsp
 #endif
   implicit none
   !
