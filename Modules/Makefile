@@ -127,13 +127,10 @@ remove_tot_torque.o \
 set_hubbard_l.o \
 set_hubbard_n.o \
 sort.o \
-sph_bes.o \
-sph_dbes.o \
 trimcheck.o \
 test_input_file.o \
 date_and_tim.o \
 volume.o \
-dylmr2.o \
 wgauss.o \
 w0gauss.o \
 w1gauss.o \
@@ -142,13 +139,10 @@ deviatoric.o
 # GPU versions of modules
 MODULES += \
   wavefunctions_gpu.o \
-  recvec_gpu.o \
   becmod_gpu.o \
   becmod_subs_gpu.o \
   cuda_subroutines.o \
-  dylmr2_gpu.o \
-  random_numbers_gpu.o \
-  sph_bes_gpu.o
+  random_numbers_gpu.o
 
 TLDEPS= libfox libutil libla libfft librxc
 

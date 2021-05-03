@@ -7,6 +7,9 @@ cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 # alias targets:
 # https://gitlab.kitware.com/cmake/cmake/merge_requests/2521
 
+# CMake < 3.20 does not support NVHPC compiler id
+# https://cmake.org/cmake/help/latest/release/3.20.html#compilers
+
 # Policy CMP0048: The project() command manages VERSION variables
 set(CMAKE_POLICY_DEFAULT_CMP0048 NEW)
 
@@ -73,7 +76,6 @@ if(QE_ENABLE_CUDA)
     # OpenMP enable by default if CUDA is enable
     option(QE_ENABLE_OPENMP
         "enable distributed execution support via OpenMP" ON)
-    
 else()
     option(QE_ENABLE_OPENMP
         "enable distributed execution support via OpenMP" OFF)
@@ -162,7 +164,7 @@ endif()
 if(QE_ENABLE_SCALAPACK AND NOT QE_ENABLE_MPI)
     message(FATAL_ERROR "SCALAPACK requires MPI support, enable it with '-DQE_ENABLE_MPI=ON' or disable SCALAPACK with '-DQE_ENABLE_SCALAPACK=OFF'")
 endif()
-if(QE_ENABLE_CUDA AND NOT CMAKE_Fortran_COMPILER_ID MATCHES "PGI")
+if(QE_ENABLE_CUDA AND NOT (CMAKE_Fortran_COMPILER_ID MATCHES "PGI" OR CMAKE_Fortran_COMPILER_ID MATCHES "NVHPC"))
     message(FATAL_ERROR "PGI compiler is mandatory when CUDA is enable due QE is based on CUDA Fortran language")
 endif()
 if(QE_ENABLE_LAXLIB_CUSOLVER AND (NOT QE_ENABLE_CUDA))
@@ -177,7 +179,7 @@ endif()
 # language standard requirements
 ###########################################################
 # TODO need to require all compilers using the same one
-if(CMAKE_C_COMPILER_ID MATCHES "PGI")
+if(CMAKE_Fortran_COMPILER_ID MATCHES "PGI" OR CMAKE_Fortran_COMPILER_ID MATCHES "NVHPC")
     set(CMAKE_C_STANDARD 11)
     set(CMAKE_C_STANDARD_REQUIRED ON)
     set(CMAKE_C_EXTENSIONS OFF)
@@ -188,7 +190,7 @@ endif()
 ############################################################
 if(CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
     include(${PROJECT_CMAKE}/GNUFortranCompiler.cmake)
-elseif(CMAKE_Fortran_COMPILER_ID MATCHES "PGI")
+elseif(CMAKE_Fortran_COMPILER_ID MATCHES "PGI" OR CMAKE_Fortran_COMPILER_ID MATCHES "NVHPC")
     include(${PROJECT_CMAKE}/NVFortranCompiler.cmake)
 elseif(CMAKE_Fortran_COMPILER_ID MATCHES "XL")
     include(${PROJECT_CMAKE}/IBMFortranCompiler.cmake)
@@ -198,13 +200,13 @@ endif()
 # CUDA
 ###########################################################
 if(QE_ENABLE_CUDA OR QE_ENABLE_PROFILE_NVTX)
-    if(CMAKE_Fortran_COMPILER_ID MATCHES "PGI")
+    if(CMAKE_Fortran_COMPILER_ID MATCHES "PGI" OR CMAKE_Fortran_COMPILER_ID MATCHES "NVHPC")
       add_library(CUDA::cufft INTERFACE IMPORTED)
-      set_target_properties(CUDA::cufft PROPERTIES INTERFACE_LINK_LIBRARIES "-Mcudalib=cufft")
+      set_target_properties(CUDA::cufft PROPERTIES INTERFACE_LINK_LIBRARIES "${CUDA_FLAG}lib=cufft")
       add_library(CUDA::cublas INTERFACE IMPORTED)
-      set_target_properties(CUDA::cublas PROPERTIES INTERFACE_LINK_LIBRARIES "-Mcudalib=cublas")
+      set_target_properties(CUDA::cublas PROPERTIES INTERFACE_LINK_LIBRARIES "${CUDA_FLAG}lib=cublas")
       add_library(CUDA::cusolver INTERFACE IMPORTED)
-      set_target_properties(CUDA::cusolver PROPERTIES INTERFACE_LINK_LIBRARIES "-Mcudalib=cusolver")
+      set_target_properties(CUDA::cusolver PROPERTIES INTERFACE_LINK_LIBRARIES "${CUDA_FLAG}lib=cusolver")
     else()
       find_package(CUDAToolkit REQUIRED)
     endif()

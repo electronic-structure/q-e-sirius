@@ -117,13 +117,10 @@ chdens_module.o : ../../Modules/wavefunctions.o
 chdens_module.o : ../../PW/src/pwcom.o
 chdens_module.o : ../../UtilXlib/mp.o
 compute_ppsi.o : ../../Modules/becmod.o
-compute_ppsi.o : ../../Modules/cell_base.o
 compute_ppsi.o : ../../Modules/io_global.o
 compute_ppsi.o : ../../Modules/ions_base.o
 compute_ppsi.o : ../../Modules/kind.o
 compute_ppsi.o : ../../Modules/noncol.o
-compute_ppsi.o : ../../Modules/recvec.o
-compute_ppsi.o : ../../Modules/wavefunctions.o
 compute_ppsi.o : ../../PW/src/pwcom.o
 compute_ppsi.o : ../../upflib/uspp.o
 compute_sigma_avg.o : ../../FFTXlib/fft_interfaces.o
@@ -492,6 +489,7 @@ projections_mod.o : ../../Modules/ions_base.o
 projections_mod.o : ../../Modules/kind.o
 projections_mod.o : ../../Modules/noncol.o
 projections_mod.o : ../../PW/src/pwcom.o
+projections_mod.o : ../../upflib/upf_ions.o
 projections_mod.o : ../../upflib/uspp.o
 projwfc.o : ../../Modules/becmod.o
 projwfc.o : ../../Modules/cell_base.o
@@ -560,11 +558,13 @@ punch_plot.o : ../../PW/src/pwcom.o
 punch_plot.o : ../../PW/src/scf_mod.o
 punch_plot.o : paw_postproc.o
 pw2bgw.o : ../../FFTXlib/fft_interfaces.o
+pw2bgw.o : ../../Modules/becmod.o
 pw2bgw.o : ../../Modules/cell_base.o
 pw2bgw.o : ../../Modules/constants.o
 pw2bgw.o : ../../Modules/control_flags.o
 pw2bgw.o : ../../Modules/environment.o
 pw2bgw.o : ../../Modules/fft_base.o
+pw2bgw.o : ../../Modules/fft_rho.o
 pw2bgw.o : ../../Modules/gvecw.o
 pw2bgw.o : ../../Modules/invmat.o
 pw2bgw.o : ../../Modules/io_files.o
@@ -579,7 +579,10 @@ pw2bgw.o : ../../Modules/mp_world.o
 pw2bgw.o : ../../Modules/noncol.o
 pw2bgw.o : ../../Modules/recvec.o
 pw2bgw.o : ../../Modules/wavefunctions.o
+pw2bgw.o : ../../PW/src/buffers.o
 pw2bgw.o : ../../PW/src/exx.o
+pw2bgw.o : ../../PW/src/g_psi_mod.o
+pw2bgw.o : ../../PW/src/ldaU.o
 pw2bgw.o : ../../PW/src/pwcom.o
 pw2bgw.o : ../../PW/src/scf_mod.o
 pw2bgw.o : ../../PW/src/start_k.o
@@ -907,10 +910,3 @@ xc_vdW_scale_mod.o : ../../Modules/recvec.o
 xc_vdW_scale_mod.o : ../../Modules/xc_vdW_DF.o
 xc_vdW_scale_mod.o : ../../PW/src/scf_mod.o
 xc_vdW_scale_mod.o : ../../UtilXlib/mp.o
-xctest.o : ../../Modules/funct.o
-xctest.o : ../../Modules/io_global.o
-xctest.o : ../../Modules/kind.o
-xctest.o : ../../Modules/mp_global.o
-xctest.o : ../../XClib/qe_funct_corr_gga.o
-xctest.o : ../../XClib/qe_funct_exch_gga.o
-xctest.o : ../../XClib/xc_lib.o

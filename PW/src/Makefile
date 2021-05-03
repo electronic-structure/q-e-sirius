@@ -33,8 +33,6 @@ newd.o \
 beef.o \
 bp_mod.o \
 bp_c_phase.o \
-bp_calc_btq.o \
-bp_qvan3.o \
 bp_strings.o \
 buffers.o \
 c_bands.o \
@@ -43,6 +41,8 @@ orbm_kubo.o \
 cdiagh.o \
 clean_pw.o \
 close_files.o \
+commutator_Hx_psi.o \
+commutator_Vhubx_psi.o \
 compute_becsum.o \
 compute_deff.o \
 compute_dip.o \
@@ -211,8 +211,6 @@ set_spin_vars.o \
 set_vrs.o \
 setlocal.o \
 setup.o \
-spinor.o \
-sph_ind.o \
 stop_run.o \
 stres_cc.o \
 stres_ewa.o \

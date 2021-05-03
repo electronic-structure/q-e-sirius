@@ -71,7 +71,7 @@ SUBROUTINE atomic_wfc( ik, wfcatom )
      qg(ig) = SQRT( qg(ig) )*tpiba
   END DO
   !
-  CALL interp_at_wfc ( npw, qg, nwfcm, chiq )
+  CALL interp_atwfc ( npw, qg, nwfcm, chiq )
   !
   DEALLOCATE( qg, gk )
   ALLOCATE( aux(npw), sk(npw) )
@@ -229,7 +229,7 @@ CONTAINS
       lm = l**2 + m
       n_starting_wfc = n_starting_wfc + 1
       IF ( n_starting_wfc + 2*l+1 > natomwfc ) CALL errore &
-            ('atomic_wfc_nc', 'internal error: too many wfcs', 1)
+            ('atomic_wfc_so_mag', 'internal error: too many wfcs', 1)
       DO ig = 1, npw
          aux(ig) = sk(ig)*ylm(ig,lm)*chiaux(ig)
       END DO

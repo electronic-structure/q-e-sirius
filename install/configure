@@ -1431,7 +1431,7 @@ Optional Features:
   --enable-shared         use shared libraries if available (default: yes)
   --enable-cuda-env-check=yes
                           The configure script will check CUDA installation
-                          and report problems [default=yes]
+                          and report problems [default=no]
   --enable-signals        enable signal trapping (default: no)
 
 Optional Packages:
@@ -3208,11 +3208,14 @@ case "$arch" in
         elif test "$nvfortran_version" != ""
         then
                 version=`echo $nvfortran_version | cut -d ' ' -f2`
+                f90_major_version=`echo $version | cut -d. -f1`
+		f90_minor_version=`echo $version | cut -d. -f2 | cut -d- -f1`
                 echo "${ECHO_T}nvfortran $version"
                 f90_in_mpif90="nvfortran"
         elif test "$pgf_version" != ""
         then
                 version=`echo $pgf_version | cut -d ' ' -f2`
+                f90_major_version=`echo $version | cut -d. -f1`
                 echo "${ECHO_T}pgf90 $version"
                 f90_in_mpif90="pgf90"
         elif test "$gfortran_version" != ""
@@ -4185,10 +4188,17 @@ fi
 if test "${enable_cuda_env_check+set}" = set; then :
   enableval=$enable_cuda_env_check;
 else
-  enable_cuda_env_check=yes
+  enable_cuda_env_check=no
 fi
 
 
+if test "$f90_major_version" -gt 20 || (test "$f90_major_version" -eq 20 && test "$f90_minor_version" -ge 7); then
+   mMcuda="-cuda -gpu"
+   mMcudalib="-cudalib"
+else
+   mMcuda="-Mcuda"
+   mMcudalib="-Mcudalib"
+fi
 
 if test "x$with_cuda" != "xno"
 then
@@ -4254,15 +4264,15 @@ ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
 ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
-   as_CACHEVAR=`$as_echo "ax_cv_check_fcflags__-Mcuda=cuda$with_cuda_runtime" | $as_tr_sh`
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether Fortran compiler accepts -Mcuda=cuda$with_cuda_runtime" >&5
-$as_echo_n "checking whether Fortran compiler accepts -Mcuda=cuda$with_cuda_runtime... " >&6; }
+   as_CACHEVAR=`$as_echo "ax_cv_check_fcflags__$mMcuda=cuda$with_cuda_runtime" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether Fortran compiler accepts $mMcuda=cuda$with_cuda_runtime" >&5
+$as_echo_n "checking whether Fortran compiler accepts $mMcuda=cuda$with_cuda_runtime... " >&6; }
 if eval \${$as_CACHEVAR+:} false; then :
   $as_echo_n "(cached) " >&6
 else
 
   ax_check_save_flags=$FCFLAGS
-  FCFLAGS="$FCFLAGS  -Mcuda=cuda$with_cuda_runtime"
+  FCFLAGS="$FCFLAGS  $mMcuda=cuda$with_cuda_runtime"
   cat > conftest.$ac_ext <<_ACEOF
 MODULE test; use cudafor; END MODULE
 _ACEOF
@@ -4739,8 +4749,8 @@ $as_echo "#define HAVE_CUDA 1" >>confdefs.h
 
    try_dflags="$try_dflags -D__CUDA"
    cuda_extlibs="devxlib"
-   cuda_libs="-Mcudalib=cufft,cublas,cusolver \$(TOPDIR)/external/devxlib/src/libdevXlib.a"
-   cuda_fflags="-Mcuda=cc$with_cuda_cc,cuda$with_cuda_runtime"
+   cuda_libs="$mMcudalib=cufft,cublas,cusolver \$(TOPDIR)/external/devxlib/src/libdevXlib.a"
+   cuda_fflags="$mMcuda=cc$with_cuda_cc,cuda$with_cuda_runtime"
    cuda_fflags="$cuda_fflags \$(MOD_FLAG)\$(TOPDIR)/external/devxlib/src"
    cuda_fflags="$cuda_fflags \$(MOD_FLAG)\$(TOPDIR)/external/devxlib/include"
 
@@ -4753,7 +4763,7 @@ $as_echo "$as_me: WARNING: Using legacy custom solver." >&2;}
    else
        try_dflags="$try_dflags -D__USE_CUSOLVER"
    fi
-   ldflags="$ldflags -Mcuda=cc$with_cuda_cc,cuda$with_cuda_runtime"
+   ldflags="$ldflags $mMcuda=cc$with_cuda_cc,cuda$with_cuda_runtime"
    gpu_arch="$with_cuda_cc"
    gpu_runtime="$with_cuda_runtime"
    cuda_path="$CUDAPATH"
@@ -6111,7 +6121,7 @@ have_fft_include=0
 $as_echo_n "checking FFT... " >&6; }
 
 if test "$fft_libs" = ""; then
-   # if FFT_LIBS is defined, use it without further checking
+   # if FFT_LIBS is not defined, try to autodetect what is available
 
    if test "$have_mkl" -eq 1; then
       # no check needed if MKL libraries have been detected
@@ -6497,13 +6507,19 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
 else
 
+   # if FFT_LIBS is defined, use it, but in order to use FFTW3
+   # you will need to set the proper include directory in FFTW_INCLUDE
+
    echo "using FFT_LIBS with no testing ... "
+   # I suspect next 3 lines are useless in practice, should be deleted - PG
    if test -n "$FFT_INCLUDE" ; then :
       try_iflags="$try_iflags -I$FFT_INCLUDE"
    fi
    if test -n "$FFTW_INCLUDE" ; then :
       try_dflags="$try_dflags -D__FFTW3"
       try_iflags="$try_iflags -I$FFTW_INCLUDE"
+   else
+      echo "BEWARE: FFT not explicitly selected, verify your DFLAGS= line"
    fi
 
 fi

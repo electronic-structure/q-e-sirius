@@ -22,8 +22,6 @@ set(src_pw
    src/beef.f90 
    src/bp_mod.f90 
    src/bp_c_phase.f90 
-   src/bp_calc_btq.f90 
-   src/bp_qvan3.f90 
    src/bp_strings.f90 
    src/buffers.f90 
    src/c_bands.f90 
@@ -32,6 +30,8 @@ set(src_pw
    src/cdiagh.f90 
    src/clean_pw.f90 
    src/close_files.f90 
+   src/commutator_Hx_psi.f90
+   src/commutator_Vhubx_psi.f90
    src/compute_becsum.f90 
    src/compute_deff.f90 
    src/compute_dip.f90 
@@ -203,8 +203,6 @@ set(src_pw
    src/set_vrs.f90 
    src/setlocal.f90 
    src/setup.f90 
-   src/spinor.f90 
-   src/sph_ind.f90 
    src/stop_run.f90 
    src/stres_cc.f90 
    src/stres_ewa.f90 
@@ -322,7 +320,8 @@ target_link_libraries(qe_pw
         qe_mpi_fortran
         qe_xclib
         qe_devxlib
-        qe_ext_prof_tool)
+        qe_ext_prof_tool
+        qe_mbd)
 
 if(QE_ENABLE_CUDA)
     target_link_libraries(qe_pw
@@ -349,7 +348,6 @@ target_link_libraries(qe_pw_exe
         qe_pw
         qe_modules
         qe_lax
-        qe_lapack
         qe_upflib)
 
 ###########################################################
@@ -363,8 +361,7 @@ set_target_properties(qe_pw_tools_ibrav2cell_exe
 target_link_libraries(qe_pw_tools_ibrav2cell_exe
     PRIVATE
         qe_pw
-        qe_modules
-        qe_lapack)
+        qe_modules)
 
 ###########################################################
 # cell2ibrav.x
@@ -377,8 +374,7 @@ set_target_properties(qe_pw_tools_cell2ibrav_exe
 target_link_libraries(qe_pw_tools_cell2ibrav_exe
     PRIVATE
         qe_pw
-        qe_modules
-        qe_lapack)
+        qe_modules)
 
 ###########################################################
 # ev.x
@@ -391,8 +387,7 @@ set_target_properties(qe_pw_tools_ev_exe
 target_link_libraries(qe_pw_tools_ev_exe
     PRIVATE
         qe_pw
-        qe_modules
-        qe_lapack)
+        qe_modules)
 
 ###########################################################
 # kpoints.x
@@ -405,8 +400,7 @@ set_target_properties(qe_pw_tools_kpoints_exe
 target_link_libraries(qe_pw_tools_kpoints_exe
     PRIVATE
         qe_pw
-        qe_modules
-        qe_lapack)
+        qe_modules)
 
 ###########################################################
 # pwi2xsf.x
@@ -419,8 +413,7 @@ set_target_properties(qe_pw_tools_pwi2xsf_exe
 target_link_libraries(qe_pw_tools_pwi2xsf_exe
     PRIVATE
         qe_pw
-        qe_modules
-        qe_lapack)
+        qe_modules)
 
 ###########################################################
 

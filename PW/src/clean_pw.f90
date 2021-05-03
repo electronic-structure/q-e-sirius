@@ -63,14 +63,14 @@ SUBROUTINE clean_pw( lflag )
   USE exx,                  ONLY : deallocate_exx
   USE Coul_cut_2D,          ONLY : cutoff_2D, lr_Vloc 
   !
-  USE control_flags,        ONLY : ts_vdw
+  USE control_flags,        ONLY : ts_vdw, mbd_vdw
   USE tsvdw_module,         ONLY : tsvdw_finalize
+  USE libmbd_interface,     ONLY : clean_mbd
   USE dftd3_qe,             ONLY : dftd3_clean
   USE mod_sirius
   !
   USE wavefunctions_gpum,   ONLY : deallocate_wavefunctions_gpu
   USE wvfct_gpum,           ONLY : deallocate_wvfct_gpu
-  USE gvect_gpum,           ONLY : deallocate_gvect_gpu
   USE scf_gpum,             ONLY : deallocate_scf_gpu
   !
   IMPLICIT NONE
@@ -125,7 +125,6 @@ SUBROUTINE clean_pw( lflag )
   ! ... arrays in gvect module
   !
   CALL deallocate_gvect( lmovecell )
-  CALL deallocate_gvect_gpu()
   !
   CALL sym_rho_deallocate()
   !
@@ -213,7 +212,8 @@ SUBROUTINE clean_pw( lflag )
   !
   CALL deallocate_exx() 
   !
-  IF (ts_vdw) CALL tsvdw_finalize()
+  IF (ts_vdw .or. mbd_vdw) CALL tsvdw_finalize()
+  IF (mbd_vdw) CALL clean_mbd()
   !
   CALL plugin_clean( 'PW', lflag )
   !

@@ -14,7 +14,8 @@ SUBROUTINE init_run()
   USE wvfct,              ONLY : nbnd, et, wg, btype
   USE control_flags,      ONLY : lmd, gamma_only, smallmem, ts_vdw, mbd_vdw, io_level
   USE gvect,              ONLY : g, gg, mill, gcutm, ig_l2g, ngm, ngm_g, &
-                                 gshells, gstart ! to be comunicated to the Solvers if gamma_only
+                                 g_d, gg_d, mill_d, gshells, &
+                                 gstart ! to be communicated to the Solvers if gamma_only
   USE gvecs,              ONLY : gcutms, ngms
   USE cell_base,          ONLY : at, bg, set_h_ainv
   USE cellmd,             ONLY : lmovecell
@@ -31,6 +32,7 @@ SUBROUTINE init_run()
   USE dfunct,             ONLY : newd
   USE esm,                ONLY : do_comp_esm, esm_init
   USE tsvdw_module,       ONLY : tsvdw_initialize
+  USE libmbd_interface,   ONLY : init_mbd
   USE Coul_cut_2D,        ONLY : do_cutoff_2D, cutoff_fact 
   USE lsda_mod,           ONLY : nspin
   USE xc_lib,             ONLY : xclib_dft_is_libxc, xclib_init_libxc
@@ -41,8 +43,6 @@ SUBROUTINE init_run()
   USE control_flags,      ONLY : use_gpu
   USE dfunct_gpum,        ONLY : newd_gpu
   USE wvfct_gpum,         ONLY : using_et, using_wg, using_wg_d
-  USE gvect_gpum,         ONLY : using_g, using_gg, using_g_d, using_gg_d, &
-                                 using_mill, using_mill_d
   !
   IMPLICIT NONE
   LOGICAL exst_file,exst_mem
@@ -68,25 +68,20 @@ SUBROUTINE init_run()
   !
   ! ... generate reciprocal-lattice vectors and fft indices
   !
-  IF( smallmem ) THEN
-     CALL ggen( dfftp, gamma_only, at, bg, gcutm, ngm_g, ngm, &
-          g, gg, mill, ig_l2g, gstart, no_global_sort = .TRUE. )
-  ELSE
-     CALL ggen( dfftp, gamma_only, at, bg, gcutm, ngm_g, ngm, &
-       g, gg, mill, ig_l2g, gstart )
-  END IF
+  CALL ggen( dfftp, gamma_only, at, bg, gcutm, ngm_g, ngm, &
+       g, gg, mill, ig_l2g, gstart, no_global_sort = smallmem )
   CALL ggens( dffts, gamma_only, at, g, gg, mill, gcutms, ngms )
-  if (gamma_only) THEN
+  !
+  IF (gamma_only) THEN
      ! ... Solvers need to know gstart
      call export_gstart_2_solvers(gstart)
   END IF
 
 #if defined(__CUDA)
   ! All these variables are actually set by ggen which has intent out
-  CALL using_mill(2); CALL using_mill_d(0); ! updates mill indices,
-  CALL using_g(2);    CALL using_g_d(0);    ! g and gg that are used almost only after
-  CALL using_gg(2);   CALL using_gg_d(0)    ! a single initialization .
-                                            ! This is a trick to avoid checking for sync everywhere.
+  mill_d = mill
+  g_d    = g
+  gg_d   = gg
 #endif
   !
   IF (do_comp_esm) CALL esm_init()
@@ -132,6 +127,10 @@ SUBROUTINE init_run()
      CALL tsvdw_initialize()
      CALL set_h_ainv()
   END IF
+  IF (mbd_vdw) THEN
+     CALL init_mbd()
+  END IF
+
   !
   CALL allocate_wfc_k()
   CALL openfil()

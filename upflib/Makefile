@@ -11,13 +11,16 @@ OBJS= \
 atom.o \
 atomic_number.o \
 dqvan2.o \
+dylmr2.o \
 gth.o \
 init_us_0.o \
 init_us_b0.o \
 init_us_1.o \
-init_at_1.o \
+init_tab_atwfc.o \
+init_tab_beta.o \
+init_tab_qrad.o \
 init_us_2_base.o \
-interp_at_wfc.o \
+interp_atwfc.o \
 paw_variables.o \
 pseudo_types.o \
 qvan2.o \
@@ -29,6 +32,9 @@ read_ps.o \
 read_upf_new.o \
 read_upf_v1.o \
 read_uspp.o \
+spinor.o \
+sph_ind.o \
+sph_bes.o \
 splinelib.o \
 simpsn.o \
 upf_auxtools.o \
@@ -51,10 +57,12 @@ ylmr2.o
 
 # GPU versions of routines
 OBJS += \
-  interp_at_wfc_gpu.o \
-  simpsn_gpu.o \
-  qvan2_gpu.o \
+  dylmr2_gpu.o \
   init_us_2_base_gpu.o \
+  interp_atwfc_gpu.o \
+  qvan2_gpu.o \
+  simpsn_gpu.o \
+  sph_bes_gpu.o \
   ylmr2_gpu.o
 
 all : libupf.a virtual_v2.x upfconv.x

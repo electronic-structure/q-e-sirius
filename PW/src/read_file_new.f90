@@ -158,8 +158,8 @@ SUBROUTINE post_xml_init (  )
   USE ions_base,            ONLY : nat, nsp, tau, ityp
   USE cell_base,            ONLY : omega
   USE recvec_subs,          ONLY : ggen, ggens
-  USE gvect,                ONLY : ecutrho, gg, ngm, g, gcutm, mill, ngm_g, ig_l2g, &
-                                   eigts1, eigts2, eigts3, gstart, gshells
+  USE gvect,                ONLY : ecutrho, gg, ngm, g, gcutm, mill, mill_d, &
+          ngm_g, ig_l2g, eigts1, eigts2, eigts3, gstart, gshells, g_d, gg_d
   USE gvecs,                ONLY : ngms, gcutms 
   USE gvecw,                ONLY : ecutwfc
   USE fft_rho,              ONLY : rho_g2r
@@ -215,6 +215,12 @@ SUBROUTINE post_xml_init (  )
   CALL allocate_fft()
   CALL ggen ( dfftp, gamma_only, at, bg, gcutm, ngm_g, ngm, &
        g, gg, mill, ig_l2g, gstart ) 
+#if defined(__CUDA)
+  ! FIXME: to be moved inside ggen
+  mill_d = mill
+  g_d    = g
+  gg_d   = gg
+#endif
   CALL ggens( dffts, gamma_only, at, g, gg, mill, gcutms, ngms ) 
   CALL gshells ( lmovecell ) 
   !
@@ -247,7 +253,7 @@ SUBROUTINE post_xml_init (  )
   IF (tq_smoothing) CALL init_us_0(ecutrho,intra_bgrp_comm)
   CALL init_us_1(nat, ityp, omega, ngm, g, gg, intra_bgrp_comm)
   IF ( lda_plus_U .AND. ( U_projection == 'pseudo' ) ) CALL init_q_aeps()
-  CALL init_at_1(omega, intra_bgrp_comm)
+  CALL init_tab_atwfc(omega, intra_bgrp_comm)
   !
   CALL struc_fact( nat, tau, nsp, ityp, ngm, g, bg, dfftp%nr1, dfftp%nr2,&
                    dfftp%nr3, strf, eigts1, eigts2, eigts3 )
