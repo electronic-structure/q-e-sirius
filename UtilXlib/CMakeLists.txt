@@ -11,13 +11,14 @@ set(src_util
     mp_bands_util.f90
     nvtx_wrapper.f90
     parallel_include.f90
+    print_mem.f90
     util_param.f90
     thread_util.f90
+    clib_wrappers.f90
     export_gstart_2_solvers.f90
     set_mpi_comm_4_solvers.f90
     # GPU
-    mp_base_gpu.f90
-    device_helper.f90)
+    mp_base_gpu.f90)
 qe_enable_cuda_fortran("${src_util}")
 
 qe_add_library(qe_utilx ${src_util})
@@ -28,9 +29,10 @@ if(QE_ENABLE_SIRIUS)
 endif(QE_ENABLE_SIRIUS)
 
 target_link_libraries(qe_utilx
+    PUBLIC
+        qe_clib # cclock is exposed by the mytime module in clocks_handler
     PRIVATE
         qe_openmp_fortran
-        qe_clib
         qe_mpi_fortran)
 
 if(QE_ENABLE_SIRIUS)
@@ -40,6 +42,18 @@ if(QE_ENABLE_SIRIUS)
 endif(QE_ENABLE_SIRIUS)
 
 qe_install_targets(qe_utilx)
+
+set(src_device_lapack
+    device_helper.f90)
+qe_enable_cuda_fortran("${src_device_lapack}")
+qe_add_library(qe_device_lapack ${src_device_lapack})
+target_link_libraries(qe_device_lapack
+    PRIVATE
+        qe_lapack
+        qe_openmp_fortran
+        qe_mpi_fortran)
+
+qe_install_targets(qe_device_lapack)
 
 ###########################################################
 # tests
@@ -109,14 +123,12 @@ if(QE_ENABLE_TEST)
         set_target_properties(${TGT_NAME} 
             PROPERTIES
                 OUTPUT_NAME ${TGT_NAME}.x 
-                RUNTIME_OUTPUT_DIRECTORY ${QE_TESTS_DIR})
+                RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
         target_link_libraries(${TGT_NAME}
             PRIVATE
                 qe_utilx
                 qe_utilx_tests
-                qe_mpi_fortran
-                qe_modules
-                qe_lapack)
-        add_test(NAME ${TGT_NAME} COMMAND ${QE_TESTS_DIR}/${TGT_NAME}.x)
+                qe_mpi_fortran)
+        add_unit_test(${TGT_NAME} 1 1 $<TARGET_FILE:${TGT_NAME}>)
     ENDFOREACH(NAME)
 endif()

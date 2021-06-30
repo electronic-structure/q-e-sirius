@@ -728,6 +728,7 @@ SUBROUTINE pregterg(h_psi, s_psi, uspp, g_psi, &
   END IF
   CALL stop_clock( 'regterg:init' )
   !
+  !
   IF ( lrot ) THEN
      !
      CALL set_e_from_h()
@@ -985,6 +986,7 @@ SUBROUTINE pregterg(h_psi, s_psi, uspp, g_psi, &
      END IF
      !
   END DO iterate
+  !
   !
   DEALLOCATE( vl, hl, sl )
   !

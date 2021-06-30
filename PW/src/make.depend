@@ -538,7 +538,7 @@ electrons.o : ../../Modules/recvec.o
 electrons.o : ../../Modules/tsvdw.o
 electrons.o : ../../Modules/wavefunctions.o
 electrons.o : ../../Modules/wavefunctions_gpu.o
-electrons.o : ../../Modules/wrappers.o
+electrons.o : ../../UtilXlib/clib_wrappers.o
 electrons.o : ../../UtilXlib/mp.o
 electrons.o : ../../UtilXlib/mp_bands_util.o
 electrons.o : ../../XClib/xc_lib.o
@@ -1969,7 +1969,7 @@ punch.o : ../../Modules/ions_base.o
 punch.o : ../../Modules/qexsd.o
 punch.o : ../../Modules/wavefunctions.o
 punch.o : ../../Modules/wavefunctions_gpu.o
-punch.o : ../../Modules/wrappers.o
+punch.o : ../../UtilXlib/clib_wrappers.o
 punch.o : a2fmod.o
 punch.o : io_rho_xml.o
 punch.o : pw_restart_new.o
@@ -2070,7 +2070,7 @@ pw_restart_new.o : ../../Modules/run_info.o
 pw_restart_new.o : ../../Modules/tsvdw.o
 pw_restart_new.o : ../../Modules/wavefunctions.o
 pw_restart_new.o : ../../Modules/wavefunctions_gpu.o
-pw_restart_new.o : ../../Modules/wrappers.o
+pw_restart_new.o : ../../UtilXlib/clib_wrappers.o
 pw_restart_new.o : ../../UtilXlib/mp.o
 pw_restart_new.o : ../../XClib/xc_lib.o
 pw_restart_new.o : ../../upflib/paw_variables.o

@@ -38,7 +38,6 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${qe_BINARY_DIR}/lib
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${qe_BINARY_DIR}/bin 
     CACHE 
     PATH "Single output directory for building all executables.")
-set(QE_TESTS_DIR ${qe_BINARY_DIR}/tests/bin)
 
 find_package(sirius CONFIG REQUIRED)
 
@@ -68,6 +67,7 @@ include(GNUInstallDirs)
 ###########################################################
 # Build Options
 ###########################################################
+include(CMakeDependentOption)
 option(QE_ENABLE_CUDA
     "enable CUDA acceleration on NVIDIA GPUs" OFF)
 if(QE_ENABLE_CUDA)
@@ -84,8 +84,12 @@ option(QE_ENABLE_SIRIUS
     "enable SIRIUS interface" OFF)
 option(QE_ENABLE_MPI
     "enable distributed execution support via MPI" ON)
+option(QE_ENABLE_MPI_GPU_AWARE
+    "enable GPU aware MPI operations" OFF)
 option(QE_ENABLE_TEST
-    "enable unit tests" ON)
+    "enable unit and system tests" ON)
+cmake_dependent_option(QE_ENABLE_BENCHMARK
+    "enable benchmark tests" OFF "QE_ENABLE_TEST" OFF)
 option(QE_ENABLE_TRACE
     "enable execution tracing output" OFF)
 option(QE_ENABLE_PROFILE_NVTX
@@ -110,6 +114,7 @@ option(QE_ENABLE_DOC
     "enable documentation building" OFF)
 set(QE_FFTW_VENDOR "AUTO" CACHE 
     STRING "select a specific FFTW library [Intel_DFTI, Intel_FFTW3, ArmPL, IBMESSL, FFTW3, Internal]")
+set(QE_ENABLE_SANITIZER "none" CACHE STRING "none,asan,ubsan,tsan,msan")
 
 # TODO change all ifdefs throughout code base to match
 # cmake options
@@ -143,6 +148,9 @@ endif()
 if(QE_ENABLE_MPI)
     # OMPI_SKIP_MPICXX: skip CXX APIs on openmpi, cause trouble to C APIs
     qe_add_global_compile_definitions(__MPI OMPI_SKIP_MPICXX)
+    if(QE_ENABLE_MPI_GPU_AWARE)
+        qe_add_global_compile_definitions(__GPU_MPI)
+    endif()
 endif()
 if(QE_ENABLE_SCALAPACK)
     qe_add_global_compile_definitions(__SCALAPACK)
@@ -167,12 +175,28 @@ endif()
 if(QE_ENABLE_CUDA AND NOT (CMAKE_Fortran_COMPILER_ID MATCHES "PGI" OR CMAKE_Fortran_COMPILER_ID MATCHES "NVHPC"))
     message(FATAL_ERROR "PGI compiler is mandatory when CUDA is enable due QE is based on CUDA Fortran language")
 endif()
+if(QE_ENABLE_MPI_GPU_AWARE AND NOT (QE_ENABLE_CUDA AND QE_ENABLE_MPI))
+    message(FATAL_ERROR "GPU aware MPI requires both MPI and CUDA features enabled")
+endif()
 if(QE_ENABLE_LAXLIB_CUSOLVER AND (NOT QE_ENABLE_CUDA))
     message(FATAL_ERROR "CUDA Solver for LAXLib requires CUDA support, enable it with '-DQE_ENABLE_CUDA=ON' or disable CUDA Solver for LAXLib with '-DQE_ENABLE_LAXLIB_CUSOLVER=OFF'")
 endif()
 # if(QE_ENABLE_HDF5 AND NOT QE_ENABLE_MPI)
 #    message(FATAL_ERROR "HDF5 requires MPI support, enable it with '-DQE_ENABLE_MPI=ON' or disable HDF5 with '-DQE_ENABLE_HDF5=OFF'")
 # endif()
+
+# Add optional sanitizers ASAN, UBSAN, MSAN
+set(VALID_SANITIZERS "none" "asan" "ubsan" "tsan" "msan")
+# Perform sanitizer option check, only works in debug mode
+if(NOT QE_ENABLE_SANITIZER IN_LIST VALID_SANITIZERS)
+  message(FATAL_ERROR "Invalid -DQE_ENABLE_SANITIZER=${QE_ENABLE_SANITIZER}, value must be one of ${VALID_SANITIZERS}")
+else()
+  message(STATUS "Enable sanitizer QE_ENABLE_SANITIZER=${QE_ENABLE_SANITIZER}")
+endif()
+# only GNU works right now
+if(NOT QE_ENABLE_SANITIZER STREQUAL "none" AND NOT CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
+  message(FATAL_ERROR "-DQE_ENABLE_SANITIZER=${QE_ENABLE_SANITIZER} only works with the GNU compiler")
+endif()
 
 
 ###########################################################
@@ -207,6 +231,8 @@ if(QE_ENABLE_CUDA OR QE_ENABLE_PROFILE_NVTX)
       set_target_properties(CUDA::cublas PROPERTIES INTERFACE_LINK_LIBRARIES "${CUDA_FLAG}lib=cublas")
       add_library(CUDA::cusolver INTERFACE IMPORTED)
       set_target_properties(CUDA::cusolver PROPERTIES INTERFACE_LINK_LIBRARIES "${CUDA_FLAG}lib=cusolver")
+      add_library(CUDA::curand INTERFACE IMPORTED)
+      set_target_properties(CUDA::curand PROPERTIES INTERFACE_LINK_LIBRARIES "${CUDA_FLAG}lib=curand")
     else()
       find_package(CUDAToolkit REQUIRED)
     endif()
@@ -237,7 +263,24 @@ if(QE_ENABLE_MPI)
     find_package(MPI REQUIRED Fortran C)
     target_link_libraries(qe_mpi_fortran
         INTERFACE MPI::MPI_Fortran)
+    message(STATUS "MPI settings used by CTest")
+    message("     MPIEXEC_EXECUTABLE : ${MPIEXEC_EXECUTABLE}")
+    message("     MPIEXEC_NUMPROC_FLAG : ${MPIEXEC_NUMPROC_FLAG}")
+    message("     MPIEXEC_PREFLAGS : ${MPIEXEC_PREFLAGS}")
+    string(REPLACE ";" " " MPIEXEC_PREFLAGS_PRINT "${MPIEXEC_PREFLAGS}")
+    message("   Tests run as : ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} <NUM_PROCS> ${MPIEXEC_PREFLAGS_PRINT} <EXECUTABLE>")
 endif(QE_ENABLE_MPI)
+
+###########################################################
+# Git
+###########################################################
+find_package(Git 2.13 REQUIRED)
+if(EXISTS ${qe_SOURCE_DIR}/.git)
+  message(STATUS "Source files are cloned from a git repository.")
+  set(IS_GIT_PROJECT 1)
+else()
+  message(STATUS "Source files are not cloned from a git repository.")
+endif()
 
 ###########################################################
 # Lapack
@@ -285,6 +328,12 @@ if(NOT QE_LAPACK_INTERNAL)
         list(REMOVE_DUPLICATES "${_lapack_libs}")
         message(STATUS "Found LAPACK: ${_lapack_libs}")
         target_link_libraries(qe_lapack INTERFACE ${_lapack_libs})
+        set(CMAKE_REQUIRED_LIBRARIES ${_lapack_libs})
+        check_fortran_function_exists(zhpev ZHPEV_FOUND)
+        if(NOT ZHPEV_FOUND)
+          unset(ZHPEV_FOUND CACHE)
+          message(FATAL_ERROR "Incomplete LAPACK! function zhpev not found!")
+        endif()
     else()
         message(FATAL_ERROR "Failed to find a complete set of external BLAS/LAPACK library by FindLAPACK. "
                             "Variables controlling FindLAPACK can be found at CMake online documentation. "
@@ -331,36 +380,28 @@ if(QE_ENABLE_ELPA)
     find_package(ELPA REQUIRED)
 
     # Check if ELPA version is compatible with QE
-    if(ELPA_VERSION_STRING VERSION_GREATER_EQUAL "2018.11")
+    if(ELPA_VERSION VERSION_GREATER_EQUAL "2018.11")
         set(QE_ELPA_DEFINITIONS __ELPA)
-    elseif(ELPA_VERSION_STRING VERSION_GREATER_EQUAL "2016.11")
+    elseif(ELPA_VERSION VERSION_GREATER_EQUAL "2016.11")
         set(QE_ELPA_DEFINITIONS __ELPA_2016)
-    elseif(ELPA_VERSION_STRING VERSION_GREATER_EQUAL "2015")
+    elseif(ELPA_VERSION VERSION_GREATER_EQUAL "2015")
         set(QE_ELPA_DEFINITIONS __ELPA_2015)
     else()
-        message(FATAL_ERROR "ELPA verion ${ELPA_VERSION_STRING} is not supported.")
+        message(FATAL_ERROR "ELPA verion ${ELPA_VERSION} is not supported.")
     endif()
     message(STATUS "Add ELPA flag : ${QE_ELPA_DEFINITIONS}")
     qe_add_global_compile_definitions(${QE_ELPA_DEFINITIONS})
-
-    # Looking for module directory
-    file(GLOB_RECURSE ELPA_MODS_FILES "${ELPA_INCLUDE_DIRS}/*.mod" "${ELPA_INCLUDE_DIRS}/../modules/*.mod")
-    if(ELPA_MODS_FILES)
-        list(GET ELPA_MODS_FILES 0 ELPA_MOD)
-        get_filename_component(ELPA_MOD_DIR "${ELPA_MOD}" PATH)
-        set(ELPA_INCLUDE_DIRS "${ELPA_MOD_DIR};${ELPA_INCLUDE_DIRS}")
-    else()
-        message(FATAL_ERROR "Fortran module directory of ELPA not found!")
-    endif()
 
     # Add link libraries and include directories
     target_link_libraries(qe_elpa
         INTERFACE
             ${ELPA_LIBRARIES}
             ${ELPA_LIBRARIES_DEP}
-            ${ELPA_LINKER_FLAGS})
+            ${ELPA_LINKER_FLAGS}
+            qe_scalapack)
     target_include_directories(qe_elpa
         INTERFACE
+            ${ELPA_Fortran_MODS_DIR}
             ${ELPA_INCLUDE_DIRS}
             ${ELPA_INCLUDE_DIRS_DEP})
 endif(QE_ENABLE_ELPA)
@@ -464,6 +505,7 @@ endif(QE_ENABLE_SIRIUS)
 # 'add_test()' will be run by the 'test' make target
 ###########################################################
 if(QE_ENABLE_TEST)
+    include(cmake/unit_test.cmake)
     enable_testing()
 endif(QE_ENABLE_TEST)
 
@@ -496,6 +538,7 @@ add_subdirectory(PWCOND)
 add_subdirectory(QHA)
 add_subdirectory(TDDFPT)
 add_subdirectory(XSpectra)
+add_subdirectory(QEHeat)
 if(QE_ENABLE_DOC)
     add_subdirectory(Doc)
 endif()
@@ -504,6 +547,7 @@ endif()
 # Tests
 ###########################################################
 if(QE_ENABLE_TEST)
+  message(STATUS "Enabling tests in test-suite")
   add_subdirectory(test-suite)
 endif()
 
@@ -568,12 +612,17 @@ add_custom_target(ph
         qe_phonon_ph_exe
         qe_phonon_dynmat_exe
         qe_phonon_q2r_exe
+        qe_phonon_dvscf_q2r_exe
         qe_phonon_matdyn_exe
         qe_phonon_q2qstar_exe
         qe_phonon_lambda_exe
         qe_phonon_alpha2f_exe
         qe_phonon_epa_exe
         qe_phonon_fqha_exe
+        qe_phonon_fd_exe
+        qe_phonon_fdef_exe
+        qe_phonon_fdifc_exe
+        qe_phonon_postahc_exe
         qe_plotphon_kforbands_exe
         qe_plotphon_bandstognuplot_exe
         qe_plotphon_eminmax_exe
@@ -656,7 +705,8 @@ add_custom_target(tddfpt
         qe_tddfpt_turbolanczos_exe
         qe_tddfpt_turbodavidson_exe
         qe_tddfpt_turboeels_exe
-        qe_tddfpt_calculatespectrum_exe
+        qe_tddfpt_turbospectrum_exe
+        qe_tddfpt_turbomagnons_exe 
     COMMENT
         "time dependent dft code")
 
@@ -709,3 +759,8 @@ add_custom_target(epw
         qe_epw_exe
     COMMENT
         "electron-Phonon Coupling with wannier functions")
+add_custom_target(all_currents
+    DEPENDS
+	qe_qeheat_exe
+    COMMENT
+	"QEHeat code to compute energy and electronic density currents")

@@ -28,12 +28,12 @@ SUBROUTINE punch( what )
   USE control_flags,        ONLY : io_level, lscf, lxdm
   USE klist,                ONLY : nks
   USE io_files,             ONLY : psfile, pseudo_dir
-  USE wrappers,             ONLY : f_copy
+  USE clib_wrappers,        ONLY : f_copy
   USE spin_orb,             ONLY : lforcet
   USE scf,                  ONLY : rho
   USE lsda_mod,             ONLY : nspin
   USE ions_base,            ONLY : nsp
-  USE pw_restart_new,       ONLY : pw_write_schema, pw_write_binaries
+  USE pw_restart_new,       ONLY : pw_write_schema, write_collected_wfc
   USE qexsd_module,         ONLY : qexsd_reset_steps
   USE io_rho_xml,           ONLY : write_scf
   USE a2F,                  ONLY : la2F, a2Fsave
@@ -107,7 +107,7 @@ SUBROUTINE punch( what )
      !
      ! ... wavefunctions in "collected" format - also G- and k+G-vectors
      !
-     CALL pw_write_binaries( )
+     CALL write_collected_wfc( )
 
      ! ... if allocated, deallocate variables containing info on ionic steps 
      ! 

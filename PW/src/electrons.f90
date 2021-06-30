@@ -427,7 +427,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
   USE esm,                  ONLY : do_comp_esm, esm_printpot, esm_ewald
   USE fcp_module,           ONLY : lfcp, fcp_mu
   USE gcscf_module,         ONLY : lgcscf, gcscf_mu, gcscf_ignore_mun, gcscf_set_nelec
-  USE wrappers,             ONLY : memstat
+  USE clib_wrappers,        ONLY : memstat
   USE iso_c_binding,        ONLY : c_int
   !
   USE plugin_variables,     ONLY : plugin_etot
@@ -659,6 +659,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
   ! Grimme-D3 correction to the energy
   !
   IF (ldftd3) THEN
+     CALL start_clock('energy_dftd3')
      latvecs(:,:)=at(:,:)*alat
      tau(:,:)=tau(:,:)*alat
      DO na = 1, nat
@@ -667,6 +668,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
      call dftd3_pbc_dispersion(dftd3,tau,atnum,latvecs,energy_dftd3)
      edftd3=energy_dftd3*2.d0
      tau(:,:)=tau(:,:)/alat
+     CALL stop_clock('energy_dftd3')
   ELSE
      edftd3= 0.0
   ENDIF

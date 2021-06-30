@@ -48,7 +48,7 @@ MODULE pw_restart_new
   !
   CHARACTER(LEN=6), EXTERNAL :: int_to_char
   PRIVATE
-  PUBLIC :: pw_write_schema, pw_write_binaries
+  PUBLIC :: pw_write_schema, write_collected_wfc
   PUBLIC :: read_xml_file, read_collected_wfc
   !
   CONTAINS
@@ -145,6 +145,7 @@ MODULE pw_restart_new
       !
       USE wvfct_gpum,           ONLY : using_et, using_wg
       USE wavefunctions_gpum,   ONLY : using_evc
+      USE qexsd_module,         ONLY : qexsd_add_all_clocks 
       !
       IMPLICIT NONE
       !
@@ -680,6 +681,9 @@ MODULE pw_restart_new
          ENDIF
          NULLIFY ( bp_obj_ptr) 
 !-------------------------------------------------------------------------------
+! ... CLOCKS
+         CALL qexsd_add_all_clocks()
+!-------------------------------------------------------------------------------
 ! ... ACTUAL WRITING
 !-------------------------------------------------------------------------------
  10      CONTINUE
@@ -733,7 +737,7 @@ MODULE pw_restart_new
     END SUBROUTINE pw_write_schema
     !
     !------------------------------------------------------------------------
-    SUBROUTINE pw_write_binaries( )
+    SUBROUTINE write_collected_wfc( )
       !------------------------------------------------------------------------
       !
       USE mp,                   ONLY : mp_sum, mp_max
@@ -748,13 +752,12 @@ MODULE pw_restart_new
       USE klist,                ONLY : nks, nkstot, xk, ngk, igk_k
       USE gvect,                ONLY : ngm, g, mill
       USE fft_base,             ONLY : dfftp
-      USE basis,                ONLY : natomwfc
       USE wvfct,                ONLY : npwx, et, wg, nbnd
       USE lsda_mod,             ONLY : nspin, isk, lsda
       USE mp_pools,             ONLY : intra_pool_comm, inter_pool_comm
       USE mp_bands,             ONLY : me_bgrp, root_bgrp, intra_bgrp_comm, &
                                        root_bgrp_id, my_bgrp_id
-      USE wrappers,             ONLY : f_mkdir_safe
+      USE clib_wrappers,        ONLY : f_mkdir_safe
       !
       USE wavefunctions_gpum,   ONLY : using_evc
       USE wvfct_gpum,           ONLY : using_et
@@ -874,7 +877,7 @@ MODULE pw_restart_new
       !
       RETURN
       !
-    END SUBROUTINE pw_write_binaries
+    END SUBROUTINE write_collected_wfc
     !
     !-----------------------------------------------------------------------
     SUBROUTINE gk_l2gmap_kdip( npw_g, ngk_g, ngk, igk_l2g, igk_l2g_kdip, igwk )
