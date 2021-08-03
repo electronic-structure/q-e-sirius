@@ -610,7 +610,7 @@ SUBROUTINE get_band_energies_from_sirius
   ENDIF
 
   ! convert to Ry
-  DO ik = 1, nks
+  DO ik = 1, nkstot
     et(:, ik) = 2.d0 * band_e(:, global_kpoint_index(nkstot, ik))
   ENDDO
 
@@ -704,7 +704,7 @@ SUBROUTINE get_band_occupancies_from_sirius
   IF (nspin.GT.1) THEN
     maxocc = 1.d0
   ENDIF
-  DO ik = 1, nks
+  DO ik = 1, nkstot
     wg(:, ik) = bnd_occ(:, global_kpoint_index(nkstot, ik)) / maxocc * wk(ik)
   ENDDO
 
