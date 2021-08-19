@@ -1290,112 +1290,112 @@ SUBROUTINE sirius_to_qe_complex(ns_sirius, ns)
   ENDDO
 END SUBROUTINE sirius_to_qe_complex
 
-SUBROUTINE qe_sirius_set_hubbard_occupancy(rho)
-  USE scf,              ONLY : scf_type
-  USE ions_base,            ONLY : nat, ityp
-  USE ldaU,                 ONLY : Hubbard_lmax, Hubbard_l, Hubbard_U, &
-       Hubbard_J, Hubbard_alpha, lda_plus_u_kind,&
-       Hubbard_J0, Hubbard_beta,  is_hubbard
-  USE noncollin_module, ONLY : noncolin, nspin_lsda
-  USE lsda_mod,             ONLY : nspin
-
-  IMPLICIT NONE
-
-  TYPE(scf_type), INTENT(IN) :: rho  ! the valence charge
-  COMPLEX(8), ALLOCATABLE :: ns_sirius(:, :, :, :)
-
-
-  IF (noncolin) THEN
-     ALLOCATE(ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, 4, nat))
-     CALL qe_to_sirius_complex(rho%ns_nc(1, 1, 1, 1), ns_sirius(1, 1, 1, 1))
-  ELSE
-     ALLOCATE(ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat))
-     CALL qe_to_sirius_real(rho%ns(1, 1, 1, 1), ns_sirius(1, 1, 1, 1))
-  ENDIF
-  CALL sirius_set_hubbard_occupancies(gs_handler, ns_sirius(1, 1, 1, 1), 2 * hubbard_lmax + 1)
-  DEALLOCATE(ns_sirius)
-END SUBROUTINE qe_sirius_set_hubbard_occupancy
-
-SUBROUTINE qe_sirius_get_hubbard_occupancy(rho)
-  USE scf,              ONLY : scf_type
-  USE ions_base,            ONLY : nat, ityp
-  USE ldaU,                 ONLY : Hubbard_lmax, Hubbard_l, Hubbard_U, &
-       Hubbard_J, Hubbard_alpha, lda_plus_u_kind,&
-       Hubbard_J0, Hubbard_beta,  is_hubbard
-  USE noncollin_module, ONLY : noncolin, nspin_lsda
-  USE lsda_mod,             ONLY : nspin
-  IMPLICIT NONE
-
-  TYPE(scf_type), INTENT(out) :: rho  ! the valence charge
-  COMPLEX(8), ALLOCATABLE :: ns_sirius(:, :, :, :)
-
-
-  IF (noncolin) THEN
-     ALLOCATE(ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, 4, nat))
-     CALL sirius_get_hubbard_occupancies(gs_handler, ns_sirius(1, 1, 1, 1), 2 * hubbard_lmax + 1)
-     CALL sirius_to_qe_complex(ns_sirius(1, 1, 1, 1), rho%ns_nc(1, 1, 1, 1))
-  ELSE
-     ALLOCATE(ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, 2, nat))
-     CALL sirius_get_hubbard_occupancies(gs_handler, ns_sirius(1, 1, 1, 1), 2 * hubbard_lmax + 1)
-     CALL sirius_to_qe_real(ns_sirius(1, 1, 1, 1), rho%ns(1, 1, 1, 1))
-  ENDIF
-
-  DEALLOCATE(ns_sirius)
-END SUBROUTINE qe_sirius_get_hubbard_occupancy
-
-SUBROUTINE qe_sirius_set_hubbard_potential(v)
-  USE scf,              ONLY : scf_type
-  USE ions_base,            ONLY : nat, ityp
-  USE ldaU,                 ONLY : Hubbard_lmax, Hubbard_l, Hubbard_U, &
-       Hubbard_J, Hubbard_alpha, lda_plus_u_kind,&
-       Hubbard_J0, Hubbard_beta,  is_hubbard
-  USE lsda_mod,             ONLY : nspin
-  USE noncollin_module, ONLY : noncolin, nspin_lsda
-  IMPLICIT NONE
-  TYPE(scf_type), INTENT(IN) :: v  ! the valence charge
-  COMPLEX(8), ALLOCATABLE :: ns_sirius(:, :, :, :)
-
-  IF (noncolin) THEN
-     ALLOCATE(ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, 4, nat))
-     CALL qe_to_sirius_complex(v%ns_nc(1, 1, 1, 1), ns_sirius(1, 1, 1, 1))
-  ELSE
-     ALLOCATE(ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat))
-     CALL qe_to_sirius_real(v%ns(1, 1, 1, 1), ns_sirius(1, 1, 1, 1))
-  ENDIF
-  ns_sirius(:,:,:,:) = 0.5 * ns_sirius(:,:,:,:)
-  CALL sirius_set_hubbard_potential(gs_handler, ns_sirius(1, 1, 1, 1), 2 * hubbard_lmax + 1)
-
-  DEALLOCATE(ns_sirius)
-END SUBROUTINE qe_sirius_set_hubbard_potential
-
-SUBROUTINE qe_sirius_get_hubbard_potential(v)
-  USE scf,              ONLY : scf_type
-  USE ions_base,            ONLY : nat, ityp
-  USE ldaU,                 ONLY : Hubbard_lmax, Hubbard_l, Hubbard_U, &
-       Hubbard_J, Hubbard_alpha, lda_plus_u_kind,&
-       Hubbard_J0, Hubbard_beta,  is_hubbard
-  USE lsda_mod,             ONLY : nspin
-  USE noncollin_module, ONLY : noncolin, nspin_lsda
-  IMPLICIT NONE
-
-  COMPLEX(8), ALLOCATABLE :: ns_sirius(:, :, :, :)
-  TYPE(scf_type), INTENT(out) :: v  ! the valence charge
-
-  CALL sirius_get_hubbard_potential(gs_handler, ns_sirius(1, 1, 1, 1), 2 * hubbard_lmax + 1)
-
-  IF (noncolin) THEN
-     ALLOCATE(ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, 4, nat))
-     ns_sirius(:,:,:,:) = 2.0 * ns_sirius(:,:,:,:)
-     CALL sirius_to_qe_complex(ns_sirius(1, 1, 1, 1), v%ns_nc(1, 1, 1, 1))
-
-  ELSE
-     ALLOCATE(ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat))
-     ns_sirius(:,:,:,:) = 2.0 * ns_sirius(:,:,:,:)
-     CALL sirius_to_qe_real(ns_sirius(1, 1, 1, 1), v%ns(1, 1, 1, 1))
-  ENDIF
-
-  DEALLOCATE(ns_sirius)
-END SUBROUTINE qe_sirius_get_hubbard_potential
+!SUBROUTINE qe_sirius_set_hubbard_occupancy(rho)
+!  USE scf,              ONLY : scf_type
+!  USE ions_base,            ONLY : nat, ityp
+!  USE ldaU,                 ONLY : Hubbard_lmax, Hubbard_l, Hubbard_U, &
+!       Hubbard_J, Hubbard_alpha, lda_plus_u_kind,&
+!       Hubbard_J0, Hubbard_beta,  is_hubbard
+!  USE noncollin_module, ONLY : noncolin, nspin_lsda
+!  USE lsda_mod,             ONLY : nspin
+!
+!  IMPLICIT NONE
+!
+!  TYPE(scf_type), INTENT(IN) :: rho  ! the valence charge
+!  COMPLEX(8), ALLOCATABLE :: ns_sirius(:, :, :, :)
+!
+!
+!  IF (noncolin) THEN
+!     ALLOCATE(ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, 4, nat))
+!     CALL qe_to_sirius_complex(rho%ns_nc(1, 1, 1, 1), ns_sirius(1, 1, 1, 1))
+!  ELSE
+!     ALLOCATE(ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat))
+!     CALL qe_to_sirius_real(rho%ns(1, 1, 1, 1), ns_sirius(1, 1, 1, 1))
+!  ENDIF
+!  CALL sirius_set_hubbard_occupancies(gs_handler, ns_sirius(1, 1, 1, 1), 2 * hubbard_lmax + 1)
+!  DEALLOCATE(ns_sirius)
+!END SUBROUTINE qe_sirius_set_hubbard_occupancy
+!
+!SUBROUTINE qe_sirius_get_hubbard_occupancy(rho)
+!  USE scf,              ONLY : scf_type
+!  USE ions_base,            ONLY : nat, ityp
+!  USE ldaU,                 ONLY : Hubbard_lmax, Hubbard_l, Hubbard_U, &
+!       Hubbard_J, Hubbard_alpha, lda_plus_u_kind,&
+!       Hubbard_J0, Hubbard_beta,  is_hubbard
+!  USE noncollin_module, ONLY : noncolin, nspin_lsda
+!  USE lsda_mod,             ONLY : nspin
+!  IMPLICIT NONE
+!
+!  TYPE(scf_type), INTENT(out) :: rho  ! the valence charge
+!  COMPLEX(8), ALLOCATABLE :: ns_sirius(:, :, :, :)
+!
+!
+!  IF (noncolin) THEN
+!     ALLOCATE(ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, 4, nat))
+!     CALL sirius_get_hubbard_occupancies(gs_handler, ns_sirius(1, 1, 1, 1), 2 * hubbard_lmax + 1)
+!     CALL sirius_to_qe_complex(ns_sirius(1, 1, 1, 1), rho%ns_nc(1, 1, 1, 1))
+!  ELSE
+!     ALLOCATE(ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, 2, nat))
+!     CALL sirius_get_hubbard_occupancies(gs_handler, ns_sirius(1, 1, 1, 1), 2 * hubbard_lmax + 1)
+!     CALL sirius_to_qe_real(ns_sirius(1, 1, 1, 1), rho%ns(1, 1, 1, 1))
+!  ENDIF
+!
+!  DEALLOCATE(ns_sirius)
+!END SUBROUTINE qe_sirius_get_hubbard_occupancy
+!
+!SUBROUTINE qe_sirius_set_hubbard_potential(v)
+!  USE scf,              ONLY : scf_type
+!  USE ions_base,            ONLY : nat, ityp
+!  USE ldaU,                 ONLY : Hubbard_lmax, Hubbard_l, Hubbard_U, &
+!       Hubbard_J, Hubbard_alpha, lda_plus_u_kind,&
+!       Hubbard_J0, Hubbard_beta,  is_hubbard
+!  USE lsda_mod,             ONLY : nspin
+!  USE noncollin_module, ONLY : noncolin, nspin_lsda
+!  IMPLICIT NONE
+!  TYPE(scf_type), INTENT(IN) :: v  ! the valence charge
+!  COMPLEX(8), ALLOCATABLE :: ns_sirius(:, :, :, :)
+!
+!  IF (noncolin) THEN
+!     ALLOCATE(ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, 4, nat))
+!     CALL qe_to_sirius_complex(v%ns_nc(1, 1, 1, 1), ns_sirius(1, 1, 1, 1))
+!  ELSE
+!     ALLOCATE(ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat))
+!     CALL qe_to_sirius_real(v%ns(1, 1, 1, 1), ns_sirius(1, 1, 1, 1))
+!  ENDIF
+!  ns_sirius(:,:,:,:) = 0.5 * ns_sirius(:,:,:,:)
+!  CALL sirius_set_hubbard_potential(gs_handler, ns_sirius(1, 1, 1, 1), 2 * hubbard_lmax + 1)
+!
+!  DEALLOCATE(ns_sirius)
+!END SUBROUTINE qe_sirius_set_hubbard_potential
+!
+!SUBROUTINE qe_sirius_get_hubbard_potential(v)
+!  USE scf,              ONLY : scf_type
+!  USE ions_base,            ONLY : nat, ityp
+!  USE ldaU,                 ONLY : Hubbard_lmax, Hubbard_l, Hubbard_U, &
+!       Hubbard_J, Hubbard_alpha, lda_plus_u_kind,&
+!       Hubbard_J0, Hubbard_beta,  is_hubbard
+!  USE lsda_mod,             ONLY : nspin
+!  USE noncollin_module, ONLY : noncolin, nspin_lsda
+!  IMPLICIT NONE
+!
+!  COMPLEX(8), ALLOCATABLE :: ns_sirius(:, :, :, :)
+!  TYPE(scf_type), INTENT(out) :: v  ! the valence charge
+!
+!  CALL sirius_get_hubbard_potential(gs_handler, ns_sirius(1, 1, 1, 1), 2 * hubbard_lmax + 1)
+!
+!  IF (noncolin) THEN
+!     ALLOCATE(ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, 4, nat))
+!     ns_sirius(:,:,:,:) = 2.0 * ns_sirius(:,:,:,:)
+!     CALL sirius_to_qe_complex(ns_sirius(1, 1, 1, 1), v%ns_nc(1, 1, 1, 1))
+!
+!  ELSE
+!     ALLOCATE(ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat))
+!     ns_sirius(:,:,:,:) = 2.0 * ns_sirius(:,:,:,:)
+!     CALL sirius_to_qe_real(ns_sirius(1, 1, 1, 1), v%ns(1, 1, 1, 1))
+!  ENDIF
+!
+!  DEALLOCATE(ns_sirius)
+!END SUBROUTINE qe_sirius_get_hubbard_potential
 
 
 SUBROUTINE check_residuals(ik)
