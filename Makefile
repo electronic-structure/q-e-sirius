@@ -201,7 +201,7 @@ librxc :
 libutil : 
 	( cd UtilXlib ; $(MAKE) TLDEPS= all || exit 1 )
 
-libupf : libfox libutil libcuda
+libupf : libutil libcuda
 	( cd upflib ; $(MAKE) TLDEPS= all || exit 1 )
 
 libs :
@@ -355,10 +355,10 @@ tar-qe-modes :
 # "latex2html" and "convert" (from Image-Magick) are needed.
 doc : 
 	if test -d Doc ; then \
-	( cd Doc ; $(MAKE) VERSION=6.6 TLDEPS= all ) ; fi
+	( cd Doc ; $(MAKE) TLDEPS= all ) ; fi
 	for dir in */Doc; do \
 	( if test -f $$dir/Makefile ; then \
-	( cd $$dir; $(MAKE) VERSION=6.6 TLDEPS= all ) ; fi ) ;  done
+	( cd $$dir; $(MAKE) TLDEPS= all ) ; fi ) ;  done
 
 doc_clean :
 	if test -d Doc ; then \

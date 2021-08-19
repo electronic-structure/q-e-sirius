@@ -425,7 +425,8 @@ SUBROUTINE setup()
   ! ... set the max number of bands used in iterative diagonalization
   !
   nbndx = nbnd
-  IF ( isolve == 0 ) nbndx = david * nbnd
+  IF ( isolve == 0  ) nbndx = david * nbnd 
+  IF (isolve == 4 ) nbndx = 2 *nbnd 
   !
   use_gpu       = check_gpu_support( )
   !
