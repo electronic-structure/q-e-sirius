@@ -91,6 +91,7 @@ SUBROUTINE stress( sigma )
     sigma_nonloc_dft = 0.d0
     sigmaexx = 0.d0
     sigmaloclong = 0.d0
+    sigma_mbd = 0.d0
 
     IF (use_veff_callback) THEN
       CALL stres_loc( sigmaloc )
