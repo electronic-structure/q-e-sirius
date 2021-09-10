@@ -44,7 +44,6 @@ find_package(sirius CONFIG REQUIRED)
 ###########################################################
 # Build helpers
 ###########################################################
-set(PROJECT_CMAKE ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 include(cmake/qeHelpers.cmake)
@@ -244,11 +243,11 @@ endif()
 # Compiler vendor specific options
 ############################################################
 if(CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
-    include(${PROJECT_CMAKE}/GNUFortranCompiler.cmake)
+    include(GNUFortranCompiler)
 elseif(CMAKE_Fortran_COMPILER_ID MATCHES "PGI" OR CMAKE_Fortran_COMPILER_ID MATCHES "NVHPC")
-    include(${PROJECT_CMAKE}/NVFortranCompiler.cmake)
+    include(NVFortranCompiler)
 elseif(CMAKE_Fortran_COMPILER_ID MATCHES "XL")
-    include(${PROJECT_CMAKE}/IBMFortranCompiler.cmake)
+    include(IBMFortranCompiler)
 endif()
 
 if(QE_ENABLE_STATIC_BUILD)
@@ -586,7 +585,6 @@ endif(QE_ENABLE_PROFILE_NVTX)
 # Components
 ###########################################################
 add_subdirectory(external)
-add_subdirectory(clib)
 add_subdirectory(FFTXlib)
 add_subdirectory(UtilXlib)
 add_subdirectory(Modules)
