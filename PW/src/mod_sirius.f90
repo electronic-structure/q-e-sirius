@@ -18,7 +18,7 @@ USE klist, ONLY : nks, xk, nkstot, wk, degauss, ngauss
 USE gvect, ONLY : ngm_g, ecutrho, ngm, mill
 USE gvecw, ONLY : ecutwfc
 USE control_flags, ONLY : gamma_only, diago_full_acc, mixing_beta, nmix
-USE mp_pools, ONLY : inter_pool_comm, npool
+USE mp_pools, ONLY : inter_pool_comm, intra_pool_comm, npool
 USE mp_images,        ONLY : nproc_image, intra_image_comm
 USE mp, ONLY : mp_sum, mp_bcast
 USE wvfct, ONLY : nbnd
@@ -69,7 +69,7 @@ DO iat = 1, nsp
 ENDDO
 
 ! create context of simulation
-CALL sirius_create_context(intra_image_comm, sctx)
+CALL sirius_create_context(intra_image_comm, sctx, fcomm_k=inter_pool_comm, fcomm_band=intra_pool_comm)
 ! create initial configuration dictionary in JSON
 WRITE(conf_str, 10)diago_david_ndim, mixing_beta, nmix
 10 FORMAT('{"parameters" : {"electronic_structure_method" : "pseudopotential", "use_scf_correction" : true}, &
