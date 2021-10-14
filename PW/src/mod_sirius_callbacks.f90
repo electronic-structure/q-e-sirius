@@ -230,7 +230,7 @@ END DO
 END SUBROUTINE calc_rhoc_radial_integrals
 
 
-! A callbacl function to compute radial integrals or rho_core(r) with
+! A callback function to compute radial integrals or rho_core(r) with
 ! the derivatives of Bessel functions
 SUBROUTINE calc_rhoc_dj_radial_integrals(iat, nq, q, rhoc_dj_ri) BIND(C)
 USE ISO_C_BINDING
@@ -305,6 +305,47 @@ DO ib = 1, upf(iat)%nbeta
 ENDDO
 
 END SUBROUTINE calc_beta_radial_integrals
+
+
+SUBROUTINE calc_atomic_wfc_radial_integrals(iat, q, wfc_ri, ld) BIND(C)
+USE iso_c_binding
+USE uspp_data,    ONLY : dq, tab, wfc_ri_tab
+USE uspp_param,   ONLY : upf
+IMPLICIT NONE
+!
+INTEGER(kind=c_int), INTENT(in), VALUE :: iat
+REAL(kind=c_double), INTENT(in), VALUE :: q
+INTEGER(kind=c_int), INTENT(in), VALUE :: ld
+REAL(kind=c_double), INTENT(out) :: wfc_ri(ld)
+!
+REAL(8) :: px, ux, vx, wx
+INTEGER :: i0, i1, i2, i3, ib
+!
+IF (ld.LT.upf(iat)%nwfc) THEN
+  WRITE(*,*)'not enough space to store all atomic wave functions, ld=',ld,' nwfc=',upf(iat)%nwfc
+  STOP
+ENDIF
+IF (.NOT.ALLOCATED(tab)) THEN
+  WRITE(*,*)'tab array is not allocated'
+  STOP
+ENDIF
+
+px = q / dq - INT(q / dq)
+ux = 1.d0 - px
+vx = 2.d0 - px
+wx = 3.d0 - px
+i0 = INT(q / dq) + 1
+i1 = i0 + 1
+i2 = i0 + 2
+i3 = i0 + 3
+DO ib = 1, upf(iat)%nwfc
+  wfc_ri(ib) = wfc_ri_tab(i0, ib, iat) * ux * vx * wx / 6.d0 + &
+                wfc_ri_tab(i1, ib, iat) * px * vx * wx / 2.d0 - &
+                wfc_ri_tab(i2, ib, iat) * px * ux * wx / 2.d0 + &
+                wfc_ri_tab(i3, ib, iat) * px * ux * vx / 6.d0
+ENDDO
+
+END SUBROUTINE calc_atomic_wfc_radial_integrals
 
 
 SUBROUTINE calc_beta_dj_radial_integrals(iat, q, beta_ri, ld) BIND(C)
@@ -428,5 +469,7 @@ IF (upf(iat)%tvanp) THEN
 ENDIF
 
 END SUBROUTINE calc_aug_dj_radial_integrals
+
+
 
 END MODULE mod_sirius_callbacks

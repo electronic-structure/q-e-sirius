@@ -13,7 +13,7 @@
 !----------------------------------------------------------------------------
 SUBROUTINE electrons()
   !----------------------------------------------------------------------------
-  !! General self-consistency loop, also for hybrid functionals.  
+  !! General self-consistency loop, also for hybrid functionals.
   !! For non-hybrid functionals it just calls \(\texttt{electron_scf}\).
   !
   USE kinds,                ONLY : DP
@@ -38,7 +38,7 @@ SUBROUTINE electrons()
   USE klist,                ONLY : nks
   USE uspp,                 ONLY : okvan
   USE exx,                  ONLY : aceinit,exxinit, exxenergy2, exxbuff, &
-                                   fock0, fock1, fock2, fock3, dexx, use_ace, local_thr 
+                                   fock0, fock1, fock2, fock3, dexx, use_ace, local_thr
   USE xc_lib,               ONLY : xclib_dft_is, exx_is_active
   USE control_flags,        ONLY : adapt_thr, tr2_init, tr2_multi, gamma_only
   !
@@ -71,7 +71,7 @@ SUBROUTINE electrons()
   REAL(DP) :: tr2_min
   !! estimated error on energy coming from diagonalization
   REAL(DP) :: tr2_final
-  !! final threshold for exx minimization 
+  !! final threshold for exx minimization
   !! when using adaptive thresholds.
   LOGICAL :: first, exst
   REAL(DP) :: etot_cmp_paw(nat,2,2)
@@ -110,7 +110,7 @@ SUBROUTINE electrons()
            iter = 0
         ELSE IF ( iter < 0 .OR. iter > niter ) THEN
            iter = 0
-        ELSE 
+        ELSE
            READ (iunres, *) exxen, fock0, fock1, fock2
            ! FIXME: et and wg should be read from xml file
            READ (iunres, *) (wg(1:nbnd,ik),ik=1,nks)
@@ -128,7 +128,7 @@ SUBROUTINE electrons()
              CALL localize_orbitals( )
            ELSE IF (DoLoc) THEN
              CALL localize_orbitals_k( )
-           ENDIF 
+           ENDIF
            ! FIXME: ugly hack, overwrites exxbuffer from exxinit
            CALL seqopn (iunres, 'restart_exx', 'unformatted', exst)
            IF (exst) READ (iunres, iostat=ios) exxbuff
@@ -143,7 +143,7 @@ SUBROUTINE electrons()
                          nspin, doublegrid )
            !
            WRITE(stdout,'(5x,"Calculation (EXX) restarted from iteration #", &
-                        & i6)') iter 
+                        & i6)') iter
         ENDIF
      ENDIF
      CLOSE ( unit=iunres, status='delete')
@@ -197,15 +197,15 @@ SUBROUTINE electrons()
           CALL localize_orbitals( )
         ELSE IF (DoLoc) THEN
           CALL localize_orbitals_k( )
-        ENDIF 
+        ENDIF
         IF (use_ace) THEN
-           CALL aceinit ( DoLoc ) 
+           CALL aceinit ( DoLoc )
            fock2 = exxenergyace()
         ELSE
            fock2 = exxenergy2()
         ENDIF
-        exxen = 0.50d0*fock2 
-        etot = etot - etxc 
+        exxen = 0.50d0*fock2
+        etot = etot - etxc
         !
         ! Recalculate potential because XC functional has changed,
         ! start self-consistency loop on exchange
@@ -237,11 +237,11 @@ SUBROUTINE electrons()
           CALL localize_orbitals( )
         ELSE IF (DoLoc) THEN
           CALL localize_orbitals_k( )
-        ENDIF 
+        ENDIF
         IF (use_ace) CALL aceinit ( DoLoc, fock3 )
         !
         ! fock2 is the exchange energy calculated for orbitals at step n,
-        !       using orbitals at step n in the expression of exchange 
+        !       using orbitals at step n in the expression of exchange
         ! fock0 is fock2 at previous step
         !
         fock0 = fock2
@@ -253,16 +253,16 @@ SUBROUTINE electrons()
         !
         ! check for convergence. dexx is positive definite: if it isn't,
         ! there is some numerical problem. One such cause could be that
-        ! the treatment of the divergence in exact exchange has failed. 
+        ! the treatment of the divergence in exact exchange has failed.
         ! FIXME: to be properly implemented for all cases
         !
-!civn 
+!civn
 !       IF (use_ace .AND. (nspin == 1) .AND. gamma_only) THEN
         IF ( DoLoc ) THEN
-          dexx =  0.5D0 * ((fock1-fock0)+(fock3-fock2)) 
+          dexx =  0.5D0 * ((fock1-fock0)+(fock3-fock2))
         ELSE
           dexx = fock1 - 0.5D0*(fock0+fock2)
-        ENDIF 
+        ENDIF
         !
         IF ( dexx < 0.0_dp ) THEN
            !IF( Doloc ) THEN
@@ -279,7 +279,7 @@ SUBROUTINE electrons()
         !
         etot = etot + exxen + 0.5D0*fock2 - fock1
         hwf_energy = hwf_energy + exxen + 0.5D0*fock2 - fock1 ! [LP]
-        exxen = 0.5D0*fock2 
+        exxen = 0.5D0*fock2
         !
         IF ( dexx < tr2_final ) THEN
            WRITE( stdout, 9066 ) '!!', etot, hwf_energy
@@ -291,7 +291,7 @@ SUBROUTINE electrons()
         ELSE
           WRITE( stdout, 9068 ) dexx
         ENDIF
-        
+
         WRITE( stdout, 9062 ) - fock1
         IF (use_ace) THEN
            WRITE( stdout, 9063 ) 0.5D0*fock2
@@ -353,7 +353,7 @@ END SUBROUTINE electrons
 !----------------------------------------------------------------------------
 SUBROUTINE electrons_scf ( printout, exxen )
   !----------------------------------------------------------------------------
-  !! This routine is a driver of the self-consistent cycle.  
+  !! This routine is a driver of the self-consistent cycle.
   !! It uses the routine \(\texttt{c_bands}\) for computing the bands at fixed
   !! Hamiltonian, the routine \(\texttt{sum_band}\) to compute the charge density,
   !! the routine \(\texttt{v_of_rho}\) to compute the new potential and the routine
@@ -489,7 +489,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
   !
   REAL(DP), EXTERNAL :: ewald, get_clock
   REAL(DP) :: etot_cmp_paw(nat,2,2)
-  ! 
+  !
   REAL(DP) :: latvecs(3,3)
   !! auxiliary variables for grimme-d3
   INTEGER:: atnum(1:nat), na
@@ -568,7 +568,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
            DO ir = 1,dfftp%nnr
              deband = deband - ( rho%of_r(ir,1) + rho%of_r(ir,2) ) * v%of_r(ir,1) &  ! up
                                - ( rho%of_r(ir,1) - rho%of_r(ir,2) ) * v%of_r(ir,2)    ! dw
-           ENDDO 
+           ENDDO
            deband = 0.5_DP*deband
            !
         ELSE
@@ -586,7 +586,10 @@ SUBROUTINE electrons_scf ( printout, exxen )
         deband = deband - 2.d0 * tmp
       END IF
 
-      etot = eband + ( etxc - etxcc ) + ewld + ehart + deband + demet + descf + epaw
+      CALL sirius_get_energy(gs_handler, "hubbard", tmp)
+      eth = tmp * 2.d0
+
+      etot = eband + ( etxc - etxcc ) + ewld + ehart + deband + demet + descf + epaw + eth
     ELSE
       eband = 0.
       demet = 0.
@@ -596,6 +599,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
       ewld = 0.
       ehart = 0.
       deband = 0.
+      eth = 0.
       epaw = 0.
       CALL sirius_get_energy(gs_handler, "total", etot)
       etot = etot * 2.d0 ! convert to Ry
@@ -743,7 +747,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
         !
         tr2_min = 0.D0
         !
-        IF ( first ) tr2_min = ethr*MAX( 1.D0, nelec ) 
+        IF ( first ) tr2_min = ethr*MAX( 1.D0, nelec )
         !
         ! ... diagonalization of the KS hamiltonian
         !
@@ -821,7 +825,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
               ENDIF
            ENDIF
            !
-           ! Keep the Hubbard potential fixed, i.e. keep the 
+           ! Keep the Hubbard potential fixed, i.e. keep the
            ! occupation matrix equal to the ground-state one.
            ! This is needed for the calculation of Hubbard parameters
            ! in a self-consistent way.
@@ -892,7 +896,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
                 mixing_beta, dr2, tr2_min, iter, nmix, iunmix, conv_elec )
         !
         ! ... Results are broadcast from pool 0 to others to prevent trouble
-        ! ... on machines unable to yield the same results for the same 
+        ! ... on machines unable to yield the same results for the same
         ! ... calculations on the same data, performed on different procs
         !
         IF ( lda_plus_u )  THEN
@@ -921,7 +925,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
         ! ... (dr2) is smaller than the estimated error due to diagonalization
         ! ... (tr2_min), rhoin and rho are unchanged: rhoin contains the input
         ! ... density and rho contains the output density.
-        ! ... In all other cases, rhoin contains the mixed charge density 
+        ! ... In all other cases, rhoin contains the mixed charge density
         ! ... (the new input density) while rho is unchanged
         !
         IF ( first .and. nat > 0) THEN
@@ -978,7 +982,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
               CALL gcscf_set_nelec( charge )
            END IF
            !
-        ELSE 
+        ELSE
            !
            ! ... convergence reached:
            ! ... 1) the output HXC-potential is saved in v
@@ -1000,7 +1004,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
            !
            descf = 0._dp
            !
-        ENDIF 
+        ENDIF
         !
         ! ... if we didn't cycle before we can exit the do-loop
         !
@@ -1042,11 +1046,11 @@ SUBROUTINE electrons_scf ( printout, exxen )
      WRITE( stdout, 9000 ) get_clock( 'PWSCF' )
      !
      IF ( conv_elec ) WRITE( stdout, 9101 )
- 
-     IF ( conv_elec ) THEN 
+
+     IF ( conv_elec ) THEN
            scf_error = dr2
            n_scf_steps = iter
-     ENDIF  
+     ENDIF
 
      !
      IF ( conv_elec .OR. MOD( iter, iprint ) == 0 .OR. dmft_updated ) THEN
@@ -1125,7 +1129,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
      !
      ! calculate the xdm energy contribution with converged density
      IF (lxdm .and. conv_elec) THEN
-        exdm = energy_xdm()  
+        exdm = energy_xdm()
         etot = etot + exdm
         hwf_energy = hwf_energy + exdm
      ENDIF
@@ -1161,7 +1165,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
      !
      ! ... adds possible external contribution from plugins to the energy
      !
-     etot = etot + plugin_etot 
+     etot = etot + plugin_etot
      !
      CALL print_energies ( printout )
      !
@@ -1245,10 +1249,11 @@ SUBROUTINE electrons_scf ( printout, exxen )
        INTEGER :: ir
        !
        !
+       magtot = 0.D0
+       absmag = 0.D0
+
        IF ( lsda ) THEN
           !
-          magtot = 0.D0
-          absmag = 0.D0
           !
           DO ir = 1, dfftp%nnr
              !
@@ -1329,7 +1334,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
           DO ir = 1,dfftp%nnr
             delta_e = delta_e - ( rho%of_r(ir,1) + rho%of_r(ir,2) ) * v%of_r(ir,1) &  ! up
                               - ( rho%of_r(ir,1) - rho%of_r(ir,2) ) * v%of_r(ir,2)    ! dw
-          ENDDO 
+          ENDDO
           delta_e = 0.5_DP*delta_e
           !
        ELSE
@@ -1398,7 +1403,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
        ! ... delta_escf = - \int \delta rho%of_r(r)  v%of_r(r)
        !                  - \int \delta rho%kin_r(r) v%kin_r(r) [for Meta-GGA]
        !                  - \sum \delta rho%ns       v%ns       [for LDA+U]
-       !                  - \sum \delta becsum       D1         [for PAW] 
+       !                  - \sum \delta becsum       D1         [for PAW]
        !
        USE xc_lib, ONLY : xclib_dft_is
        !
@@ -1492,7 +1497,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
        IMPLICIT NONE
        REAL (DP) :: en_el
        !
-       INTEGER :: i, j 
+       INTEGER :: i, j
        REAL(DP):: sca, el_pol_cart(3),  el_pol_acc_cart(3)
        !
        IF (.NOT.l3dstring) THEN
@@ -1580,7 +1585,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
        USE constants, ONLY : eps8, RYTOEV
        INTEGER, INTENT (IN) :: printout
        !
-   
+
        IF ( printout == 0 ) RETURN
        IF ( ( conv_elec .OR. MOD(iter,iprint) == 0 ) .AND. printout > 1 ) THEN
           !

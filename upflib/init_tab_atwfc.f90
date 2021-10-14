@@ -9,7 +9,7 @@
 !-----------------------------------------------------------------------
 SUBROUTINE init_tab_atwfc( omega, intra_bgrp_comm)
   !-----------------------------------------------------------------------
-  !! This routine computes a table with the radial Fourier transform 
+  !! This routine computes a table with the radial Fourier transform
   !! of the atomic wavefunctions.
   !
   USE upf_kinds,    ONLY : DP
@@ -18,6 +18,9 @@ SUBROUTINE init_tab_atwfc( omega, intra_bgrp_comm)
   USE uspp_data,    ONLY : tab_at, tab_at_d, nqx, dq
   USE uspp_param,   ONLY : nsp, upf
   USE mp,           ONLY : mp_sum
+#if defined(__SIRIUS)
+  USE uspp_data,    ONLY : wfc_ri_tab
+#endif
   !
   IMPLICIT NONE
   !
@@ -35,7 +38,7 @@ SUBROUTINE init_tab_atwfc( omega, intra_bgrp_comm)
   ! chiq = radial fourier transform of atomic orbitals chi
   !
   pref = fpi / SQRT(omega)
-  ! needed to normalize atomic wfcs (not a bad idea in general and 
+  ! needed to normalize atomic wfcs (not a bad idea in general and
   ! necessary to compute correctly lda+U projections)
   CALL divide( intra_bgrp_comm, nqx, startq, lastq )
   !
@@ -55,7 +58,10 @@ SUBROUTINE init_tab_atwfc( omega, intra_bgrp_comm)
               ENDDO
               CALL simpson( msh(nt), vchi, rgrid(nt)%rab, vqint )
               tab_at( iq, nb, nt ) = vqint * pref
-           ENDDO
+#if defined(__SIRIUS)
+              wfc_ri_tab(iq, nb, nt) = vqint
+#endif
+      ENDDO
            !
         ENDIF
         !
@@ -63,6 +69,9 @@ SUBROUTINE init_tab_atwfc( omega, intra_bgrp_comm)
   ENDDO
   !
   CALL mp_sum( tab_at, intra_bgrp_comm )
+#if defined(__SIRIUS)
+  CALL mp_sum( wfc_ri_tab, intra_bgrp_comm )
+#endif
   !
 #if defined __CUDA
   ! update GPU memory (taking care of zero-dim allocations)
@@ -74,4 +83,3 @@ SUBROUTINE init_tab_atwfc( omega, intra_bgrp_comm)
   RETURN
   !
 END SUBROUTINE init_tab_atwfc
-

@@ -22,7 +22,7 @@ MODULE uspp_data
   PUBLIC :: allocate_uspp_data
   PUBLIC :: deallocate_uspp_data
   PUBLIC :: scale_uspp_data
-  PUBLIC ::  beta_ri_tab, aug_ri_tab
+  PUBLIC ::  beta_ri_tab, aug_ri_tab, wfc_ri_tab
   !
   INTEGER :: nqxq
   !! size of interpolation table
@@ -41,6 +41,7 @@ MODULE uspp_data
   !! for cubic splines
   !
   REAL(DP), ALLOCATABLE :: beta_ri_tab(:,:,:)
+  REAL(DP), ALLOCATABLE :: wfc_ri_tab(:,:,:)
   REAL(DP), ALLOCATABLE :: aug_ri_tab(:,:,:,:)
   ! GPUs vars
   !
@@ -110,4 +111,3 @@ contains
   end subroutine scale_uspp_data
   !
 END MODULE uspp_data
-

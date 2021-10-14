@@ -12,7 +12,7 @@ SUBROUTINE forces()
   !! acting on the atoms. The complete expression of the forces
   !! contains many parts which are computed by different routines:
   !
-  !! - force_lc: local potential contribution 
+  !! - force_lc: local potential contribution
   !! - force_us: non-local potential contribution
   !! - (esm_)force_ew: (ESM) electrostatic ewald term
   !! - force_cc: nonlinear core correction contribution
@@ -25,7 +25,7 @@ SUBROUTINE forces()
   !
   USE kinds,             ONLY : DP
   USE io_global,         ONLY : stdout
-  USE cell_base,         ONLY : at, bg, alat, omega  
+  USE cell_base,         ONLY : at, bg, alat, omega
   USE ions_base,         ONLY : nat, ntyp => nsp, ityp, tau, zv, amass, extfor, atm
   USE fft_base,          ONLY : dfftp
   USE gvect,             ONLY : ngm, gstart, ngl, igtongl, igtongl_d, g, gg, &
@@ -106,7 +106,7 @@ SUBROUTINE forces()
   !
   ALLOCATE( forcenl(3,nat), forcelc(3,nat), forcecc(3,nat), &
             forceh(3,nat), forceion(3,nat), forcescc(3,nat) )
-  !    
+  !
   forcescc(:,:) = 0.D0
   forceh(:,:)   = 0.D0
   force(:,:)    = 0.D0
@@ -140,23 +140,26 @@ SUBROUTINE forces()
       forceion = forceion * 2 ! convert to Ry
       CALL sirius_get_forces(gs_handler, "core", forcecc)
       forcecc = forcecc * 2 ! convert to Ry
-    ENDIF
+     ENDIF
+     CALL sirius_get_forces(gs_handler, "hubbard", forceh)
+     !convert to Ry
+     forceh = forceh * 2.0d0
   ELSE
   !
   ! ... The nonlocal contribution is computed here
   !
-  call start_clock('frc_us') 
+  call start_clock('frc_us')
   IF (.not. use_gpu) CALL force_us( forcenl )
   IF (      use_gpu) CALL force_us_gpu( forcenl )
-  call stop_clock('frc_us') 
+  call stop_clock('frc_us')
   !
   ! ... The local contribution
   !
-  CALL start_clock('frc_lc') 
+  CALL start_clock('frc_lc')
   IF (.not. use_gpu) & ! On the CPU
      CALL force_lc( nat, tau, ityp, alat, omega, ngm, ngl, igtongl, &
-                 g, rho%of_r(:,1), dfftp%nl, gstart, gamma_only, vloc, &
-                 forcelc )
+     g, rho%of_r(:,1), dfftp%nl, gstart, gamma_only, vloc, &
+     forcelc )
   IF (      use_gpu) THEN ! On the GPU
      ! move these data to the GPU
      CALL dev_buf%lock_buffer(vloc_d, (/ ngl, ntyp /) , ierr)
@@ -167,23 +170,23 @@ SUBROUTINE forces()
                    forcelc )
      CALL dev_buf%release_buffer(vloc_d, ierr)
   END IF
-  call stop_clock('frc_lc') 
+  call stop_clock('frc_lc')
   !
   ! ... The NLCC contribution
   !
-  call start_clock('frc_cc') 
+  call start_clock('frc_cc')
   IF (.not. use_gpu) CALL force_cc( forcecc )
   IF (      use_gpu) CALL force_cc_gpu( forcecc )
   !
-  call stop_clock('frc_cc') 
+  call stop_clock('frc_cc')
 
   ! ... The Hubbard contribution
   !     (included by force_us if using beta as local projectors)
   !
   IF (.not. use_gpu) THEN
-     IF ( lda_plus_u .AND. U_projection.NE.'pseudo' ) CALL force_hub( forceh )
+    IF ( lda_plus_u .AND. U_projection .NE. 'pseudo' ) CALL force_hub( forceh )
   ELSE
-     IF ( lda_plus_u .AND. U_projection.NE.'pseudo' ) CALL force_hub_gpu( forceh )
+    IF ( lda_plus_u .AND. U_projection.NE.'pseudo' ) CALL force_hub_gpu( forceh )
   ENDIF
   !
   ! ... The ionic contribution is computed here
@@ -239,7 +242,7 @@ SUBROUTINE forces()
   !
   IF ( .not. use_gpu ) CALL force_corr( forcescc )
   IF (       use_gpu ) CALL force_corr_gpu( forcescc )
-  call stop_clock('frc_scc') 
+  call stop_clock('frc_scc')
   !
   IF (do_comp_mt) THEN
     !
@@ -304,7 +307,7 @@ SUBROUTINE forces()
         IF ( tefield )  force(ipol,na) = force(ipol,na) + forcefield(ipol,na)
         IF ( gate )     force(ipol,na) = force(ipol,na) + forcegate(ipol,na) ! TB
         IF (lelfield)   force(ipol,na) = force(ipol,na) + forces_bp_efield(ipol,na)
-        IF (do_comp_mt) force(ipol,na) = force(ipol,na) + force_mt(ipol,na) 
+        IF (do_comp_mt) force(ipol,na) = force(ipol,na) + force_mt(ipol,na)
         !
         sumfor = sumfor + force(ipol,na)
         !
@@ -327,7 +330,7 @@ SUBROUTINE forces()
         ! ... impose total force = 0 except in a QM-MM calculation
         !
         DO na = 1, nat
-           force(ipol,na) = force(ipol,na) - sumfor / DBLE( nat ) 
+           force(ipol,na) = force(ipol,na) - sumfor / DBLE( nat )
         ENDDO
         !
      ENDIF
@@ -494,7 +497,7 @@ SUBROUTINE forces()
   DEALLOCATE( forcenl, forcelc, forcecc, forceh, forceion, forcescc )
   IF ( llondon  ) DEALLOCATE( force_disp       )
   IF ( ldftd3   ) DEALLOCATE( force_d3         )
-  IF ( lxdm     ) DEALLOCATE( force_disp_xdm   ) 
+  IF ( lxdm     ) DEALLOCATE( force_disp_xdm   )
   IF ( lelfield ) DEALLOCATE( forces_bp_efield )
   !
   lforce = .TRUE.
