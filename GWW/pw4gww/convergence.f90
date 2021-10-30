@@ -881,7 +881,7 @@ MODULE   convergence_gw
                 write(stdout,*) iw,dble(cmat(iw,ct%nf))
              enddo
              if(ionode.and. kk==ct%iband .and. l_verbose) close(iun)
-
+          
              sigmac=0.d0
              do dw=-ct%nf+1,ct%nf
                 dww=dw+ct%nf
@@ -1030,7 +1030,7 @@ MODULE   convergence_gw
              deallocate(vprods,vprods_im,wterms,wterms_im)
              deallocate(gwmat_rr,gwmat_ri,gwmat_ir,gwmat_ii)
              
-             if(ionode) close(iun)
+         
           enddo
        enddo
        nr_counter=nr_counter+1
@@ -1246,6 +1246,7 @@ MODULE   convergence_gw
     USE becmod,           ONLY : becp,allocate_bec_type,deallocate_bec_type
     USE uspp,                 ONLY : vkb, nkb, okvan
     USE g_psi_mod,            ONLY : h_diag, s_diag
+    USE uspp_init,            ONLY : init_us_2
 
     IMPLICIT NONE
     TYPE(gzero) :: g0!green's function to be created and initialised
@@ -1332,6 +1333,7 @@ MODULE   convergence_gw
     USE g_psi_mod,            ONLY : h_diag, s_diag
     USE lanczos 
     USE lsda_mod,             ONLY : nspin, current_spin
+    USE uspp_init,            ONLY : init_us_2
     
     IMPLICIT NONE
 
@@ -1520,6 +1522,7 @@ MODULE   convergence_gw
     USE lsda_mod,    ONLY : nspin,  current_spin
     USE io_files,             ONLY :  prefix, diropn
     USE gvecw,     ONLY : ecutwfc
+    USE uspp_init, ONLY : init_us_2
 
 
     IMPLICIT NONE
@@ -1571,7 +1574,7 @@ MODULE   convergence_gw
     REAL(kind=DP) :: energy0, energy1, energy,energy_old,mod_force, mod_force_old
     COMPLEX(kind=DP), ALLOCATABLE :: force(:),phi_old(:)
     COMPLEX(kind=DP), ALLOCATABLE :: psi_g_phi(:,:)
-    REAL(kind=DP) :: alpha_old,par_a,par_b,par_c, alpha_new
+    REAL(kind=DP) :: alpha_old,par_a,par_b=1.d0,par_c=1.d0, alpha_new
     LOGICAL :: l_updated
     COMPLEX(kind=DP), ALLOCATABLE :: h_diag2(:,:), s_diag2(:,:)
     INTEGER :: is
@@ -2249,6 +2252,7 @@ SUBROUTINE calculate_hks(h0,r,nr,v_states)
     USE g_psi_mod,            ONLY : h_diag, s_diag
     USE scf,       ONLY : rho, vltot, vrs, rho_core,rhog_core, scf_type
     USE lsda_mod,             ONLY : nspin
+    USE uspp_init,            ONLY : init_us_2
 
     IMPLICIT NONE
     TYPE(hks) :: h0!Hamiltonian function to be created and initialised
@@ -2474,8 +2478,7 @@ END MODULE convergence_gw
       USE scf,              ONLY : scf_type
       USE paw_variables,    ONLY : okpaw
       USE ldaU,             ONLY : lda_plus_u, starting_ns
-      USE noncollin_module, ONLY : noncolin
-      USE spin_orb,         ONLY : domag
+      USE noncollin_module, ONLY : noncolin, domag
       USE gvect,            ONLY : ig_l2g
       USE io_files,         ONLY : seqopn, prefix, tmp_dir, postfix
       USE io_global,        ONLY : ionode, ionode_id, stdout

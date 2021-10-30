@@ -401,8 +401,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
                                    ldim_u, is_hubbard_back
   USE extfield,             ONLY : tefield, etotefield, gate, etotgatefield !TB
   USE noncollin_module,     ONLY : noncolin, magtot_nc, i_cons,  bfield, &
-                                   lambda, report
-  USE spin_orb,             ONLY : domag
+                                   lambda, report, domag
   USE io_rho_xml,           ONLY : write_scf
   USE uspp,                 ONLY : okvan
   USE mp_bands,             ONLY : intra_bgrp_comm
@@ -437,6 +436,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
   USE mp_bands_util, ONLY : evp_work_count, num_loc_op_applied
   USE input_parameters,     ONLY : nlcg_T, nlcg_tau, nlcg_tol, nlcg_kappa, nlcg_maxiter,&
                                  & nlcg_restart, nlcg_smearing, nlcg_processing_unit
+  USE add_dmft_occ,         ONLY : dmft, dmft_update, v_dmft, dmft_updated
   !
   USE wvfct_gpum,           ONLY : using_et
   USE scf_gpum,             ONLY : using_vrs
@@ -775,8 +775,26 @@ SUBROUTINE electrons_scf ( printout, exxen )
         ! ... sum_band computes new becsum (stored in uspp modules)
         ! ... and a subtly different copy in rho%bec (scf module)
         !
+        ! ... for charge self-consistent calculations call update
+        ! ... of Fermi weights from DMFT here
+        !
+        IF ( dmft .AND. idum == 1) THEN
+            CALL weights()
+            CALL dmft_update()
+        ELSEIF ( dmft .AND. idum > 1) THEN
+            WRITE( stdout, '(5X,"WARNING: electron_maxstep > 1 not recommended for dmft = .true.")')
+        END IF
+        !
         IF (.not. use_gpu) CALL sum_band()
         IF (      use_gpu) CALL sum_band_gpu()
+        !
+        ! ... if DMFT update was made, make sure it is only done in the first iteration
+        ! ... (generally in this mode it should only run a single iteration, but just to make sure!)
+        !
+        IF ( dmft .AND. idum == 1) THEN
+            dmft_updated = .TRUE.
+            DEALLOCATE(v_dmft)
+        END IF
         !
         ! ... the Harris-Weinert-Foulkes energy is computed here using only
         ! ... quantities obtained from the input density
@@ -1031,7 +1049,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
      ENDIF  
 
      !
-     IF ( conv_elec .OR. MOD( iter, iprint ) == 0 ) THEN
+     IF ( conv_elec .OR. MOD( iter, iprint ) == 0 .OR. dmft_updated ) THEN
         !
         ! iverbosity == 0 for the PW code
         ! iverbosity >  2 for the HP code

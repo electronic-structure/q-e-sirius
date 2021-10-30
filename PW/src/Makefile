@@ -13,6 +13,7 @@ PWLIBS = \
 a2fmod.o \
 add_bfield.o \
 add_efield.o \
+add_dmft_occ.o \
 add_vuspsi.o \
 add_gatefield.o \
 add_paw_to_deeq.o \
@@ -257,10 +258,7 @@ wannier_init.o \
 wannier_check.o \
 wannier_clean.o \
 wannier_occ.o \
-mod_sirius.o \
-gram_schmidt.o \
-rotate_xpsi.o  \
-rotate_xpsi_gpu.o \
+mod_sirius.o
 
 
 # GPU versions of routines

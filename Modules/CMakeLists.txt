@@ -151,6 +151,7 @@ target_link_libraries(qe_modules
         qe_xclib
         qe_devxlib
     PUBLIC
+        qe_openacc_fortran
         qe_hdf5_fortran
         qe_upflib
         qe_fox
@@ -161,6 +162,7 @@ if(QE_ENABLE_CUDA)
         PRIVATE
             CUDA::curand)
 endif()
+
 ###########################################################
 
 qe_install_targets(qe_modules qe_modules_c)

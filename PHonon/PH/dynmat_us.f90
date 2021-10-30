@@ -30,7 +30,6 @@ SUBROUTINE dynmat_us()
   USE cell_base,            ONLY : omega, tpiba2
   USE uspp_param,           ONLY : nh, nhm
   USE noncollin_module,     ONLY : noncolin, npol
-  USE spin_orb,             ONLY : lspinorb
   USE becmod,               ONLY : calbec, bec_type, allocate_bec_type, &
                                    deallocate_bec_type, beccopy
   USE modes,                ONLY : u
@@ -47,6 +46,7 @@ SUBROUTINE dynmat_us()
   USE lrus,                 ONLY : becp1
   USE qpoint,               ONLY : nksq, ikks
   USE control_lr,           ONLY : nbnd_occ, lgamma
+  USE uspp_init,        ONLY : init_us_2
 
   IMPLICIT NONE
   

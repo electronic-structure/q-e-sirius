@@ -329,7 +329,7 @@ SUBROUTINE elphel (irr, npe, imode0, dvscfins)
   USE buffers,    ONLY : get_buffer, save_buffer
   USE klist,      ONLY : xk, ngk, igk_k
   USE lsda_mod,   ONLY : lsda, current_spin, isk, nspin
-  USE noncollin_module, ONLY : noncolin, npol, nspin_mag
+  USE noncollin_module, ONLY : noncolin, domag, npol, nspin_mag
   USE wvfct,      ONLY : nbnd, npwx
   USE uspp,       ONLY : okvan, vkb, deeq_nc
   USE el_phon,    ONLY : el_ph_mat, el_ph_mat_rec, el_ph_mat_rec_col, &
@@ -340,7 +340,6 @@ SUBROUTINE elphel (irr, npe, imode0, dvscfins)
   USE units_lr,   ONLY : iuwfc, lrwfc
   USE control_ph, ONLY : trans, current_iq
   USE ph_restart, ONLY : ph_writefile
-  USE spin_orb,   ONLY : domag
   USE mp_bands,   ONLY : intra_bgrp_comm, ntask_groups
   USE mp_pools,   ONLY : npool
   USE mp,         ONLY : mp_sum, mp_bcast
@@ -361,6 +360,7 @@ SUBROUTINE elphel (irr, npe, imode0, dvscfins)
   USE apply_dpot_mod, ONLY : apply_dpot_allocate, apply_dpot_deallocate, apply_dpot_bands
   USE qpoint_aux,   ONLY : ikmks, ikmkmqs, becpt, alphapt
   USE nc_mag_aux,   ONLY : int1_nc_save, deeq_nc_save, int3_save
+  USE uspp_init,        ONLY : init_us_2
 
   IMPLICIT NONE
   !
@@ -521,7 +521,7 @@ SUBROUTINE elphel (irr, npe, imode0, dvscfins)
            !  V_{eff} on the bare change of the potential
            !
            IF (isolv==1) THEN
-              call adddvscf_ph_mag (ipert, ik, becp1)
+              call adddvscf (ipert, ik)
               !
               ! DFPT+U: add to dvpsi the scf part of the response
               ! Hubbard potential dV_hub
@@ -531,7 +531,7 @@ SUBROUTINE elphel (irr, npe, imode0, dvscfins)
                  call adddvhubscf (ipert, ik)
               ENDIF
            ELSE
-              call adddvscf_ph_mag (ipert, ik, becpt)
+              call adddvscf_ph_mag (ipert, ik)
            END IF
            !
            !  reset the original magnetic field if it was changed

@@ -35,7 +35,7 @@ SUBROUTINE init_run()
   USE libmbd_interface,   ONLY : init_mbd
   USE Coul_cut_2D,        ONLY : do_cutoff_2D, cutoff_fact 
   USE lsda_mod,           ONLY : nspin
-  USE spin_orb,           ONLY : domag
+  USE noncollin_module,   ONLY : domag
   USE xc_lib,             ONLY : xclib_dft_is_libxc, xclib_init_libxc
   USE buffers,            ONLY : open_buffer
   USE io_files,           ONLY : iunwfc, nwordwfc
@@ -86,6 +86,7 @@ SUBROUTINE init_run()
      gg_d   = gg
   END IF
 #endif
+  !$acc update device(mill, g)
   !
   IF (do_comp_esm) CALL esm_init()
   !

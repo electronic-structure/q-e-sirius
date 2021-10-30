@@ -43,12 +43,11 @@ SUBROUTINE solve_linter (irr, imode0, npe, drhoscf)
   USE gvecs,                ONLY : doublegrid
   USE fft_base,             ONLY : dfftp, dffts
   USE lsda_mod,             ONLY : lsda, nspin, current_spin, isk
-  USE spin_orb,             ONLY : domag
   USE wvfct,                ONLY : nbnd, npwx
   USE scf,                  ONLY : rho, vrs
   USE uspp,                 ONLY : okvan, vkb, deeq_nc
   USE uspp_param,           ONLY : nhm
-  USE noncollin_module,     ONLY : noncolin, npol, nspin_mag
+  USE noncollin_module,     ONLY : noncolin, domag, npol, nspin_mag
   USE paw_variables,        ONLY : okpaw
   USE paw_onecenter,        ONLY : paw_dpotential
   USE paw_symmetry,         ONLY : paw_dusymmetrize, paw_dumqsymmetrize
@@ -86,6 +85,7 @@ SUBROUTINE solve_linter (irr, imode0, npe, drhoscf)
   USE nc_mag_aux,           ONLY : int1_nc_save, deeq_nc_save, int3_save
   USE apply_dpot_mod,       ONLY : apply_dpot_allocate, apply_dpot_deallocate
   USE response_kernels,     ONLY : sternheimer_kernel
+  USE uspp_init,            ONLY : init_us_2
   USE sym_def_module,       ONLY : sym_def
 
   implicit none

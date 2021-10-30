@@ -29,7 +29,7 @@ SUBROUTINE phq_readin()
   USE fixed_occ,     ONLY : tfixed_occ
   USE lsda_mod,      ONLY : lsda, nspin
   USE fft_base,      ONLY : dffts
-  USE spin_orb,      ONLY : domag, lspinorb
+  USE spin_orb,      ONLY : lspinorb
   USE cellmd,        ONLY : lmovecell
   USE run_info,      ONLY : title
   USE control_ph,    ONLY : maxter, alpha_mix, lgamma_gamma, epsil, &
@@ -48,7 +48,7 @@ SUBROUTINE phq_readin()
   USE disp,          ONLY : nq1, nq2, nq3, x_q, wq, nqs, lgamma_iq
   USE io_files,      ONLY : tmp_dir, prefix, postfix, create_directory, &
                             check_tempdir, xmlpun_schema
-  USE noncollin_module, ONLY : i_cons, noncolin
+  USE noncollin_module, ONLY : domag, i_cons, noncolin
   USE control_flags, ONLY : iverbosity, modenum
   USE io_global,     ONLY : meta_ionode, meta_ionode_id, ionode, ionode_id, &
                             qestdin, stdout
@@ -404,8 +404,6 @@ SUBROUTINE phq_readin()
   ENDDO
   IF (niter_ph.LT.1.OR.niter_ph.GT.maxter) CALL errore ('phq_readin', &
        ' Wrong niter_ph ', 1)
-  IF (nmix_ph.LT.1.OR.nmix_ph.GT.5) CALL errore ('phq_readin', ' Wrong &
-       &nmix_ph ', 1)
   IF (iverbosity.NE.0.AND.iverbosity.NE.1) CALL errore ('phq_readin', &
        &' Wrong  iverbosity ', 1)
   IF (fildyn.EQ.' ') CALL errore ('phq_readin', ' Wrong fildyn ', 1)
