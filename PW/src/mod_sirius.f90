@@ -82,7 +82,7 @@ WRITE(conf_str, 10)diago_david_ndim, mixing_beta, nmix
 ! set initial parameters
 CALL sirius_import_parameters(sctx, conf_str)
 ! set default verbosity
-CALL sirius_set_parameters(sctx, verbosity=MIN(1, iverbosity))
+CALL sirius_set_parameters(sctx, verbosity=min(1,iverbosity))
 ! import config file
 CALL sirius_import_parameters(sctx, TRIM(ADJUSTL(sirius_cfg)))
 
@@ -319,7 +319,7 @@ IF (sirius_pwpp) THEN
     IF (lda_plus_u_kind .EQ. 2) then
       IF (ldim_u(nt1).GT.0) THEN
         ! QE double count the links while sirius works with the links only. So
-        ! we need a factor 1/2 for the coupling constants to take into account
+        ! we probably need a factor 1/2 for the coupling constants to take into account
         ! the double counting
         DO viz = 1, neighood(iat)%num_neigh
           atom_pair(1) = iat - 1
