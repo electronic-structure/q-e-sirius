@@ -1,12 +1,592 @@
 MODULE mod_sirius
+  !! author: Anton Kozhevnikov, Simon Pintarelli, Mathieu Taillefumier
+  !!
+  !!
 #if defined(__SIRIUS)
-USE input_parameters, ONLY : sirius_cfg, use_sirius_scf, use_sirius_nlcg
-USE sirius
-USE mod_sirius_callbacks
-USE mod_sirius_base
-IMPLICIT NONE
+  !
+  USE input_parameters, ONLY : sirius_cfg, use_sirius_scf, use_sirius_nlcg
+  !
+  USE sirius
+  !
+  IMPLICIT NONE
+  !
+  LOGICAL :: use_veff_callback = .FALSE.
+  !! If true, the effective potential (Vha + Vxc + Vloc) is computed by QE
+  !
+  LOGICAL :: always_setup_sirius = .FALSE.
+  !! Setup simulation context even if SIRIUS is not used (default is false)
+  !
+! Use SIRIUS in plane-wave pseudopotential mode (true) or FP-LAPW (false)
+LOGICAL :: sirius_pwpp = .TRUE.
+
+! inverse of the reciprocal lattice vectors matrix
+REAL(8) bg_inv(3,3)
+
+! total number of k-points (without x2 lsda case)
+INTEGER num_kpoints
+
+! List of k-points in fractional coordinates
+REAL(8), ALLOCATABLE :: kpoints(:,:)
+
+! Weights of k-points
+REAL(8), ALLOCATABLE :: wkpoints(:)
+! store rank and local k-point index for a gloobal k-point index
+INTEGER, ALLOCATABLE :: kpoint_index_map(:,:)
+
+TYPE atom_type_t
+  ! atom label
+  CHARACTER(len=100, kind=C_CHAR) :: label
+  ! nh(iat) in the QE notation
+  INTEGER                 :: num_beta_projectors
+  ! lmax for beta-projectors
+  INTEGER                 :: lmax
+  ! plane-wave coefficients of Q-operator
+  COMPLEX(8), ALLOCATABLE :: qpw(:, :)
+END TYPE atom_type_t
+
+TYPE(atom_type_t), ALLOCATABLE :: atom_type(:)
+
+TYPE(C_PTR) :: sctx = C_NULL_PTR
+TYPE(C_PTR) :: gs_handler = C_NULL_PTR
+TYPE(C_PTR) :: ks_handler = C_NULL_PTR
 
 CONTAINS
+
+!----------------------------------------------------------------------
+SUBROUTINE put_potential_to_sirius
+  !--------------------------------------------------------------------
+  !! Put the QE potential into SIRIUS.
+  !
+  USE scf,                  ONLY : v, vltot
+  USE gvect,                ONLY : mill, ngm
+  USE mp_bands,             ONLY : intra_bgrp_comm
+  USE lsda_mod,             ONLY : nspin
+  USE noncollin_module,     ONLY : nspin_mag
+  USE wavefunctions,        ONLY : psic
+
+  USE fft_base,             ONLY : dfftp
+  USE fft_interfaces,       ONLY : fwfft
+  USE uspp,                 ONLY : deeq
+  USE uspp_param,           ONLY : nhm
+  USE paw_variables,        ONLY : okpaw
+  USE ions_base,            ONLY : nat
+  USE sirius
+  !
+  IMPLICIT NONE
+  !
+  COMPLEX(8), ALLOCATABLE :: vxcg(:)
+  COMPLEX(8) :: z1, z2
+  INTEGER ig, is, ir, i, ia, j
+  CHARACTER(10) label
+  REAL(8), ALLOCATABLE :: deeq_tmp(:,:)
+  REAL(8) :: d1,d2
+  !
+  IF (nspin.EQ.1.OR.nspin.EQ.4) THEN
+    ! add local part of the potential and transform to PW domain
+    psic(:) = v%of_r(:, 1) + vltot(:)
+    CALL fwfft('Rho', psic, dfftp)
+    ! convert to Hartree
+    DO ig = 1, ngm
+      v%of_g(ig, 1) = psic(dfftp%nl(ig)) * 0.5d0
+    ENDDO
+    ! set effective potential
+    CALL sirius_set_pw_coeffs(gs_handler, "veff", v%of_g(:, 1), .TRUE., ngm, mill, intra_bgrp_comm)
+  ENDIF
+
+  IF (nspin.EQ.2) THEN
+    DO is = 1, 2
+      ! add local part of the potential and transform to PW domain
+      psic(:) = v%of_r(:, is) + vltot(:)
+      CALL fwfft('Rho', psic, dfftp)
+      ! convert to Hartree
+      DO ig = 1, ngm
+         v%of_g(ig, is) = psic(dfftp%nl(ig)) * 0.5d0
+      ENDDO
+    ENDDO
+
+    DO ig = 1, ngm
+      z1 = v%of_g(ig, 1)
+      z2 = v%of_g(ig, 2)
+      v%of_g(ig, 1) = 0.5 * (z1 + z2)
+      v%of_g(ig, 2) = 0.5 * (z1 - z2)
+    ENDDO
+    ! set effective potential and magnetization
+    CALL sirius_set_pw_coeffs(gs_handler, "veff", v%of_g(:, 1), .TRUE., ngm, mill, intra_bgrp_comm)
+    CALL sirius_set_pw_coeffs(gs_handler, "bz",   v%of_g(:, 2), .TRUE., ngm, mill, intra_bgrp_comm)
+  ENDIF
+
+  IF (nspin.EQ.4) THEN
+    DO is = 2, nspin_mag
+      psic(:) = v%of_r(:, is)
+      CALL fwfft('Rho', psic, dfftp)
+      ! convert to Hartree
+      DO ig = 1, ngm
+        v%of_g(ig, is) = psic(dfftp%nl(ig)) * 0.5d0
+      ENDDO
+      IF (is.EQ.2) label="bx"
+      IF (is.EQ.3) label="by"
+      IF (is.EQ.4) label="bz"
+
+      CALL sirius_set_pw_coeffs(gs_handler, label, v%of_g(:, is), .TRUE., ngm, mill, intra_bgrp_comm)
+    ENDDO
+  ENDIF
+
+END SUBROUTINE put_potential_to_sirius
+
+
+SUBROUTINE get_density_from_sirius
+  !
+  USE scf,        ONLY : rho
+  USE gvect,      ONLY : mill, ngm
+  USE mp_bands,   ONLY : intra_bgrp_comm
+  USE lsda_mod,   ONLY : nspin
+  USE ions_base,  ONLY : nat, nsp, ityp
+  USE uspp_param, ONLY : nhm, nh
+  USE fft_base,             ONLY : dfftp
+  USE fft_interfaces,       ONLY : invfft
+  USE wavefunctions, ONLY : psic
+  USE control_flags,        ONLY : gamma_only
+  USE sirius
+  !
+  IMPLICIT NONE
+  !
+  INTEGER iat, ig, ih, jh, ijh, na, ispn
+  COMPLEX(8) z1, z2
+
+  ! get rho(G)
+  CALL sirius_get_pw_coeffs(gs_handler, "rho", rho%of_g(:, 1), ngm, mill, intra_bgrp_comm)
+  IF (nspin.EQ.2) THEN
+    CALL sirius_get_pw_coeffs(gs_handler, "magz", rho%of_g(:, 2), ngm, mill, intra_bgrp_comm)
+  ENDIF
+  IF (nspin.EQ.4) THEN
+    CALL sirius_get_pw_coeffs(gs_handler, "magx", rho%of_g(:, 2), ngm, mill, intra_bgrp_comm)
+    CALL sirius_get_pw_coeffs(gs_handler, "magy", rho%of_g(:, 3), ngm, mill, intra_bgrp_comm)
+    CALL sirius_get_pw_coeffs(gs_handler, "magz", rho%of_g(:, 4), ngm, mill, intra_bgrp_comm)
+  ENDIF
+  ! get density matrix
+  !CALL get_density_matrix_from_sirius
+  DO ispn = 1, nspin
+    psic(:) = 0.d0
+    psic(dfftp%nl(:)) = rho%of_g(:, ispn)
+    IF (gamma_only) psic(dfftp%nlm(:)) = CONJG(rho%of_g(:, ispn))
+    CALL invfft('Rho', psic, dfftp)
+    rho%of_r(:,ispn) = psic(:)
+  ENDDO
+END SUBROUTINE get_density_from_sirius
+
+SUBROUTINE calc_veff() BIND(C)
+USE ISO_C_BINDING
+USE scf, ONLY : rho, rho_core, rhog_core, v
+USE ener, ONLY : ehart, vtxc, etxc
+USE ldaU, ONLY : eth
+USE extfield, ONLY : tefield, etotefield
+IMPLICIT NONE
+REAL(8) :: charge
+!
+write(*,*)'QE: calc_veff'
+CALL get_density_from_sirius()
+CALL v_of_rho( rho, rho_core, rhog_core, &
+    ehart, etxc, vtxc, eth, etotefield, charge, v)
+!CALL put_density_to_sirius
+CALL put_potential_to_sirius()
+!
+END SUBROUTINE calc_veff
+
+! A callback function to compute radial integals of the free atomic density
+SUBROUTINE calc_ps_rho_radial_integrals(iat, nq, q, ps_rho_ri) BIND(C)
+USE ISO_C_BINDING
+USE kinds
+USE atom
+USE constants
+USE esm
+USE Coul_cut_2D
+USE uspp_param, ONLY : upf
+IMPLICIT NONE
+!
+INTEGER(KIND=c_int), INTENT(IN), VALUE :: iat
+INTEGER(KIND=c_int), INTENT(IN), VALUE :: nq
+REAL(KIND=c_double), INTENT(IN)  :: q(nq)
+REAL(KIND=c_double), INTENT(OUT) :: ps_rho_ri(nq)
+!
+REAL(DP) :: aux(rgrid(iat)%mesh)
+INTEGER :: iq, ir, nr
+!
+nr = msh(iat)
+!
+DO iq = 1, nq
+  CALL sph_bes(nr, rgrid(iat)%r(1), q(iq), 0, aux)
+  DO ir = 1, nr
+    aux(ir) = aux(ir) * upf(iat)%rho_at(ir)
+  ENDDO
+  CALL simpson(nr, aux, rgrid(iat)%rab(1), ps_rho_ri(iq))
+  ps_rho_ri(iq) = ps_rho_ri(iq) / 12.566370614359172954d0
+ENDDO
+END SUBROUTINE calc_ps_rho_radial_integrals
+
+! A callback function to compute radial integrals of Vloc(r)
+SUBROUTINE calc_vloc_radial_integrals(iat, nq, q, vloc_ri) BIND(C)
+USE ISO_C_BINDING
+USE kinds
+USE atom
+USE constants
+USE esm
+USE Coul_cut_2D
+USE uspp_param, ONLY : upf
+IMPLICIT NONE
+!
+INTEGER(KIND=c_int), INTENT(IN), VALUE :: iat
+INTEGER(KIND=c_int), INTENT(IN), VALUE :: nq
+REAL(KIND=c_double), INTENT(IN)  :: q(nq)
+REAL(KIND=c_double), INTENT(OUT) :: vloc_ri(nq)
+!
+REAL(DP) :: aux(rgrid(iat)%mesh), aux1(rgrid(iat)%mesh), r, q2
+INTEGER :: iq, ir, nr
+!
+! number of points to the effective infinity (~10 a.u. hardcoded somewhere in the code)
+nr = msh(iat)
+! q-independent radial function
+DO ir = 1, nr
+  r = rgrid(iat)%r(ir)
+  aux1(ir) = r * upf(iat)%vloc(ir) + upf(iat)%zp * e2 * erf(r)
+END DO
+! loop over q-points
+DO iq = 1, nq
+  IF (q(iq) < eps8) THEN ! q=0 case
+    !
+    ! first the G=0 term
+    !
+    IF ((do_comp_esm .AND. (esm_bc .NE. 'pbc')) .OR. do_cutoff_2D) THEN
+      !
+      ! ... temporarily redefine term for ESM calculation
+      !
+      DO ir = 1, nr
+        r = rgrid(iat)%r(ir)
+        aux(ir) = r * (r * upf(iat)%vloc(ir) + upf(iat)%zp * e2 * erf(r))
+      END DO
+      IF (do_cutoff_2D .AND. rgrid(iat)%r(nr) > lz) THEN
+        CALL errore('vloc_of_g','2D cutoff is smaller than pseudo cutoff radius: &
+          & increase interlayer distance (or see Modules/read_pseudo.f90)',1)
+      END IF
+    ELSE
+      DO ir = 1, nr
+        r = rgrid(iat)%r(ir)
+        aux(ir) = r * (r * upf(iat)%vloc(ir) + upf(iat)%zp * e2)
+      END DO
+    END IF
+    CALL simpson(nr, aux, rgrid(iat)%rab(1), vloc_ri(iq))
+  ELSE ! q > 0 case
+    DO ir = 1, nr
+      r = rgrid(iat)%r(ir)
+      aux(ir) = aux1(ir) * SIN(q(iq) * r) / q(iq)
+    END DO
+    CALL simpson(nr, aux, rgrid(iat)%rab(1), vloc_ri(iq))
+    IF ((.NOT.do_comp_esm) .OR. (esm_bc .EQ. 'pbc')) THEN
+      !
+      !   here we re-add the analytic fourier transform of the erf function
+      !
+      IF (.NOT. do_cutoff_2D) THEN
+        q2 = q(iq) * q(iq)
+        vloc_ri(iq) = vloc_ri(iq) - upf(iat)%zp * e2 * EXP(-q2 * 0.25d0) / q2
+      END IF
+    END IF
+  END IF
+  ! convert to Ha
+  vloc_ri(iq) = vloc_ri(iq) / 2.0
+END DO
+
+END SUBROUTINE calc_vloc_radial_integrals
+
+
+! A callback function to compute radial integrals of Vloc(r) with
+! derivatives of Bessel functions
+SUBROUTINE calc_vloc_dj_radial_integrals(iat, nq, q, vloc_dj_ri) BIND(C)
+USE ISO_C_BINDING
+USE kinds
+USE atom
+USE constants
+USE esm
+USE Coul_cut_2D
+USE uspp_param, ONLY : upf
+IMPLICIT NONE
+!
+INTEGER(KIND=c_int), INTENT(IN), VALUE :: iat
+INTEGER(KIND=c_int), INTENT(IN), VALUE :: nq
+REAL(KIND=c_double), INTENT(IN)  :: q(nq)
+REAL(KIND=c_double), INTENT(OUT) :: vloc_dj_ri(nq)
+!
+REAL(DP) :: aux(rgrid(iat)%mesh), aux1(rgrid(iat)%mesh), r, q2
+INTEGER :: iq, ir, nr
+!
+! number of points to the effective infinity (~10 a.u. hardcoded somewhere in the code)
+nr = msh(iat)
+! q-independent radial function
+DO ir = 1, nr
+  r = rgrid(iat)%r(ir)
+  aux1(ir) = r * upf(iat)%vloc(ir) + upf(iat)%zp * e2 * erf(r)
+END DO
+! loop over q-points
+DO iq = 1, nq
+  IF (q(iq) < eps8) THEN ! q=0 case
+    vloc_dj_ri(iq) = 0.d0
+  ELSE ! q > 0 case
+    DO ir = 1, nr
+      r = rgrid(iat)%r(ir)
+      aux(ir) = aux1(ir) * (SIN(q(iq) * r) / q(iq)**2 - r * COS(q(iq) * r) / q(iq))
+    END DO
+    CALL simpson(nr, aux, rgrid(iat)%rab(1), vloc_dj_ri(iq))
+    vloc_dj_ri(iq) = vloc_dj_ri(iq) / q(iq)
+    IF ((.NOT.do_comp_esm) .OR. (esm_bc .EQ. 'pbc')) THEN
+      IF (.NOT. do_cutoff_2D) THEN
+        q2 = q(iq) * q(iq)
+        vloc_dj_ri(iq) = vloc_dj_ri(iq) - upf(iat)%zp * e2 * &
+          &EXP(-q2 * 0.25d0) * (q2 + 4) / 2 / q2 / q2
+      END IF
+    END IF
+  END IF
+  ! convert to Ha
+  vloc_dj_ri(iq) = vloc_dj_ri(iq) / 2.0
+END DO
+
+END SUBROUTINE calc_vloc_dj_radial_integrals
+
+
+! A callback function to compute radial integrals of rho_core(r)
+SUBROUTINE calc_rhoc_radial_integrals(iat, nq, q, rhoc_ri) BIND(C)
+USE ISO_C_BINDING
+USE kinds
+USE atom
+USE constants
+USE uspp_param, ONLY : upf
+IMPLICIT NONE
+!
+INTEGER(KIND=c_int), INTENT(IN), VALUE :: iat
+INTEGER(KIND=c_int), INTENT(IN), VALUE :: nq
+REAL(KIND=c_double), INTENT(IN)  :: q(nq)
+REAL(KIND=c_double), INTENT(OUT) :: rhoc_ri(nq)
+!
+REAL(DP) :: aux(rgrid(iat)%mesh), r
+INTEGER :: iq, ir, nr
+! number of points to the effective infinity (~10 a.u. hardcoded somewhere in the code)
+nr = msh(iat)
+! loop over q-points
+DO iq = 1, nq
+  IF (q(iq) < eps8) THEN ! q=0 case
+    DO ir = 1, nr
+      r = rgrid(iat)%r(ir)
+      aux(ir) = r**2 * upf(iat)%rho_atc(ir)
+    ENDDO
+  ELSE
+    CALL sph_bes(nr, rgrid(iat)%r(1), q(iq), 0, aux)
+    DO ir = 1, nr
+      r = rgrid(iat)%r(ir)
+      aux(ir) = r**2 * upf(iat)%rho_atc(ir) * aux(ir)
+    ENDDO
+  END IF
+  CALL simpson(nr, aux, rgrid(iat)%rab(1), rhoc_ri(iq))
+END DO
+
+END SUBROUTINE calc_rhoc_radial_integrals
+
+
+! A callbacl function to compute radial integrals or rho_core(r) with
+! the derivatives of Bessel functions
+SUBROUTINE calc_rhoc_dj_radial_integrals(iat, nq, q, rhoc_dj_ri) BIND(C)
+USE ISO_C_BINDING
+USE kinds
+USE atom
+USE constants
+USE uspp_param, ONLY : upf
+IMPLICIT NONE
+!
+INTEGER(KIND=c_int), INTENT(IN), VALUE :: iat
+INTEGER(KIND=c_int), INTENT(IN), VALUE :: nq
+REAL(KIND=c_double), INTENT(IN)  :: q(nq)
+REAL(KIND=c_double), INTENT(OUT) :: rhoc_dj_ri(nq)
+!
+REAL(DP) :: aux(rgrid(iat)%mesh), r
+INTEGER :: iq, ir, nr
+! number of points to the effective infinity (~10 a.u. hardcoded somewhere in the code)
+nr = msh(iat)
+! loop over q-points
+DO iq = 1, nq
+  IF (q(iq) < eps8) THEN ! q=0 case
+    rhoc_dj_ri(iq) = 0.d0
+  ELSE
+    DO ir = 1, nr
+      r = rgrid(iat)%r(ir)
+      aux(ir) = r * upf(iat)%rho_atc(ir) * &
+        &(r * COS(q(iq) * r) / q(iq) - SIN(q(iq) * r) / q(iq)**2)
+    ENDDO
+    CALL simpson(nr, aux, rgrid(iat)%rab(1), rhoc_dj_ri(iq))
+  END IF
+END DO
+
+END SUBROUTINE calc_rhoc_dj_radial_integrals
+
+
+SUBROUTINE calc_beta_radial_integrals(iat, q, beta_ri, ld) BIND(C)
+USE iso_c_binding
+USE uspp_data,    ONLY : dq, tab, beta_ri_tab
+USE uspp_param,   ONLY : upf
+IMPLICIT NONE
+!
+INTEGER(kind=c_int), INTENT(in), VALUE :: iat
+REAL(kind=c_double), INTENT(in), VALUE :: q
+INTEGER(kind=c_int), INTENT(in), VALUE :: ld
+REAL(kind=c_double), INTENT(out) :: beta_ri(ld)
+!
+REAL(8) :: px, ux, vx, wx
+INTEGER :: i0, i1, i2, i3, ib
+!
+IF (ld.LT.upf(iat)%nbeta) THEN
+  WRITE(*,*)'not enough space to store all beta projectors, ld=',ld,' nbeta=',upf(iat)%nbeta
+  STOP
+ENDIF
+IF (.NOT.ALLOCATED(tab)) THEN
+  WRITE(*,*)'tab array is not allocated'
+  STOP
+ENDIF
+
+px = q / dq - INT(q / dq)
+ux = 1.d0 - px
+vx = 2.d0 - px
+wx = 3.d0 - px
+i0 = INT(q / dq) + 1
+i1 = i0 + 1
+i2 = i0 + 2
+i3 = i0 + 3
+DO ib = 1, upf(iat)%nbeta
+  beta_ri(ib) = beta_ri_tab(i0, ib, iat) * ux * vx * wx / 6.d0 + &
+                beta_ri_tab(i1, ib, iat) * px * vx * wx / 2.d0 - &
+                beta_ri_tab(i2, ib, iat) * px * ux * wx / 2.d0 + &
+                beta_ri_tab(i3, ib, iat) * px * ux * vx / 6.d0
+ENDDO
+
+END SUBROUTINE calc_beta_radial_integrals
+
+
+SUBROUTINE calc_beta_dj_radial_integrals(iat, q, beta_ri, ld) BIND(C)
+USE iso_c_binding
+USE uspp_data,    ONLY : dq, tab, beta_ri_tab
+USE uspp_param,   ONLY : upf
+IMPLICIT NONE
+!
+INTEGER(kind=c_int), INTENT(in), VALUE :: iat
+REAL(kind=c_double), INTENT(in), VALUE :: q
+INTEGER(kind=c_int), INTENT(in), VALUE :: ld
+REAL(kind=c_double), INTENT(out) :: beta_ri(ld)
+!
+REAL(8) :: px, ux, vx, wx
+INTEGER :: i0, i1, i2, i3, ib
+!
+IF (ld.LT.upf(iat)%nbeta) THEN
+  WRITE(*,*)'not enough space to store all beta projectors, ld=',ld,' nbeta=',upf(iat)%nbeta
+  STOP
+ENDIF
+IF (.NOT.ALLOCATED(tab)) THEN
+  WRITE(*,*)'tab array is not allocated'
+  STOP
+ENDIF
+
+px = q / dq - INT(q / dq)
+ux = 1.d0 - px
+vx = 2.d0 - px
+wx = 3.d0 - px
+i0 = INT(q / dq) + 1
+i1 = i0 + 1
+i2 = i0 + 2
+i3 = i0 + 3
+DO ib = 1, upf(iat)%nbeta
+  beta_ri(ib) = beta_ri_tab(i0, ib, iat) * (-vx*wx-ux*wx-ux*vx)/6.d0 + &
+                beta_ri_tab(i1, ib, iat) * (+vx*wx-px*wx-px*vx)/2.d0 - &
+                beta_ri_tab(i2, ib, iat) * (+ux*wx-px*wx-px*ux)/2.d0 + &
+                beta_ri_tab(i3, ib, iat) * (+ux*vx-px*vx-px*ux)/6.d0
+  beta_ri(ib) = beta_ri(ib) / dq
+ENDDO
+
+END SUBROUTINE calc_beta_dj_radial_integrals
+
+
+SUBROUTINE calc_aug_radial_integrals(iat, q, aug_ri, ld1, ld2) BIND(C)
+USE iso_c_binding
+USE uspp_data,    ONLY : dq, qrad, aug_ri_tab
+USE uspp_param,   ONLY : upf
+IMPLICIT NONE
+!
+INTEGER(kind=c_int), INTENT(in), VALUE :: iat
+REAL(kind=c_double), INTENT(in), VALUE :: q
+INTEGER(kind=c_int), INTENT(in), VALUE :: ld1
+INTEGER(kind=c_int), INTENT(in), VALUE :: ld2
+REAL(kind=c_double), INTENT(out) :: aug_ri(ld1, ld2)
+!
+REAL(8) :: px, ux, vx, wx
+INTEGER :: i0, i1, i2, i3, l, nb, mb, ijv
+!
+IF (upf(iat)%tvanp) THEN
+  px = q / dq - INT(q / dq)
+  ux = 1.d0 - px
+  vx = 2.d0 - px
+  wx = 3.d0 - px
+  i0 = INT(q / dq) + 1
+  i1 = i0 + 1
+  i2 = i0 + 2
+  i3 = i0 + 3
+  DO l = 1, 2 * atom_type(iat)%lmax + 1
+    DO nb = 1, upf(iat)%nbeta
+      DO mb = nb, upf(iat)%nbeta
+        ijv = mb * (mb-1) / 2 + nb
+        aug_ri(ijv, l) = aug_ri_tab(i0, ijv, l, iat) * ux * vx * wx / 6.d0 + &
+                         aug_ri_tab(i1, ijv, l, iat) * px * vx * wx / 2.d0 - &
+                         aug_ri_tab(i2, ijv, l, iat) * px * ux * wx / 2.d0 + &
+                         aug_ri_tab(i3, ijv, l, iat) * px * ux * vx / 6.d0
+      ENDDO
+    ENDDO
+  ENDDO
+ENDIF
+
+END SUBROUTINE calc_aug_radial_integrals
+
+
+SUBROUTINE calc_aug_dj_radial_integrals(iat, q, aug_ri, ld1, ld2) BIND(C)
+USE iso_c_binding
+USE uspp_data,    ONLY : dq, qrad, aug_ri_tab
+USE uspp_param,   ONLY : upf
+IMPLICIT NONE
+!
+INTEGER(kind=c_int), INTENT(in), VALUE :: iat
+REAL(kind=c_double), INTENT(in), VALUE :: q
+INTEGER(kind=c_int), INTENT(in), VALUE :: ld1
+INTEGER(kind=c_int), INTENT(in), VALUE :: ld2
+REAL(kind=c_double), INTENT(out) :: aug_ri(ld1, ld2)
+!
+REAL(8) :: px, ux, vx, wx
+INTEGER :: i0, i1, i2, i3, l, nb, mb, ijv
+!
+IF (upf(iat)%tvanp) THEN
+  px = q / dq - INT(q / dq)
+  ux = 1.d0 - px
+  vx = 2.d0 - px
+  wx = 3.d0 - px
+  i0 = INT(q / dq) + 1
+  i1 = i0 + 1
+  i2 = i0 + 2
+  i3 = i0 + 3
+  DO l = 1, 2 * atom_type(iat)%lmax + 1
+    DO nb = 1, upf(iat)%nbeta
+      DO mb = nb, upf(iat)%nbeta
+        ijv = mb * (mb-1) / 2 + nb
+        aug_ri(ijv, l) = - aug_ri_tab(i0, ijv, l, iat) * (ux*vx + vx*wx + ux*wx) / 6.d0 &
+                         + aug_ri_tab(i1, ijv, l, iat) * (wx*vx - px*wx - px*vx) * 0.5d0 &
+                         - aug_ri_tab(i2, ijv, l, iat) * (wx*ux - px*wx - px*ux) * 0.5d0 &
+                         + aug_ri_tab(i3, ijv, l, iat) * (ux*vx - px*ux - px*vx) / 6.d0
+        aug_ri(ijv, l) = aug_ri(ijv, l) / dq
+      ENDDO
+    ENDDO
+  ENDDO
+ENDIF
+
+END SUBROUTINE calc_aug_dj_radial_integrals
+
 
 SUBROUTINE setup_sirius()
 USE cell_base,            ONLY : alat, at, bg, omega
@@ -369,8 +949,6 @@ ENDIF
 IF (mpime.eq.0) THEN
   CALL sirius_dump_runtime_setup(sctx, "setup.json")
 ENDIF
-
-
 
 ! get number of g-vectors of the dense fft grid
 CALL sirius_get_num_gvec(sctx, num_gvec)
