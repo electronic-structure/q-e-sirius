@@ -1,7 +1,7 @@
 MODULE mod_sirius
+#if defined(__SIRIUS)
 USE input_parameters, ONLY : sirius_cfg, use_sirius_scf, use_sirius_nlcg
 USE sirius
-USE funct
 USE mod_sirius_callbacks
 USE mod_sirius_base
 IMPLICIT NONE
@@ -9,42 +9,37 @@ IMPLICIT NONE
 CONTAINS
 
 SUBROUTINE setup_sirius()
-USE cell_base, ONLY : alat, at, bg
-USE ions_base, ONLY : tau, nsp, atm, zv, amass, ityp, nat
-USE uspp_param, ONLY : upf, nhm, nh
-USE atom, ONLY : rgrid, msh
-USE fft_base, ONLY :  dfftp
-USE klist, ONLY : nks, xk, nkstot, wk, degauss, ngauss
-USE gvect, ONLY : ngm_g, ecutrho, ngm, mill
-USE gvecw, ONLY : ecutwfc
-USE control_flags, ONLY : gamma_only, diago_full_acc, mixing_beta, nmix
-USE mp_pools, ONLY : inter_pool_comm, intra_pool_comm, npool
-USE mp_images,        ONLY : nproc_image, intra_image_comm
-USE mp, ONLY : mp_sum, mp_bcast
-USE wvfct, ONLY : nbnd
-USE parallel_include
-USE sirius
-USE input_parameters, ONLY : sirius_cfg, diago_david_ndim
-USE noncollin_module, ONLY : noncolin, npol, angle1, angle2
-USE lsda_mod, ONLY : lsda, nspin, starting_magnetization
-USE cell_base, ONLY : omega
+USE cell_base,            ONLY : alat, at, bg, omega
+USE ions_base,            ONLY : tau, nsp, atm, zv, amass, ityp, nat
+USE uspp_param,           ONLY : upf, nhm, nh
+USE atom,                 ONLY : rgrid, msh
+USE fft_base,             ONLY : dfftp
+USE klist,                ONLY : nks, nkstot, degauss, ngauss
+USE gvect,                ONLY : ngm_g, ecutrho
+USE gvecw,                ONLY : ecutwfc
+USE control_flags,        ONLY : gamma_only, diago_full_acc, mixing_beta, nmix, iverbosity
+USE mp_world,             ONLY : mpime
+USE mp_pools,             ONLY : inter_pool_comm, intra_pool_comm, npool
+USE mp_images,            ONLY : nproc_image, intra_image_comm
+USE mp,                   ONLY : mp_sum, mp_bcast
+USE wvfct,                ONLY : nbnd
+USE parallel_include,     ONLY : MPI_IN_PLACE, MPI_INT, MPI_SUM
+USE input_parameters,     ONLY : diago_david_ndim
+USE noncollin_module,     ONLY : noncolin, npol, angle1, angle2
+USE lsda_mod,             ONLY : lsda, nspin, starting_magnetization
 USE symm_base,            ONLY : nosym, nsym
 USE spin_orb,             ONLY : lspinorb
 USE ldaU,                 ONLY : lda_plus_U, Hubbard_J, Hubbard_U, Hubbard_alpha, &
                                & Hubbard_beta, is_Hubbard, lda_plus_u_kind, &
                                & Hubbard_J0, U_projection, Hubbard_l
 USE esm,                  ONLY : do_comp_esm
-USE control_flags,        ONLY : iverbosity
 USE Coul_cut_2D,          ONLY : do_cutoff_2D
-USE mp_world, ONLY: mpime
-USE klist,            ONLY : nkstot, nks, ngk, igk_k
 IMPLICIT NONE
 !
-INTEGER :: dims(3), i, ia, iat, rank, ierr, ijv, li, lj, mb, nb, j, l,&
-     ilast, ir, num_gvec, num_ranks_k, vt(3), iwf, num_kp, nmagd
-REAL(8) :: a1(3), a2(3), a3(3), vlat(3, 3), vlat_inv(3, 3), v1(3), v2(3), tmp
-REAL(8), ALLOCATABLE :: dion(:, :), qij(:,:,:), vloc(:), wk_tmp(:), xk_tmp(:,:)
-INTEGER, ALLOCATABLE :: nk_loc(:)
+INTEGER :: dims(3), i, ia, iat, rank, ierr, ijv, j, l,&
+         & ilast, ir, num_gvec, num_ranks_k, iwf, nmagd
+REAL(8) :: a1(3), a2(3), a3(3), vlat(3, 3), vlat_inv(3, 3), v1(3), v2(3)
+REAL(8), ALLOCATABLE :: dion(:, :), vloc(:)
 INTEGER :: ih, jh, ijh, lmax_beta, nsymop
 CHARACTER(LEN=1024) :: conf_str
 INTEGER, EXTERNAL :: set_hubbard_l,set_hubbard_n
@@ -172,12 +167,6 @@ CALL invert_mtrx(bg, bg_inv)
 ! get MPI rank associated with the distribution of k-points
 CALL mpi_comm_rank(inter_pool_comm, rank, ierr)
 
-write(100+rank,*)'nkstot=',nkstot, ' nks=',nks
-do i = 1, nks
-  write(100+rank,*)'ikloc=', i, ' ikglob=',global_kpoint_index(nkstot, i),' ngk=',ngk(i)
-enddo
-flush(100+rank)
-
 IF (ALLOCATED(kpoint_index_map)) DEALLOCATE(kpoint_index_map)
 ALLOCATE(kpoint_index_map(2, nkstot))
 kpoint_index_map = 0
@@ -186,13 +175,7 @@ DO i = 1, nks
   kpoint_index_map(2, global_kpoint_index(nkstot, i)) = i
 END DO
 
-call mpi_allreduce(MPI_IN_PLACE, kpoint_index_map, 2 * nkstot, MPI_INT, MPI_SUM, inter_pool_comm, ierr)
-write(100+rank, *)'kpoint_index_map'
-do i = 1, nkstot
-  write(100+rank, *)i, kpoint_index_map(1, i), kpoint_index_map(2, i)
-enddo
-flush(100+rank)
-
+CALL mpi_allreduce(MPI_IN_PLACE, kpoint_index_map, 2 * nkstot, MPI_INT, MPI_SUM, inter_pool_comm, ierr)
 
 IF (sirius_pwpp) THEN
 
@@ -802,5 +785,6 @@ CLOSE(200)
 
 END SUBROUTINE
 
+#endif
 
 END MODULE mod_sirius
