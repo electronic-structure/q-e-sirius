@@ -144,14 +144,14 @@ SUBROUTINE init_run()
   !
   CALL potinit()
   !
-  IF (use_sirius_scf.OR.always_setup_sirius) THEN
+#if defined(__SIRIUS)
+  IF (use_sirius_scf.OR.use_sirius_nlcg.OR.always_setup_sirius) THEN
     CALL clear_sirius
     CALL setup_sirius
-  ENDIF
-  !
-  IF (use_sirius_scf.OR.always_setup_sirius) THEN
     CALL sirius_initialize_kset(ks_handler)
+    CALL sirius_initialize_subspace(gs_handler, ks_handler)
   ENDIF
+#endif
   !
   IF ( use_gpu ) THEN
     !
@@ -163,12 +163,7 @@ SUBROUTINE init_run()
     !
     CALL newd()
     !
-    IF (sirius_pwpp.AND.(use_sirius_scf.OR.use_sirius_nlcg)) THEN
-      CALL sirius_initialize_subspace(gs_handler, ks_handler)
-      CALL open_buffer( iunwfc, 'wfc', nwordwfc, io_level, exst_mem, exst_file )
-    ELSE
     CALL wfcinit()
-    ENDIF
     !
   END IF
   !
@@ -176,9 +171,7 @@ SUBROUTINE init_run()
   !
 #if defined(__MPI)
   ! Cleanup PAW arrays that are only used for init
-  !IF (.NOT.(use_sirius_scf.OR.use_sirius_nlcg)) THEN
   IF (okpaw) CALL paw_post_init() ! only parallel!
-  !ENDIF
 #endif
   !
   IF ( lmd ) CALL allocate_dyn_vars()

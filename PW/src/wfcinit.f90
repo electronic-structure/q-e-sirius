@@ -37,23 +37,29 @@ SUBROUTINE wfcinit()
   USE qes_libs_module,      ONLY : qes_reset
   USE wavefunctions_gpum,   ONLY : using_evc
   USE uspp_init,            ONLY : init_us_2
+  USE input_parameters,     ONLY : use_sirius_scf, use_sirius_nlcg
   !
   IMPLICIT NONE
   !
   INTEGER :: ik, ierr, exst_sum
-  LOGICAL :: exst, exst_mem, exst_file, opnd_file, twfcollect_file
+  LOGICAL :: exst, exst_mem, exst_file, opnd_file, twfcollect_file, do_init
   CHARACTER (LEN=256)  :: dirname
   TYPE ( output_type ) :: output_obj
   !
   CALL start_clock( 'wfcinit' )
   CALL using_evc(0) ! this may be removed
+
+  do_init = .TRUE.
+  IF (use_sirius_scf.OR.use_sirius_nlcg) do_init = .FALSE.
   !
   ! ... Orthogonalized atomic functions needed for DFT+U and other cases
   !
-  IF ( (use_wannier .OR. one_atom_occupations ) .AND. lda_plus_u ) &
-       CALL errore ( 'wfcinit', 'currently incompatible options', 1 )
-  IF ( use_wannier .OR. one_atom_occupations ) CALL orthoatwfc ( use_wannier )
-  IF ( lda_plus_u ) CALL orthoUwfc(.FALSE.)
+  IF (do_init) THEN
+     IF ( (use_wannier .OR. one_atom_occupations ) .AND. lda_plus_u ) &
+          CALL errore ( 'wfcinit', 'currently incompatible options', 1 )
+     IF ( use_wannier .OR. one_atom_occupations ) CALL orthoatwfc ( use_wannier )
+     IF ( lda_plus_u ) CALL orthoUwfc(.FALSE.)
+  END IF
   !
   ! ... open files/buffer for wavefunctions (nwordwfc set in openfil)
   ! ... io_level > 1 : open file, otherwise: open buffer
@@ -170,20 +176,20 @@ SUBROUTINE wfcinit()
      !
      ! ... More Hpsi initialization: nonlocal pseudopotential projectors |beta>
      !
-     IF ( nkb > 0 ) CALL init_us_2( ngk(ik), igk_k(1,ik), xk(1,ik), vkb )
+     IF ( nkb > 0 .AND. do_init ) CALL init_us_2( ngk(ik), igk_k(1,ik), xk(1,ik), vkb )
      !
      ! ... Needed for DFT+U
      !
-     IF ( nks > 1 .AND. lda_plus_u .AND. (U_projection .NE. 'pseudo') ) &
+     IF ( nks > 1 .AND. lda_plus_u .AND. (U_projection .NE. 'pseudo') .AND. do_init ) &
         CALL get_buffer( wfcU, nwordwfcU, iunhub, ik )
      !
      ! DFT+U+V: calculate the phase factor at a given k point
      !
-     IF (lda_plus_u .AND. lda_plus_u_kind.EQ.2) CALL phase_factor(ik)
+     IF (lda_plus_u .AND. lda_plus_u_kind.EQ.2 .AND. do_init ) CALL phase_factor(ik)
      !
      ! ... calculate starting wavefunctions (calls Hpsi)
      !
-     CALL init_wfc ( ik )
+     if (do_init) CALL init_wfc ( ik )
      !
      ! ... write  starting wavefunctions to file
      !
@@ -203,7 +209,7 @@ SUBROUTINE init_wfc ( ik )
   !----------------------------------------------------------------------------
   !
   ! ... This routine computes starting wavefunctions for k-point ik
-  !
+  !:
   USE kinds,                ONLY : DP
   USE bp,                   ONLY : lelfield
   USE becmod,               ONLY : allocate_bec_type, deallocate_bec_type, &

@@ -37,6 +37,7 @@ USE esm,                  ONLY : do_comp_esm
 USE control_flags,        ONLY : iverbosity
 USE Coul_cut_2D,          ONLY : do_cutoff_2D
 USE mp_world, ONLY: mpime
+USE klist,            ONLY : nkstot, nks, ngk, igk_k
 IMPLICIT NONE
 !
 INTEGER :: dims(3), i, ia, iat, rank, ierr, ijv, li, lj, mb, nb, j, l,&
@@ -49,6 +50,7 @@ CHARACTER(LEN=1024) :: conf_str
 INTEGER, EXTERNAL :: set_hubbard_l,set_hubbard_n
 REAL(8), EXTERNAL :: hubbard_occ
 REAL(8), PARAMETER :: spglib_tol=1e-4
+INTEGER, EXTERNAL :: global_kpoint_index
 
 CALL sirius_start_timer("setup_sirius")
 
@@ -170,21 +172,42 @@ CALL invert_mtrx(bg, bg_inv)
 ! get MPI rank associated with the distribution of k-points
 CALL mpi_comm_rank(inter_pool_comm, rank, ierr)
 
+write(100+rank,*)'nkstot=',nkstot, ' nks=',nks
+do i = 1, nks
+  write(100+rank,*)'ikloc=', i, ' ikglob=',global_kpoint_index(nkstot, i),' ngk=',ngk(i)
+enddo
+flush(100+rank)
+
+IF (ALLOCATED(kpoint_index_map)) DEALLOCATE(kpoint_index_map)
+ALLOCATE(kpoint_index_map(2, nkstot))
+kpoint_index_map = 0
+DO i = 1, nks
+  kpoint_index_map(1, global_kpoint_index(nkstot, i)) = rank
+  kpoint_index_map(2, global_kpoint_index(nkstot, i)) = i
+END DO
+
+call mpi_allreduce(MPI_IN_PLACE, kpoint_index_map, 2 * nkstot, MPI_INT, MPI_SUM, inter_pool_comm, ierr)
+write(100+rank, *)'kpoint_index_map'
+do i = 1, nkstot
+  write(100+rank, *)i, kpoint_index_map(1, i), kpoint_index_map(2, i)
+enddo
+flush(100+rank)
+
+
 IF (sirius_pwpp) THEN
 
   ! initialize atom types
   DO iat = 1, nsp
-  
+
     ! add new atom type
      CALL sirius_add_atom_type(sctx, TRIM(atom_type(iat)%label), &
           & zn=NINT(zv(iat)+0.001d0), &
           & mass=amass(iat), &
           & spin_orbit=upf(iat)%has_so)
-  
-  
+
     ! set radial grid
     CALL sirius_set_atom_type_radial_grid(sctx, TRIM(atom_type(iat)%label), upf(iat)%mesh, upf(iat)%r)
-  
+
     ! set beta-projectors
     DO i = 1, upf(iat)%nbeta
       l = upf(iat)%lll(i);
@@ -326,17 +349,15 @@ DO ia = 1, nat
   ! fractional coordinates
   v1(:) = MATMUL(vlat_inv, v1)
   ! reduce coordinates to [0, 1) interval
-  !call sirius_reduce_coordinates(v1(1), v2(1), vt(1))
-  v2 = v1
   IF (noncolin) THEN
-    v1(1) = zv(iat) * starting_magnetization(iat) * SIN(angle1(iat)) * COS(angle2(iat))
-    v1(2) = zv(iat) * starting_magnetization(iat) * SIN(angle1(iat)) * SIN(angle2(iat))
-    v1(3) = zv(iat) * starting_magnetization(iat) * COS(angle1(iat))
+    v2(1) = zv(iat) * starting_magnetization(iat) * SIN(angle1(iat)) * COS(angle2(iat))
+    v2(2) = zv(iat) * starting_magnetization(iat) * SIN(angle1(iat)) * SIN(angle2(iat))
+    v2(3) = zv(iat) * starting_magnetization(iat) * COS(angle1(iat))
   ELSE
-    v1 = 0
-    v1(3) = zv(iat) * starting_magnetization(iat)
+    v2 = 0
+    v2(3) = zv(iat) * starting_magnetization(iat)
   ENDIF
-  CALL sirius_add_atom(sctx, TRIM(atom_type(iat)%label), v2, v1)
+  CALL sirius_add_atom(sctx, TRIM(atom_type(iat)%label), v1, v2)
 ENDDO
 
 CALL put_xc_functional_to_sirius()
@@ -363,77 +384,24 @@ IF (nsymop .NE. nsym) THEN
 ENDIF
 
 IF (mpime.eq.0) THEN
-  CALL sirius_dump_runtime_setup(sctx, "setup.json");
+  CALL sirius_dump_runtime_setup(sctx, "setup.json")
 ENDIF
 
 
 
-!! get number of g-vectors of the dense fft grid
-!call sirius_get_num_gvec(num_gvec)
-!
-!! TODO: number of G-vectors can be different; adapt the code wo work in this situation
-!if (.not.((num_gvec .eq. ngm_g) .or. (num_gvec * 2 - 1 .eq. ngm_g))) then
-!  write(*,*)"wrong number of g-vectors"
-!  write(*,*)"num_gvec=",num_gvec
-!  write(*,*)"ngm_g=",ngm_g
-!endif
+! get number of g-vectors of the dense fft grid
+CALL sirius_get_num_gvec(sctx, num_gvec)
 
-!call sirius_get_fft_grid_size(dims(1)) ! TODO: size of FFT box is not very relevant and in principle can be slightly different
-!if (dims(1).ne.dfftp%nr1.or.dims(2).ne.dfftp%nr2.or.dims(3).ne.dfftp%nr3) then
-!  write(*,*)"wrong fft grid dimensions"
-!  write(*,*)"qe: ", dfftp%nr1,  dfftp%nr2,  dfftp%nr3
-!  write(*,*)"sirius: ", dims
-!  stop 111
-!endif
-
-!if (.true.) then
-!  do i = 1, num_kpoints
-!    write(*,*)'ik=',i,' kpoint=',matmul(bg_inv,kpoints(:,i))
-!  enddo
-!endif
-
-!allocate(wk_tmp(nkstot))
-!allocate(xk_tmp(3, nkstot))
-!! weights of k-points in SIRIUS must sum to one
-!do i = 1, nkstot
-!  if (nspin.eq.1) then
-!    wk_tmp(i) = wk(i) / 2.d0
-!  else
-!    wk_tmp(i) = wk(i)
-!  endif
-!  xk_tmp(:,i) = xk(:,i)
-!end do
-!
-!call mpi_bcast(wk_tmp(1),        nkstot, mpi_double, 0, inter_pool_comm, ierr)
-!call mpi_bcast(xk_tmp(1, 1), 3 * nkstot, mpi_double, 0, inter_pool_comm, ierr)
-!
-!! convert to fractional coordinates
-!do ik = 1, nkstot
-!  xk_tmp(:, ik) = matmul(bg_inv, xk_tmp(:, ik))
-!end do
-
-!allocate(nk_loc(0:npool-1))
-!nk_loc = 0
-!nk_loc(rank) = nks
-!call mp_sum(nk_loc, inter_pool_comm)
-!if (nspin.eq.2) then
-!  nk_loc(:) = nk_loc(:)
-!endif
-
-!if (nspin.eq.2) then
-!  num_kp = nkstot / 2
-!else
-!  num_kp = nkstot
-!endif
-
-!allocate(xk_tmp(3, num_kpoints))
-!do i = 1, num_kpoints
-!  xk_tmp(:, i) =  matmul(bg_inv, kpoints(:, i))
-!enddo
-!deallocate(xk_tmp)
+IF (.NOT.((num_gvec .EQ. ngm_g) .OR. (num_gvec * 2 - 1 .EQ. ngm_g))) THEN
+  WRITE(*,*)
+  WRITE(*,'("Error: wrong number of G-vectors; QE: ", I6, ", SIRIUS: ", I6)')ngm_g, num_gvec
+  WRITE(*,*)
+  STOP
+END IF
 
 ! create k-point set
-! WARNING: k-points must be provided in fractional coordinates of the reciprocal lattice
+! WARNING: k-points must be provided in fractional coordinates of the reciprocal lattice and
+!          without x2 multiplication for the lsda case
 CALL sirius_create_kset(sctx, num_kpoints, kpoints, wkpoints, .FALSE., ks_handler)
 
 ! create ground-state class
@@ -492,67 +460,6 @@ IF (ALLOCATED(atom_type)) THEN
 ENDIF
 
 END SUBROUTINE
-
-
-SUBROUTINE get_q_operator_from_sirius
-USE uspp_param, ONLY : upf, nh, nhm
-USE ions_base,  ONLY : nsp
-USE gvect,      ONLY : ngm, mill
-USE uspp,       ONLY : qq_nt
-IMPLICIT NONE
-INTEGER iat, ih, jh, ijh, i
-
-DO iat = 1, nsp
-  IF (nh(iat).NE.atom_type(iat)%num_beta_projectors) THEN
-     WRITE(*,*) nh(iat), atom_type(iat)%num_beta_projectors
-     STOP 'wrong number of beta projectors'
-  ENDIF
-  IF (upf(iat)%tvanp) THEN
-    i = atom_type(iat)%num_beta_projectors
-    IF (ALLOCATED(atom_type(iat)%qpw)) DEALLOCATE(atom_type(iat)%qpw)
-    ALLOCATE(atom_type(iat)%qpw(ngm, i * (i + 1) / 2))
-    ijh = 0
-    DO ih = 1, atom_type(iat)%num_beta_projectors
-      DO jh = ih, atom_type(iat)%num_beta_projectors
-        ijh = ijh + 1
-        CALL sirius_get_q_operator(sctx, TRIM(atom_type(iat)%label), ih, jh, ngm, mill, atom_type(iat)%qpw(:, ijh))
-      ENDDO
-    ENDDO
-  ENDIF
-ENDDO
-
-CALL get_q_operator_matrix_from_sirius
-
-END SUBROUTINE get_q_operator_from_sirius
-
-
-SUBROUTINE get_q_operator_matrix_from_sirius
-USE uspp_param, ONLY : upf, nh, nhm
-USE ions_base,  ONLY : nsp, ityp, nat
-USE uspp,       ONLY : qq_nt, qq_at
-IMPLICIT NONE
-INTEGER iat, ih, jh, ijh, ia
-
-qq_nt = 0
-DO iat = 1, nsp
-  IF (nh(iat).NE.atom_type(iat)%num_beta_projectors) THEN
-    STOP 'wrong number of beta projectors'
-  ENDIF
-  IF (upf(iat)%tvanp) THEN
-    ijh = 0
-    DO ih = 1, atom_type(iat)%num_beta_projectors
-      DO jh = ih, atom_type(iat)%num_beta_projectors
-        ijh = ijh + 1
-        CALL sirius_get_q_operator_matrix(sctx, TRIM(atom_type(iat)%label), qq_nt(1, 1, iat), nhm)
-      ENDDO
-    ENDDO
-  ENDIF
-ENDDO
-DO ia = 1, nat
-   qq_at(:, :, ia) = qq_nt(:, :, ityp(ia))
-END DO
-
-END SUBROUTINE get_q_operator_matrix_from_sirius
 
 
 SUBROUTINE invert_mtrx(vlat, vlat_inv)
@@ -713,78 +620,6 @@ SUBROUTINE get_band_occupancies_from_sirius
 END SUBROUTINE get_band_occupancies_from_sirius
 
 
-
-SUBROUTINE put_d_matrix_to_sirius
-USE uspp_param,           ONLY : nhm
-USE ions_base,            ONLY : nat
-USE lsda_mod,             ONLY : nspin
-USE uspp,                 ONLY : deeq
-IMPLICIT NONE
-REAL(8), ALLOCATABLE :: deeq_tmp(:,:)
-INTEGER ia, is
-ALLOCATE(deeq_tmp(nhm, nhm))
-DO ia = 1, nat
-  DO is = 1, nspin
-    IF (nspin.EQ.2.AND.is.EQ.1) THEN
-      deeq_tmp(:, :) = 0.5 * (deeq(:, :, ia, 1) + deeq(:, :, ia, 2)) / 2 ! convert to Ha
-    ENDIF
-    IF (nspin.EQ.2.AND.is.EQ.2) THEN
-      deeq_tmp(:, :) = 0.5 * (deeq(:, :, ia, 1) - deeq(:, :, ia, 2)) / 2 ! convert to Ha
-    ENDIF
-    IF (nspin.EQ.1.OR.nspin.EQ.4) THEN
-      deeq_tmp(:, :) = deeq(:, :, ia, is) / 2 ! convert to Ha
-    ENDIF
-    CALL sirius_set_d_operator_matrix(sctx, ia, is, deeq_tmp(1, 1), nhm)
-  ENDDO
-ENDDO
-DEALLOCATE(deeq_tmp)
-END SUBROUTINE put_d_matrix_to_sirius
-
-
-SUBROUTINE get_d_matrix_from_sirius
-USE uspp_param,           ONLY : nhm
-USE ions_base,            ONLY : nat
-USE lsda_mod,             ONLY : nspin
-USE uspp,                 ONLY : deeq
-IMPLICIT NONE
-REAL(8) d1, d2
-INTEGER ia, is, i, j
-! get D-operator matrix
-DO ia = 1, nat
-  DO is = 1, nspin
-    CALL sirius_get_d_operator_matrix(sctx, ia, is, deeq(1, 1, ia, is), nhm)
-  ENDDO
-  IF (nspin.EQ.2) THEN
-    DO i = 1, nhm
-      DO j = 1, nhm
-        d1 = deeq(i, j, ia, 1)
-        d2 = deeq(i, j, ia, 2)
-        deeq(i, j, ia, 1) = d1 + d2
-        deeq(i, j, ia, 2) = d1 - d2
-      ENDDO
-    ENDDO
-  ENDIF
-  ! convert to Ry
-  deeq(:, :, ia, :) = deeq(:, :, ia, :) * 2
-ENDDO
-END SUBROUTINE get_d_matrix_from_sirius
-
-SUBROUTINE put_q_operator_matrix_to_sirius
-USE uspp,       ONLY : qq_nt
-USE uspp_param, ONLY : upf, nhm
-USE ions_base,  ONLY : nsp, atm
-IMPLICIT NONE
-INTEGER iat
-
-DO iat = 1, nsp
-  IF (upf(iat)%tvanp) THEN
-    CALL sirius_set_q_operator_matrix(sctx, TRIM(atom_type(iat)%label), qq_nt(1, 1, iat), nhm)
-  ENDIF
-ENDDO
-
-END SUBROUTINE put_q_operator_matrix_to_sirius
-
-
 SUBROUTINE get_wave_functions_from_sirius
 USE klist,            ONLY : nkstot, nks, ngk, igk_k
 USE gvect,            ONLY : mill
@@ -800,194 +635,68 @@ USE mp_pools,         ONLY : inter_pool_comm
 USE parallel_include
 IMPLICIT NONE
 INTEGER, EXTERNAL :: global_kpoint_index
-INTEGER, ALLOCATABLE :: gvl(:,:)
-INTEGER ig, ik, ik_, i, j, ispn, rank, ierr, nksmax
+INTEGER, ALLOCATABLE :: vgl(:,:)
+INTEGER ig, ik, ik_, ik1, i, j, ispn, rank, ierr, nksmax, ikloc
 COMPLEX(8) z1
 LOGICAL exst_file,exst_mem
 
 ! rank of communicator that distributes k-points
 CALL mpi_comm_rank(inter_pool_comm, rank, ierr)
-CALL mpi_allreduce(nks, nksmax, 1, MPI_INTEGER, MPI_MAX, inter_pool_comm, ierr)
 
-!CALL open_buffer( iunwfc, 'wfc', nwordwfc, io_level, exst_mem, exst_file )
+ALLOCATE(vgl(3, npwx))
 
-ALLOCATE(gvl(3, npwx))
-DO ik = 1, nksmax
-  IF (ik.LE.nks) THEN
-    DO ig = 1, ngk(ik)
-      gvl(:,ig) = mill(:, igk_k(ig, ik))
+DO ik = 1, nkstot
+  ik1 = MOD(ik - 1, num_kpoints) + 1
+  ispn = 1
+  IF (ik .GT. num_kpoints) THEN
+    ispn = 2
+  ENDIF
+  IF (kpoint_index_map(1, ik) .EQ. rank) THEN
+    ikloc = kpoint_index_map(2, ik)
+    DO ig = 1, ngk(ikloc)
+      vgl(:,ig) = mill(:, igk_k(ig, ikloc))
     ENDDO
-    !
-    ik_ = global_kpoint_index(nkstot, ik)
-    ispn = isk(ik)
-    IF (lsda.AND.ispn.EQ.2) THEN
-      ik_ = ik_ - nkstot / 2
-    ENDIF
-    CALL sirius_get_wave_functions(ks_handler, ik_, ispn, ngk(ik), gvl(1, 1), evc(1, 1), npwx, npol)
+    CALL sirius_get_wave_functions_v2( ks_handler, vkl=kpoints(:, ik1), spin=ispn, num_gvec_loc=ngk(ikloc), &
+                                     & gvec_loc=vgl(1, 1), evec=evc(1, 1), ld=npwx, num_spin_comp=npol )
     IF (nks > 1 .OR. lelfield) THEN
-      CALL save_buffer ( evc, nwordwfc, iunwfc, ik )
+      CALL save_buffer ( evc, nwordwfc, iunwfc, ikloc )
     ENDIF
   ELSE
-    CALL sirius_get_wave_functions(ks_handler, -1, -1, -1, -1, z1, -1, -1)
+    CALL sirius_get_wave_functions_v2( ks_handler )
   ENDIF
+
+  CALL mpi_barrier(inter_pool_comm, ierr)
+
 ENDDO
-DEALLOCATE(gvl)
+
+!CALL mpi_allreduce(nks, nksmax, 1, MPI_INTEGER, MPI_MAX, inter_pool_comm, ierr)
+!
+!!CALL open_buffer( iunwfc, 'wfc', nwordwfc, io_level, exst_mem, exst_file )
+!
+!DO ik = 1, nksmax
+!  IF (ik.LE.nks) THEN
+!    DO ig = 1, ngk(ik)
+!      gvl(:,ig) = mill(:, igk_k(ig, ik))
+!    ENDDO
+!    !
+!    ik_ = global_kpoint_index(nkstot, ik)
+!    ispn = isk(ik)
+!    IF (lsda.AND.ispn.EQ.2) THEN
+!      ik_ = ik_ - nkstot / 2
+!    ENDIF
+!    CALL sirius_get_wave_functions(ks_handler, ik_, ispn, ngk(ik), gvl(1, 1), evc(1, 1), npwx, npol)
+!    IF (nks > 1 .OR. lelfield) THEN
+!      CALL save_buffer ( evc, nwordwfc, iunwfc, ik )
+!    ENDIF
+!  ELSE
+!    CALL sirius_get_wave_functions(ks_handler, -1, -1, -1, -1, z1, -1, -1)
+!  ENDIF
+!ENDDO
+
+DEALLOCATE(vgl)
 
 END SUBROUTINE get_wave_functions_from_sirius
 
-
-!subroutine put_vltot_to_sirius
-!  use scf,       only : vltot
-!  use gvect, only : mill, ngm
-!  use wavefunctions_module, only : psic
-!  use fft_interfaces,       only : fwfft, invfft
-!  use fft_base,             only : dfftp
-!  use mp_bands, only : intra_bgrp_comm
-!  use sirius
-!  !
-!  implicit none
-!  !
-!  complex(8), allocatable :: vg(:)
-!  integer ig
-!  !
-!  allocate(vg(ngm))
-!  psic(:) = vltot(:)
-!  call fwfft('Rho', psic, dfftp)
-!  ! convert to Hartree
-!  do ig = 1, ngm
-!    vg(ig) = psic(dfftp%nl(ig)) * 0.5d0 ! convert to Ha
-!  enddo
-!  ! set local potential
-!  call sirius_set_pw_coeffs("vloc", vg(1), ngm, mill(1, 1), intra_bgrp_comm)
-!  deallocate(vg)
-!end subroutine put_vltot_to_sirius
-
-!subroutine get_rhoc_from_sirius
-!  use uspp_param,only : upf
-!  use ener,      only : etxcc
-!  use scf,       only : rho_core, rhog_core
-!  use control_flags, only : gamma_only
-!  use wavefunctions_module, only : psic
-!  use gvect, only : mill, ngm
-!  use scf, only : rho_core, rhog_core
-!  use mp_bands, only : intra_bgrp_comm
-!  use ions_base, only : ntyp => nsp
-!  use fft_interfaces,only : invfft
-!  use fft_base,  only : dfftp
-!  use sirius
-!  !
-!  implicit none
-!
-!  etxcc = 0.0d0
-!  if (any(upf(1:ntyp)%nlcc)) then
-!    call sirius_get_pw_coeffs("rhoc", rhog_core(1), ngm, mill(1, 1), intra_bgrp_comm)
-!    psic(:) = (0.d0, 0.d0)
-!    psic(dfftp%nl(:)) = rhog_core(:)
-!    if (gamma_only) psic(dfftp%nlm(:)) = conjg(rhog_core(:))
-!    call invfft ('Rho', psic, dfftp)
-!    rho_core(:) = psic(:)
-!  else
-!    rhog_core(:) = 0.0d0
-!    rho_core(:)  = 0.0d0
-!  endif
-!
-!end subroutine get_rhoc_from_sirius
-
-!subroutine set_vloc_sirius
-!use sirius
-!use gvect, only : ngm, mill, igtongl, ngl
-!use vlocal, only : vloc
-!use mp_bands, only : intra_bgrp_comm
-!use ions_base, only : atm
-!integer nt,i
-!real(8), allocatable :: tmp(:)
-!
-!allocate(tmp(ngm))
-!vloc(:,:) = 0.d0
-!do nt = 1, ntyp
-!  call sirius_get_pw_coeffs_real(string(atm(nt)), "vloc", tmp(1), ngm, mill(1, 1), intra_bgrp_comm)
-!  do i = 1, ngm
-!    vloc(igtongl(i), nt) = tmp(i) * 2 ! convert to Ry
-!  enddo
-!enddo
-!
-!deallocate(tmp, tmp1)
-!
-!call set_vloc_sirius
-!CALL setlocal()
-!end subroutine
-
-!subroutine get_vloc_from_sirius
-!  use wavefunctions_module, only : psic
-!  use gvect, only : mill, ngm, gg
-!  use scf, only: vltot, v_of_0
-!  use fft_interfaces, only : fwfft, invfft
-!  use fft_base, only : dfftp
-!  use constants, only : eps8
-!  use control_flags, only : gamma_only
-!  use mp_bands, only : intra_bgrp_comm
-!  use mp, only : mp_bcast, mp_sum
-!  use sirius
-!  !
-!  implicit none
-!  !
-!  complex(8), allocatable :: vpw(:)
-!  allocate(vpw(ngm))
-!  call sirius_get_pw_coeffs("vloc", vpw(1), ngm, mill(1, 1), intra_bgrp_comm)
-!  psic(:) = 0.d0
-!  psic(dfftp%nl(:)) = vpw(:)
-!  if (gamma_only) psic(dfftp%nlm(:)) = conjg(vpw(:))
-!  call invfft('Rho', psic, dfftp)
-!  vltot(:) = dble(psic(:)) * 2 ! convert to Ry
-!  v_of_0=0.d0
-!  IF (gg(1) < eps8) v_of_0 = dble(vpw(1))
-!  !
-!  call mp_sum(v_of_0, intra_bgrp_comm)
-!  deallocate(vpw)
-!
-!end subroutine get_vloc_from_sirius
-
-!subroutine get_density_matrix_from_sirius
-!implicit none
-!real(8), allocatable :: dens_mtrx(:, :, :)
-!integer iat, na
-!
-!allocate(dens_mtrx(nhm, nhm, 3))
-!do iat = 1, nsp
-!  do na = 1, nat
-!    if (ityp(na).eq.iat.and.allocated(rho%bec)) then
-!      rho%bec(:, na, :) = 0.d0
-!      call sirius_get_density_matrix(na, dens_mtrx(1, 1, 1), nhm)
-!
-!      ijh = 0
-!      do ih = 1, nh(iat)
-!        do jh = ih, nh(iat)
-!          ijh = ijh + 1
-!          if (nspin.le.2) then
-!            do ispn = 1, nspin
-!              rho%bec(ijh, na, ispn) = dreal(dens_mtrx(ih, jh, ispn))
-!            enddo
-!          endif
-!          if (nspin.eq.4) then
-!            rho%bec(ijh, na, 1) = dreal(dens_mtrx(ih, jh, 1) + dens_mtrx(ih, jh, 2))
-!            rho%bec(ijh, na, 4) = dreal(dens_mtrx(ih, jh, 1) - dens_mtrx(ih, jh, 2))
-!            rho%bec(ijh, na, 2) = 2.d0 * dreal(dens_mtrx(ih, jh, 3))
-!            rho%bec(ijh, na, 3) = -2.d0 * dimag(dens_mtrx(ih, jh, 3))
-!          endif
-!          ! off-diagonal elements have a weight of 2
-!          if (ih.ne.jh) then
-!            do ispn = 1, nspin
-!              rho%bec(ijh, na, ispn) = rho%bec(ijh, na, ispn) * 2.d0
-!            enddo
-!          endif
-!        enddo
-!      enddo
-!    endif
-!  enddo
-!enddo
-!deallocate(dens_mtrx)
-!
-!end subroutine get_density_matrix_from_sirius
 
 SUBROUTINE put_xc_functional_to_sirius
 USE xc_lib
@@ -1092,215 +801,6 @@ WRITE(200,'("}")')
 CLOSE(200)
 
 END SUBROUTINE
-
-FUNCTION idx_m_qe(m) RESULT(m1)
-  IMPLICIT NONE
-  INTEGER :: m
-  INTEGER :: m1
-
-  IF (m .GT. 0) THEN
-     m1 = 2 * m - 1
-  ELSE
-     m1 = -2 * m
-  ENDIF
-END FUNCTION idx_m_qe
-
-SUBROUTINE qe_to_sirius_real(ns, ns_sirius)
-  USE ions_base,            ONLY : nat, ityp
-  USE ldaU,                 ONLY : Hubbard_lmax, Hubbard_l, Hubbard_U, &
-       Hubbard_J, Hubbard_alpha, lda_plus_u_kind,&
-       Hubbard_J0, Hubbard_beta,  is_hubbard
-  USE lsda_mod,             ONLY : nspin
-
-  COMPLEX(8), INTENT(out) :: ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat)
-  REAL(8), INTENT(in) :: ns(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat)
-  INTEGER :: m1, m2, mm2, mm1, is, nt, na
-  ns_sirius(:, :, :, :) = 0.0
-  DO na = 1, nat
-     nt = ityp (na)
-     IF (is_hubbard(nt)) THEN
-        DO m1 = -Hubbard_l(nt), Hubbard_l(nt)
-           mm1 = idx_m_qe(m1)
-           DO m2 = -Hubbard_l(nt), Hubbard_l(nt)
-              mm2 = idx_m_qe(m2)
-              DO is = 1, nspin
-                 ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, is, na) = ns(mm1 + 1, mm2 + 1, is, na)
-              ENDDO
-           ENDDO
-        ENDDO
-     ENDIF
-  ENDDO
-END SUBROUTINE qe_to_sirius_real
-
-SUBROUTINE qe_to_sirius_complex(ns, ns_sirius)
-  USE ions_base,            ONLY : nat, ityp
-  USE ldaU,                 ONLY : Hubbard_lmax, Hubbard_l, Hubbard_U, &
-       Hubbard_J, Hubbard_alpha, lda_plus_u_kind,&
-       Hubbard_J0, Hubbard_beta,  is_hubbard
-  USE lsda_mod,             ONLY : nspin
-
-  COMPLEX(8), INTENT(out) :: ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat)
-  COMPLEX(8), INTENT(in) :: ns(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat)
-  INTEGER :: m1, m2, mm2, mm1, is, nt, na
-
-  ns_sirius(:, :, :, :) = 0.0
-  DO na = 1, nat
-     nt = ityp (na)
-     IF (is_hubbard(nt)) THEN
-        DO m1 = -Hubbard_l(nt), Hubbard_l(nt)
-           mm1 = idx_m_qe(m1)
-           DO m2 = -Hubbard_l(nt), Hubbard_l(nt)
-              mm2 = idx_m_qe(m2)
-              ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, 1, na) = ns(mm1 + 1, mm2 + 1, 1, na)
-              ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, 2, na) = ns(mm1 + 1, mm2 + 1, 4, na)
-              ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, 3, na) = ns(mm1 + 1, mm2 + 1, 2, na)
-              ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, 4, na) = ns(mm1 + 1, mm2 + 1, 3, na)
-           ENDDO
-        ENDDO
-     ENDIF
-  ENDDO
-END SUBROUTINE qe_to_sirius_complex
-
-SUBROUTINE sirius_to_qe_real(ns_sirius, ns)
-  USE ions_base,            ONLY : nat, ityp
-  USE ldaU,                 ONLY : Hubbard_lmax, Hubbard_l, Hubbard_U, &
-       Hubbard_J, Hubbard_alpha, lda_plus_u_kind,&
-       Hubbard_J0, Hubbard_beta,  is_hubbard
-  USE lsda_mod,             ONLY : nspin
-  INTEGER :: m1, m2, mm2, mm1, is, nt, na
-
-  COMPLEX(8), INTENT(in) :: ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat)
-  REAL(8), INTENT(out) :: ns(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat)
-
-  ns(:, :, :, :) = 0.0
-  DO na = 1, nat
-     nt = ityp (na)
-     IF (is_hubbard(nt)) THEN
-        DO m1 = -Hubbard_l(nt), Hubbard_l(nt)
-           mm1 = idx_m_qe(m1)
-           DO m2 = -Hubbard_l(nt), Hubbard_l(nt)
-              mm2 = idx_m_qe(m2)
-              DO is = 1, nspin
-                 ns(mm1 + 1, mm2 + 1, is, na) = REAL(ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, is, na))
-              ENDDO
-           ENDDO
-        ENDDO
-     ENDIF
-  ENDDO
-END SUBROUTINE sirius_to_qe_real
-
-SUBROUTINE sirius_to_qe_complex(ns_sirius, ns)
-  USE ions_base,            ONLY : nat, ityp
-  USE ldaU,                 ONLY : Hubbard_lmax, Hubbard_l, Hubbard_U, &
-       Hubbard_J, Hubbard_alpha, lda_plus_u_kind,&
-       Hubbard_J0, Hubbard_beta,  is_hubbard
-  USE lsda_mod,             ONLY : nspin
-
-  COMPLEX(8), INTENT(in) :: ns_sirius(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, 4, nat)
-  COMPLEX(8), INTENT(out) :: ns(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat)
-  INTEGER :: m1, m2, mm2, mm1, is, nt, na
-
-  ns(:, :, :, :) = 0.0
-  DO na = 1, nat
-     nt = ityp (na)
-     IF (is_hubbard(nt)) THEN
-        DO m1 = -Hubbard_l(nt), Hubbard_l(nt)
-           mm1 = idx_m_qe(m1)
-           DO m2 = -Hubbard_l(nt), Hubbard_l(nt)
-              mm2 = idx_m_qe(m2)
-              ns(mm1 + 1, mm2 + 1, 1, na) = ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, 1, na)
-              ns(mm1 + 1, mm2 + 1, 4, na) = ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, 2, na)
-              ns(mm1 + 1, mm2 + 1, 2, na) = ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, 3, na)
-              ns(mm1 + 1, mm2 + 1, 3, na) = ns_sirius(m1 + Hubbard_l(nt) + 1, m2 + Hubbard_l(nt) + 1, 4, na)
-           ENDDO
-        ENDDO
-     ENDIF
-  ENDDO
-END SUBROUTINE sirius_to_qe_complex
-
-
-SUBROUTINE check_residuals(ik)
-  USE wvfct,                ONLY : nbnd, npwx, wg, et, btype
-  USE lsda_mod,             ONLY : lsda, nspin, current_spin, isk
-  USE wavefunctions,        ONLY : evc
-  USE io_files,             ONLY : iunwfc, nwordwfc
-  USE klist,                ONLY : nks, nkstot, wk, xk, ngk, igk_k
-  USE noncollin_module,     ONLY : noncolin, npol
-  USE buffers,              ONLY : get_buffer
-  USE uspp,                 ONLY : okvan, nkb, vkb
-  USE bp,                   ONLY : lelfield, bec_evcel
-  USE becmod,               ONLY : bec_type, becp, calbec,&
-                                   allocate_bec_type, deallocate_bec_type
-  USE mp_bands,             ONLY : nproc_bgrp, intra_bgrp_comm, inter_bgrp_comm
-IMPLICIT NONE
-INTEGER, INTENT(in) :: ik
-INTEGER npw, i, j, ig
-COMPLEX(8), ALLOCATABLE :: hpsi(:,:), spsi(:,:), ovlp(:,:)
-REAL(8) l2norm, l2norm_psi, max_err
-
-ALLOCATE(hpsi(npwx*npol,nbnd))
-ALLOCATE(spsi(npwx*npol,nbnd))
-ALLOCATE(ovlp(nbnd, nbnd))
-
-!  call allocate_bec_type ( nkb, nbnd, becp, intra_bgrp_comm )
-!do ik = 1, nks
-!
-!   if ( lsda ) current_spin = isk(ik)
-   npw = ngk (ik)
-!   !
-!   if ( nks > 1 ) &
-!      call get_buffer ( evc, nwordwfc, iunwfc, ik )
-!
-  !call g2_kin( ik )
-!  !
-!  ! ... more stuff needed by the hamiltonian: nonlocal projectors
-!  !
-!  if ( nkb > 0 ) call init_us_2( ngk(ik), igk_k(1,ik), xk(1,ik), vkb )
-!  call calbec(npw, vkb, evc, becp)
-
-   CALL h_psi(npwx, npw, nbnd, evc, hpsi)
-   IF (okvan) THEN
-     CALL s_psi(npwx, npw, nbnd, evc, spsi)
-   ELSE
-     spsi = evc
-   ENDIF
-
-   DO j = 1, nbnd
-     l2norm = 0
-     l2norm_psi = 0
-     DO ig = 1, npw
-       l2norm = l2norm + ABS(hpsi(ig, j) - et(j, ik) * spsi(ig, j))**2
-       l2norm_psi = l2norm_psi + REAL(CONJG(evc(ig, j)) * spsi(ig, j))
-     ENDDO
-     WRITE(*,*)'band: ', j, ', residual l2norm: ',SQRT(l2norm), ', psi norm: ',SQRT(l2norm_psi)
-
-   ENDDO
-
-   ovlp = 0
-   max_err = 0
-   DO i = 1, nbnd
-     DO j = 1, nbnd
-       DO ig = 1, npw
-         ovlp(i, j) = ovlp(i, j) + CONJG(evc(ig, i)) * spsi(ig, j)
-       ENDDO
-       IF (i.EQ.j) ovlp(i, j) = ovlp(i, j) - 1.0
-       IF (ABS(ovlp(i, j)).GT.max_err) THEN
-         max_err = ABS(ovlp(i, j))
-       ENDIF
-       !if (abs(ovlp(i, j)).gt.1e-13) then
-       !  write(*,*)'bands i, j:',i,j,', overlap: ', ovlp(i, j)
-       !endif
-     ENDDO
-   ENDDO
-   WRITE(*,*)'maximum overlap error: ',max_err
-
-
-!enddo
-!call deallocate_bec_type ( becp )
-
-DEALLOCATE(hpsi, spsi, ovlp)
-
-END SUBROUTINE check_residuals
 
 
 END MODULE mod_sirius

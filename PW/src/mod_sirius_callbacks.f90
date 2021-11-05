@@ -26,11 +26,11 @@ IMPLICIT NONE
 REAL(8) :: charge
 !
 write(*,*)'QE: calc_veff'
-CALL get_density_from_sirius
+CALL get_density_from_sirius()
 CALL v_of_rho( rho, rho_core, rhog_core, &
     ehart, etxc, vtxc, eth, etotefield, charge, v)
 !CALL put_density_to_sirius
-CALL put_potential_to_sirius
+CALL put_potential_to_sirius()
 !
 END SUBROUTINE calc_veff
 
