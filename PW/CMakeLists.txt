@@ -125,8 +125,6 @@ set(src_pw
    src/lchk_tauxk.f90 
    src/ldaU.f90 
    src/make_pointlists.f90 
-   src/mod_sirius_base.f90
-   src/mod_sirius_callbacks.f90
    src/mod_sirius.f90
    src/makov_payne.f90 
    src/manypw.f90 
