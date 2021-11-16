@@ -97,12 +97,16 @@ SUBROUTINE setup()
   USE gcscf_module,       ONLY : lgcscf
   USE extfield,           ONLY : gate
   USE additional_kpoints, ONLY : add_additional_kpoints
+#if defined(__SIRIUS)
+  USE mod_sirius,         ONLY : num_kpoints, kpoints, wkpoints, invert_mtrx
+#endif
   !
   IMPLICIT NONE
   !
   INTEGER  :: na, is, ierr, ibnd, ik, nrot_
   LOGICAL  :: magnetic_sym, skip_equivalence=.FALSE.
   REAL(DP) :: iocc, ionic_charge, one
+  REAL(DP) :: bg_inv(3, 3)
   !
   LOGICAL, EXTERNAL  :: check_gpu_support
   !
