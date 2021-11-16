@@ -32,7 +32,6 @@ MODULE input_parameters
   USE parameters, ONLY : nsx, natx, sc_size
   USE wannier_new,ONLY : wannier_data
   USE upf_params, ONLY : lqmax
-  USE iso_c_binding, ONLY : c_char
   !
   IMPLICIT NONE
   !
@@ -1044,12 +1043,7 @@ MODULE input_parameters
           tcpbo,emass_emin, emass_cutoff_emin, electron_damping_emin,  &
           dt_emin, efield_phase
 
-!
-!=----------------------------------------------------------------------------=!
-!  SIRIUS Namelist Input Parameters
-!=----------------------------------------------------------------------------=!
-
-
+#if defined(__SIRIUS)
 !
 !=----------------------------------------------------------------------------=!
 !  NLCG Namelist Input Parameters
@@ -1060,16 +1054,16 @@ MODULE input_parameters
         REAL(DP)          :: nlcg_T
         REAL(DP)          :: nlcg_kappa
         REAL(DP)          :: nlcg_tol
-        CHARACTER(len=80, kind=C_CHAR) :: nlcg_smearing
+        CHARACTER(len=80) :: nlcg_smearing
         CHARACTER(len=80) :: nlcg_smearing_allowed(2)
         DATA nlcg_smearing_allowed / 'FD', 'GS' /
-        CHARACTER(len=80, kind=C_CHAR) :: nlcg_processing_unit = 'none'
+        CHARACTER(len=80) :: nlcg_processing_unit = 'none'
         CHARACTER(len=80) :: nlcg_processing_unit_allowed(3)
         DATA nlcg_processing_unit_allowed / 'none', 'cpu', 'gpu' /
 
         NAMELIST / nlcg / nlcg_maxiter, nlcg_restart, nlcg_tau, nlcg_T, nlcg_kappa, &
           nlcg_tol, nlcg_smearing, nlcg_processing_unit
-
+#endif
 !
 !=----------------------------------------------------------------------------=!
 !  IONS Namelist Input Parameters

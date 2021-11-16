@@ -430,10 +430,12 @@ SUBROUTINE electrons_scf ( printout, exxen )
   !
   USE plugin_variables,     ONLY : plugin_etot
   USE libmbd_interface,     ONLY : EmbdvdW
-  USE mod_sirius
   USE input_parameters,     ONLY : diago_thr_init
+#if defined(__SIRIUS)
+  USE mod_sirius
   USE input_parameters,     ONLY : nlcg_T, nlcg_tau, nlcg_tol, nlcg_kappa, nlcg_maxiter,&
                                  & nlcg_restart, nlcg_smearing, nlcg_processing_unit
+#endif
   USE add_dmft_occ,         ONLY : dmft, dmft_update, v_dmft, dmft_updated
   !
   USE wvfct_gpum,           ONLY : using_et
