@@ -373,10 +373,6 @@ MODULE force_mod
   !! norm of the gradient (forces)
   REAL(DP) :: sigma(3,3)
   !! the stress acting on the system
-  LOGICAL :: lforce
-  !! if .TRUE. compute the forces
-  LOGICAL :: lstres
-  !! if .TRUE. compute the stress
   REAL(DP), ALLOCATABLE :: eigenval(:)
   !! eigenvalues of the overlap matrix
   COMPLEX(DP), ALLOCATABLE :: eigenvect(:,:)
@@ -494,6 +490,5 @@ MODULE pwcom
   USE relax
   USE cellmd
   USE fixed_occ
-  USE spin_orb
   !
 END MODULE pwcom
