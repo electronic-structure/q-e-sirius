@@ -65,7 +65,6 @@ SUBROUTINE run_pwscf( exit_status )
   USE mp_world,             ONLY : mpime
   USE dfunct,               ONLY : newd
   USE mod_sirius
-  USE mp_bands_util,        ONLY : evp_work_count, num_loc_op_applied
   USE ldaU,                 ONLY : lda_plus_u
   USE add_dmft_occ,         ONLY : dmft
   !
@@ -163,9 +162,6 @@ SUBROUTINE run_pwscf( exit_status )
      ELSE
         CALL electrons()
      END IF
-     WRITE(stdout, *)
-     WRITE(stdout,'("     evp_work_count     : ", I10)')int(evp_work_count)
-     WRITE(stdout,'("     num_loc_op_applied : ", I10)')num_loc_op_applied
      !
      ! ... code stopped by user or not converged
      !

@@ -432,7 +432,6 @@ SUBROUTINE electrons_scf ( printout, exxen )
   USE libmbd_interface,     ONLY : EmbdvdW
   USE mod_sirius
   USE input_parameters,     ONLY : diago_thr_init
-  USE mp_bands_util, ONLY : evp_work_count, num_loc_op_applied
   USE input_parameters,     ONLY : nlcg_T, nlcg_tau, nlcg_tol, nlcg_kappa, nlcg_maxiter,&
                                  & nlcg_restart, nlcg_smearing, nlcg_processing_unit
   USE add_dmft_occ,         ONLY : dmft, dmft_update, v_dmft, dmft_updated
@@ -626,8 +625,6 @@ SUBROUTINE electrons_scf ( printout, exxen )
   END IF
   !
   IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
-    CALL sirius_get_parameters(sctx, evp_work_count=evp_work_count)
-    CALL sirius_get_parameters(sctx, num_loc_op_applied=num_loc_op_applied)
     CALL get_band_occupancies_from_sirius()
     CALL get_band_energies_from_sirius()
     IF (sirius_pwpp) THEN
