@@ -516,6 +516,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
   CALL memstat( kilobytes )
   IF ( kilobytes > 0 ) WRITE( stdout, 9001 ) kilobytes/1000.0
   !
+#if defined(__SIRIUS)
   IF (use_sirius_scf) THEN
     WRITE(*,*)''
     WRITE(*,*)'============================'
@@ -638,6 +639,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
     END IF
     RETURN
   END IF
+#endif
   !
   CALL start_clock( 'electrons' )
   !
@@ -889,7 +891,6 @@ SUBROUTINE electrons_scf ( printout, exxen )
         ! ... The mixing is done on pool 0 only (image parallelization
         ! ... inside mix_rho => rho_ddot => PAW_ddot is no longer there)
         !
-        CALL sirius_start_timer("qe|mix")
         IF ( my_pool_id == root_pool ) CALL mix_rho( rho, rhoin, &
                 mixing_beta, dr2, tr2_min, iter, nmix, iunmix, conv_elec )
         !
@@ -914,7 +915,6 @@ SUBROUTINE electrons_scf ( printout, exxen )
         CALL bcast_scf_type( rhoin, root_pool, inter_pool_comm )
         CALL mp_bcast( dr2, root_pool, inter_pool_comm )
         CALL mp_bcast( conv_elec, root_pool, inter_pool_comm )
-        CALL sirius_stop_timer("qe|mix")
         !
         !
         IF (.NOT. scf_must_converge .AND. idum == niter) conv_elec = .TRUE.

@@ -97,7 +97,6 @@ SUBROUTINE setup()
   USE gcscf_module,       ONLY : lgcscf
   USE extfield,           ONLY : gate
   USE additional_kpoints, ONLY : add_additional_kpoints
-  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -114,7 +113,6 @@ SUBROUTINE setup()
 #else
   LOGICAL :: lpara = .false.
 #endif
-  CALL sirius_start_timer("qe|setup")
 
   !
   ! ... okvan/okpaw = .TRUE. : at least one pseudopotential is US/PAW
@@ -689,9 +687,6 @@ SUBROUTINE setup()
   ! ... set linear-lagebra diagonalization
   !
   CALL set_para_diag( nbnd, use_para_diag )
-  !
-  CALL sirius_stop_timer("qe|setup")
-  !
   !
   RETURN
   !

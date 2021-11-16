@@ -111,6 +111,7 @@ SUBROUTINE forces()
   forceh(:,:)   = 0.D0
   force(:,:)    = 0.D0
   !
+#if defined(__SIRIUS)
   IF (use_sirius_scf .OR. use_sirius_nlcg) THEN
     forcenl = 0.d0
     forcelc = 0.d0
@@ -142,6 +143,7 @@ SUBROUTINE forces()
       forcecc = forcecc * 2 ! convert to Ry
     ENDIF
   ELSE
+#endif
   !
   ! ... The nonlocal contribution is computed here
   !
@@ -272,7 +274,9 @@ SUBROUTINE forces()
      ENDIF
   ENDIF
   !
+#if defined(__SIRIUS)
   ENDIF ! if (use_sirius_scf)
+#endif
   !
   ! ... here we sum all the contributions and compute the total force acting
   ! ... on the crystal
@@ -336,9 +340,7 @@ SUBROUTINE forces()
   !
   ! ... resymmetrize (should not be needed, but ...)
   !
-  IF (.NOT. (use_sirius_scf .OR. use_sirius_nlcg)) THEN
   CALL symvector( nat, force )
-  END IF
   !
   IF ( remove_rigid_rot ) &
      CALL remove_tot_torque( nat, tau, amass(ityp(:)), force  )
