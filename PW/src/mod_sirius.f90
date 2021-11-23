@@ -1313,6 +1313,7 @@ MODULE mod_sirius
     !! Put the information about XC potentials into SIRIUS.
     !
     USE xc_lib
+    USE funct,                ONLY : get_dft_name
     !
     IMPLICIT NONE
     !
@@ -1324,6 +1325,8 @@ MODULE mod_sirius
     igcc   = xclib_get_id( 'GGA', 'CORR' )
     imeta  = xclib_get_id( 'MGGA','EXCH' )
     imetac = xclib_get_id( 'MGGA','CORR' )
+    WRITE(*,*)iexch,icorr,igcx,igcc,imeta,imetac
+    WRITE(*,*)trim(get_dft_name())
     !
     IF (imeta.NE.0.OR.imetac.NE.0) THEN
       STOP ("interface for meta-XC functional is not implemented")
@@ -1346,8 +1349,20 @@ MODULE mod_sirius
         CALL sirius_add_xc_functional(sctx, "XC_GGA_X_PW91")
       CASE(3)
         CALL sirius_add_xc_functional(sctx, "XC_GGA_X_PBE")
+      CASE(101)
+        CALL sirius_add_xc_functional(sctx, "XC_GGA_X_PBE")
       CASE(10)
         CALL sirius_add_xc_functional(sctx, "XC_GGA_X_PBE_SOL")
+      CASE default
+        WRITE(*,*)igcx
+        STOP ("interface for this gradient exchange functional is not implemented")
+      END SELECT
+    ENDIF
+    !
+    IF (iexch.EQ.0.AND.igcx.NE.0) THEN
+      SELECT CASE(igcx)
+      CASE(101)
+        CALL sirius_add_xc_functional(sctx, "XC_GGA_X_PBE")
       CASE default
         WRITE(*,*)igcx
         STOP ("interface for this gradient exchange functional is not implemented")
@@ -1373,8 +1388,19 @@ MODULE mod_sirius
         CALL sirius_add_xc_functional(sctx, "XC_GGA_C_PW91")
       CASE(4)
         CALL sirius_add_xc_functional(sctx, "XC_GGA_C_PBE")
+      CASE(130)
+        CALL sirius_add_xc_functional(sctx, "XC_GGA_C_PBE")
       CASE(8)
         CALL sirius_add_xc_functional(sctx, "XC_GGA_C_PBE_SOL")
+      CASE default
+        STOP ("interface for this gradient correlation functional is not implemented")
+      END SELECT
+    ENDIF
+    !
+    IF (icorr.EQ.0.AND.igcc.NE.0) THEN
+      SELECT CASE(igcc)
+      CASE(130)
+        CALL sirius_add_xc_functional(sctx, "XC_GGA_C_PBE")
       CASE default
         STOP ("interface for this gradient correlation functional is not implemented")
       END SELECT
