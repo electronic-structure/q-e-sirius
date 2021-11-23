@@ -145,6 +145,7 @@ CONTAINS
               ENDIF
               READ ( arg, *, ERR = 15, END = 15) ndiag_
               narg = narg + 1
+#if defined(__SIRIUS)
            CASE ( '-sirius_nlcg' )
               use_sirius_nlcg = .true.
            CASE ( '-sirius_scf' )
@@ -157,6 +158,7 @@ CONTAINS
               ENDIF
               IF ( TRIM (sirius_cfg) == ' ' ) GO TO 15
               narg = narg + 1
+#endif
            CASE ( '-nh', '-nhw', '-n_howmany', '-howmany')
               IF (read_string) THEN
                  CALL my_getarg ( input_command_line, narg, arg )

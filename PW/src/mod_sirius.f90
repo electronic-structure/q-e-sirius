@@ -682,7 +682,7 @@ MODULE mod_sirius
     ! create initial configuration dictionary in JSON
     WRITE(conf_str, 10)diago_david_ndim, mixing_beta, nmix
     10 FORMAT('{"parameters" : {"electronic_structure_method" : "pseudopotential", "use_scf_correction" : true}, &
-               &"iterative_solver" : {"residual_tolerance" : 1e-6, "subspace_size" : ',I4,'}, &
+               &"iterative_solver" : {"residual_tolerance" : 1e-6, "locking" : true, "subspace_size" : ',I4,'}, &
                &"mixer" : {"beta" : ', F12.6, ', "max_history" : ', I4, ', "use_hartree" : true},&
                &"settings" : {"itsol_tol_scale" : [0.1, 0.95]}}')
     ! set initial parameters
