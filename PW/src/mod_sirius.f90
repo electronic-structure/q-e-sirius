@@ -636,10 +636,9 @@ MODULE mod_sirius
     USE wvfct,                ONLY : nbnd
     USE parallel_include,     ONLY : MPI_IN_PLACE, MPI_INT, MPI_SUM
     USE input_parameters,     ONLY : diago_david_ndim
-    USE noncollin_module,     ONLY : noncolin, npol, angle1, angle2
+    USE noncollin_module,     ONLY : noncolin, npol, angle1, angle2, lspinorb
     USE lsda_mod,             ONLY : lsda, nspin, starting_magnetization
     USE symm_base,            ONLY : nosym, nsym
-    USE spin_orb,             ONLY : lspinorb
     USE ldaU,                 ONLY : lda_plus_U, Hubbard_J, Hubbard_U, Hubbard_alpha, &
                                    & Hubbard_beta, is_Hubbard, lda_plus_u_kind, &
                                    & Hubbard_J0, U_projection, Hubbard_l
@@ -1266,13 +1265,13 @@ MODULE mod_sirius
         DO ig = 1, ngk(ikloc)
           vgl(:,ig) = mill(:, igk_k(ig, ikloc))
         ENDDO
-        CALL sirius_get_wave_functions_v2( ks_handler, vkl=kpoints(:, ik1), spin=ispn, num_gvec_loc=ngk(ikloc), &
-                                         & gvec_loc=vgl(1, 1), evec=evc(1, 1), ld=npwx, num_spin_comp=npol )
+        CALL sirius_get_wave_functions( ks_handler, vkl=kpoints(:, ik1), spin=ispn, num_gvec_loc=ngk(ikloc), &
+                                      & gvec_loc=vgl(1, 1), evec=evc(1, 1), ld=npwx, num_spin_comp=npol )
         IF (nks > 1 .OR. lelfield) THEN
           CALL save_buffer ( evc, nwordwfc, iunwfc, ikloc )
         ENDIF
       ELSE
-        CALL sirius_get_wave_functions_v2( ks_handler )
+        CALL sirius_get_wave_functions( ks_handler )
       ENDIF
       !
       CALL mpi_barrier(inter_pool_comm, ierr)
