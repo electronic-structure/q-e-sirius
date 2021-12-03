@@ -1362,6 +1362,8 @@ MODULE mod_sirius
       SELECT CASE(igcx)
       CASE(101)
         CALL sirius_add_xc_functional(sctx, "XC_GGA_X_PBE")
+      CASE(109)
+        CALL sirius_add_xc_functional(sctx, "XC_GGA_X_PW91")
       CASE default
         WRITE(*,*)igcx
         STOP ("interface for this gradient exchange functional is not implemented")
@@ -1400,6 +1402,8 @@ MODULE mod_sirius
       SELECT CASE(igcc)
       CASE(130)
         CALL sirius_add_xc_functional(sctx, "XC_GGA_C_PBE")
+      CASE(134)
+        CALL sirius_add_xc_functional(sctx, "XC_GGA_C_PW91")
       CASE default
         STOP ("interface for this gradient correlation functional is not implemented")
       END SELECT
