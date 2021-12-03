@@ -14,7 +14,6 @@ SUBROUTINE set_vrs( vrs, vltot, vr, kedtau, kedtaur, nrxx, nspin, doublegrid )
   !
   USE kinds
   USE fft_base, ONLY : dffts 
-  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -35,11 +34,9 @@ SUBROUTINE set_vrs( vrs, vltot, vr, kedtau, kedtaur, nrxx, nspin, doublegrid )
   LOGICAL :: doublegrid
   ! input: true if a doublegrid is used
   !
-  CALL sirius_start_timer("qe|set_vrs")
   CALL sum_vrs( nrxx, nspin, vltot, vr, vrs )
   !
   CALL interpolate_vrs( nrxx, nspin, doublegrid, kedtau, kedtaur, vrs )
-  CALL sirius_stop_timer("qe|set_vrs")
   ! 
   RETURN
   !

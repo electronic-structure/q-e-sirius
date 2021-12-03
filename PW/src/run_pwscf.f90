@@ -40,12 +40,12 @@ SUBROUTINE run_pwscf( exit_status )
   USE upf_params,           ONLY : lmaxx
   USE cell_base,            ONLY : fix_volume, fix_area
   USE control_flags,        ONLY : conv_elec, gamma_only, ethr, lscf, treinit_gvecs
-  USE control_flags,        ONLY : conv_ions, istep, nstep, restart, lmd, lbfgs, lensemb
+  USE control_flags,        ONLY : conv_ions, istep, nstep, restart, lmd, lbfgs,&
+                                   lensemb, lforce=>tprnfor, tstress
   USE control_flags,        ONLY : io_level
   USE cellmd,               ONLY : lmovecell
   USE command_line_options, ONLY : command_line
-  USE force_mod,            ONLY : lforce, lstres, sigma, force
-  USE ions_base,            ONLY : if_pos
+  USE force_mod,            ONLY : sigma, force
   USE check_stop,           ONLY : check_stop_init, check_stop_now
   USE mp_images,            ONLY : intra_image_comm
   USE extrapolation,        ONLY : update_file, update_pot
@@ -64,7 +64,6 @@ SUBROUTINE run_pwscf( exit_status )
   USE mp_world,             ONLY : mpime
   USE dfunct,               ONLY : newd
   USE mod_sirius
-  USE mp_bands_util,        ONLY : evp_work_count, num_loc_op_applied
   USE ldaU,                 ONLY : lda_plus_u
   USE add_dmft_occ,         ONLY : dmft
   !
@@ -162,9 +161,6 @@ SUBROUTINE run_pwscf( exit_status )
      ELSE
         CALL electrons()
      END IF
-     WRITE(stdout, *)
-     WRITE(stdout,'("     evp_work_count     : ", I10)')int(evp_work_count)
-     WRITE(stdout,'("     num_loc_op_applied : ", I10)')num_loc_op_applied
      !
      ! ... code stopped by user or not converged
      !
@@ -187,14 +183,6 @@ SUBROUTINE run_pwscf( exit_status )
      ELSE
         CALL pw2casino( 0 )
      END IF
-
-     !IF (use_sirius) THEN
-     !   CALL put_density_to_sirius
-     !   IF (.NOT.use_sirius_density_matrix) THEN
-     !      CALL put_density_matrix_to_sirius
-     !   ENDIF
-     !ENDIF
-
      !
      ! ... ionic section starts here
      !
@@ -203,11 +191,11 @@ SUBROUTINE run_pwscf( exit_status )
      !
      ! ... force calculation
      !
-     IF ( lforce .AND. ANY( if_pos(:,:) == 1 )) CALL forces()
+     IF ( lforce ) CALL forces()
      !
      ! ... stress calculation
      !
-     IF ( lstres ) CALL stress( sigma )
+     IF ( tstress ) CALL stress( sigma )
      !
      IF ( lmd .OR. lbfgs ) THEN
         !
@@ -225,9 +213,11 @@ SUBROUTINE run_pwscf( exit_status )
         ! ... ionic step (for molecular dynamics or optimization)
         !
         CALL move_ions ( idone, ions_status, optimizer_failed )
+#if defined(__SIRIUS)
         IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
           CALL update_sirius
         ENDIF
+#endif
         conv_ions = ( ions_status == 0 ) .OR. &
                     ( ions_status == 1 .AND. treinit_gvecs )
         !
@@ -290,6 +280,7 @@ SUBROUTINE run_pwscf( exit_status )
               CALL reset_gvectors ( )
               !
            ELSE
+#if defined(__SIRIUS)
               IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
                  CALL sirius_start_timer("qe|update")
                  IF ( lmovecell ) THEN
@@ -307,6 +298,7 @@ SUBROUTINE run_pwscf( exit_status )
                  CALL sirius_initialize_subspace(gs_handler, ks_handler)
                  CALL sirius_stop_timer("qe|update")
               ELSE
+#endif
               !
               ! ... update the wavefunctions, charge density, potential
               ! ... update_pot initializes structure factor array as well
@@ -316,7 +308,9 @@ SUBROUTINE run_pwscf( exit_status )
               ! ... re-initialize atomic position-dependent quantities
               !
               CALL hinit1()
+#if defined(__SIRIUS)
               END IF
+#endif
               !
            END IF
            !
@@ -327,18 +321,16 @@ SUBROUTINE run_pwscf( exit_status )
      ! ... the first scf iteration of each ionic step (after the first)
      !
      ethr = 1.0D-6
+#if defined(__SIRIUS)
      IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
         ethr = 1.0D-2
      ENDIF
+#endif
      !
      CALL dev_buf%reinit( ierr )
-     IF ( ierr .ne. 0 ) CALL errore( 'run_pwscf', 'Cannot reset GPU buffers! Buffers still locked: ', abs(ierr) )
+     IF ( ierr .ne. 0 ) CALL infomsg( 'run_pwscf', 'Cannot reset GPU buffers! Some buffers still locked.' )
      !
   ENDDO main_loop
-  ! write basic results to a JSON file
-  IF (mpime.eq.0) THEN
-    CALL write_json()
-  endif
   !
   ! Set correct exit_status
   !
@@ -353,9 +345,7 @@ SUBROUTINE run_pwscf( exit_status )
   !
   CALL qexsd_set_status( exit_status )
   IF ( lensemb ) CALL beef_energies( )
-  CALL sirius_start_timer("qe|punch")
   IF ( io_level > -2 ) CALL punch( 'all' )
-  CALL sirius_stop_timer("qe|punch")
   !
   CALL qmmm_shutdown()
   !

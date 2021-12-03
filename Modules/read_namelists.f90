@@ -163,7 +163,7 @@ MODULE read_namelists_module
        ntyp   = 0
        nbnd   = 0
        tot_charge = 0.0_DP
-       tot_magnetization = -1
+       tot_magnetization = -10000
        ecutwfc = 0.0_DP
        ecutrho = 0.0_DP
        nr1  = 0
@@ -420,6 +420,7 @@ MODULE read_namelists_module
        passop  = 0.3_DP
        niter_cg_restart = 20
        etresh  = 1.E-6_DP
+       pre_state = .FALSE.
        !
        epol   = 3
        efield = 0.0_DP
@@ -456,10 +457,11 @@ MODULE read_namelists_module
      !
      !-----------------------------------------------------------------------
      SUBROUTINE nlcg_defaults( prog )
+             !
              IMPLICIT NONE
              !
              CHARACTER(LEN=2) :: prog ! .. specify the calling probram
-
+#if defined(__SIRIUS)
              nlcg_maxiter = 300
              nlcg_restart = 10
              nlcg_tau = 0.1_DP
@@ -468,7 +470,7 @@ MODULE read_namelists_module
              nlcg_tol = 1.0E-9_DP
              nlcg_smearing = 'FD'
              nlcg_processing_unit = 'none'
-
+#endif
              RETURN
      END SUBROUTINE
 
@@ -1094,6 +1096,7 @@ MODULE read_namelists_module
        CALL mp_bcast( etresh,  ionode_id, intra_image_comm )
        CALL mp_bcast( passop,  ionode_id, intra_image_comm )
        CALL mp_bcast( niter_cg_restart, ionode_id, intra_image_comm )
+       CALL mp_bcast( pre_state, ionode_id, intra_image_comm )
        !
        ! ... electric field
        !
@@ -1142,6 +1145,7 @@ MODULE read_namelists_module
        !
        IMPLICIT NONE
        !
+#if defined(__SIRIUS)
        CALL mp_bcast( nlcg_maxiter,          ionode_id, intra_image_comm )
        CALL mp_bcast( nlcg_restart,          ionode_id, intra_image_comm )
        CALL mp_bcast( nlcg_tau,              ionode_id, intra_image_comm )
@@ -1150,6 +1154,7 @@ MODULE read_namelists_module
        CALL mp_bcast( nlcg_tol,              ionode_id, intra_image_comm )
        CALL mp_bcast( nlcg_smearing,         ionode_id, intra_image_comm )
        CALL mp_bcast( nlcg_processing_unit,  ionode_id, intra_image_comm )
+#endif
        RETURN
        !
      END SUBROUTINE
@@ -1664,9 +1669,10 @@ MODULE read_namelists_module
      !-----------------------------------------------------------------------
      SUBROUTINE nlcg_checkin( prog )
        IMPLICIT NONE
+       CHARACTER(LEN=2)  :: prog   ! ... specify the calling program
+#if defined(__SIRIUS)
        LOGICAL :: allowed = .FALSE.
        CHARACTER(LEN=20) :: sub_name = ' nlcg_checkin '
-       CHARACTER(LEN=2)  :: prog   ! ... specify the calling program
        INTEGER           :: i
 
        DO i = 1, SIZE(nlcg_smearing_allowed)
@@ -1695,9 +1701,9 @@ MODULE read_namelists_module
          CALL errore(sub_name, 'nlcg_maxiter out of range', 1)
        IF ( nlcg_restart < 0 ) &
          CALL errore(sub_name, 'nlcg_restart out of range', 1)
+#endif
        RETURN
      END SUBROUTINE
-
      !
      !
      !-----------------------------------------------------------------------
@@ -2100,6 +2106,7 @@ MODULE read_namelists_module
        !
        ! ... NLCG namelist
        !
+#if defined(__SIRIUS)
        IF ( use_sirius_nlcg ) THEN
          ios = 0
          IF( ionode ) THEN
@@ -2110,7 +2117,7 @@ MODULE read_namelists_module
          CALL nlcg_bcast( )
          CALL nlcg_checkin( prog )
        END IF
-
+#endif
        !
        ! ... IONS namelist - must be read only if ionic motion is expected,
        ! ...                 or if code called by i-Pi via run_driver
@@ -2130,7 +2137,9 @@ MODULE read_namelists_module
              ! of the previous present section, in this case electrons
              REWIND( unit_loc )
              IF ( use_sirius_nlcg ) THEN
+#if defined(__SIRIUS)
                READ( unit_loc, nlcg, iostat = ios )
+#endif
              ELSE
                READ( unit_loc, electrons, iostat = ios )
              END IF

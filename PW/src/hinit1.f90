@@ -32,13 +32,10 @@ SUBROUTINE hinit1()
   USE paw_symmetry,        ONLY : paw_symmetrize_ddd
   USE dfunct,              ONLY : newd
   USE exx_base,            ONLY : coulomb_fac, coulomb_done
-  USE mod_sirius
   !
   USE scf_gpum,      ONLY : using_vrs
-  
   !
   IMPLICIT NONE
-  CALL sirius_start_timer("qe|hinit1")
   !
   ! these routines can be used to patch quantities that are dependent
   ! on the ions and cell parameters
@@ -99,8 +96,6 @@ SUBROUTINE hinit1()
   ! FIXME: array coulomb_fac may take a large amount of memory: worth it? 
   !
   IF ( ALLOCATED(coulomb_fac) ) DEALLOCATE (coulomb_fac, coulomb_done)
-  !
-  CALL sirius_stop_timer("qe|hinit1")
   !
   RETURN
   !

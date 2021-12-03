@@ -27,7 +27,6 @@ SUBROUTINE regterg(  h_psi, s_psi, uspp, g_psi, &
           nbgrp, my_bgrp_id, me_bgrp, root_bgrp
   USE mp_bands_util, ONLY : gstart
   USE mp,            ONLY : mp_sum, mp_bcast
-  USE mp_bands_util, ONLY : evp_work_count
   !
   IMPLICIT NONE
   !
@@ -210,7 +209,6 @@ SUBROUTINE regterg(  h_psi, s_psi, uspp, g_psi, &
      CALL start_clock( 'regterg:diag' )
      IF( my_bgrp_id == root_bgrp_id ) THEN
         CALL diaghg( nbase, nvec, hr, sr, nvecx, ew, vr, me_bgrp, root_bgrp, intra_bgrp_comm )
-        evp_work_count = evp_work_count + (1.d0 * nbase / nvec)**3
      END IF
      IF( nbgrp > 1 ) THEN
         CALL mp_bcast( vr, root_bgrp_id, inter_bgrp_comm )
@@ -372,7 +370,6 @@ SUBROUTINE regterg(  h_psi, s_psi, uspp, g_psi, &
      CALL start_clock( 'regterg:diag' )
      IF( my_bgrp_id == root_bgrp_id ) THEN
         CALL diaghg( nbase, nvec, hr, sr, nvecx, ew, vr, me_bgrp, root_bgrp, intra_bgrp_comm )
-        evp_work_count = evp_work_count + (1.d0 * nbase / nvec)**3
      END IF
      IF( nbgrp > 1 ) THEN
         CALL mp_bcast( vr, root_bgrp_id, inter_bgrp_comm )
@@ -523,7 +520,6 @@ SUBROUTINE pregterg(h_psi, s_psi, uspp, g_psi, &
   USE mp_bands_util,     ONLY : intra_bgrp_comm, inter_bgrp_comm, root_bgrp_id, nbgrp, my_bgrp_id
   USE mp_bands_util,     ONLY : gstart
   USE mp,                ONLY : mp_bcast, mp_root_sum, mp_sum
-  USE mp_bands_util, ONLY : evp_work_count
   !
   IMPLICIT NONE
   !
@@ -745,7 +741,6 @@ SUBROUTINE pregterg(h_psi, s_psi, uspp, g_psi, &
         ! only the first bgrp performs the diagonalization
         IF( my_bgrp_id == root_bgrp_id ) THEN
             CALL pdiaghg( nbase, hl, sl, nx, ew, vl, idesc )
-            evp_work_count = evp_work_count + (1.d0 * nbase / nvec)**3
         ENDIF
         IF( nbgrp > 1 ) THEN ! results must be brodcast to the other band groups
            CALL mp_bcast( vl, root_bgrp_id, inter_bgrp_comm )
@@ -753,7 +748,6 @@ SUBROUTINE pregterg(h_psi, s_psi, uspp, g_psi, &
         ENDIF
      ELSE
         CALL pdiaghg( nbase, hl, sl, nx, ew, vl, idesc )
-        evp_work_count = evp_work_count + (1.d0 * nbase / nvec)**3
      END IF
      CALL stop_clock( 'regterg:diag' )
      !
@@ -877,7 +871,6 @@ SUBROUTINE pregterg(h_psi, s_psi, uspp, g_psi, &
         ! only the first bgrp performs the diagonalization
         IF( my_bgrp_id == root_bgrp_id ) THEN
             CALL pdiaghg( nbase, hl, sl, nx, ew, vl, idesc )
-            evp_work_count = evp_work_count + (1.d0 * nbase / nvec)**3
         ENDIF
         IF( nbgrp > 1 ) THEN ! results must be brodcast to the other bnd groups
            CALL mp_bcast( vl, root_bgrp_id, inter_bgrp_comm )
@@ -885,7 +878,6 @@ SUBROUTINE pregterg(h_psi, s_psi, uspp, g_psi, &
         ENDIF
      ELSE
         CALL pdiaghg( nbase, hl, sl, nx, ew, vl, idesc )
-        evp_work_count = evp_work_count + (1.d0 * nbase / nvec)**3
      END IF
      CALL stop_clock( 'regterg:diag' )
      !

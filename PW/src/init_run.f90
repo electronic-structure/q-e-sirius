@@ -10,9 +10,11 @@ SUBROUTINE init_run()
   !----------------------------------------------------------------------------
   !
   USE klist,              ONLY : nkstot
+  USE start_k,            ONLY : nks_start, nk1, nk2, nk3, k1, k2, k3
   USE symme,              ONLY : sym_rho_init
   USE wvfct,              ONLY : nbnd, et, wg, btype
-  USE control_flags,      ONLY : lmd, gamma_only, smallmem, ts_vdw, mbd_vdw, io_level
+  USE control_flags,      ONLY : lmd, gamma_only, smallmem, ts_vdw, mbd_vdw, &
+                                 lforce => tprnfor, tstress
   USE gvect,              ONLY : g, gg, mill, gcutm, ig_l2g, ngm, ngm_g, &
                                  g_d, gg_d, mill_d, gshells, &
                                  gstart ! to be communicated to the Solvers if gamma_only
@@ -132,7 +134,7 @@ SUBROUTINE init_run()
      CALL set_h_ainv()
   END IF
   IF (mbd_vdw) THEN
-     CALL init_mbd()
+     CALL init_mbd( nks_start, nk1, nk2, nk3, k1, k2, k3, lforce, tstress )
   END IF
   !
   CALL allocate_wfc_k()
@@ -144,14 +146,14 @@ SUBROUTINE init_run()
   !
   CALL potinit()
   !
-  IF (use_sirius_scf.OR.always_setup_sirius) THEN
+#if defined(__SIRIUS)
+  IF (use_sirius_scf.OR.use_sirius_nlcg.OR.always_setup_sirius) THEN
     CALL clear_sirius
     CALL setup_sirius
-  ENDIF
-  !
-  IF (use_sirius_scf.OR.always_setup_sirius) THEN
     CALL sirius_initialize_kset(ks_handler)
+    CALL sirius_initialize_subspace(gs_handler, ks_handler)
   ENDIF
+#endif
   !
   IF ( use_gpu ) THEN
     !
@@ -163,12 +165,7 @@ SUBROUTINE init_run()
     !
     CALL newd()
     !
-    IF (sirius_pwpp.AND.(use_sirius_scf.OR.use_sirius_nlcg)) THEN
-      CALL sirius_initialize_subspace(gs_handler, ks_handler)
-      CALL open_buffer( iunwfc, 'wfc', nwordwfc, io_level, exst_mem, exst_file )
-    ELSE
     CALL wfcinit()
-    ENDIF
     !
   END IF
   !
@@ -176,9 +173,7 @@ SUBROUTINE init_run()
   !
 #if defined(__MPI)
   ! Cleanup PAW arrays that are only used for init
-  !IF (.NOT.(use_sirius_scf.OR.use_sirius_nlcg)) THEN
   IF (okpaw) CALL paw_post_init() ! only parallel!
-  !ENDIF
 #endif
   !
   IF ( lmd ) CALL allocate_dyn_vars()

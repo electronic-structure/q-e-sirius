@@ -73,6 +73,7 @@ SUBROUTINE stress( sigma )
   !
   CALL start_clock( 'stress' )
   !
+#if defined(__SIRIUS)
   IF (use_sirius_scf) THEN
     sigmakin = 0.d0
     sigmaloc = 0.d0
@@ -152,6 +153,7 @@ SUBROUTINE stress( sigma )
     ENDIF
 
   ELSE
+#endif
   !
   !   contribution from local potential
   !
@@ -275,7 +277,9 @@ SUBROUTINE stress( sigma )
   sigma_nonloc_dft(:,:) = 0.d0
   CALL stres_nonloc_dft( rho%of_r, rho_core, nspin, sigma_nonloc_dft )
   !
+#if defined(__SIRIUS)
   END IF ! use_sirius_scf
+#endif
   !
   ! SUM
   !

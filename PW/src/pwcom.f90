@@ -373,10 +373,6 @@ MODULE force_mod
   !! norm of the gradient (forces)
   REAL(DP) :: sigma(3,3)
   !! the stress acting on the system
-  LOGICAL :: lforce
-  !! if .TRUE. compute the forces
-  LOGICAL :: lstres
-  !! if .TRUE. compute the stress
   REAL(DP), ALLOCATABLE :: eigenval(:)
   !! eigenvalues of the overlap matrix
   COMPLEX(DP), ALLOCATABLE :: eigenvect(:,:)
@@ -466,23 +462,6 @@ MODULE fixed_occ
 END MODULE fixed_occ
 !
 !
-!
-MODULE spin_orb
-  !
-  !! Variables needed for calculations with spin-orbit
-  !
-  SAVE
-  LOGICAL :: lspinorb
-  !! if .TRUE. this calculation uses spin-orbit interactions
-  LOGICAL :: lforcet
-  !! if .TRUE. apply Force Theorem to calculate MAE
-  LOGICAL :: starting_spin_angle
-  !! if .TRUE. the initial wavefunctions are spin-angle functions.
-  !
-END MODULE spin_orb
-!
-!
-!
 MODULE pwcom
   !
   USE klist
@@ -494,6 +473,5 @@ MODULE pwcom
   USE relax
   USE cellmd
   USE fixed_occ
-  USE spin_orb
   !
 END MODULE pwcom

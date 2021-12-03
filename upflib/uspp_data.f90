@@ -40,8 +40,14 @@ MODULE uspp_data
   REAL(DP), ALLOCATABLE :: tab_d2y(:,:,:)
   !! for cubic splines
   !
+#if defined(__SIRIUS)
   REAL(DP), ALLOCATABLE :: beta_ri_tab(:,:,:)
+  !! radial integrals of beta projectors without unit-cell volume (Omega) factor
+  !
   REAL(DP), ALLOCATABLE :: aug_ri_tab(:,:,:,:)
+  !! radial integrals of augmentation charge without unit-cell volume (Omega) factor
+  !
+#endif
   ! GPUs vars
   !
   REAL(DP), ALLOCATABLE :: qrad_d(:,:,:,:)

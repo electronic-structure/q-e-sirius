@@ -427,15 +427,15 @@ SUBROUTINE electrons_scf ( printout, exxen )
   USE fcp_module,           ONLY : lfcp, fcp_mu
   USE gcscf_module,         ONLY : lgcscf, gcscf_mu, gcscf_ignore_mun, gcscf_set_nelec
   USE clib_wrappers,        ONLY : memstat
-  USE iso_c_binding,        ONLY : c_int
   !
   USE plugin_variables,     ONLY : plugin_etot
   USE libmbd_interface,     ONLY : EmbdvdW
-  USE mod_sirius
   USE input_parameters,     ONLY : diago_thr_init
-  USE mp_bands_util, ONLY : evp_work_count, num_loc_op_applied
+#if defined(__SIRIUS)
+  USE mod_sirius
   USE input_parameters,     ONLY : nlcg_T, nlcg_tau, nlcg_tol, nlcg_kappa, nlcg_maxiter,&
                                  & nlcg_restart, nlcg_smearing, nlcg_processing_unit
+#endif
   USE add_dmft_occ,         ONLY : dmft, dmft_update, v_dmft, dmft_updated
   !
   USE wvfct_gpum,           ONLY : using_et
@@ -516,6 +516,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
   CALL memstat( kilobytes )
   IF ( kilobytes > 0 ) WRITE( stdout, 9001 ) kilobytes/1000.0
   !
+#if defined(__SIRIUS)
   IF (use_sirius_scf) THEN
     WRITE(*,*)''
     WRITE(*,*)'============================'
@@ -532,7 +533,9 @@ SUBROUTINE electrons_scf ( printout, exxen )
     CALL start_clock( 'electrons' )
     CALL sirius_set_parameters(sctx, iter_solver_tol=ethr)
     ! look only for the convergence of the density; converge total energy only to 10^-4
-    CALL sirius_find_ground_state(gs_handler, density_tol=sqrt(tr2), energy_tol=1d-4, niter=niter, save_state=.false.)
+    !CALL sirius_find_ground_state(gs_handler, density_tol=sqrt(tr2), energy_tol=1d-4, niter=niter, save_state=.false.)
+    CALL sirius_find_ground_state(gs_handler, density_tol=tr2, energy_tol=1d-4, max_niter=niter, save_state=.false., &
+                                 &converged=conv_elec, niter=iter)
     CALL stop_clock( 'electrons' )
 
     CALL sirius_get_energy(gs_handler, "descf", descf)
@@ -605,9 +608,9 @@ SUBROUTINE electrons_scf ( printout, exxen )
     IF ( lsda .OR. noncolin ) CALL compute_magnetization()
     CALL print_energies ( printout )
 
-    conv_elec = .TRUE.
-
-    WRITE( stdout, 9110 ) 1
+    IF (conv_elec) THEN
+      WRITE( stdout, 9110 ) iter
+    END IF
   END IF
   !
   IF (use_sirius_nlcg) THEN
@@ -624,8 +627,6 @@ SUBROUTINE electrons_scf ( printout, exxen )
   END IF
   !
   IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
-    CALL sirius_get_parameters(sctx, evp_work_count=evp_work_count)
-    CALL sirius_get_parameters(sctx, num_loc_op_applied=num_loc_op_applied)
     CALL get_band_occupancies_from_sirius()
     CALL get_band_energies_from_sirius()
     IF (sirius_pwpp) THEN
@@ -636,6 +637,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
     END IF
     RETURN
   END IF
+#endif
   !
   CALL start_clock( 'electrons' )
   !
@@ -887,7 +889,6 @@ SUBROUTINE electrons_scf ( printout, exxen )
         ! ... The mixing is done on pool 0 only (image parallelization
         ! ... inside mix_rho => rho_ddot => PAW_ddot is no longer there)
         !
-        CALL sirius_start_timer("qe|mix")
         IF ( my_pool_id == root_pool ) CALL mix_rho( rho, rhoin, &
                 mixing_beta, dr2, tr2_min, iter, nmix, iunmix, conv_elec )
         !
@@ -912,7 +913,6 @@ SUBROUTINE electrons_scf ( printout, exxen )
         CALL bcast_scf_type( rhoin, root_pool, inter_pool_comm )
         CALL mp_bcast( dr2, root_pool, inter_pool_comm )
         CALL mp_bcast( conv_elec, root_pool, inter_pool_comm )
-        CALL sirius_stop_timer("qe|mix")
         !
         !
         IF (.NOT. scf_must_converge .AND. idum == niter) conv_elec = .TRUE.

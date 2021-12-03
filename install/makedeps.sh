@@ -4,6 +4,8 @@
 # make sure there is no locale setting creating unneeded differences.
 LC_ALL=C
 export LC_ALL
+# ensure that command echo understands escape characters
+if test "`echo -e`" = "-e" ; then ECHO=echo ; else ECHO="echo -e" ; fi
 
 # run from directory where this script is
 cd `echo $0 | sed 's/\(.*\)\/.*/\1/'` # extract pathname
@@ -21,9 +23,9 @@ then
 	   KS_Solvers/PPCG KS_Solvers/ParO  KS_Solvers/DENSE  KS_Solvers/RMM \
            upflib XClib Modules LR_Modules PW/src CPV/src PW/tools PP/src PWCOND/src \
            PHonon/Gamma PHonon/PH PHonon/FD HP/src atomic/src \
-           EPW/src XSpectra/src ACFDT/src NEB/src TDDFPT/src \
+           EPW/src XSpectra/src NEB/src TDDFPT/src \
            GWW/pw4gww GWW/gww GWW/head GWW/bse GWW/simple \
-	   GWW/simple_bse GWW/simple_ip QEHeat/src " 
+	   GWW/simple_bse GWW/simple_ip QEHeat/src ACFDT/src " 
           
 elif
     test $1 = "-addson" 
@@ -105,7 +107,7 @@ for dir in $dirs; do
 
     # list of all system modules
     sysdeps="iso_c_binding iso_fortran_env f90_unix_io f90_unix_env \
-             f90_unix_proc ifcore ifport"
+             f90_unix_proc ifcore ifport git-rev.h"
 
     # list of all external library modules or include files
     libdeps="mpi omp_lib hdf5 mkl_dfti mkl_dfti.f90 fftw3.f03 fftw3.f \
@@ -152,18 +154,18 @@ EOF
         if test "$missing" != "";
         then
 	   notfound=1
-	   echo "\nWARNING! dependencies not found in directory $DIR:"
+	   $ECHO "\nWARNING! dependencies not found in directory $DIR:"
 	   grep @ make.depend
-	   echo "File $DIR/make.depend is broken"
+	   $ECHO "File $DIR/make.depend is broken"
        else
-           echo -n "\rdirectory $DIR : ok"
+           $ECHO -n "\rdirectory $DIR : ok"
        fi
     else
-       echo "\ndirectory $DIR : not present in $TOPDIR" 
+       $ECHO "\ndirectory $DIR : not present in $TOPDIR" 
     fi
 done
 if test "$notfound" = ""
 then
-    echo "\nall dependencies updated successfully"
+    $ECHO "\nall dependencies updated successfully"
 fi
 

@@ -35,7 +35,6 @@ SUBROUTINE setlocal
   USE esm,               ONLY : esm_local, esm_bc, do_comp_esm
   USE qmmm,              ONLY : qmmm_add_esf
   USE Coul_cut_2D,       ONLY : do_cutoff_2D, cutoff_local 
-  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -45,7 +44,6 @@ SUBROUTINE setlocal
   ! counter on atom types
   ! counter on g vectors
   !
-  CALL sirius_start_timer("qe|setlocal")
   ALLOCATE( aux(dfftp%nnr) )
   aux(:) = (0.d0,0.d0)
   !
@@ -121,7 +119,6 @@ SUBROUTINE setlocal
   DEALLOCATE( aux )
   !
   !
-  CALL sirius_stop_timer("qe|setlocal")
   RETURN
   !
 END SUBROUTINE setlocal

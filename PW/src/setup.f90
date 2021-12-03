@@ -80,10 +80,9 @@ SUBROUTINE setup()
   USE mp,                 ONLY : mp_bcast
   USE lsda_mod,           ONLY : lsda, nspin, current_spin, isk, &
                                  starting_magnetization
-  USE spin_orb,           ONLY : lspinorb
   USE noncollin_module,   ONLY : noncolin, domag, npol, i_cons, m_loc, &
                                  angle1, angle2, bfield, ux, nspin_lsda, &
-                                 nspin_gga, nspin_mag
+                                 nspin_gga, nspin_mag, lspinorb
   USE qexsd_module,       ONLY : qexsd_readschema
   USE qexsd_copy,         ONLY : qexsd_copy_efermi
   USE qes_libs_module,    ONLY : qes_reset
@@ -97,13 +96,16 @@ SUBROUTINE setup()
   USE gcscf_module,       ONLY : lgcscf
   USE extfield,           ONLY : gate
   USE additional_kpoints, ONLY : add_additional_kpoints
-  USE mod_sirius
+#if defined(__SIRIUS)
+  USE mod_sirius,         ONLY : num_kpoints, kpoints, wkpoints, invert_mtrx
+#endif
   !
   IMPLICIT NONE
   !
   INTEGER  :: na, is, ierr, ibnd, ik, nrot_
   LOGICAL  :: magnetic_sym, skip_equivalence=.FALSE.
   REAL(DP) :: iocc, ionic_charge, one
+  REAL(DP) :: bg_inv(3, 3)
   !
   LOGICAL, EXTERNAL  :: check_gpu_support
   !
@@ -114,8 +116,6 @@ SUBROUTINE setup()
 #else
   LOGICAL :: lpara = .false.
 #endif
-  CALL sirius_start_timer("qe|setup")
-
   !
   ! ... okvan/okpaw = .TRUE. : at least one pseudopotential is US/PAW
   !
@@ -689,9 +689,6 @@ SUBROUTINE setup()
   ! ... set linear-lagebra diagonalization
   !
   CALL set_para_diag( nbnd, use_para_diag )
-  !
-  CALL sirius_stop_timer("qe|setup")
-  !
   !
   RETURN
   !

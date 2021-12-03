@@ -32,7 +32,6 @@ MODULE input_parameters
   USE parameters, ONLY : nsx, natx, sc_size
   USE wannier_new,ONLY : wannier_data
   USE upf_params, ONLY : lqmax
-  USE iso_c_binding, ONLY : c_char
   !
   IMPLICIT NONE
   !
@@ -275,7 +274,6 @@ MODULE input_parameters
         !! \(\text{large}\): QE tries to use (when implemented) algorithms using more memory
         !! to enhance performance.
         DATA memory_allowed / 'small', 'default', 'large' /
-          
 
         !
         CHARACTER(len=256) :: input_xml_schema_file = ' '
@@ -328,8 +326,8 @@ MODULE input_parameters
         REAL(DP):: tot_charge = 0.0_DP
         !! total system charge
 
-        REAL(DP) :: tot_magnetization = -1.0_DP
-        !! majority - minority spin. A value < 0 means unspecified
+        REAL(DP) :: tot_magnetization = -10000.0_DP
+        !! majority - minority spin. A value = -10000 means unspecified
 
         REAL(DP) :: ecutwfc = 0.0_DP
         !! energy cutoff for wave functions in k-space ( in Rydberg ).
@@ -950,6 +948,10 @@ MODULE input_parameters
         LOGICAL :: tcg = .true.
         !! if TRUE perform in cpv conjugate gradient minimization of electron energy
 
+        LOGICAL :: pre_state = .false.
+        !! if TRUE, in CP's conjugate gradient routine, precondition each band
+        !! with its kinetic energy (see CPV/src/cg_sub.f90)
+
         INTEGER :: maxiter = 100
         !! max number of conjugate gradient iterations
 
@@ -1042,14 +1044,9 @@ MODULE input_parameters
           occupation_constraints, niter_cg_restart,                    &
           niter_cold_restart, lambda_cold, efield_cart, real_space,    &
           tcpbo,emass_emin, emass_cutoff_emin, electron_damping_emin,  &
-          dt_emin, efield_phase
+          dt_emin, efield_phase, pre_state
 
-!
-!=----------------------------------------------------------------------------=!
-!  SIRIUS Namelist Input Parameters
-!=----------------------------------------------------------------------------=!
-
-
+#if defined(__SIRIUS)
 !
 !=----------------------------------------------------------------------------=!
 !  NLCG Namelist Input Parameters
@@ -1060,16 +1057,16 @@ MODULE input_parameters
         REAL(DP)          :: nlcg_T
         REAL(DP)          :: nlcg_kappa
         REAL(DP)          :: nlcg_tol
-        CHARACTER(len=80, kind=C_CHAR) :: nlcg_smearing
+        CHARACTER(len=80) :: nlcg_smearing
         CHARACTER(len=80) :: nlcg_smearing_allowed(2)
         DATA nlcg_smearing_allowed / 'FD', 'GS' /
-        CHARACTER(len=80, kind=C_CHAR) :: nlcg_processing_unit = 'none'
+        CHARACTER(len=80) :: nlcg_processing_unit = 'none'
         CHARACTER(len=80) :: nlcg_processing_unit_allowed(3)
         DATA nlcg_processing_unit_allowed / 'none', 'cpu', 'gpu' /
 
         NAMELIST / nlcg / nlcg_maxiter, nlcg_restart, nlcg_tau, nlcg_T, nlcg_kappa, &
           nlcg_tol, nlcg_smearing, nlcg_processing_unit
-
+#endif
 !
 !=----------------------------------------------------------------------------=!
 !  IONS Namelist Input Parameters
