@@ -46,7 +46,6 @@ SUBROUTINE run_pwscf( exit_status )
   USE cellmd,               ONLY : lmovecell
   USE command_line_options, ONLY : command_line
   USE force_mod,            ONLY : sigma, force
-  USE ions_base,            ONLY : if_pos
   USE check_stop,           ONLY : check_stop_init, check_stop_now
   USE mp_images,            ONLY : intra_image_comm
   USE extrapolation,        ONLY : update_file, update_pot
@@ -192,7 +191,7 @@ SUBROUTINE run_pwscf( exit_status )
      !
      ! ... force calculation
      !
-     IF ( lforce .AND. ANY( if_pos(:,:) == 1 )) CALL forces()
+     IF ( lforce ) CALL forces()
      !
      ! ... stress calculation
      !
@@ -329,7 +328,7 @@ SUBROUTINE run_pwscf( exit_status )
 #endif
      !
      CALL dev_buf%reinit( ierr )
-     IF ( ierr .ne. 0 ) CALL errore( 'run_pwscf', 'Cannot reset GPU buffers! Buffers still locked: ', abs(ierr) )
+     IF ( ierr .ne. 0 ) CALL infomsg( 'run_pwscf', 'Cannot reset GPU buffers! Some buffers still locked.' )
      !
   ENDDO main_loop
   !

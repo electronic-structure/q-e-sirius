@@ -159,7 +159,7 @@ SUBROUTINE v_xc_meta( rho, rho_core, rhog_core, etxc, vtxc, v, kedtaur )
   USE cell_base,        ONLY : omega
   USE funct,            ONLY : dft_is_nonlocc, nlc
   USE scf,              ONLY : scf_type
-  USE xc_lib,           ONLY : xc_metagcx
+  USE xc_lib,           ONLY : xc_metagcx, xclib_get_ID
   USE mp,               ONLY : mp_sum
   USE mp_bands,         ONLY : intra_bgrp_comm
   USE control_flags,    ONLY : use_gpu
@@ -184,9 +184,11 @@ SUBROUTINE v_xc_meta( rho, rho_core, rhog_core, etxc, vtxc, v, kedtaur )
   ! ... local variables
   !
   REAL(DP) :: zeta, rh, sgn_is
+  REAL(DP) :: etxc0, vtxc0
   INTEGER  :: k, ipol, is, np
+  LOGICAL  :: lda_gga_terms
   !
-  REAL(DP), ALLOCATABLE :: ex(:), ec(:)
+  REAL(DP), ALLOCATABLE :: ex(:), ec(:), v0(:,:)
   REAL(DP), ALLOCATABLE :: v1x(:,:), v2x(:,:), v3x(:,:)
   REAL(DP), ALLOCATABLE :: v1c(:,:), v2c(:,:,:), v3c(:,:)
   !
@@ -256,11 +258,8 @@ SUBROUTINE v_xc_meta( rho, rho_core, rhog_core, etxc, vtxc, v, kedtaur )
   !$acc data create( ex, ec, v1x, v2x, v3x, v1c, v2c, v3c )
   IF (nspin == 1) THEN
     !
-    !$acc host_data use_device( rho%of_r, grho, tau, ex, ec, &
-    !$acc&                      v1x, v2x, v3x, v1c, v2c, v3c )
     CALL xc_metagcx( dfftp%nnr, 1, np, rho%of_r, grho, tau, ex, ec, &
                      v1x, v2x, v3x, v1c, v2c, v3c, gpu_args_=.TRUE. )
-    !$acc end host_data
     !
     !$acc parallel loop reduction(+:etxc) reduction(+:vtxc) reduction(-:rhoneg1) &
     !$acc&              reduction(-:rhoneg2) present(rho)
@@ -293,11 +292,8 @@ SUBROUTINE v_xc_meta( rho, rho_core, rhog_core, etxc, vtxc, v, kedtaur )
         rho_updw(k,2) = ( rho%of_r(k,1) - rho%of_r(k,2) ) * 0.5d0
     ENDDO
     !
-    !$acc host_data use_device( rho_updw, grho, tau, ex, ec, &
-    !$acc&                      v1x, v2x, v3x, v1c, v2c, v3c )
     CALL xc_metagcx( dfftp%nnr, 2, np, rho_updw, grho, tau, ex, ec, &
                      v1x, v2x, v3x, v1c, v2c, v3c, gpu_args_=.TRUE. )
-    !$acc end host_data
     !
     ! ... first term of the gradient correction : D(rho*Exc)/D(rho)
     !
@@ -384,6 +380,24 @@ SUBROUTINE v_xc_meta( rho, rho_core, rhog_core, etxc, vtxc, v, kedtaur )
   CALL mp_sum(  vtxc , intra_bgrp_comm )
   CALL mp_sum(  etxc , intra_bgrp_comm )
   !
+  !
+  ! ... calculate and add LDA+GGA terms separately, if needed (not standard)
+  !
+  lda_gga_terms = (xclib_get_ID('LDA','EXCH') + xclib_get_ID('LDA','CORR') + &
+                   xclib_get_ID('GGA','EXCH') + xclib_get_ID('GGA','CORR')) /= 0  
+  !
+  IF ( lda_gga_terms ) THEN
+    ALLOCATE(v0(dfftp%nnr,nspin))
+    !
+    CALL v_xc( rho, rho_core, rhog_core, etxc0, vtxc0, v0 )
+    !
+    etxc = etxc + etxc0
+    vtxc = vtxc + vtxc0
+    v = v + v0
+    !
+    DEALLOCATE(v0)
+  ENDIF
+  !
   DEALLOCATE( tau, grho )
   DEALLOCATE( h )
   !
@@ -461,9 +475,6 @@ SUBROUTINE v_xc( rho, rho_core, rhog_core, etxc, vtxc, v )
   ALLOCATE( ex(dfftp%nnr), vx(dfftp%nnr,nspin) )
   ALLOCATE( ec(dfftp%nnr), vc(dfftp%nnr,nspin) )
   !$acc data create( ex, ec, vx, vc )
-  !
-  !$acc host_data use_device( rho%of_r, rho%of_g, rho_core, rhog_core, v,&
-  !$acc&                      ex, ec, vx, vc )
   !
   !$acc parallel loop
   DO ir = 1, dfftp%nnr
@@ -545,7 +556,6 @@ SUBROUTINE v_xc( rho, rho_core, rhog_core, etxc, vtxc, v )
       !
   ENDIF
   !
-  !$acc end host_data
   !$acc end data
   DEALLOCATE( ex, vx )
   DEALLOCATE( ec, vc )
@@ -566,9 +576,7 @@ SUBROUTINE v_xc( rho, rho_core, rhog_core, etxc, vtxc, v )
   !
   ! ... add gradient corrections (if any)
   !
-  !$acc host_data use_device( rho%of_r, rho%of_g, rho_core, rhog_core, v )
   CALL gradcorr( rho%of_r, rho%of_g, rho_core, rhog_core, etxc, vtxc, v )
-  !$acc end host_data
   !
   !$acc end data
   !$acc end data
