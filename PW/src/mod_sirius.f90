@@ -976,9 +976,9 @@ MODULE mod_sirius
       WRITE(*,*)
     ENDIF
     !
-    IF (mpime.eq.0) THEN
-      CALL sirius_dump_runtime_setup(sctx, "setup.json")
-    ENDIF
+    !IF (mpime.eq.0) THEN
+    !  CALL sirius_dump_runtime_setup(sctx, "setup.json")
+    !ENDIF
     !
     ! get number of g-vectors of the dense fft grid
     CALL sirius_get_num_gvec(sctx, num_gvec)
