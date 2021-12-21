@@ -441,6 +441,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
   USE wvfct_gpum,           ONLY : using_et
   USE scf_gpum,             ONLY : using_vrs
   USE device_fbuff_m,       ONLY : dev_buf, pin_buf
+  USE pwcom,                ONLY : report_mag 
   !
   IMPLICIT NONE
   !
@@ -1036,7 +1037,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
      IF ( report > 0 ) THEN
         IF ( conv_elec .OR.  MOD(iter,report) == 0 ) CALL report_mag()
      ELSE IF ( report < 0 ) THEN
-        IF ( conv_elec ) CALL report_mag()
+        IF ( conv_elec ) CALL report_mag(SAVE_LOCALS=.TRUE.)
      END IF
      !
      WRITE( stdout, 9000 ) get_clock( 'PWSCF' )
