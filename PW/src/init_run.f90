@@ -38,7 +38,7 @@ SUBROUTINE init_run()
   USE Coul_cut_2D,        ONLY : do_cutoff_2D, cutoff_fact 
   USE lsda_mod,           ONLY : nspin
   USE noncollin_module,   ONLY : domag
-  USE xc_lib,             ONLY : xclib_dft_is_libxc, xclib_init_libxc
+  USE xc_lib,             ONLY : xclib_dft_is_libxc, xclib_init_libxc, xclib_dft_is 
   USE buffers,            ONLY : open_buffer
   USE io_files,           ONLY : iunwfc, nwordwfc
   USE mod_sirius
@@ -141,6 +141,8 @@ SUBROUTINE init_run()
   CALL openfil()
   !
   IF (xclib_dft_is_libxc('ANY')) CALL xclib_init_libxc( nspin, domag )
+  !
+  IF (xclib_dft_is('hybrid')) CALL aceinit0()
   !
   CALL hinit0()
   !
