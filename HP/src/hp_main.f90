@@ -24,6 +24,7 @@ PROGRAM hp_main
   USE ldaU_hp,           ONLY : perturbed_atom, start_q, last_q, nqs, code, &
                                 compute_hp, sum_pertq, perturb_only_atom,   &
                                 determine_num_pert_only, tmp_dir_save
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -47,6 +48,9 @@ PROGRAM hp_main
   ! Read the input parameters and the data produced by PWscf
   !
   CALL hp_readin()
+#if defined(__SIRIUS)
+  CALL setup_sirius
+#endif
   !
   ! Initialization
   !

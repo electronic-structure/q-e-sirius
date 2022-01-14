@@ -213,6 +213,13 @@ SUBROUTINE hp_solve_linear_system (na, iq)
         ! it decreases with iterations.
         thresh = MIN (1.D-1 * SQRT(dr2), 1.D-2)
      ENDIF
+#if defined(__SIRIUS)
+    ! we need the following quantities
+    ! 1) k and q points in reciprocal lattice coordinates
+    ! 2) G-vector miller indices for k and k+q points (they define the order:wA
+    ! 3) left-hand side of linear equation
+    ! 4) right-hand side of linear equation
+#endif
      !
      ! Compute drhoscf, the charge density response to the total potential
      !
