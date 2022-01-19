@@ -49,7 +49,9 @@ PROGRAM hp_main
   !
   CALL hp_readin()
 #if defined(__SIRIUS)
-  CALL setup_sirius
+  CALL setup_sirius()
+  CALL put_potential_to_sirius()
+  CALL sirius_generate_d_operator_matrix(gs_handler)
 #endif
   !
   ! Initialization
