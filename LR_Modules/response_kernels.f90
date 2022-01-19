@@ -77,6 +77,9 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
    USE qpoint_aux,            ONLY : ikmks, ikmkmqs, becpt
    USE eqv,                   ONLY : dpsi, dvpsi, evq
    USE apply_dpot_mod,        ONLY : apply_dpot_bands
+   USE cell_base,             ONLY : at
+   USE gvect,                 ONLY : mill
+   USE mod_sirius
    !
    IMPLICIT NONE
    !
@@ -111,7 +114,7 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
    !! true if linear system is converged
    LOGICAL :: exclude_hubbard_
    !! Local variable to set the default of exclude_hubbard to false
-   INTEGER :: ikk, ikq, npw, npwq, ipert, num_iter, ik, nrec, ikmk, ikmkmq
+   INTEGER :: ikk, ikq, npw, npwq, ipert, num_iter, ik, nrec, ikmk, ikmkmq, ig
    !! counters
    INTEGER :: tot_num_iter
    !! total number of iterations in cgsolve_all
@@ -125,6 +128,7 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
    !! diagonal part of the Hamiltonian, used for preconditioning
    COMPLEX(DP) , ALLOCATABLE :: aux2(:, :)
    !! temporary storage used in apply_dpot_bands
+   INTEGER, ALLOCATABLE :: vg_k(:,:), vg_kq(:,:)
    !
    EXTERNAL ch_psi_all, cg_psi
    !! functions passed to cgsolve_all
@@ -243,6 +247,33 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
          conv_root = .TRUE.
          !
          ! TODO: should nbnd_occ(ikk) be nbnd_occ(ikmk)?
+#if defined(__SIRIUS)
+         WRITE(*,*)'vk=',MATMUL(TRANSPOSE(at), xk(:,ikk))
+         WRITE(*,*)'vq=',MATMUL(TRANSPOSE(at), xk(:,ikq))
+         ALLOCATE(vg_k(3,ngk(ikk)))
+         ALLOCATE(vg_kq(3,ngk(ikq)))
+
+         DO ig = 1, npw
+           vg_k(:,ig) = mill(:, igk_k(ig, ikk))
+         ENDDO
+         DO ig = 1, npwq
+           vg_kq(:,ig) = mill(:, igk_k(ig, ikq))
+         ENDDO
+        !
+        ! dvpsi == d0psi  <-- right-hand side (in, destroyed on exit)
+        ! dpsi   <-- left-hand side (in/out)
+        !
+        !ALLOCATE (dvpsi(npwx*npol,nbnd))
+        !ALLOCATE (dpsi(npwx*npol,nbnd))
+        !
+         CALL sirius_linear_solver( sctx, vk=MATMUL(TRANSPOSE(at), xk(:,ikk)), &
+            &vkq=MATMUL(TRANSPOSE(at), xk(:,ikq)), num_gvec_k_loc=npw, gvec_k_loc=vg_k(:,:),&
+            &num_gvec_kq_loc=npwq, gvec_kq_loc=vg_kq(:,:), dpsi=dpsi(1,1),&
+            &dvpsi=dvpsi(1,1), ld=npwx, num_spin_comp=npol)
+
+         DEALLOCATE(vg_k)
+         DEALLOCATE(vg_kq)
+#endif
          CALL cgsolve_all(ch_psi_all, cg_psi, et(1, ikmk), dvpsi, dpsi, h_diag, &
             npwx, npwq, thresh, ik, num_iter, conv_root, anorm, nbnd_occ(ikk), npol)
          !
