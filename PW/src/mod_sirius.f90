@@ -647,7 +647,7 @@ MODULE mod_sirius
     !
     IMPLICIT NONE
     !
-    INTEGER :: dims(3), i, ia, iat, rank, ierr, ijv, j, l,&
+    INTEGER :: dims(3), i, ia, iat, rank, ierr, ijv, j, l, s, &
              & ilast, ir, num_gvec, num_ranks_k, iwf, nmagd
     REAL(8) :: a1(3), a2(3), a3(3), vlat(3, 3), vlat_inv(3, 3), v1(3), v2(3)
     REAL(8), ALLOCATABLE :: dion(:, :), vloc(:)
@@ -680,10 +680,11 @@ MODULE mod_sirius
     CALL sirius_create_context(intra_image_comm, sctx, fcomm_k=inter_pool_comm, fcomm_band=intra_pool_comm)
     ! create initial configuration dictionary in JSON
     WRITE(conf_str, 10)diago_david_ndim, mixing_beta, nmix
-    10 FORMAT('{"parameters" : {"electronic_structure_method" : "pseudopotential", "use_scf_correction" : true}, &
+    10 FORMAT('{"parameters"       : {"electronic_structure_method" : "pseudopotential", "use_scf_correction" : true}, &
                &"iterative_solver" : {"residual_tolerance" : 1e-6, "locking" : true, "subspace_size" : ',I4,'}, &
-               &"mixer" : {"beta" : ', F12.6, ', "max_history" : ', I4, ', "use_hartree" : true},&
-               &"settings" : {"itsol_tol_scale" : [0.1, 0.95]}}')
+               &"mixer"            : {"beta" : ', F12.6, ', "max_history" : ', I4, ', "use_hartree" : true},&
+               &"settings"         : {"itsol_tol_scale" : [0.1, 0.95]},&
+               &"control"          : {"print_checksum" : false}}')
     ! set initial parameters
     CALL sirius_import_parameters(sctx, conf_str)
     ! set default verbosity
@@ -817,9 +818,12 @@ MODULE mod_sirius
         ! set the atomic radial functions
         DO iwf = 1, upf(iat)%nwfc
           l = upf(iat)%lchi(iwf)
+          s = 0
           IF (upf(iat)%has_so) THEN
             IF (upf(iat)%jchi(iwf) < l) THEN
-              l = -l
+              s = -1
+            ELSE
+              s = 1
             ENDIF
           ENDIF
           IF (ALLOCATED(upf(iat)%nchi)) THEN
@@ -828,7 +832,7 @@ MODULE mod_sirius
             i = -1
           ENDIF
           CALL sirius_add_atom_type_radial_function(sctx, TRIM(atom_type(iat)%label), "ps_atomic_wf", &
-               & upf(iat)%chi(1:msh(iat), iwf), msh(iat), l=l, occ=upf(iat)%oc(iwf), n=i)
+               & upf(iat)%chi(1:msh(iat), iwf), msh(iat), l=l, s=s, occ=upf(iat)%oc(iwf), n=i)
         ENDDO
 
         IF (is_hubbard(iat)) THEN
