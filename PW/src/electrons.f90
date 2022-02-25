@@ -466,7 +466,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
   USE input_parameters,     ONLY : diago_thr_init
 #if defined(__SIRIUS)
   USE mod_sirius
-  USE input_parameters,     ONLY : nlcg_T, nlcg_tau, nlcg_tol, nlcg_kappa, nlcg_maxiter,&
+  USE input_parameters,     ONLY : nlcg_T, nlcg_bt_step_length, nlcg_conv_thr, nlcg_pseudo_precond, nlcg_maxiter,&
                                  & nlcg_restart, nlcg_smearing, nlcg_processing_unit
 #endif
   USE add_dmft_occ,         ONLY : dmft, dmft_update, v_dmft, dmft_updated
@@ -595,7 +595,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
 
             !CALL insert_xc_functional_to_sirius
             CALL sirius_nlcg_params(gs_handler, ks_handler, nlcg_T, TRIM(ADJUSTL(nlcg_smearing))&
-                    &, nlcg_kappa, nlcg_tau, nlcg_tol, nlcg_maxiter, nlcg_restart,&
+                    &, nlcg_pseudo_precond, nlcg_bt_step_length, nlcg_conv_thr, nlcg_maxiter, nlcg_restart,&
                     & TRIM(ADJUSTL(nlcg_processing_unit)))
             conv_elec = .TRUE.
     END IF

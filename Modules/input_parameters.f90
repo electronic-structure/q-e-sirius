@@ -32,6 +32,7 @@ MODULE input_parameters
   USE parameters, ONLY : nsx, natx, sc_size, nsolx
   USE wannier_new,ONLY : wannier_data
   USE upf_params, ONLY : lqmax
+  USE iso_c_binding, ONLY : c_char
   !
   IMPLICIT NONE
   !
@@ -1084,21 +1085,26 @@ MODULE input_parameters
 !=----------------------------------------------------------------------------=!
 !  NLCG Namelist Input Parameters
 !=----------------------------------------------------------------------------=!
+        CHARACTER(len=80, kind=C_CHAR) :: nlcg_method = 'mvp2'
         INTEGER           :: nlcg_maxiter
         INTEGER           :: nlcg_restart
-        REAL(DP)          :: nlcg_tau
+        REAL(DP)          :: nlcg_bt_step_length
         REAL(DP)          :: nlcg_T
-        REAL(DP)          :: nlcg_kappa
-        REAL(DP)          :: nlcg_tol
-        CHARACTER(len=80) :: nlcg_smearing
+        REAL(DP)          :: nlcg_pseudo_precond
+        REAL(DP)          :: nlcg_conv_thr
+        CHARACTER(len=80, kind=C_CHAR) :: nlcg_smearing
         CHARACTER(len=80) :: nlcg_smearing_allowed(5)
         DATA nlcg_smearing_allowed / 'FD', 'GS', 'MP', 'COLD', 'GAUSS' /
-        CHARACTER(len=80) :: nlcg_processing_unit = 'none'
+        CHARACTER(len=80, kind=C_CHAR) :: nlcg_processing_unit = 'none'
         CHARACTER(len=80) :: nlcg_processing_unit_allowed(3)
         DATA nlcg_processing_unit_allowed / 'none', 'cpu', 'gpu' /
+        CHARACTER(len=80) :: nlcg_method_allowed(1)
+        DATA nlcg_method_allowed / 'mvp2' /
 
-        NAMELIST / nlcg / nlcg_maxiter, nlcg_restart, nlcg_tau, nlcg_T, nlcg_kappa, &
-          nlcg_tol, nlcg_smearing, nlcg_processing_unit
+        NAMELIST / direct_minimization / nlcg_method, nlcg_maxiter, nlcg_restart, nlcg_bt_step_length, nlcg_T, &
+          nlcg_pseudo_precond, nlcg_conv_thr, nlcg_smearing, nlcg_processing_unit
+
+!
 #endif
 !
 !=----------------------------------------------------------------------------=!
