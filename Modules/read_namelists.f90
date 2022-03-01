@@ -495,6 +495,8 @@ MODULE read_namelists_module
          nlcg_smearing = 'MP'
        CASE('fermi-dirac', 'f-d', 'fd', 'Fermi-Dirac', 'F-D', 'FD')
          nlcg_smearing = 'FD'
+       CASE('marzari-vanderbilt', 'cold', 'm-v', 'mv')
+         nlcg_smearing = 'COLD'
        CASE DEFAULT
          nlcg_smearing = 'GAUSS'
        END SELECT
