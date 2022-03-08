@@ -22,7 +22,9 @@ MODULE uspp_data
   PUBLIC :: allocate_uspp_data
   PUBLIC :: deallocate_uspp_data
   PUBLIC :: scale_uspp_data
-  PUBLIC ::  beta_ri_tab, aug_ri_tab
+#if defined(__SIRIUS)
+  PUBLIC :: beta_ri_tab, aug_ri_tab, wfc_ri_tab
+#endif
   !
   INTEGER :: nqxq
   !! size of interpolation table
@@ -46,6 +48,9 @@ MODULE uspp_data
   !
   REAL(DP), ALLOCATABLE :: aug_ri_tab(:,:,:,:)
   !! radial integrals of augmentation charge without unit-cell volume (Omega) factor
+  !
+  REAL(DP), ALLOCATABLE :: wfc_ri_tab(:,:,:)
+  !! radial integrals of atomic wave-functions
   !
 #endif
   ! GPUs vars
