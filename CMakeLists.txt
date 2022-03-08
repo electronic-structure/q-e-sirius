@@ -70,8 +70,6 @@ option(QE_ENABLE_CUDA
     "enable CUDA acceleration on NVIDIA GPUs" OFF)
 if(QE_ENABLE_CUDA)
     option(QE_ENABLE_OPENACC "enable OpenACC acceleration" ON)
-    option(QE_ENABLE_LAXLIB_CUSOLVER
-        "enable CUDA solver acceleration for LAXLib on NVIDIA GPUs" ON)
     # OpenMP enabled by default if CUDA is enable
     option(QE_ENABLE_OPENMP
         "enable distributed execution support via OpenMP" ON)
@@ -118,6 +116,26 @@ set(QE_FFTW_VENDOR "AUTO" CACHE
     STRING "select a specific FFTW library [Intel_DFTI, Intel_FFTW3, ArmPL, IBMESSL, FFTW3, Internal]")
 set(QE_ENABLE_SANITIZER "none" CACHE STRING "none,asan,ubsan,tsan,msan")
 set(QE_ENABLE_PLUGINS "" CACHE STRING "Semicolon-separated list of plugins")
+if(FOX_ROOT)
+    set(QE_FOX_INTERNAL OFF)
+endif()
+option(QE_FOX_INTERNAL
+    "enable FoX intenal library" ON)
+if(WANNIER90_ROOT)
+    set(QE_WANNIER90_INTERNAL OFF)
+endif()
+option(QE_WANNIER90_INTERNAL
+    "enable Wannier90 intenal library" ON)
+if(MBD_ROOT)
+    set(QE_MBD_INTERNAL OFF)
+endif()
+option(QE_MBD_INTERNAL
+    "enable LibMBD intenal library" ON)
+if(DEVICEXLIB_ROOT)
+    set(QE_DEVICEXLIB_INTERNAL OFF)
+endif()
+option(QE_DEVICEXLIB_INTERNAL
+    "enable DeviceXlib intenal library" ON)
 
 # TODO change all ifdefs throughout code base to match
 # cmake options
@@ -186,9 +204,6 @@ if(QE_ENABLE_OPENACC AND NOT (CMAKE_Fortran_COMPILER_ID MATCHES "PGI" OR CMAKE_F
 endif()
 if(QE_ENABLE_MPI_GPU_AWARE AND NOT (QE_ENABLE_CUDA AND QE_ENABLE_MPI))
     message(FATAL_ERROR "GPU aware MPI requires both MPI and CUDA features enabled")
-endif()
-if(QE_ENABLE_LAXLIB_CUSOLVER AND (NOT QE_ENABLE_CUDA))
-    message(FATAL_ERROR "CUDA Solver for LAXLib requires CUDA support, enable it with '-DQE_ENABLE_CUDA=ON' or disable CUDA Solver for LAXLib with '-DQE_ENABLE_LAXLIB_CUSOLVER=OFF'")
 endif()
 # if(QE_ENABLE_HDF5 AND NOT QE_ENABLE_MPI)
 #    message(FATAL_ERROR "HDF5 requires MPI support, enable it with '-DQE_ENABLE_MPI=ON' or disable HDF5 with '-DQE_ENABLE_HDF5=OFF'")

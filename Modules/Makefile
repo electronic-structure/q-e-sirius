@@ -3,8 +3,7 @@
 include ../make.inc
 
 # location of needed modules
-MODFLAGS=$(BASEMOD_FLAGS) \
-         $(MOD_FLAG)../ELPA/src
+MODFLAGS=$(BASEMOD_FLAGS)
 
 # list of modules
 
@@ -123,8 +122,6 @@ radial_gradients.o \
 rgen.o \
 recips.o \
 remove_tot_torque.o \
-set_hubbard_l.o \
-set_hubbard_n.o \
 sort.o \
 trimcheck.o \
 test_input_file.o \

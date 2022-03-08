@@ -1313,7 +1313,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
        !
        ! ... delta_e =  - \int rho%of_r(r)  v%of_r(r)
        !                - \int rho%kin_r(r) v%kin_r(r) [for Meta-GGA]
-       !                - \sum rho%ns       v%ns       [for LDA+U]
+       !                - \sum rho%ns       v%ns       [for DFT+Hubbard]
        !                - \sum becsum       D1_Hxc     [for PAW]
        !
        USE xc_lib,  ONLY : xclib_dft_is
@@ -1398,7 +1398,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
        !
        ! ... delta_escf = - \int \delta rho%of_r(r)  v%of_r(r)
        !                  - \int \delta rho%kin_r(r) v%kin_r(r) [for Meta-GGA]
-       !                  - \sum \delta rho%ns       v%ns       [for LDA+U]
+       !                  - \sum \delta rho%ns       v%ns       [for DFT+Hubbard]
        !                  - \sum \delta becsum       D1         [for PAW] 
        !
        USE xc_lib, ONLY : xclib_dft_is

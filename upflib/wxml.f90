@@ -8,6 +8,12 @@
 MODULE wxml
   !
   ! Poor-man FoX_wxml replacement - Paolo Giannozzi, 2022
+  ! Uses xmltools, with a workaround to deal with a difference in logic:
+  ! FoX adds attributes after tag, xmltools expects them before tag.
+  ! Workaround: a new tag is stored but not actually written until its
+  ! contents is provided, or a new tag is opened, or when it is closed.
+  ! A second workaround: use variable "sameline" to keep track of tags
+  ! to be written on a single line
   !
   USE upf_kinds, ONLY : dp
   use xmltools
@@ -17,6 +23,8 @@ MODULE wxml
      integer :: unit = -1
   end type xmlf_t
   character(len=80), save :: opentag = ''
+  logical :: sameline = .false.
+  logical :: newline  = .false.
   !
   private
   public :: xmlf_t, xml_openfile, xml_close, xml_addcharacters, &
@@ -27,12 +35,13 @@ MODULE wxml
      MODULE PROCEDURE xml_addcharacters_c, xml_addcharacters_l, &
                       xml_addcharacters_r, xml_addcharacters_rv,&
                       xml_addcharacters_i, xml_addcharacters_iv,&
-                      xml_addcharacters_rm
+                      xml_addcharacters_rm, xml_addcharacters_lv
   END INTERFACE xml_addcharacters
   !
   INTERFACE xml_addattribute
-     MODULE PROCEDURE xml_addattribute_c, xml_addattribute_r, &
-             xml_addattribute_i, xml_addattribute_l, xml_addattribute_iv
+     MODULE PROCEDURE xml_addattribute_c,  xml_addattribute_r, &
+                      xml_addattribute_i,  xml_addattribute_l, &
+                      xml_addattribute_iv, xml_addattribute_rv
   END INTERFACE xml_addattribute
   !
 CONTAINS
@@ -43,7 +52,7 @@ CONTAINS
     character(len=*), intent(in) :: filename
     type(xmlf_t), intent(out) :: xf
     ! ignored
-    integer, intent(in) :: unit
+    integer, intent(in), optional :: unit
     integer, intent(out) :: iostat
     ! ignored
     logical, intent(in)  :: pretty_print, replace, namespace 
@@ -65,8 +74,10 @@ CONTAINS
     !
   end subroutine xml_openfile
   !
-  subroutine xml_close ( xf )
+  subroutine xml_close ( xf, empty )
     type(xmlf_t), intent(inout) :: xf
+    ! ignored
+    logical, optional :: empty
     !
     if ( xf%unit == -1 ) then
        print *, 'xml file not opened'
@@ -119,6 +130,22 @@ CONTAINS
     !
   end subroutine xml_addattribute_r
   !
+  subroutine xml_addattribute_rv( xf, name, value )
+    !
+    type(xmlf_t), intent(in) :: xf
+    character(len=*), intent(in) :: name
+    real(dp), intent(in) :: value(:)
+    character(len=80) :: cvalue
+    !
+    if ( xf%unit == -1 ) then
+       print *, 'xml file not opened'
+    else
+       write(cvalue,*) value
+       call add_attr(name, cvalue)
+    end if
+    !
+  end subroutine xml_addattribute_rv
+  !
   subroutine xml_addattribute_iv ( xf, name, value )
     !
     type(xmlf_t), intent(in) :: xf
@@ -158,12 +185,7 @@ CONTAINS
     if ( xf%unit == -1 ) then
        print *, 'xml file not opened'
     else
-       ! FoX compatibility
-       if ( value ) then
-          call add_attr(name, 'true')
-       else
-          call add_attr(name, 'false')
-       end if
+       call add_attr(name, l2c(value) )
     end if
     !
   end subroutine xml_addattribute_l
@@ -194,8 +216,12 @@ CONTAINS
        print *, 'xml file not opened'
     else
        ! workaround for different logic
-       if ( opentag /= '' ) call xmlw_opentag ( opentag, ierr )
-       call xmlw_closetag ( )
+       if ( opentag /= '' ) then
+          call xmlw_writetag ( opentag, '', ierr )
+       else
+          call xmlw_closetag ( noind = sameline )
+       end if
+       sameline = .false.
        opentag = ''
     end if
   end subroutine xml_endelement
@@ -211,14 +237,14 @@ CONTAINS
     if ( xf%unit == -1 ) then
        print *, 'xml file not opened'
     else
-       ! workaround: write previous tag when contents is added
-       ! (FoX adds attributes after tag, xmltools expects them before tag)
+       ! workaround for different logic
        if ( opentag /= '') then
-          call xmlw_opentag ( opentag, ierr )
+          sameline = .true.
+          call xmlw_opentag ( opentag, ierr, noadv=sameline )
           if ( ierr /= 0 ) print *, 'xml_addcharacter: ierr = ', ierr
           opentag = ''
        end if
-       write( xf%unit, '(A)' ) trim(field)
+       write( xf%unit, '(A)', advance='no' ) trim(field)
     end if
     !
   end subroutine xml_addcharacters_c
@@ -234,30 +260,25 @@ CONTAINS
     if ( xf%unit == -1 ) then
        print *, 'xml file not opened'
     else
-       ! workaround: write previous tag when contents is added
-       ! (FoX adds attributes after tag, xmltools expects them before tag)
+       ! workaround for different logic
        if ( opentag /= '') then
-          call xmlw_opentag ( opentag, ierr )
+          sameline = .true.
+          call xmlw_opentag ( opentag, ierr, noadv=sameline )
           if ( ierr /= 0 ) print *, 'xml_addcharacter: ierr = ', ierr
           opentag = ''
        end if
-       ! FoX compatibility
-       if ( field ) then
-          write( xf%unit, '("true")' )
-       else
-          write( xf%unit, '("false")' )
-       end if
+       write( xf%unit, '(A)', advance='no' ) l2c(field)
     end if
     !
   end subroutine xml_addcharacters_l
   !
-  subroutine xml_addcharacters_r ( xf, field, fmt )
+  subroutine xml_addcharacters_lv( xf, field, fmt )
     !
     type(xmlf_t), intent(in) :: xf
-    real(dp), intent(in) :: field
+    logical, intent(in) :: field(:)
     character(len=*), intent(in), optional :: fmt
     !
-    integer :: ierr
+    integer :: ierr, n
     !
     if ( xf%unit == -1 ) then
        print *, 'xml file not opened'
@@ -269,7 +290,35 @@ CONTAINS
           if ( ierr /= 0 ) print *, 'xml_addcharacter: ierr = ', ierr
           opentag = ''
        end if
-       write( xf%unit, * ) field
+       write( xf%unit, '(A)', advance='no' ) l2c(field(1))
+       do n = 2, size(field)
+          write( xf%unit, '(" ",A)', advance='no' ) l2c(field(n))
+       end do
+    end if
+    !
+  end subroutine xml_addcharacters_lv
+  !
+  subroutine xml_addcharacters_r ( xf, field, fmt )
+    !
+    type(xmlf_t), intent(in) :: xf
+    real(dp), intent(in) :: field
+    character(len=*), intent(in), optional :: fmt
+    !
+    integer :: ierr
+    character(len=24) :: cfield
+    !
+    if ( xf%unit == -1 ) then
+       print *, 'xml file not opened'
+    else
+       ! workaround for different logic
+       if ( opentag /= '') then
+          sameline = .true.
+          call xmlw_opentag ( opentag, ierr, noadv=sameline )
+          if ( ierr /= 0 ) print *, 'xml_addcharacter: ierr = ', ierr
+          opentag = ''
+       end if
+       write( cfield, '(1pes24.15)' ) field
+       write( xf%unit, '(A)', advance='no' ) trim(adjustl(cfield))
     end if
     !
   end subroutine xml_addcharacters_r
@@ -280,19 +329,26 @@ CONTAINS
     real(dp), intent(in) :: field(:)
     character(len=*), intent(in), optional :: fmt
     !
-    integer :: ierr
+    integer :: ierr, nf
+    character(len=72) :: cfield
     !
     if ( xf%unit == -1 ) then
        print *, 'xml file not opened'
     else
-       ! workaround: write previous tag when contents is added
-       ! (FoX adds attributes after tag, xmltools expects them before tag)
+       ! workaround for different logic
        if ( opentag /= '') then
-          call xmlw_opentag ( opentag, ierr )
+          sameline = (size(field) <= 3) .and..not.newline
+          call xmlw_opentag ( opentag, ierr, noadv=sameline )
           if ( ierr /= 0 ) print *, 'xml_addcharacter: ierr = ', ierr
           opentag = ''
+          newline = .false.
        end if
-       write( xf%unit, '(1p3es24.15)' ) field
+       if ( sameline) then
+          write( cfield, '(1p3es24.15)' ) field
+          write( xf%unit, '(A)', advance='no' ) trim(adjustl(cfield))
+       else
+          write( xf%unit, '(1p3es24.15)' ) field
+       endif
     end if
     !
   end subroutine xml_addcharacters_rv
@@ -308,8 +364,7 @@ CONTAINS
     if ( xf%unit == -1 ) then
        print *, 'xml file not opened'
     else
-       ! workaround: write previous tag when contents is added
-       ! (FoX adds attributes after tag, xmltools expects them before tag)
+       ! workaround for different logic
        if ( opentag /= '') then
           call xmlw_opentag ( opentag, ierr )
           if ( ierr /= 0 ) print *, 'xml_addcharacter: ierr = ', ierr
@@ -327,18 +382,20 @@ CONTAINS
     character(len=*), intent(in), optional :: fmt
     !
     integer :: ierr
+    character(len=16) :: cfield
     !
     if ( xf%unit == -1 ) then
        print *, 'xml file not opened'
     else
-       ! workaround: write previous tag when contents is added
-       ! (FoX adds attributes after tag, xmltools expects them before tag)
+       ! workaround for different logic
        if ( opentag /= '') then
-          call xmlw_opentag ( opentag, ierr )
+          sameline = .true.
+          call xmlw_opentag ( opentag, ierr, noadv=sameline )
           if ( ierr /= 0 ) print *, 'xml_addcharacter: ierr = ', ierr
           opentag = '' 
        end if
-       write( xf%unit, * ) field
+       write( cfield, * ) field
+       write( xf%unit, '(A)', advance='no' ) trim(adjustl(cfield))
     end if
     !
   end subroutine xml_addcharacters_i
@@ -354,8 +411,7 @@ CONTAINS
     if ( xf%unit == -1 ) then
        print *, 'xml file not opened'
     else
-       ! workaround: write previous tag when contents is added
-       ! (FoX adds attributes after tag, xmltools expects them before tag)
+       ! workaround for different logic
        if ( opentag /= '') then
           call xmlw_opentag (opentag, ierr )
           if ( ierr /= 0 ) print *, 'xml_addcharacter: ierr = ', ierr
@@ -373,8 +429,8 @@ CONTAINS
     if ( xf%unit == -1 ) then
        print *, 'xml file not opened'
     else
-       continue
-       ! write( xf%unit, * )
+       ! used only for vectors of real numbers
+       newline=.true.
     end if
     !
   end subroutine xml_addnewline
