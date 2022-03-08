@@ -594,10 +594,11 @@ SUBROUTINE electrons_scf ( printout, exxen )
             WRITE(*,*)'============================='
 
             !CALL insert_xc_functional_to_sirius
-            CALL sirius_nlcg_params(gs_handler, ks_handler, nlcg_T, TRIM(ADJUSTL(nlcg_smearing))&
-                    &, nlcg_pseudo_precond, nlcg_bt_step_length, nlcg_conv_thr, nlcg_maxiter, nlcg_restart,&
-                    & TRIM(ADJUSTL(nlcg_processing_unit)))
-            conv_elec = .TRUE.
+            CALL sirius_nlcg_params(gs_handler, ks_handler, temp=nlcg_T, smearing&
+              &=TRIM(ADJUSTL(nlcg_smearing)) , kappa=nlcg_pseudo_precond, tau&
+              &=nlcg_bt_step_length, tol=nlcg_conv_thr, maxiter=nlcg_maxiter,&
+              & restart=nlcg_restart, processing_unit&
+              &=TRIM(ADJUSTL(nlcg_processing_unit)), converged=conv_elec)
     END IF
 
     CALL stop_clock( 'electrons' )
