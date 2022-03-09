@@ -147,7 +147,7 @@ SUBROUTINE stress( sigma )
     ! add ultrasoft term
     CALL sirius_get_stress_tensor(gs_handler, "us", tmp)
     sigmanlc = sigmanlc - 2 * tmp
-    IF ( lda_plus_u .AND. U_projection /= 'pseudo' ) THEN
+    IF ( lda_plus_u .AND. Hubbard_projectors /= 'pseudo' ) THEN
       CALL sirius_get_stress_tensor(gs_handler, "hubbard", sigmah)
       sigmah = sigmah * 2 ! convert to Ry
     ENDIF

@@ -617,6 +617,51 @@ MODULE mod_sirius
   END SUBROUTINE calc_aug_dj_radial_integrals
   !
   !-------------------------------------------------------------------------
+  SUBROUTINE calc_atomic_wfc_radial_integrals(iat, q, wfc_ri, ld) BIND(C)
+    !-----------------------------------------------------------------------
+    !! Callback function to compute radial integrals of the atomic wave functions
+    !
+    USE iso_c_binding
+    USE uspp_data,    ONLY : dq, tab, wfc_ri_tab
+    USE uspp_param,   ONLY : upf
+    !
+    IMPLICIT NONE
+    !
+    INTEGER(kind=c_int), INTENT(in), VALUE :: iat
+    REAL(kind=c_double), INTENT(in), VALUE :: q
+    INTEGER(kind=c_int), INTENT(in), VALUE :: ld
+    REAL(kind=c_double), INTENT(out) :: wfc_ri(ld)
+    !
+    REAL(8) :: px, ux, vx, wx
+    INTEGER :: i0, i1, i2, i3, ib
+    !
+    IF (ld.LT.upf(iat)%nwfc) THEN
+      WRITE(*,*)'not enough space to store all atomic wave functions, ld=',ld,' nwfc=',upf(iat)%nwfc
+      STOP
+    ENDIF
+    IF (.NOT.ALLOCATED(tab)) THEN
+      WRITE(*,*)'tab array is not allocated'
+      STOP
+    ENDIF
+    !
+    px = q / dq - INT(q / dq)
+    ux = 1.d0 - px
+    vx = 2.d0 - px
+    wx = 3.d0 - px
+    i0 = INT(q / dq) + 1
+    i1 = i0 + 1
+    i2 = i0 + 2
+    i3 = i0 + 3
+    DO ib = 1, upf(iat)%nwfc
+      wfc_ri(ib) = wfc_ri_tab(i0, ib, iat) * ux * vx * wx / 6.d0 + &
+                    wfc_ri_tab(i1, ib, iat) * px * vx * wx / 2.d0 - &
+                    wfc_ri_tab(i2, ib, iat) * px * ux * wx / 2.d0 + &
+                    wfc_ri_tab(i3, ib, iat) * px * ux * vx / 6.d0
+    ENDDO
+    !
+  END SUBROUTINE calc_atomic_wfc_radial_integrals
+  !
+  !-------------------------------------------------------------------------
   SUBROUTINE setup_sirius()
     !-----------------------------------------------------------------------
     !! Setup SIRIUS simulation context, create k-point set and DFT ground state instance.
@@ -641,7 +686,7 @@ MODULE mod_sirius
     USE symm_base,            ONLY : nosym, nsym
     USE ldaU,                 ONLY : lda_plus_U, Hubbard_J, Hubbard_U, Hubbard_alpha, &
                                    & Hubbard_beta, is_Hubbard, lda_plus_u_kind, &
-                                   & Hubbard_J0, U_projection, Hubbard_l
+                                   & Hubbard_J0, Hubbard_projectors, Hubbard_l, Hubbard_n, Hubbard_occ
     USE esm,                  ONLY : do_comp_esm
     USE Coul_cut_2D,          ONLY : do_cutoff_2D
     !
@@ -653,8 +698,6 @@ MODULE mod_sirius
     REAL(8), ALLOCATABLE :: dion(:, :), vloc(:)
     INTEGER :: lmax_beta, nsymop
     CHARACTER(LEN=1024) :: conf_str
-    INTEGER, EXTERNAL :: set_hubbard_n
-    REAL(8), EXTERNAL :: hubbard_occ
     INTEGER, EXTERNAL :: global_kpoint_index
     REAL(8), PARAMETER :: spglib_tol=1e-4
 
@@ -719,7 +762,7 @@ MODULE mod_sirius
       &use_symmetry=(use_sirius_scf.OR.use_sirius_nlcg).AND..NOT.nosym, so_correction=lspinorb,&
       &pw_cutoff=SQRT(ecutrho), gk_cutoff=SQRT(ecutwfc),&
       &hubbard_correction=lda_plus_U, hubbard_correction_kind=lda_plus_u_kind,&
-      &hubbard_orbitals=TRIM(ADJUSTL(U_projection)),fft_grid_size=dims, spglib_tol=spglib_tol)
+      &hubbard_orbitals=TRIM(ADJUSTL(Hubbard_projectors)), fft_grid_size=dims, spglib_tol=spglib_tol)
 
     ! degauss is converted to Ha units
     CALL sirius_set_parameters(sctx, smearing_width=degauss/2.d0)
@@ -758,6 +801,7 @@ MODULE mod_sirius
     CALL sirius_set_callback_function(sctx, "rhoc_ri", C_FUNLOC(calc_rhoc_radial_integrals))
     CALL sirius_set_callback_function(sctx, "rhoc_ri_djl", C_FUNLOC(calc_rhoc_dj_radial_integrals))
     CALL sirius_set_callback_function(sctx, "ps_rho_ri", C_FUNLOC(calc_ps_rho_radial_integrals))
+    CALL sirius_set_callback_function(sctx, "ps_atomic_wf", C_FUNLOC(calc_atomic_wfc_radial_integrals))
     IF (use_veff_callback) THEN
       CALL sirius_set_callback_function(sctx, "veff", C_FUNLOC(calc_veff))
     ENDIF
@@ -834,14 +878,14 @@ MODULE mod_sirius
         IF (is_hubbard(iat)) THEN
            CALL sirius_set_atom_type_hubbard(sctx, &
                 & TRIM(atom_type(iat)%label), &
-                & Hubbard_l(iat), &
-                & set_hubbard_n(upf(iat)%psd), &
-                & hubbard_occ ( upf(iat)%psd ), &
-                & Hubbard_U(iat), &
-                & Hubbard_J(1,iat), &
-                & Hubbard_alpha(iat), &
-                & Hubbard_beta(iat), &
-                & Hubbard_J0(iat))
+                & l=Hubbard_l(iat), &
+                & n=Hubbard_n(iat), &
+                & occ=Hubbard_occ(1, iat), &
+                & U=Hubbard_U(iat), &
+                & J=Hubbard_J(1,iat), &
+                & alpha=Hubbard_alpha(iat), &
+                & beta=Hubbard_beta(iat), &
+                & J0=Hubbard_J0(iat))
         ENDIF
 
         ALLOCATE(dion(upf(iat)%nbeta, upf(iat)%nbeta))

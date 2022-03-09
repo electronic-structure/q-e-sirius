@@ -60,11 +60,8 @@ SUBROUTINE forces()
 #if defined(__CUDA)
   USE device_fbuff_m,          ONLY : dev_buf
   USE device_memcpy_m,     ONLY : dev_memcpy
-<<<<<<< HEAD
-  USE mod_sirius
-=======
 #endif
->>>>>>> upstream/develop
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
