@@ -207,7 +207,9 @@ SUBROUTINE init_run()
   !
 #if defined(__MPI)
   ! Cleanup PAW arrays that are only used for init
-  IF (okpaw) CALL paw_post_init() ! only parallel!
+  IF (.NOT.(use_sirius_scf.OR.use_sirius_nlcg)) THEN
+    IF (okpaw) CALL paw_post_init()
+  ENDIF
 #endif
   !
   IF ( lmd ) CALL allocate_dyn_vars()
