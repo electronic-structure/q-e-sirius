@@ -684,6 +684,8 @@ SUBROUTINE electrons_scf ( printout, exxen )
 
     IF (conv_elec) THEN
       WRITE( stdout, 9110 ) iter
+    ELSE
+      WRITE( stdout, 9120 ) iter
     END IF
   END IF
   !
