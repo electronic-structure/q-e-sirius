@@ -48,6 +48,22 @@ MODULE mod_sirius
     COMPLEX(8), ALLOCATABLE :: qpw(:, :)
     !! plane-wave coefficients of Q-operator
     !
+    INTEGER                 :: num_chi
+    !! number of atomic wave-functions
+    !
+    INTEGER, ALLOCATABLE    :: l_chi(:)
+    !! orbital quantum number of atomic wave-functions
+    !
+    INTEGER, ALLOCATABLE    :: n_chi(:)
+    !! principal quantum number of atomic wave-functions
+    !
+    REAL(8), ALLOCATABLE    :: chi(:, :)
+    !! radial part of atomic wave-functions
+    !
+    INTEGER, ALLOCATABLE    :: idx_chi(:,:)
+    !! points to one or two radial functions in the origianl list of atomic wfs
+    !
+    REAL(8), ALLOCATABLE    :: occ(:)
   END TYPE atom_type_t
   !
   TYPE(atom_type_t), ALLOCATABLE :: atom_type(:)
@@ -633,10 +649,10 @@ MODULE mod_sirius
     REAL(kind=c_double), INTENT(out) :: wfc_ri(ld)
     !
     REAL(8) :: px, ux, vx, wx
-    INTEGER :: i0, i1, i2, i3, ib
+    INTEGER :: i0, i1, i2, i3, ib, j
     !
-    IF (ld.LT.upf(iat)%nwfc) THEN
-      WRITE(*,*)'not enough space to store all atomic wave functions, ld=',ld,' nwfc=',upf(iat)%nwfc
+    IF ( ld .LT. atom_type(iat)%num_chi ) THEN
+      WRITE(*,*)'not enough space to store all atomic wave functions, ld=',ld,' nwfc=',atom_type(iat)%num_chi
       STOP
     ENDIF
     IF (.NOT.ALLOCATED(tab)) THEN
@@ -652,11 +668,19 @@ MODULE mod_sirius
     i1 = i0 + 1
     i2 = i0 + 2
     i3 = i0 + 3
-    DO ib = 1, upf(iat)%nwfc
-      wfc_ri(ib) = wfc_ri_tab(i0, ib, iat) * ux * vx * wx / 6.d0 + &
-                    wfc_ri_tab(i1, ib, iat) * px * vx * wx / 2.d0 - &
-                    wfc_ri_tab(i2, ib, iat) * px * ux * wx / 2.d0 + &
-                    wfc_ri_tab(i3, ib, iat) * px * ux * vx / 6.d0
+    DO ib = 1, atom_type(iat)%num_chi
+      j = atom_type(iat)%idx_chi(1, ib)
+      wfc_ri(ib) = wfc_ri_tab(i0, j, iat) * ux * vx * wx / 6.d0 + &
+                   wfc_ri_tab(i1, j, iat) * px * vx * wx / 2.d0 - &
+                   wfc_ri_tab(i2, j, iat) * px * ux * wx / 2.d0 + &
+                   wfc_ri_tab(i3, j, iat) * px * ux * vx / 6.d0
+      IF ( atom_type(iat)%idx_chi(2, ib) .NE. -1 ) THEN
+        j = atom_type(iat)%idx_chi(2, ib)
+        wfc_ri(ib) = 0.5d0 * wfc_ri(ib) + 0.5d0 * (wfc_ri_tab(i0, j, iat) * ux * vx * wx / 6.d0 + &
+                    wfc_ri_tab(i1, j, iat) * px * vx * wx / 2.d0 - &
+                    wfc_ri_tab(i2, j, iat) * px * ux * wx / 2.d0 + &
+                    wfc_ri_tab(i3, j, iat) * px * ux * vx / 6.d0)
+      END IF
     ENDDO
     !
   END SUBROUTINE calc_atomic_wfc_radial_integrals
@@ -717,6 +741,60 @@ MODULE mod_sirius
         lmax_beta = MAX(lmax_beta, upf(iat)%lll(i))
       ENDDO
       atom_type(iat)%lmax = lmax_beta
+
+      ! set the atomic radial functions
+      IF (upf(iat)%has_so) THEN
+        atom_type(iat)%num_chi = 0
+        DO iwf = 1, upf(iat)%nwfc
+          IF (upf(iat)%jchi(iwf) > upf(iat)%lchi(iwf)) THEN
+            atom_type(iat)%num_chi = atom_type(iat)%num_chi + 1
+          END IF
+        END DO
+      ELSE
+        atom_type(iat)%num_chi = upf(iat)%nwfc
+      END IF
+      ALLOCATE(atom_type(iat)%l_chi( atom_type(iat)%num_chi) )
+      ALLOCATE(atom_type(iat)%n_chi( atom_type(iat)%num_chi) )
+      ALLOCATE(atom_type(iat)%chi( msh(iat), atom_type(iat)%num_chi) )
+      ALLOCATE(atom_type(iat)%idx_chi( 2, atom_type(iat)%num_chi) )
+      ALLOCATE(atom_type(iat)%occ( atom_type(iat)%num_chi) )
+
+      iwf = 1
+      j = 1
+      DO WHILE(iwf <= upf(iat)%nwfc)
+        ! orbital quantum number
+        atom_type(iat)%l_chi(j) = upf(iat)%lchi(iwf)
+        ! principal quantum number
+        IF (ALLOCATED(upf(iat)%nchi)) THEN
+          atom_type(iat)%n_chi(j) = upf(iat)%nchi(iwf)
+        ELSE
+          atom_type(iat)%n_chi(j) = -1
+        ENDIF
+        ! indices of radial functions
+        IF (upf(iat)%has_so) THEN
+          IF (atom_type(iat)%l_chi(j) == 0) THEN
+            atom_type(iat)%idx_chi(1, j) = iwf
+            atom_type(iat)%idx_chi(2, j) = -1
+            iwf = iwf + 1
+          ELSE
+            atom_type(iat)%idx_chi(1, j) = iwf
+            atom_type(iat)%idx_chi(2, j) = iwf + 1
+            iwf = iwf + 2
+          ENDIF
+        ELSE
+          atom_type(iat)%idx_chi(1, j) = iwf
+          atom_type(iat)%idx_chi(2, j) = -1
+          iwf = iwf + 1
+        END IF
+        atom_type(iat)%chi(:, j) = upf(iat)%chi(1:msh(iat), atom_type(iat)%idx_chi(1, j))
+        atom_type(iat)%occ(j) = upf(iat)%oc(atom_type(iat)%idx_chi(1, j))
+        IF (atom_type(iat)%idx_chi(2, j) .NE. -1) THEN
+          atom_type(iat)%chi(:, j) = 0.5d0 * atom_type(iat)%chi(:, j) + &
+                &0.5d0 * upf(iat)%chi(1:msh(iat), atom_type(iat)%idx_chi(2, j))
+          atom_type(iat)%occ(j) = atom_type(iat)%occ(j) + upf(iat)%oc(atom_type(iat)%idx_chi(2, j))
+        END IF
+        j = j + 1
+      END DO
     ENDDO
     !
     ! create context of simulation
@@ -859,20 +937,10 @@ MODULE mod_sirius
         ENDDO
 
         ! set the atomic radial functions
-        DO iwf = 1, upf(iat)%nwfc
-          l = upf(iat)%lchi(iwf)
-          IF (upf(iat)%has_so) THEN
-            IF (upf(iat)%jchi(iwf) < l) THEN
-              l = -l
-            ENDIF
-          ENDIF
-          IF (ALLOCATED(upf(iat)%nchi)) THEN
-            i = upf(iat)%nchi(iwf)
-          ELSE
-            i = -1
-          ENDIF
+        DO j = 1, atom_type(iat)%num_chi
           CALL sirius_add_atom_type_radial_function(sctx, TRIM(atom_type(iat)%label), "ps_atomic_wf", &
-               & upf(iat)%chi(1:msh(iat), iwf), msh(iat), l=l, occ=upf(iat)%oc(iwf), n=i)
+               &atom_type(iat)%chi(:, j), msh(iat), l=atom_type(iat)%l_chi(j), occ=atom_type(iat)%occ(j), &
+               &n=atom_type(iat)%n_chi(j))
         ENDDO
 
         IF (is_hubbard(iat)) THEN
@@ -881,11 +949,11 @@ MODULE mod_sirius
                 & l=Hubbard_l(iat), &
                 & n=Hubbard_n(iat), &
                 & occ=Hubbard_occ(1, iat), &
-                & U=Hubbard_U(iat), &
-                & J=Hubbard_J(1,iat), &
-                & alpha=Hubbard_alpha(iat), &
-                & beta=Hubbard_beta(iat), &
-                & J0=Hubbard_J0(iat))
+                & U=Hubbard_U(iat) / 2.0, &
+                & J=Hubbard_J(1,iat) / 2.0, &
+                & alpha=Hubbard_alpha(iat) / 2.0, &
+                & beta=Hubbard_beta(iat) / 2.0, &
+                & J0=Hubbard_J0(iat) / 2.0)
         ENDIF
 
         ALLOCATE(dion(upf(iat)%nbeta, upf(iat)%nbeta))
@@ -1100,6 +1168,11 @@ MODULE mod_sirius
     IF (ALLOCATED(atom_type)) THEN
       DO iat = 1, nsp
         IF (ALLOCATED(atom_type(iat)%qpw)) DEALLOCATE(atom_type(iat)%qpw)
+        IF (ALLOCATED(atom_type(iat)%l_chi)) DEALLOCATE(atom_type(iat)%l_chi)
+        IF (ALLOCATED(atom_type(iat)%n_chi)) DEALLOCATE(atom_type(iat)%n_chi)
+        IF (ALLOCATED(atom_type(iat)%chi)) DEALLOCATE(atom_type(iat)%chi)
+        IF (ALLOCATED(atom_type(iat)%idx_chi)) DEALLOCATE(atom_type(iat)%idx_chi)
+        IF (ALLOCATED(atom_type(iat)%occ)) DEALLOCATE(atom_type(iat)%occ)
       ENDDO
       DEALLOCATE(atom_type)
     ENDIF

@@ -556,6 +556,12 @@ SUBROUTINE electrons_scf ( printout, exxen )
       CALL sirius_get_energy(gs_handler, "paw", epaw)
       epaw = epaw * 2.d0 ! convert to Ry
 
+      eth = 0.d0
+      IF ( lda_plus_u ) THEN
+        CALL sirius_get_energy(gs_handler, "hubbard", eth)
+        eth = eth * 2.d0
+      END IF
+
       IF (.NOT.use_veff_callback) THEN
         ! Vha should be multiplied by 2 to convert to Ry and divided by 2 to get Eha = 1/2 <Vha|rho>
         CALL sirius_get_energy(gs_handler, "vha", ehart)
@@ -590,7 +596,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
         deband = deband - 2.d0 * tmp
       END IF
 
-      etot = eband + ( etxc - etxcc ) + ewld + ehart + deband + demet + descf + epaw
+      etot = eband + ( etxc - etxcc ) + ewld + ehart + deband + demet + descf + epaw + eth
     ELSE
       eband = 0.
       demet = 0.
