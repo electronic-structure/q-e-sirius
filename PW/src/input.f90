@@ -323,9 +323,7 @@ SUBROUTINE iosys()
   USE constraints_module,    ONLY : init_constraint
   USE read_namelists_module, ONLY : read_namelists, sm_not_set
   USE london_module,         ONLY : init_london, lon_rcut, scal6, in_c6, in_rvdw
-  USE dftd3_api,             ONLY : dftd3_init, dftd3_set_params, &
-                                    dftd3_set_functional, dftd3_calc, &
-                                    dftd3_input
+  USE dftd3_api,             ONLY : dftd3_init, dftd3_set_functional
   USE dftd3_qe,              ONLY : dftd3_xc, dftd3, dftd3_in
   USE xdm_module,            ONLY : init_xdm, a1i, a2i
   USE tsvdw_module,          ONLY : vdw_isolated, vdw_econv_thr
@@ -1682,7 +1680,7 @@ SUBROUTINE iosys()
   !
   ! ... End of reading input parameters
   !
-#if ! defined (__INTEL_COMPILER) || (__INTEL_COMPILER >= 1300) 
+#if ( ! defined (__INTEL_COMPILER) || (__INTEL_COMPILER >= 1300) ) && ! defined (__CRAY)
   CALL pw_init_qexsd_input(qexsd_input_obj, obj_tagname="input")
 #endif
   CALL deallocate_input_parameters ()  
