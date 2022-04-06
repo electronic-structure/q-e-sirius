@@ -649,6 +649,7 @@ MODULE mod_sirius
     REAL(kind=c_double), INTENT(out) :: wfc_ri(ld)
     !
     REAL(8) :: px, ux, vx, wx
+    REAL(8) :: wfc_ri_tmp(upf(iat)%nwfc)
     INTEGER :: i0, i1, i2, i3, ib, j
     !
     IF ( ld .LT. atom_type(iat)%num_chi ) THEN
@@ -668,22 +669,77 @@ MODULE mod_sirius
     i1 = i0 + 1
     i2 = i0 + 2
     i3 = i0 + 3
+    DO ib = 1, upf(iat)%nwfc
+      wfc_ri_tmp(ib) = wfc_ri_tab(i0, ib, iat) * ux * vx * wx / 6.d0 + &
+                       wfc_ri_tab(i1, ib, iat) * px * vx * wx / 2.d0 - &
+                       wfc_ri_tab(i2, ib, iat) * px * ux * wx / 2.d0 + &
+                       wfc_ri_tab(i3, ib, iat) * px * ux * vx / 6.d0
+    ENDDO
     DO ib = 1, atom_type(iat)%num_chi
       j = atom_type(iat)%idx_chi(1, ib)
-      wfc_ri(ib) = wfc_ri_tab(i0, j, iat) * ux * vx * wx / 6.d0 + &
-                   wfc_ri_tab(i1, j, iat) * px * vx * wx / 2.d0 - &
-                   wfc_ri_tab(i2, j, iat) * px * ux * wx / 2.d0 + &
-                   wfc_ri_tab(i3, j, iat) * px * ux * vx / 6.d0
+      wfc_ri(ib) = wfc_ri_tmp(j)
       IF ( atom_type(iat)%idx_chi(2, ib) .NE. -1 ) THEN
         j = atom_type(iat)%idx_chi(2, ib)
-        wfc_ri(ib) = 0.5d0 * wfc_ri(ib) + 0.5d0 * (wfc_ri_tab(i0, j, iat) * ux * vx * wx / 6.d0 + &
-                    wfc_ri_tab(i1, j, iat) * px * vx * wx / 2.d0 - &
-                    wfc_ri_tab(i2, j, iat) * px * ux * wx / 2.d0 + &
-                    wfc_ri_tab(i3, j, iat) * px * ux * vx / 6.d0)
+        wfc_ri(ib) = 0.5d0 * wfc_ri(ib) + 0.5d0 * wfc_ri_tmp(j)
       END IF
     ENDDO
     !
   END SUBROUTINE calc_atomic_wfc_radial_integrals
+  !
+  !-------------------------------------------------------------------------
+  SUBROUTINE calc_atomic_wfc_djl_radial_integrals(iat, q, wfc_ri, ld) BIND(C)
+    !-----------------------------------------------------------------------
+    !! Callback function to compute radial integrals of the atomic wave functions
+    !
+    USE iso_c_binding
+    USE uspp_data,    ONLY : dq, tab, wfc_ri_tab
+    USE uspp_param,   ONLY : upf
+    !
+    IMPLICIT NONE
+    !
+    INTEGER(kind=c_int), INTENT(in), VALUE :: iat
+    REAL(kind=c_double), INTENT(in), VALUE :: q
+    INTEGER(kind=c_int), INTENT(in), VALUE :: ld
+    REAL(kind=c_double), INTENT(out) :: wfc_ri(ld)
+    !
+    REAL(8) :: px, ux, vx, wx
+    REAL(8) :: wfc_ri_tmp(upf(iat)%nwfc)
+    INTEGER :: i0, i1, i2, i3, ib, j
+    !
+    IF ( ld .LT. atom_type(iat)%num_chi ) THEN
+      WRITE(*,*)'not enough space to store all atomic wave functions, ld=',ld,' nwfc=',atom_type(iat)%num_chi
+      STOP
+    ENDIF
+    IF (.NOT.ALLOCATED(tab)) THEN
+      WRITE(*,*)'tab array is not allocated'
+      STOP
+    ENDIF
+    !
+    px = q / dq - INT(q / dq)
+    ux = 1.d0 - px
+    vx = 2.d0 - px
+    wx = 3.d0 - px
+    i0 = INT(q / dq) + 1
+    i1 = i0 + 1
+    i2 = i0 + 2
+    i3 = i0 + 3
+    DO ib = 1, upf(iat)%nwfc
+      wfc_ri_tmp(ib) = - wfc_ri_tab(i0, ib, iat) * (ux*vx + vx*wx + ux*wx) / 6.d0 &
+                       + wfc_ri_tab(i1, ib, iat) * (wx*vx - px*wx - px*vx) * 0.5d0 &
+                       - wfc_ri_tab(i2, ib, iat) * (wx*ux - px*wx - px*ux) * 0.5d0 &
+                       + wfc_ri_tab(i3, ib, iat) * (ux*vx - px*ux - px*vx) / 6.d0
+      wfc_ri_tmp(ib) = wfc_ri_tmp(ib) / dq
+    ENDDO
+    DO ib = 1, atom_type(iat)%num_chi
+      j = atom_type(iat)%idx_chi(1, ib)
+      wfc_ri(ib) = wfc_ri_tmp(j)
+      IF ( atom_type(iat)%idx_chi(2, ib) .NE. -1 ) THEN
+        j = atom_type(iat)%idx_chi(2, ib)
+        wfc_ri(ib) = 0.5d0 * wfc_ri(ib) + 0.5d0 * wfc_ri_tmp(j)
+      END IF
+    ENDDO
+    !
+  END SUBROUTINE calc_atomic_wfc_djl_radial_integrals
   !
   !-------------------------------------------------------------------------
   SUBROUTINE setup_sirius()
@@ -710,14 +766,16 @@ MODULE mod_sirius
     USE symm_base,            ONLY : nosym, nsym
     USE ldaU,                 ONLY : lda_plus_U, Hubbard_J, Hubbard_U, Hubbard_alpha, &
                                    & Hubbard_beta, is_Hubbard, lda_plus_u_kind, &
-                                   & Hubbard_J0, Hubbard_projectors, Hubbard_l, Hubbard_n, Hubbard_occ
+                                   & Hubbard_J0, Hubbard_projectors, Hubbard_l, Hubbard_n, Hubbard_occ, &
+                                   & ldim_u, neighood, at_sc, Hubbard_V
     USE esm,                  ONLY : do_comp_esm
     USE Coul_cut_2D,          ONLY : do_cutoff_2D
+    USE constants,            ONLY : RYTOEV
     !
     IMPLICIT NONE
     !
-    INTEGER :: dims(3), i, ia, iat, rank, ierr, ijv, j, l,&
-             & ilast, ir, num_gvec, num_ranks_k, iwf, nmagd
+    INTEGER :: dims(3), i, ia, iat, rank, ierr, ijv, j, l, ir, num_gvec, num_ranks_k, &
+             & iwf, nmagd, viz, ia2, iat2, atom_pair(2), n_pair(2), l_pair(2)
     REAL(8) :: a1(3), a2(3), a3(3), vlat(3, 3), vlat_inv(3, 3), v1(3), v2(3)
     REAL(8), ALLOCATABLE :: dion(:, :), vloc(:)
     INTEGER :: lmax_beta, nsymop
@@ -801,10 +859,11 @@ MODULE mod_sirius
     CALL sirius_create_context(intra_image_comm, sctx, fcomm_k=inter_pool_comm, fcomm_band=intra_pool_comm)
     ! create initial configuration dictionary in JSON
     WRITE(conf_str, 10)diago_david_ndim, mixing_beta, nmix
-    10 FORMAT('{"parameters" : {"electronic_structure_method" : "pseudopotential", "use_scf_correction" : true}, &
+    10 FORMAT('{"parameters"       : {"electronic_structure_method" : "pseudopotential", "use_scf_correction" : true}, &
                &"iterative_solver" : {"residual_tolerance" : 1e-6, "locking" : true, "subspace_size" : ',I4,'}, &
-               &"mixer" : {"beta" : ', F12.6, ', "max_history" : ', I4, ', "use_hartree" : true},&
-               &"settings" : {"itsol_tol_scale" : [0.1, 0.95]}}')
+               &"mixer"            : {"beta" : ', F12.6, ', "max_history" : ', I4, ', "use_hartree" : true},&
+               &"settings"         : {"itsol_tol_scale" : [0.1, 0.95]}, &
+               &"control"          : {"verification" : 0}}')
     ! set initial parameters
     CALL sirius_import_parameters(sctx, conf_str)
     ! set default verbosity
@@ -879,7 +938,8 @@ MODULE mod_sirius
     CALL sirius_set_callback_function(sctx, "rhoc_ri", C_FUNLOC(calc_rhoc_radial_integrals))
     CALL sirius_set_callback_function(sctx, "rhoc_ri_djl", C_FUNLOC(calc_rhoc_dj_radial_integrals))
     CALL sirius_set_callback_function(sctx, "ps_rho_ri", C_FUNLOC(calc_ps_rho_radial_integrals))
-    CALL sirius_set_callback_function(sctx, "ps_atomic_wf", C_FUNLOC(calc_atomic_wfc_radial_integrals))
+    CALL sirius_set_callback_function(sctx, "ps_atomic_wf_ri", C_FUNLOC(calc_atomic_wfc_radial_integrals))
+    CALL sirius_set_callback_function(sctx, "ps_atomic_wf_ri_djl", C_FUNLOC(calc_atomic_wfc_djl_radial_integrals))
     IF (use_veff_callback) THEN
       CALL sirius_set_callback_function(sctx, "veff", C_FUNLOC(calc_veff))
     ENDIF
@@ -944,15 +1004,10 @@ MODULE mod_sirius
         ENDDO
 
         IF (is_hubbard(iat)) THEN
-           CALL sirius_set_atom_type_hubbard(sctx, &
-                & TRIM(atom_type(iat)%label), &
-                & l=Hubbard_l(iat), &
-                & n=Hubbard_n(iat), &
-                & occ=Hubbard_occ(1, iat), &
-                & U=Hubbard_U(iat) / 2.0, &
-                & J=Hubbard_J(1,iat) / 2.0, &
-                & alpha=Hubbard_alpha(iat) / 2.0, &
-                & beta=Hubbard_beta(iat) / 2.0, &
+           CALL sirius_set_atom_type_hubbard(sctx, TRIM(atom_type(iat)%label), &
+                & l=Hubbard_l(iat), n=Hubbard_n(iat), occ=Hubbard_occ(iat, 1), &
+                & U=Hubbard_U(iat) / 2.0, J=Hubbard_J(1,iat) / 2.0, &
+                & alpha=Hubbard_alpha(iat) / 2.0, beta=Hubbard_beta(iat) / 2.0, &
                 & J0=Hubbard_J0(iat) / 2.0)
         ENDIF
 
@@ -1037,6 +1092,130 @@ MODULE mod_sirius
           DEALLOCATE(vloc)
         ENDIF
       ENDDO ! iat
+
+      IF (lda_plus_U) THEN
+        DO ia = 1, nat
+          !
+          iat = ityp(ia)
+          !
+          IF (lda_plus_u_kind .EQ. 2) THEN
+            !
+            IF (ldim_u(iat).GT.0) THEN
+              !
+              DO viz = 1, neighood(ia)%num_neigh
+                atom_pair(1) = ia
+                ia2 = neighood(ia)%neigh(viz)
+                atom_pair(2) = at_sc(ia2)%at
+                iat2 = ityp(atom_pair(2))
+                n_pair(1) = Hubbard_n(iat)
+                n_pair(2) = Hubbard_n(iat2)
+                l_pair(1) = Hubbard_l(iat)
+                l_pair(2) = Hubbard_l(iat2)
+                IF (ia .NE. ia2) THEN
+                  ! standard-standard term in QE language
+                  CALL sirius_add_hubbard_atom_pair(sctx, atom_pair(1:2), at_sc(ia2)%n(1:3), &
+                                                    n_pair(1:2), l_pair(1:2), Hubbard_V(ia,ia2,1) * RYTOEV)
+                END IF
+                !
+              END DO
+              !
+            END IF
+            !
+          END IF
+          !=  IF (ldim_u(nt1).GT.0) THEN
+          !=    DO viz = 1, neighood(iat)%num_neigh
+          !=      atom_pair(1) = iat - 1
+          !=      ia2 = neighood(iat)%neigh(viz)
+          !=      atom_pair(2) = at_sc(ia2)%at - 1
+          !=      nt2 = ityp(atom_pair(2) + 1)
+          !=      !     sirius does not make any distinction
+          !=      ! between orbitals contributing to the U
+          !=      ! correction and orbitals with U = 0.
+          !=      ! Add them to the list of interacting
+          !=      ! orbitals if (V \neq 0) but (U = 0)
+          !=      ! terms contributing to the standard-standard term in QE language
+          !=      n_pair(1) = set_hubbard_n(upf(nt1)%psd)
+          !=      n_pair(2) = set_hubbard_n(upf(nt2)%psd)
+          !=      l_pair(1) = Hubbard_l(nt1)
+          !=      l_pair(2) = Hubbard_l(nt2)
+          !=      V_ = Hubbard_V(iat,ia2,1) * RYTOEV
+          !=      if (iat /= ia2) then
+          !=        call sirius_add_hubbard_atom_pair(sctx, &
+          !=                atom_pair, &
+          !=                at_sc(ia2)%n, &
+          !=                n_pair, &
+          !=                l_pair, &
+          !=                V_)
+          !=        ! terms contributing to the standard-background term in QE language
+          !=        if (Abs(Hubbard_V(iat,ia2,2)) > 1e-8) then
+          !=          n2 = set_hubbard_n(upf(nt2)%psd)
+          !=          DO iwf = 1, upf(nt2)%nwfc
+          !=            if (n2 /= upf(nt2)%nchi(iwf)) then
+          !=              n_pair(2) = upf(nt2)%nchi(iwf)
+          !=              l_pair(2) = upf(nt2)%lchi(iwf)
+          !=              V_ = Hubbard_V(iat,ia2,2)  * RYTOEV
+          !=              call sirius_add_hubbard_atom_pair(sctx, &
+          !=                      atom_pair, &
+          !=                      at_sc(ia2)%n, &
+          !=                      n_pair, &
+          !=                      l_pair, &
+          !=                      V_)
+          !=            end if
+          !=          end DO
+          !=         end if
+          !=         ! terms contributing to the background-background  term in QE language
+          !=         if (Hubbard_V(iat,ia2,3) > 1e-8) then
+          !=           n1 = set_hubbard_n(upf(nt1)%psd)
+          !=           n2 = set_hubbard_n(upf(nt2)%psd)
+          !=           DO iwf1 = 1, upf(nt1)%nwfc
+          !=             DO iwf2 = 1, upf(nt2)%nwfc
+          !=               if ((n1 /= upf(nt1)%nchi(iwf)) .AND. (n2 /= upf(nt2)%nchi(iwf))) then
+          !=                 n_pair(1) = upf(nt1)%nchi(iwf)
+          !=                 n_pair(2) = upf(nt2)%nchi(iwf)
+          !=                 l_pair(1) = upf(nt1)%lchi(iwf)
+          !=                 l_pair(2) = upf(nt2)%lchi(iwf)
+          !=                 V_ = Hubbard_V(iat, ia2, 3)  * RYTOEV
+          !=                 call sirius_add_hubbard_atom_pair(sctx, &
+          !=                         atom_pair, &
+          !=                         at_sc(ia2)%n, &
+          !=                         n_pair, &
+          !=                         l_pair, &
+          !=                         V_)
+          !=               end if
+          !=             end DO
+          !=           end do
+          !=         END if
+          !=       else
+          !=         CALL sirius_set_atom_type_hubbard(sctx, &
+          !=                 & TRIM(atom_type(nt1)%label), &
+          !=                 & Hubbard_l(nt1), &
+          !=                 & set_hubbard_n(upf(nt1)%psd), &
+          !=                 & hubbard_occ ( upf(nt1)%psd ), &
+          !=                 & Hubbard_V(iat,ia2,1) * RYTOEV, &
+          !=                 & 0.0d0, &
+          !=                 & 0.0d0, &
+          !=                 & 0.0d0, &
+          !=                 & 0.0d0)
+          !=       end if
+          !=     END DO
+          !=   end if
+          != else
+          !=   !IF (is_hubbard(iat)) THEN
+          !=   !  nt1 = ityp(iat)
+          !=   !  CALL sirius_set_atom_type_hubbard(sctx, &
+          !=   !          & TRIM(atom_type(nt1)%label), &
+          !=   !          & Hubbard_l(nt1), &
+          !=   !          & set_hubbard_n(upf(nt1)%psd), &
+          !=   !             & hubbard_occ ( upf(nt1)%psd ), &
+          !=   !          & Hubbard_U(nt1) * RYTOEV, &
+          !=   !          & Hubbard_J(1,nt1) * RYTOEV, &
+          !=   !          & Hubbard_alpha(nt1) * RYTOEV, &
+          !=   !          & Hubbard_beta(nt1) * RYTOEV, &
+          !=   !          & Hubbard_J0(nt1) * RYTOEV)
+          !=   !ENDIF
+          != END IF
+        END DO ! ia
+      END IF
     ELSE
       ! initialize atom types with FP-LAPW species
       DO iat = 1, nsp

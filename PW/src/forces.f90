@@ -133,7 +133,7 @@ SUBROUTINE forces()
     forcenl = forcenl * 2 ! convert to Ry
     CALL sirius_get_forces(gs_handler, "scf_corr", forcescc)
     forcescc = forcescc * 2 ! convert to Ry
-    IF (use_veff_callback) THEN
+    IF ( use_veff_callback ) THEN
      CALL force_lc( nat, tau, ityp, alat, omega, ngm, ngl, igtongl, &
                  g, rho%of_r(:,1), dfftp%nl, gstart, gamma_only, vloc, &
                  forcelc )
@@ -151,6 +151,10 @@ SUBROUTINE forces()
       forceion = forceion * 2 ! convert to Ry
       CALL sirius_get_forces(gs_handler, "core", forcecc)
       forcecc = forcecc * 2 ! convert to Ry
+    ENDIF
+    IF ( lda_plus_u ) THEN
+      CALL sirius_get_forces(gs_handler,"hubbard", forceh)
+      forceh = forceh * 2 ! convert to Ry
     ENDIF
   ELSE
 #endif

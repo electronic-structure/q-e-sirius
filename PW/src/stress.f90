@@ -149,7 +149,7 @@ SUBROUTINE stress( sigma )
     sigmanlc = sigmanlc - 2 * tmp
     IF ( lda_plus_u .AND. Hubbard_projectors /= 'pseudo' ) THEN
       CALL sirius_get_stress_tensor(gs_handler, "hubbard", sigmah)
-      sigmah = sigmah * 2 ! convert to Ry
+      sigmah = -sigmah * 2 ! convert to Ry
     ENDIF
 
   ELSE
