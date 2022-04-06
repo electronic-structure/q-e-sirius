@@ -74,7 +74,8 @@ set(src_pw4gww
     pw4gww/operator_1_vp.f90
     pw4gww/lanczos_chains.f90
     pw4gww/convergence.f90
-    pw4gww/easy_gw.f90)
+    pw4gww/easy_gw.f90
+    pw4gww/operator_debug.f90)
 qe_enable_cuda_fortran("${src_pw4gww}")
 
 set(src_bse
