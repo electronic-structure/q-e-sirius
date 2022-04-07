@@ -1620,8 +1620,8 @@ MODULE mod_sirius
     igcc   = xclib_get_id( 'GGA', 'CORR' )
     imeta  = xclib_get_id( 'MGGA','EXCH' )
     imetac = xclib_get_id( 'MGGA','CORR' )
-    WRITE(*,*)iexch,icorr,igcx,igcc,imeta,imetac
-    WRITE(*,*)trim(get_dft_name())
+    !WRITE(*,*)iexch,icorr,igcx,igcc,imeta,imetac
+    !WRITE(*,*)trim(get_dft_name())
     !
     IF (imeta.NE.0.OR.imetac.NE.0) THEN
       STOP ("interface for meta-XC functional is not implemented")
