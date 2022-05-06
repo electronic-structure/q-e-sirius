@@ -79,6 +79,7 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
    USE apply_dpot_mod,        ONLY : apply_dpot_bands
    USE cell_base,             ONLY : at
    USE gvect,                 ONLY : mill
+   USE control_lr,            ONLY : alpha_pv
    USE mod_sirius
    !
    IMPLICIT NONE
@@ -267,16 +268,23 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
         !ALLOCATE (dpsi(npwx*npol,nbnd))
         !
         !WRITE(*,*)'et=',et(:,ikmk)
+        !WRITE(*,*) 'inital dpsi(1:1, :)=', dpsi(1:1, :)
+
          CALL sirius_linear_solver( gs_handler, vk=MATMUL(TRANSPOSE(at), xk(:,ikk)), &
             &vkq=MATMUL(TRANSPOSE(at), xk(:,ikq)), num_gvec_k_loc=npw, gvec_k_loc=vg_k(:,:),&
             &num_gvec_kq_loc=npwq, gvec_kq_loc=vg_kq(:,:), dpsi=dpsi(1,1),&
-            &dvpsi=dvpsi(1,1), ld=npwx, num_spin_comp=npol )
+            &psi=evq(:,:), eigvals=et(1, ikmk), dvpsi=dvpsi(1,1), ld=npwx, num_spin_comp=npol,&
+            alpha_pv=alpha_pv)
+
+        !WRITE(*,*) 'post sirius dpsi(1:1, :)=', dpsi(1:1, :)
 
          DEALLOCATE(vg_k)
          DEALLOCATE(vg_kq)
 #endif
          CALL cgsolve_all(ch_psi_all, cg_psi, et(1, ikmk), dvpsi, dpsi, h_diag, &
             npwx, npwq, thresh, ik, num_iter, conv_root, anorm, nbnd_occ(ikk), npol)
+
+        !WRITE(*,*) 'post QE dpsi(1:1, :)=', dpsi(1:1, :)
          !
          tot_num_iter = tot_num_iter + num_iter
          tot_cg_calls = tot_cg_calls + 1
