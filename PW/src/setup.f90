@@ -632,6 +632,29 @@ SUBROUTINE setup()
   ALLOCATE(wkpoints(num_kpoints))
   wkpoints(1:num_kpoints) = wk(1:num_kpoints)
 #endif
+  IF (.true.) THEN
+     WRITE(*,*)'setup.f90: trying new order of k-points'
+     kunit   = 1
+     CALL divide_et_impera ( nkstot, xk, wk, isk, nks )
+     IF ( lsda ) THEN
+       DO ik = 1, nks
+         xk(:,ik+nks) = xk(:,ik)
+         wk(ik+nks) = wk(ik)
+         isk(ik) = 1
+         isk(ik+nks) = 2
+       ENDDO
+       nkstot = 2 * nkstot
+       nks = 2 * nks
+     ELSE IF ( noncolin ) THEN
+        current_spin = 1
+        isk(:) = 1
+     ELSE
+        wk(1:nks)    = wk(1:nks) * degspin
+        current_spin = 1
+        isk(:) = 1
+     ENDIF
+  ELSE
+
   !
   IF ( lsda ) THEN
      !
@@ -678,6 +701,7 @@ SUBROUTINE setup()
   !
   kunit   = 1
   CALL divide_et_impera ( nkstot, xk, wk, isk, nks )
+  ENDIF
   !
   ! ... checks and initializations to be performed after parallelization setup
   !
