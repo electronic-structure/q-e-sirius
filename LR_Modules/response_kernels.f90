@@ -130,6 +130,9 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
    COMPLEX(DP) , ALLOCATABLE :: aux2(:, :)
    !! temporary storage used in apply_dpot_bands
    INTEGER, ALLOCATABLE :: vg_k(:,:), vg_kq(:,:)
+
+   complex(8), allocatable :: dpsi1(:,:), dvpsi1(:,:), keep1(:,:)
+   integer i,j
    !
    EXTERNAL ch_psi_all, cg_psi
    !! functions passed to cgsolve_all
@@ -148,7 +151,9 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
    tot_num_iter = 0
    tot_cg_calls = 0
    !
+   write(*,*)'sternheimer_kernel'
    DO ik = 1, nksq
+      write(*,*)'ik=',ik
       ikk  = ikks(ik)
       ikq  = ikqs(ik)
       npw  = ngk(ikk)
@@ -191,6 +196,7 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
       CALL h_prec(ik, evq, h_diag)
       !
       DO ipert = 1, npert
+         write(*,*)'ipert=',ipert
          !
          ! read P_c^+ x psi_kpoint into dvpsi.
          !
@@ -248,9 +254,10 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
          conv_root = .TRUE.
          !
          ! TODO: should nbnd_occ(ikk) be nbnd_occ(ikmk)?
+         !IF (.TRUE.) THEN
 #if defined(__SIRIUS)
-         WRITE(*,*)'vk=',MATMUL(TRANSPOSE(at), xk(:,ikk))
-         WRITE(*,*)'vq=',MATMUL(TRANSPOSE(at), xk(:,ikq))
+         !WRITE(*,*)'vk=',MATMUL(TRANSPOSE(at), xk(:,ikk))
+         !WRITE(*,*)'vq=',MATMUL(TRANSPOSE(at), xk(:,ikq))
          ALLOCATE(vg_k(3,ngk(ikk)))
          ALLOCATE(vg_kq(3,ngk(ikq)))
 
@@ -270,19 +277,43 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
         !WRITE(*,*)'et=',et(:,ikmk)
         !WRITE(*,*) 'inital dpsi(1:1, :)=', dpsi(1:1, :)
 
+
+        ALLOCATE (dvpsi1(npwx*npol,nbnd))
+        ALLOCATE (dpsi1(npwx*npol,nbnd))
+        ALLOCATE (keep1(npwx*npol,nbnd))
+        dvpsi1=dvpsi
+        dpsi1=dpsi
+
+        ! TODO: pass eigvals in [Ha]
          CALL sirius_linear_solver( gs_handler, vk=MATMUL(TRANSPOSE(at), xk(:,ikk)), &
             &vkq=MATMUL(TRANSPOSE(at), xk(:,ikq)), num_gvec_k_loc=npw, gvec_k_loc=vg_k(:,:),&
             &num_gvec_kq_loc=npwq, gvec_kq_loc=vg_kq(:,:), dpsi=dpsi(1,1),&
             &psi=evq(:,:), eigvals=et(1, ikmk), dvpsi=dvpsi(1,1), ld=npwx, num_spin_comp=npol,&
             alpha_pv=alpha_pv)
 
+
+        keep1=dpsi
+
         !WRITE(*,*) 'post sirius dpsi(1:1, :)=', dpsi(1:1, :)
 
          DEALLOCATE(vg_k)
          DEALLOCATE(vg_kq)
+
+         dvpsi=dvpsi1
+         dpsi=dpsi1
 #endif
+         !ELSE
          CALL cgsolve_all(ch_psi_all, cg_psi, et(1, ikmk), dvpsi, dpsi, h_diag, &
             npwx, npwq, thresh, ik, num_iter, conv_root, anorm, nbnd_occ(ikk), npol)
+         !END IF
+
+         do i = 1, nbnd
+             write(*,*)'i=',i,' diff=',SUM(ABS(keep1(1:npw,i)-dpsi(1:npw,i)))
+         enddo
+
+        DEALLOCATE (dvpsi1)
+        DEALLOCATE (dpsi1)
+        DEALLOCATE (keep1)
 
         !WRITE(*,*) 'post QE dpsi(1:1, :)=', dpsi(1:1, :)
          !
