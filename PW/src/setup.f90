@@ -598,6 +598,26 @@ SUBROUTINE setup()
      !
   END IF
   !
+  ! ... Set up Hubbard parameters for DFT+Hubbard
+  !
+  CALL init_hubbard ( upf(1:ntyp)%psd, nspin, noncolin )
+  !
+  ! ... initialize d1 and d2 to rotate the spherical harmonics
+  !
+  IF (lda_plus_u .or. okpaw .or. (okvan.and.xclib_dft_is('hybrid')) ) CALL d_matrix( d1, d2, d3 )
+  !
+  ! ... set parallelization strategy: need an estimate of FFT dimension along z
+  !
+  nr3 = int ( sqrt(gcutms)*sqrt (at(1, 3)**2 + at(2, 3)**2 + at(3, 3)**2) ) + 1
+  nr3 = good_fft_order( 2*nr3, fft_fact(3) )
+  !
+  ! ... nk_ = number of k-points usable for k-point parallelization
+  !           (set to 1 if k-point parallelization is not implemented)
+  nk_ = nkstot
+  IF ( lberry .OR. lelfield .OR. lorbm .OR. &
+       ( xclib_dft_is('hybrid') .AND. tstress ) ) nk_ = 1
+  !
+  CALL setup_para ( nr3, nk_, nbnd )
 #if defined(__SIRIUS)
   ! get inverse of the reciprocal lattice vectors
   CALL invert_mtrx(bg, bg_inv)
@@ -653,27 +673,6 @@ SUBROUTINE setup()
         ENDDO
      ENDDO
   ENDIF
-  !
-  ! ... Set up Hubbard parameters for DFT+Hubbard
-  !
-  CALL init_hubbard ( upf(1:ntyp)%psd, nspin, noncolin )
-  !
-  ! ... initialize d1 and d2 to rotate the spherical harmonics
-  !
-  IF (lda_plus_u .or. okpaw .or. (okvan.and.xclib_dft_is('hybrid')) ) CALL d_matrix( d1, d2, d3 )
-  !
-  ! ... set parallelization strategy: need an estimate of FFT dimension along z
-  !
-  nr3 = int ( sqrt(gcutms)*sqrt (at(1, 3)**2 + at(2, 3)**2 + at(3, 3)**2) ) + 1
-  nr3 = good_fft_order( 2*nr3, fft_fact(3) )
-  !
-  ! ... nk_ = number of k-points usable for k-point parallelization
-  !           (set to 1 if k-point parallelization is not implemented)
-  nk_ = nkstot
-  IF ( lberry .OR. lelfield .OR. lorbm .OR. &
-       ( xclib_dft_is('hybrid') .AND. tstress ) ) nk_ = 1
-  !
-  CALL setup_para ( nr3, nk_, nbnd )
   !
   ! ... distribute k-points across processors of a pool
   !
