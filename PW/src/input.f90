@@ -332,6 +332,11 @@ SUBROUTINE iosys()
   USE qexsd_input,           ONLY : qexsd_input_obj
   USE qes_types_module,      ONLY : input_type
   !
+#if defined (__ENVIRON)
+  USE plugin_flags,          ONLY : use_environ
+  USE environ_base_module,   ONLY : read_environ_input, init_environ_setup
+#endif
+  !
   IMPLICIT NONE
   !
   INTERFACE  
@@ -346,7 +351,7 @@ SUBROUTINE iosys()
   CHARACTER(LEN=256):: dft_
   !
   INTEGER  :: ia, nt, tempunit, i, j, ibrav_mp
-  LOGICAL  :: exst, parallelfs, domag, stop_on_error
+  LOGICAL  :: exst, parallelfs, domag, stop_on_error, is_tau_read
   REAL(DP) :: at_dum(3,3), theta, phi, ecutwfc_pp, ecutrho_pp, V
   CHARACTER(len=256) :: tempfile
   INTEGER, EXTERNAL :: at2ibrav
@@ -1461,7 +1466,12 @@ SUBROUTINE iosys()
   !
   ! ... once input variables have been stored, read optional plugin input files
   !
-  CALL plugin_read_input("PW")
+#if defined (__ENVIRON)
+  IF (use_environ) THEN
+     CALL read_environ_input()
+     CALL init_environ_setup('PW')
+  END IF
+#endif
   !
   ! ... Files (for compatibility) and directories
   !     Must be set before calling read_conf_from_file
@@ -1491,7 +1501,8 @@ SUBROUTINE iosys()
         pseudo_dir_cur = restart_dir()
      END IF
      !
-     CALL read_conf_from_file( stop_on_error, nat_, ntyp, tau, alat, at )
+     CALL read_conf_from_file( stop_on_error, nat_, ntyp, tau, alat, at, &
+                               is_tau_read )
      !
      ! Update reciprocal lattice and volume (may be updated if coming from a vc run)
      !
@@ -1680,7 +1691,7 @@ SUBROUTINE iosys()
   !
   ! ... End of reading input parameters
   !
-#if ( ! defined (__INTEL_COMPILER) || (__INTEL_COMPILER >= 1300) ) && ! defined (__CRAY)
+#if ! defined (__INTEL_COMPILER) || __INTEL_COMPILER >= 1300
   CALL pw_init_qexsd_input(qexsd_input_obj, obj_tagname="input")
 #endif
   CALL deallocate_input_parameters ()  
