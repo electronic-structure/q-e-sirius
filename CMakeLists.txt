@@ -136,6 +136,13 @@ if(DEVICEXLIB_ROOT)
 endif()
 option(QE_DEVICEXLIB_INTERNAL
     "enable DeviceXlib intenal library" ON)
+if(ENVIRON_ROOT)
+    set(ENVIRON_DEFAULT "EXTERNAL")
+else()
+    set(ENVIRON_DEFAULT "NO")
+endif()
+set(QE_ENABLE_ENVIRON "${ENVIRON_DEFAULT}" CACHE
+    STRING "select a specific Environ library [NO, EXTERNAL, INTERNAL]")
 
 # TODO change all ifdefs throughout code base to match
 # cmake options
@@ -178,6 +185,9 @@ if(QE_ENABLE_SCALAPACK)
 endif()
 if(QE_ENABLE_HDF5)
     qe_add_global_compile_definitions(__HDF5)
+endif()
+if(QE_ENABLE_ENVIRON)
+    qe_add_global_compile_definitions(__ENVIRON)
 endif()
 
 # Feature checks
@@ -223,7 +233,7 @@ if(NOT QE_ENABLE_SANITIZER STREQUAL "none" AND NOT CMAKE_Fortran_COMPILER_ID MAT
 endif()
 
 # valid plugins checks
-set(VALID_QE_PLUGINS "d3q")
+set(VALID_QE_PLUGINS "d3q" "pw2qmcpack")
 # Perform sanitizer option check, only works in debug mode
 foreach(PLUGIN IN LISTS QE_ENABLE_PLUGINS)
   if(NOT PLUGIN IN_LIST VALID_QE_PLUGINS)
@@ -648,6 +658,7 @@ add_subdirectory(PWCOND)
 add_subdirectory(TDDFPT)
 add_subdirectory(XSpectra)
 add_subdirectory(QEHeat)
+add_subdirectory(KCW)
 add_subdirectory(GUI)
 if(QE_ENABLE_DOC)
     add_subdirectory(Doc)

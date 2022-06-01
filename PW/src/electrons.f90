@@ -440,6 +440,12 @@ SUBROUTINE electrons_scf ( printout, exxen )
   USE device_fbuff_m,       ONLY : dev_buf, pin_buf
   USE pwcom,                ONLY : report_mag 
   !
+#if defined (__ENVIRON)
+  USE plugin_flags,         ONLY : use_environ
+  USE environ_base_module,  ONLY : calc_environ_energy, print_environ_energies
+  USE environ_pw_module,    ONLY : calc_environ_potential
+#endif
+  !
   IMPLICIT NONE
   !
   INTEGER, INTENT (IN) :: printout
@@ -529,10 +535,9 @@ SUBROUTINE electrons_scf ( printout, exxen )
       END IF
     END IF
     CALL start_clock( 'electrons' )
-    CALL sirius_set_parameters(sctx, iter_solver_tol=ethr)
     ! look only for the convergence of the density; converge total energy only to 10^-4
-    CALL sirius_find_ground_state(gs_handler, density_tol=tr2, energy_tol=1d-4, max_niter=niter, save_state=.false., &
-                                 &converged=conv_elec, niter=iter)
+    CALL sirius_find_ground_state(gs_handler, density_tol=tr2, energy_tol=1d-4, max_niter=niter,&
+        &iter_solver_tol=ethr, save_state=.false., converged=conv_elec, niter=iter)
     CALL stop_clock( 'electrons' )
 
     CALL sirius_get_energy(gs_handler, "descf", descf)
@@ -1013,9 +1018,12 @@ SUBROUTINE electrons_scf ( printout, exxen )
      !
      plugin_etot = 0.0_dp
      !
-     CALL plugin_scf_energy(plugin_etot,rhoin)
-     !
-     CALL plugin_scf_potential(rhoin,conv_elec,dr2,vltot)
+#if defined (__ENVIRON)
+     IF (use_environ) THEN
+        CALL calc_environ_energy(plugin_etot, .TRUE.)
+        CALL calc_environ_potential(rhoin, conv_elec, dr2, vltot)
+     END IF
+#endif
      !
      ! ... define the total local potential (external + scf)
      !
@@ -1678,7 +1686,9 @@ SUBROUTINE electrons_scf ( printout, exxen )
        WRITE(stdout,*)''
        WRITE(stdout, 9990)eband
        !
-       CALL plugin_print_energies()
+#if defined (__ENVIRON)
+       IF (use_environ) CALL print_environ_energies('PW')
+#endif
        !
        IF ( lsda ) WRITE( stdout, 9017 ) magtot, absmag
        !
