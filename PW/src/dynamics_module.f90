@@ -582,7 +582,7 @@ CONTAINS
          REAL(DP) :: sigma, kt
          !
          IF (.NOT. vel_defined) THEN
-            vel(:,:) = (tau(:,:) - tau_old(:,:)) / dt
+            vel(:,:) = ( tau(:,:) - tau_old(:,:) ) / dt * dble( if_pos(:,:) )
          ENDIF
          !
          SELECT CASE( TRIM( thermostat ) )
@@ -835,13 +835,14 @@ CONTAINS
      !! Terminate Verlet molecular dynamics calculation.
      !
      USE io_global, ONLY : stdout
+     USE control_flags, ONLY : istep
      !
      WRITE( UNIT = stdout, &
           FMT = '(/,5X,"The maximum number of steps has been reached.")' )
      WRITE( UNIT = stdout, &
           FMT = '(/,5X,"End of molecular dynamics calculation")' )
      !
-     CALL print_averages()
+     IF (istep > 0) CALL print_averages()
      !
    END SUBROUTINE terminate_verlet
    !
@@ -2084,7 +2085,7 @@ CONTAINS
       REAL(DP), INTENT(in) :: time, temp ! in ps, K
       INTEGER              :: iunit, i, k
       !
-      OPEN(UNIT = iunit, FILE = TRIM( tmp_dir ) // TRIM( prefix ) // ".mdtrj", &
+      OPEN(NEWUNIT = iunit, FILE = TRIM( tmp_dir ) // TRIM( prefix ) // ".mdtrj", &
          STATUS="unknown", POSITION="APPEND")
       !
       ! Time (ps), temp (K), total energy (Ry), unit cell (9 values, Ang),

@@ -23,7 +23,7 @@ MODULE qexsd_copy
        qexsd_copy_symmetry, qexsd_copy_algorithmic_info, &
        qexsd_copy_basis_set, qexsd_copy_dft, qexsd_copy_band_structure, &
        qexsd_copy_efield, qexsd_copy_magnetization, qexsd_copy_kpoints, &
-       qexsd_copy_efermi
+       qexsd_copy_efermi, qexsd_copy_rism3d, qexsd_copy_rismlaue
   !
 CONTAINS
   !-------------------------------------------------------------------------------
@@ -301,7 +301,7 @@ CONTAINS
     npw_g     = basis_set%npwx
     !
     b1 =  basis_set%reciprocal_lattice%b1
-    b2 =  basis_set%reciprocal_lattice%b2
+   !  b2 =  basis_set%reciprocal_lattice%b2
     b3 =  basis_set%reciprocal_lattice%b3
     !
   END SUBROUTINE qexsd_copy_basis_set
@@ -348,7 +348,7 @@ CONTAINS
     !
     CHARACTER(LEN=256 ) :: label
     CHARACTER(LEN=3 )   :: symbol
-    INTEGER :: ihub, isp, hu_n, hu_l, idx1, idx2
+    INTEGER :: ihub, isp, hu_n, hu_l, idx1, idx2, idx3
     INTEGER, EXTERNAL :: spdf_to_l
     !
     dft_name = TRIM(dft_obj%functional)
@@ -500,18 +500,32 @@ CONTAINS
          DO ihub = 1, dft_obj%dftU%ndim_Hubbard_V 
            idx1 = dft_obj%dftU%Hubbard_V(ihub)%index1
            idx2 = dft_obj%dftU%Hubbard_V(ihub)%index2
-           Hubbard_V(idx1, idx2,1) = dft_obj%dftU%Hubbard_V(ihub)%HubbardInterSpecieV  
+           IF (Hubbard_V(idx1, idx2,1 ) == 0._DP ) THEN 
+             idx3 = 1 
+           ELSE IF (Hubbard_V(idx1, idx2, 2) == 0._DP) THEN 
+             idx3 = 2 
+           ELSE IF (Hubbard_V(idx1, idx2, 3) == 0._DP) THEN 
+             idx3 = 3 
+           ELSE IF (Hubbard_V(idx1, idx2, 4) == 0._DP) THEN
+             idx3 = 4  
+           END IF 
+           Hubbard_V(idx1, idx2, idx3 ) = dft_obj%dftU%Hubbard_V(ihub)%HubbardInterSpecieV
            symbol = TRIM(dft_obj%dftU%Hubbard_V(ihub)%specie1) 
            label  = TRIM(dft_obj%dftU%hubbard_V(ihub)%label1) 
            DO isp = 1, nsp
-             IF (TRIM(symbol) == TRIM(atm(isp)) .AND. Hubbard_n(isp) == -1 ) THEN 
+             IF (TRIM(symbol) == TRIM(atm(isp)) .AND. & 
+                  ( Hubbard_n(isp) == -1 .OR. Hubbard_n2(isp) == -1 ))  THEN 
                READ (label(1:1),'(i1)', END=14, ERR=15) hu_n
                hu_l = spdf_to_l( label(2:2) )
-               Hubbard_n(isp) = hu_n
-               Hubbard_l(isp) = hu_l
-               IF (Hubbard_n(isp)<0 .OR. Hubbard_l(isp)<0) &
-                  CALL errore ("qexsd_copy_dft:", &
-                     &"Problem while reading Hubbard_n and/or Hubbard_l", 1 )
+               IF ( idx3 == 1 .OR. idx3 == 2 ) THEN 
+                 Hubbard_n(isp) = hu_n
+                 Hubbard_l(isp) = hu_l
+                 IF (Hubbard_n(isp)<0 .OR. Hubbard_l(isp)<0) &
+                    CALL errore ("qexsd_copy_dft:", "Problem while reading Hubbard_n and/or Hubbard_l", 1)
+               ELSE IF ( idx3 == 3 .OR. idx3 == 4 ) THEN 
+                 Hubbard_n2 = hu_n 
+                 Hubbard_l2 = hu_l 
+               END IF 
              END IF 
            END DO
          END DO     
@@ -647,7 +661,7 @@ CONTAINS
     END SUBROUTINE qexsd_copy_band_structure
     !
     SUBROUTINE qexsd_copy_efermi ( band_struct_obj, &
-         nelec, ef, two_fermi_energies, ef_up, ef_dw )
+         nelec, ef, two_fermi_energies, ef_up, ef_dw, nbnd )
       !------------------------------------------------------------------------
       !
       USE qes_types_module, ONLY : band_structure_type
@@ -656,6 +670,7 @@ CONTAINS
       TYPE ( band_structure_type) :: band_struct_obj
       LOGICAL, INTENT(out) :: two_fermi_energies
       REAL(dp), INTENT(out):: nelec, ef, ef_up, ef_dw
+      INTEGER, OPTIONAL, INTENT(out) :: nbnd
       !
       nelec = band_struct_obj%nelec
       two_fermi_energies = band_struct_obj%two_fermi_energies_ispresent 
@@ -672,6 +687,30 @@ CONTAINS
          ef_up = 0.d0
          ef_dw = 0.d0
       END IF      
+      !
+      IF ( PRESENT(nbnd) ) THEN
+         !
+         IF ( band_struct_obj%lsda ) THEN
+            !
+            IF (band_struct_obj%nbnd_ispresent) THEN
+               nbnd  = band_struct_obj%nbnd / 2
+            ELSE IF ( band_struct_obj%nbnd_up_ispresent .AND. band_struct_obj%nbnd_dw_ispresent ) THEN
+               nbnd = (band_struct_obj%nbnd_up + band_struct_obj%nbnd_dw)/2
+            ELSE
+               CALL errore ('qexsd_copy_efermi: ','both nbnd and nbnd_up+nbnd_dw missing', 1)
+            END IF
+            !
+         ELSE
+            !
+            IF (band_struct_obj%nbnd_ispresent) THEN
+               nbnd  = band_struct_obj%nbnd
+            ELSE
+               CALL errore ('qexsd_copy_efermi: ','nbnd missing', 1)
+            END IF
+            !
+         END IF
+         !
+      END IF
       !
     END SUBROUTINE qexsd_copy_efermi
     !-----------------------------------------------------------------------
@@ -847,4 +886,89 @@ CONTAINS
        ! 
      END SUBROUTINE qexsd_copy_kpoints
      !
-   END MODULE qexsd_copy
+
+  !
+  !---------------------------------------------------------------------------
+  SUBROUTINE qexsd_copy_rism3d( rism3d_obj, pseudo_dir, nsolV, solVs, molfile, ecutsolv )
+    !---------------------------------------------------------------------------
+    !
+    USE qes_types_module, ONLY : rism3d_type
+    USE molecule_types,   ONLY : molecule, nullify_molecule
+    !
+    IMPLICIT NONE
+    !
+    TYPE(rism3d_type), INTENT(IN)  :: rism3d_obj
+    CHARACTER(LEN=*),  INTENT(IN)  :: pseudo_dir
+    INTEGER,           INTENT(OUT) :: nsolV
+    TYPE(molecule),    INTENT(INOUT), ALLOCATABLE :: solVs(:)
+    CHARACTER(LEN=*),  INTENT(OUT) :: molfile(:)
+    REAL(DP),          INTENT(OUT) :: ecutsolv
+    !
+    INTEGER :: isolV
+    !
+    IF ( rism3d_obj%molec_dir_ispresent ) THEN
+       IF ( TRIM(pseudo_dir) /= TRIM(rism3d_obj%molec_dir) ) THEN
+          CALL errore ("qexsd_copy_rism3d:", "pseudo_dir /= molec_dir", 1)
+       END IF
+    END IF
+    !
+    nsolV = rism3d_obj%nmol
+    !
+    IF ( .NOT. ALLOCATED(solVs) ) ALLOCATE(solVs(nsolV))
+    !
+    DO isolV = 1, nsolV
+       !
+       CALL nullify_molecule(solVs(isolV))
+       solVs(isolV)%name       = TRIM(rism3d_obj%solvent(isolV)%label)
+       solVs(isolV)%density    = rism3d_obj%solvent(isolV)%density1
+       solVs(isolV)%subdensity = rism3d_obj%solvent(isolV)%density2
+       !
+       molfile(isolV) = TRIM(rism3d_obj%solvent(isolV)%molec_file)
+       !
+    END DO
+    !
+    ecutsolv = rism3d_obj%ecutsolv
+    !
+  END SUBROUTINE qexsd_copy_rism3d
+  !
+  !---------------------------------------------------------------------------
+  SUBROUTINE qexsd_copy_rismlaue( rismlaue_obj, both_hands, laue_nfit, ireference, qsol, &
+                                  starting_r, expand_r, buffer_r, buffer_ru, buffer_rv,   &
+                                  starting_l, expand_l, buffer_l, buffer_lu, buffer_lv )
+    !---------------------------------------------------------------------------
+    !
+    USE qes_types_module, ONLY : rismlaue_type
+    !
+    IMPLICIT NONE
+    !
+    TYPE(rismlaue_type), INTENT(IN)  :: rismlaue_obj
+    LOGICAL,             INTENT(OUT) :: both_hands
+    INTEGER,             INTENT(OUT) :: laue_nfit
+    INTEGER,             INTENT(OUT) :: ireference
+    REAL(DP),            INTENT(OUT) :: qsol
+    REAL(DP),            INTENT(OUT) :: starting_r, starting_l
+    REAL(DP),            INTENT(OUT) :: expand_r,   expand_l
+    REAL(DP),            INTENT(OUT) :: buffer_r,   buffer_l
+    REAL(DP),            INTENT(OUT) :: buffer_ru,  buffer_lu
+    REAL(DP),            INTENT(OUT) :: buffer_rv,  buffer_lv
+    !
+    both_hands = rismlaue_obj%both_hands
+    laue_nfit  = rismlaue_obj%nfit
+    ireference = rismlaue_obj%pot_ref
+    qsol       = rismlaue_obj%charge
+    !
+    starting_r = rismlaue_obj%right_start
+    expand_r   = rismlaue_obj%right_expand
+    buffer_r   = rismlaue_obj%right_buffer
+    buffer_ru  = rismlaue_obj%right_buffer_u
+    buffer_rv  = rismlaue_obj%right_buffer_v
+    !
+    starting_l = rismlaue_obj%left_start
+    expand_l   = rismlaue_obj%left_expand
+    buffer_l   = rismlaue_obj%left_buffer
+    buffer_lu  = rismlaue_obj%left_buffer_u
+    buffer_lv  = rismlaue_obj%left_buffer_v
+    !
+  END SUBROUTINE qexsd_copy_rismlaue
+  !
+END MODULE qexsd_copy

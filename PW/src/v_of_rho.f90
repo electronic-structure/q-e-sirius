@@ -567,6 +567,9 @@ SUBROUTINE v_xc( rho, rho_core, rhog_core, etxc, vtxc, v )
   !$acc end data
   !$acc end data
   !
+  ! ... to avoid NaN in some rare cases (see summations in subroutine delta_e)
+  IF ( nspin==4 .AND. .NOT.domag ) v(:,2:nspin) = 0.D0
+  !
   ! ... add non local corrections (if any)
   !
   IF ( dft_is_nonlocc() ) CALL nlc( rho%of_r, rho_core, nspin, etxc, vtxc, v )
@@ -588,7 +591,7 @@ SUBROUTINE v_h( rhog, ehart, charge, v )
   USE constants,         ONLY : fpi, e2
   USE kinds,             ONLY : DP
   USE fft_base,          ONLY : dfftp
-  USE fft_interfaces,    ONLY : invfft
+  USE fft_rho,           ONLY : rho_g2r
   USE gvect,             ONLY : ngm, gg, gstart
   USE lsda_mod,          ONLY : nspin
   USE cell_base,         ONLY : omega, tpiba2
@@ -612,7 +615,7 @@ SUBROUTINE v_h( rhog, ehart, charge, v )
   !  ... local variables
   !
   REAL(DP)              :: fac
-  REAL(DP), ALLOCATABLE :: aux1(:,:)
+  REAL(DP), ALLOCATABLE :: aux1(:,:), vh(:)
   REAL(DP)              :: rgtot_re, rgtot_im, eh_corr
   INTEGER               :: is, ig
   COMPLEX(DP), ALLOCATABLE :: aux(:), rgtot(:), vaux(:)
@@ -620,24 +623,24 @@ SUBROUTINE v_h( rhog, ehart, charge, v )
   !
   CALL start_clock( 'v_h' )
   !
-  ALLOCATE( aux( dfftp%nnr ), aux1( 2, ngm ) )
+  ALLOCATE( aux(dfftp%nnr), aux1(2,ngm), vh(dfftp%nnr) )
   charge = 0.D0
   !
   IF ( gstart == 2 ) THEN
      !
      charge = omega*REAL( rhog(1) )
      !
-  END IF
+  ENDIF
   !
-  CALL mp_sum(  charge , intra_bgrp_comm )
+  CALL mp_sum( charge, intra_bgrp_comm )
   !
   ! ... calculate hartree potential in G-space (NB: V(G=0)=0 )
   !
-  IF ( do_comp_esm .and. ( esm_bc .ne. 'pbc' ) ) THEN
+  IF ( do_comp_esm .AND. ( esm_bc .NE. 'pbc' ) ) THEN
      !
      ! ... calculate modified Hartree potential for ESM
      !
-     CALL esm_hartree (rhog, ehart, aux)
+     CALL esm_hartree( rhog, ehart, aux )
      !
   ELSE
      !
@@ -674,62 +677,84 @@ SUBROUTINE v_h( rhog, ehart, charge, v )
         !
         ehart = ehart * omega
         !
-     ELSE 
+     ELSE
         !
         ehart = ehart * 0.5D0 * omega
         !
-     END IF
-     ! 
-     if (do_comp_mt) then
-        ALLOCATE( vaux( ngm ), rgtot(ngm) )
+     ENDIF
+     !
+     IF (do_comp_mt) THEN
+        ALLOCATE( vaux(ngm), rgtot(ngm) )
         rgtot(:) = rhog(:)
-        CALL wg_corr_h (omega, ngm, rgtot, vaux, eh_corr)
+        CALL wg_corr_h( omega, ngm, rgtot, vaux, eh_corr )
         aux1(1,1:ngm) = aux1(1,1:ngm) + REAL( vaux(1:ngm))
         aux1(2,1:ngm) = aux1(2,1:ngm) + AIMAG(vaux(1:ngm))
         ehart = ehart + eh_corr
         DEALLOCATE( rgtot, vaux )
-     end if
+     ENDIF
      !
-     CALL mp_sum(  ehart , intra_bgrp_comm )
-     ! 
-     aux(:) = 0.D0
+     CALL mp_sum( ehart, intra_bgrp_comm )
      !
-     aux(dfftp%nl(1:ngm)) = CMPLX( aux1(1,1:ngm), aux1(2,1:ngm), KIND=dp )
+     aux(1:ngm) = CMPLX( aux1(1,1:ngm), aux1(2,1:ngm), KIND=DP )
      !
-     IF ( gamma_only ) THEN
-        !
-        aux(dfftp%nlm(1:ngm)) = CMPLX( aux1(1,1:ngm), -aux1(2,1:ngm), KIND=dp )
-        !
-     END IF
-  END IF
+  ENDIF
   !
-  ! ... transform hartree potential to real space
+  ! ... transform Hartree potential to real space
   !
-  CALL invfft('Rho', aux, dfftp)
+  CALL rho_g2r( dfftp, aux, vh )
   !
-  ! ... add hartree potential to the xc potential
+  ! ... add Hartree potential to the xc potential
   !
   IF ( nspin == 4 ) THEN
      !
-     v(:,1) = v(:,1) + DBLE(aux(:))
+     v(:,1) = v(:,1) + vh(:)
      !
   ELSE
      !
      DO is = 1, nspin
         !
-        v(:,is) = v(:,is) + DBLE(aux(:))
+        v(:,is) = v(:,is) + vh(:)
         !
-     END DO
+     ENDDO
      !
-  END IF
+  ENDIF
   !
-  DEALLOCATE( aux, aux1 )
+  DEALLOCATE( aux, aux1, vh )
   !
   CALL stop_clock( 'v_h' )
   !
   RETURN
   !
 END SUBROUTINE v_h
+!
+!----------------------------------------------------------------------------
+SUBROUTINE v_h_without_esm( rhog, ehart, charge, v )
+  !----------------------------------------------------------------------------
+  !
+  ! ... Hartree potential VH(r) from n(G), with do_comp_esm = .FALSE.
+  !
+  USE kinds,    ONLY : DP
+  USE fft_base, ONLY : dfftp
+  USE gvect,    ONLY : ngm
+  USE lsda_mod, ONLY : nspin
+  USE esm,      ONLY : do_comp_esm
+  !
+  IMPLICIT NONE
+  !
+  COMPLEX(DP), INTENT(IN)    :: rhog(ngm)
+  REAL(DP),    INTENT(INOUT) :: v(dfftp%nnr,nspin)
+  REAL(DP),    INTENT(OUT)   :: ehart, charge
+  !
+  LOGICAL :: do_comp_esm_org
+  !
+  do_comp_esm_org = do_comp_esm
+  do_comp_esm = .FALSE.
+  !
+  CALL v_h( rhog, ehart, charge, v )
+  !
+  do_comp_esm = do_comp_esm_org
+  !
+END SUBROUTINE v_h_without_esm
 !
 !-----------------------------------------------------------------------
 SUBROUTINE v_hubbard( ns, v_hub, eth )
@@ -861,8 +886,11 @@ SUBROUTINE v_hubbard_b (ns, v_hub, eth)
      !
      nt = ityp (na)
      !
-     IF (Hubbard_J0(nt).NE.0.d0 .OR. Hubbard_beta(nt).NE.0.d0) &
-     CALL errore('v_hubbard_b', 'Hubbard_J0 and Hubbard_beta are not supported',1) 
+     IF (Hubbard_J0(nt).NE.0.d0) &
+          CALL errore('v_hubbard_b', 'J0 is not supported in DFT+U with multiple channels per atomic type',1)
+     !
+     IF (Hubbard_beta(nt).NE.0.d0) &
+     CALL errore('v_hubbard_b', 'Hubbard_beta is not supported in DFT+U with multiple channels per atomic type',1) 
      !
      IF (is_hubbard_back(nt)) THEN
         !

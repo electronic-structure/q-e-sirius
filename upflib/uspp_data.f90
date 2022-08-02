@@ -25,9 +25,6 @@ MODULE uspp_data
 #if defined(__SIRIUS)
   PUBLIC :: beta_ri_tab, aug_ri_tab, wfc_ri_tab
 #endif
-  ! Next variables for compatibility only, to be removed
-  LOGICAL, PUBLIC :: spline_ps=.TRUE.
-  REAL(DP), ALLOCATABLE, PUBLIC :: tab_d2y(:,:,:)
   !
   INTEGER :: nqxq
   !! size of interpolation table

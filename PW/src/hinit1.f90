@@ -34,7 +34,9 @@ SUBROUTINE hinit1()
   USE dfunct,              ONLY : newd
   USE exx_base,            ONLY : coulomb_fac, coulomb_done
   !
-  USE scf_gpum,      ONLY : using_vrs
+  USE scf_gpum,            ONLY : using_vrs
+  USE ener,                ONLY : esol, vsol
+  USE rism_module,         ONLY : lrism, rism_update_pos, rism_calc3d
   !
 #if defined (__ENVIRON)
   USE plugin_flags,        ONLY : use_environ
@@ -43,6 +45,14 @@ SUBROUTINE hinit1()
 #endif
   !
   IMPLICIT NONE
+#if defined (__ENVIRON)
+  REAL(DP) :: at_scaled(3, 3)
+  REAL(DP) :: tau_scaled(3, nat)
+#endif
+  !
+  ! ... update solute position for 3D-RISM
+  !
+  IF (lrism) CALL rism_update_pos()
   !
 #if defined (__ENVIRON)
   REAL(DP) :: at_scaled(3, 3)
@@ -77,6 +87,10 @@ SUBROUTINE hinit1()
   IF ( report /= 0 ) CALL make_pointlists( )
   !
   CALL tag_wg_corr_as_obsolete
+  !
+  ! ... calculate 3D-RISM to get the solvation potential
+  !
+  IF (lrism) CALL rism_calc3d(rho%of_g(:, 1), esol, vsol, v%of_r, -1.0_DP)
   !
   ! ... plugin contribution to local potential
   !
