@@ -24,6 +24,7 @@ PROGRAM hp_main
   USE ldaU_hp,           ONLY : perturbed_atom, start_q, last_q, nqs, code, &
                                 compute_hp, sum_pertq, perturb_only_atom,   &
                                 determine_num_pert_only, tmp_dir_save
+  USE mp_world, ONLY: mpime
   USE mod_sirius
   !
   IMPLICIT NONE
@@ -34,6 +35,9 @@ PROGRAM hp_main
   ! Initialize MPI, clocks, print initial messages
   !
   CALL mp_startup()
+#if defined(__SIRIUS)
+  CALL sirius_initialize(call_mpi_init=.false.)
+#endif
   !
   CALL environment_start(code)
   !
@@ -230,6 +234,13 @@ PROGRAM hp_main
      CALL print_clock_pw()
      CALL hp_print_clock()
   ENDIF
+#if defined(__SIRIUS)
+  CALL sirius_finalize(call_mpi_fin=.false.)
+  IF (mpime.eq.0) THEN
+    CALL sirius_print_timers(.false.)
+    CALL sirius_print_timers(.true.)
+  ENDIF
+#endif
   !
   CALL environment_end(code)
   !
