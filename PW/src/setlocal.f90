@@ -42,11 +42,6 @@ SUBROUTINE setlocal
   USE environ_pw_module, ONLY : update_environ_potential
 #endif
   !
-#if defined (__ENVIRON)
-  USE plugin_flags,      ONLY : use_environ
-  USE environ_pw_module, ONLY : update_environ_potential
-#endif
-  !
   IMPLICIT NONE
   !
   COMPLEX(DP), ALLOCATABLE :: aux(:), v_corr(:)

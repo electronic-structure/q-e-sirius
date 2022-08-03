@@ -70,12 +70,6 @@ SUBROUTINE forces()
   USE environ_pw_module,   ONLY : is_ms_gcs, run_ms_gcs
 #endif
   !
-#if defined (__ENVIRON)
-  USE plugin_flags,        ONLY : use_environ
-  USE environ_base_module, ONLY : calc_environ_force
-  USE environ_pw_module,   ONLY : is_ms_gcs, run_ms_gcs
-#endif
-  !
   IMPLICIT NONE
   !
   REAL(DP), ALLOCATABLE :: forcenl(:,:),         &

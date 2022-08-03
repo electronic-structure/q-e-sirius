@@ -34,12 +34,6 @@ SUBROUTINE reset_k_points_and_reinit_nscf()
                                   print_environ_summary
 #endif
 
-#if defined (__ENVIRON)
-  USE plugin_flags,        ONLY : use_environ
-  USE environ_base_module, ONLY : read_environ_input, init_environ_setup, &
-                                  print_environ_summary
-#endif
-
   IMPLICIT NONE 
 
   CALL clean_pw( .FALSE. )
