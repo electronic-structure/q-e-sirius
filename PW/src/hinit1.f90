@@ -54,11 +54,6 @@ SUBROUTINE hinit1()
   !
   IF (lrism) CALL rism_update_pos()
   !
-#if defined (__ENVIRON)
-  REAL(DP) :: at_scaled(3, 3)
-  REAL(DP) :: tau_scaled(3, nat)
-#endif
-  !
   ! these routines can be used to patch quantities that are dependent
   ! on the ions and cell parameters
   !

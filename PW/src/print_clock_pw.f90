@@ -29,11 +29,6 @@ SUBROUTINE print_clock_pw()
    USE environ_base_module, ONLY : print_environ_clocks
 #endif
    !
-#if defined (__ENVIRON)
-   USE plugin_flags,        ONLY : use_environ
-   USE environ_base_module, ONLY : print_environ_clocks
-#endif
-   !
    IMPLICIT NONE
    !
    !

@@ -41,8 +41,6 @@ SUBROUTINE init_run()
   USE lsda_mod,           ONLY : nspin
   USE noncollin_module,   ONLY : domag
   USE xc_lib,             ONLY : xclib_dft_is_libxc, xclib_init_libxc, xclib_dft_is 
-  USE buffers,            ONLY : open_buffer
-  USE io_files,           ONLY : iunwfc, nwordwfc
   USE mod_sirius
   !
   USE control_flags,      ONLY : use_gpu
@@ -55,18 +53,8 @@ SUBROUTINE init_run()
   USE environ_base_module, ONLY : init_environ_base
 #endif
   !
-#if defined (__ENVIRON)
-  USE plugin_flags,        ONLY : use_environ
-  USE environ_base_module, ONLY : init_environ_base
-#endif
-  !
   IMPLICIT NONE
-  LOGICAL exst_file,exst_mem
-  !
-#if defined (__ENVIRON)
-  REAL(DP) :: at_scaled(3, 3)
-  REAL(DP) :: gcutm_scaled
-#endif
+  INTEGER :: ierr
   !
 #if defined (__ENVIRON)
   REAL(DP) :: at_scaled(3, 3)

@@ -64,11 +64,6 @@ SUBROUTINE potinit()
   USE environ_pw_module,    ONLY : calc_environ_potential
 #endif
   !
-#if defined (__ENVIRON)
-  USE plugin_flags,         ONLY : use_environ
-  USE environ_pw_module,    ONLY : calc_environ_potential
-#endif
-  !
   IMPLICIT NONE
   !
   REAL(DP)                  :: charge           ! the starting charge
@@ -170,6 +165,7 @@ SUBROUTINE potinit()
         ENDIF
         !
      ENDIF
+
      ! ... in the paw case uses atomic becsum
      IF ( okpaw )      CALL PAW_atomic_becsum()
      !

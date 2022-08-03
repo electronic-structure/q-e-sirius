@@ -115,7 +115,7 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
    !! true if linear system is converged
    LOGICAL :: exclude_hubbard_
    !! Local variable to set the default of exclude_hubbard to false
-   INTEGER :: ikk, ikq, npw, npwq, ipert, num_iter, ik, nrec, ikmk, ikmkmq, ig
+   INTEGER :: ikk, ikq, npw, npwq, ipert, num_iter, ik, nrec, ikmk, ikmkmq
    !! counters
    INTEGER :: tot_num_iter
    !! total number of iterations in cgsolve_all
@@ -130,9 +130,8 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
    COMPLEX(DP) , ALLOCATABLE :: aux2(:, :)
    !! temporary storage used in apply_dpot_bands
    INTEGER, ALLOCATABLE :: vg_kq(:,:)
-
-   complex(8), allocatable :: dpsi1(:,:), dvpsi1(:,:), keep1(:,:)
-   integer i,j
+   !
+   INTEGER :: ig
    !
    EXTERNAL ch_psi_all, cg_psi
    !! functions passed to cgsolve_all

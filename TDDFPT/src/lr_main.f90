@@ -54,11 +54,6 @@ PROGRAM lr_main
   !
   USE control_flags,         ONLY : use_gpu
   !
-#if defined (__ENVIRON)
-  USE plugin_flags,          ONLY : use_environ
-  USE environ_base_module,   ONLY : print_environ_summary
-#endif
-  !
   IMPLICIT NONE
   !
   ! Local variables
