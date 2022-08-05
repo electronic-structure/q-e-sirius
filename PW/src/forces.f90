@@ -143,7 +143,7 @@ SUBROUTINE forces()
     forcescc = forcescc * 2 ! convert to Ry
     IF ( use_veff_callback ) THEN
      CALL force_lc( nat, tau, ityp, alat, omega, ngm, ngl, igtongl, &
-                 g, rho%of_r(:,1), dfftp%nl, gstart, gamma_only, vloc, &
+                 g, rho%of_r(:,1), gstart, gamma_only, vloc, &
                  forcelc )
      IF( do_comp_esm ) THEN
         CALL esm_force_ew( forceion )

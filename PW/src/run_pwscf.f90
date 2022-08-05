@@ -74,11 +74,6 @@ SUBROUTINE run_pwscf( exit_status )
   USE environ_pw_module, ONLY : is_ms_gcs, init_ms_gcs
 #endif
   !
-#if defined (__ENVIRON)
-  USE plugin_flags,      ONLY : use_environ
-  USE environ_pw_module, ONLY : is_ms_gcs, init_ms_gcs
-#endif
-  !
   IMPLICIT NONE
   !
   INTEGER, INTENT(OUT) :: exit_status
