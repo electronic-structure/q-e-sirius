@@ -1409,15 +1409,15 @@ MODULE mod_sirius
     IF (nspin.NE.2) THEN
       ! non-magnetic or non-collinear case
       DO ik = 1, nkstot
-        CALL sirius_get_band_energies(ks_handler, ik, 1, band_e(1, ik))
+        CALL sirius_get_band_energies(ks_handler, ik, 1, band_e(:, ik))
       END DO
     ELSE
       ! collinear magnetic case
       nk = nkstot / 2
       ! get band energies
       DO ik = 1, nk
-        CALL sirius_get_band_energies(ks_handler, ik, 1, band_e(1, ik))
-        CALL sirius_get_band_energies(ks_handler, ik, 2, band_e(1, nk + ik))
+        CALL sirius_get_band_energies(ks_handler, ik, 1, band_e(:, ik))
+        CALL sirius_get_band_energies(ks_handler, ik, 2, band_e(:, nk + ik))
       END DO
     ENDIF
     ! convert to Ry
@@ -1463,13 +1463,13 @@ MODULE mod_sirius
     IF (nspin.NE.2) THEN
       ! set band occupancies
       DO ik = 1, nkstot
-        CALL sirius_set_band_occupancies(ks_handler, ik, 1, bnd_occ(1, ik))
+        CALL sirius_set_band_occupancies(ks_handler, ik, 1, bnd_occ(:, ik))
       ENDDO
     ELSE
       nk = nkstot / 2
       DO ik = 1, nk
-        CALL sirius_set_band_occupancies(ks_handler, ik, 1, bnd_occ(1, ik))
-        CALL sirius_set_band_occupancies(ks_handler, ik, 2, bnd_occ(1, ik + nk))
+        CALL sirius_set_band_occupancies(ks_handler, ik, 1, bnd_occ(:, ik))
+        CALL sirius_set_band_occupancies(ks_handler, ik, 2, bnd_occ(:, ik + nk))
       ENDDO
     ENDIF
     !
@@ -1500,13 +1500,13 @@ MODULE mod_sirius
     IF (nspin.NE.2) THEN
       ! set band occupancies
       DO ik = 1, nkstot
-        CALL sirius_get_band_occupancies(ks_handler, ik, 1, bnd_occ(1, ik))
+        CALL sirius_get_band_occupancies(ks_handler, ik, 1, bnd_occ(:, ik))
       ENDDO
     ELSE
       nk = nkstot / 2
       DO ik = 1, nk
-        CALL sirius_get_band_occupancies(ks_handler, ik, 1, bnd_occ(1, ik))
-        CALL sirius_get_band_occupancies(ks_handler, ik, 2, bnd_occ(1, ik + nk))
+        CALL sirius_get_band_occupancies(ks_handler, ik, 1, bnd_occ(:, ik))
+        CALL sirius_get_band_occupancies(ks_handler, ik, 2, bnd_occ(:, ik + nk))
       ENDDO
     ENDIF
     ! define a maximum band occupancy (2 in case of spin-unpolarized, 1 in case of spin-polarized)
@@ -1565,7 +1565,7 @@ MODULE mod_sirius
           vgl(:,ig) = mill(:, igk_k(ig, ikloc))
         ENDDO
         CALL sirius_get_wave_functions( ks_handler, vkl=kpoints(:, ik1), spin=ispn, num_gvec_loc=ngk(ikloc), &
-                                      & gvec_loc=vgl(1, 1), evec=evc(1, 1), ld=npwx, num_spin_comp=npol )
+                                      & gvec_loc=vgl, evec=evc, ld=npwx, num_spin_comp=npol )
         IF (nks > 1 .OR. lelfield) THEN
           CALL save_buffer ( evc, nwordwfc, iunwfc, ikloc )
         ENDIF
