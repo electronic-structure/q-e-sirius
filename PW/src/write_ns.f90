@@ -325,27 +325,26 @@ SUBROUTINE write_nsg
   !
   ! debug output
   !
-  do na1 = 1, nat
-     nt1 = ityp(na1)
-     if ( is_hubbard(nt1) ) then
-        ldim1 = 2*hubbard_l(nt1)+1
-        write( stdout,'(5x,24("-")," atom ",i4,1x,24("-"))') na1
-        do viz = 1, neighood(na1)%num_neigh
-           write(*,*)'viz=',viz
-           na2 = neighood(na1)%neigh(viz)
-           na2 = at_sc(na2)%at
-           nt2 = ityp(na2)
-           write(*,*)'na2=',na2
-           do is = 1, nspin
-              write(*,*)'is=',is
-              do m1 = 1, ldim1
-                 write(*,'(255f12.6)')(dreal(nsgnew(m2,m1,viz,na1,is)),m2=1,2*hubbard_l(nt2)+1)
-              enddo
-           enddo
-        enddo ! viz
-     endif
-  enddo
-
+  !do na1 = 1, nat
+  !   nt1 = ityp(na1)
+  !   if ( is_hubbard(nt1) ) then
+  !      ldim1 = 2*hubbard_l(nt1)+1
+  !      write( stdout,'(5x,24("-")," atom ",i4,1x,24("-"))') na1
+  !      do viz = 1, neighood(na1)%num_neigh
+  !         write(*,*)'viz=',viz
+  !         na2 = neighood(na1)%neigh(viz)
+  !         na2 = at_sc(na2)%at
+  !         nt2 = ityp(na2)
+  !         write(*,*)'na2=',na2
+  !         do is = 1, nspin
+  !            write(*,*)'is=',is
+  !            do m1 = 1, ldim1
+  !               write(*,'(255f12.6)')(dreal(nsgnew(m2,m1,viz,na1,is)),m2=1,2*hubbard_l(nt2)+1)
+  !            enddo
+  !         enddo
+  !      enddo ! viz
+  !   endif
+  !enddo
   !
   WRITE (stdout,'(/5x,19("="), " HUBBARD OCCUPATIONS ",19("="))')
   !
