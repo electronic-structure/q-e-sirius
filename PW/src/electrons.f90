@@ -639,6 +639,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
       etot = etot + descf
     ENDIF
 
+    CALL get_density_from_sirius()
     IF ( lsda .OR. noncolin ) CALL compute_magnetization()
     CALL print_energies ( printout )
 
