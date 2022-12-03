@@ -1422,7 +1422,7 @@ MODULE mod_sirius
     ENDIF
     ! convert to Ry
     DO ik = 1, nkstot
-      et(:, ik) = 2.d0 * band_e(:, global_kpoint_index(nkstot, ik))
+      et(:, ik) = 2.d0 * band_e(:, ik)
     ENDDO
     !
     DEALLOCATE(band_e)
@@ -1515,7 +1515,7 @@ MODULE mod_sirius
       maxocc = 1.d0
     ENDIF
     DO ik = 1, nkstot
-      wg(:, ik) = bnd_occ(:, global_kpoint_index(nkstot, ik)) / maxocc * wk(ik)
+      wg(:, ik) = bnd_occ(:, ik) / maxocc * wk(ik)
     ENDDO
     !
     DEALLOCATE(bnd_occ)
