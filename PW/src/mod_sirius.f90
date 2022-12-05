@@ -1399,8 +1399,6 @@ MODULE mod_sirius
     !
     IMPLICIT NONE
     !
-    INTEGER, EXTERNAL :: global_kpoint_index
-    !
     REAL(8), ALLOCATABLE :: band_e(:,:)
     INTEGER :: ik, nk, nb, nfv
     !
@@ -1488,8 +1486,6 @@ MODULE mod_sirius
     USE parallel_include
     !
     IMPLICIT NONE
-    !
-    INTEGER, EXTERNAL :: global_kpoint_index
     !
     REAL(8), ALLOCATABLE :: bnd_occ(:, :)
     REAL(8) :: maxocc
@@ -1663,6 +1659,8 @@ MODULE mod_sirius
         CALL sirius_add_xc_functional(sctx, "XC_GGA_X_PBE")
       CASE(109)
         CALL sirius_add_xc_functional(sctx, "XC_GGA_X_PW91")
+      CASE(116)
+        CALL sirius_add_xc_functional(sctx, "XC_GGA_X_PBE_SOL")
       CASE default
         WRITE(*,*)igcx
         STOP ("interface for this gradient exchange functional is not implemented")
@@ -1701,6 +1699,8 @@ MODULE mod_sirius
       SELECT CASE(igcc)
       CASE(130)
         CALL sirius_add_xc_functional(sctx, "XC_GGA_C_PBE")
+      CASE(133)
+        CALL sirius_add_xc_functional(sctx, "XC_GGA_C_PBE_SOL")
       CASE(134)
         CALL sirius_add_xc_functional(sctx, "XC_GGA_C_PW91")
       CASE default
