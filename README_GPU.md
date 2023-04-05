@@ -19,7 +19,7 @@ of a few cuda libraries. For this reason the path pointing to the cuda toolkit
 must be present in `LD_LIBRARY_PATH`. A template for the configure command is:
 
 ```
-./configure --with-cuda=XX --with-cuda-runtime=YY --with-cuda-cc=ZZ --enable-openmp [ --with-scalapack=no ][ --with-cuda-mpi=yes ]
+./con-with-cuda-runtime=YY --with-cuda-cc=ZZ --enable-openmp [ --with-scalapack=no ][ --with-cuda-mpi=yes ]
 ```
 
 where `XX` is the location of the CUDA Toolkit (in HPC environments is 
