@@ -60,6 +60,7 @@ PROGRAM hp_main
   CALL setup_sirius()
   CALL put_potential_to_sirius()
   CALL sirius_generate_d_operator_matrix(gs_handler)
+  CALL sirius_create_H0(gs_handler)
 #endif
   !
   ! Initialization
