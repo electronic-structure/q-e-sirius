@@ -18,6 +18,8 @@ init_us_1.o \
 init_us_2_base.o \
 init_tab_atwfc.o \
 init_tab_beta.o \
+init_tab_rho.o \
+init_tab_rhc.o \
 init_tab_qrad.o
 
 OBJS_NODEP= \
@@ -35,6 +37,7 @@ read_cpmd.o \
 read_fhi.o \
 read_ncpp.o \
 read_ps.o \
+read_psml.o \
 read_upf_new.o \
 read_upf_v1.o \
 read_uspp.o \
@@ -68,10 +71,7 @@ OBJS_GPU= \
   init_us_2_base_gpu.o \
   interp_atwfc_gpu.o \
   qvan2_gpu.o \
-  simpsn_gpu.o \
-  sph_bes_gpu.o \
-  ylmr2_gpu.o \
-  upf_acc_interfaces.o
+  ylmr2_gpu.o
 
 OBJS_NODEP+= dom.o wxml.o
 

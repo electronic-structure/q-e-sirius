@@ -454,7 +454,6 @@ SUBROUTINE dndtau_k( ldim, proj, spsi, alpha, jkb0, ipol, ik, nb_s, &
       ALLOCATE( doverlap_inv(natomwfc,natomwfc) )
       CALL calc_doverlap_inv( alpha, ipol, ik, jkb0 )
    ENDIF
-   !$acc data copyin(doverlap_inv)
    !
    ! ... Band parallelization. If each band appears more than once
    ! ... compute its contribution only once (i.e. when mykey=0)
@@ -535,7 +534,6 @@ SUBROUTINE dndtau_k( ldim, proj, spsi, alpha, jkb0, ipol, ik, nb_s, &
    ENDDO
 ! !omp end parallel do
    !
-   !$acc end data
    !$acc end data
    DEALLOCATE( dproj )
    IF (ALLOCATED(doverlap_inv)) DEALLOCATE( doverlap_inv )
@@ -836,7 +834,6 @@ SUBROUTINE dngdtau_k( ldim, proj, spsi, alpha, jkb0, ipol, ik, nb_s, &
       ALLOCATE( doverlap_inv(natomwfc,natomwfc) )
       CALL calc_doverlap_inv( alpha, ipol, ik, jkb0 )
    ENDIF
-   !$acc data copyin(doverlap_inv)
    !
    ! ... Band parallelization. If each band appears more than once
    ! ... compute its contribution only once (i.e. when mykey=0)
@@ -920,7 +917,6 @@ SUBROUTINE dngdtau_k( ldim, proj, spsi, alpha, jkb0, ipol, ik, nb_s, &
 ! !omp end parallel do
    !
    !$acc end data
-   !$acc end data
    DEALLOCATE( dproj1 )
    DEALLOCATE( dproj2 )
    IF (ALLOCATED(doverlap_inv)) DEALLOCATE( doverlap_inv )
@@ -981,7 +977,7 @@ SUBROUTINE dngdtau_gamma( ldim, rproj, spsi, alpha, jkb0, ipol, ik, nb_s, &
    USE ions_base,            ONLY : nat, ityp
    USE lsda_mod,             ONLY : nspin, current_spin
    USE ldaU,                 ONLY : nwfcU, offsetU, at_sc, offsetU_back, Hubbard_l,&
-                                    offsetU_back1, is_Hubbard, Hubbard_l2, backall,&
+                                    offsetU_back1, is_hubbard, Hubbard_l2, backall,&
                                     max_num_neighbors, phase_fac, ldim_u, neighood
    USE wvfct,                ONLY : nbnd, npwx, npw, wg
    USE mp_pools,             ONLY : intra_pool_comm, me_pool, nproc_pool
@@ -1158,7 +1154,7 @@ SUBROUTINE dprojdtau_k( spsi, alpha, na, ijkb0, ipol, ik, nb_s, nb_e, mykey, dpr
    USE ldaU,                 ONLY : nwfcU, wfcU, offsetU, is_hubbard_back,   &
                                     Hubbard_l2, offsetU_back, offsetU_back1, &
                                     ldim_u, backall, lda_plus_u_kind, Hubbard_l,&
-                                    Hubbard_projectors, oatwfc, is_Hubbard
+                                    Hubbard_projectors, oatwfc, is_hubbard
    USE wvfct,                ONLY : nbnd, npwx, wg
    USE uspp,                 ONLY : okvan, nkb
    USE uspp_param,           ONLY : nh
@@ -1352,13 +1348,11 @@ SUBROUTINE dprojdtau_k( spsi, alpha, na, ijkb0, ipol, ik, nb_s, nb_e, mykey, dpr
       ! ... dwfc(ig,m1) = dwfc(ig,m1) + wfcatom(ig,m2) * doverlap_inv(m2,offpm+m1)
       ! ... where m1=1,ldim; m2=1,natomwfc; ig=1,npw
       !
-      !$acc data present_or_copyin(doverlap_inv)
       !$acc host_data use_device(wfcatom,doverlap_inv,dwfc)
       CALL MYZGEMM( 'N','N', npw, ldim, natomwfc, (1.d0,0.d0), &
                     wfcatom, npwx, doverlap_inv(:,offpm+1:offpm+ldim), &
                     natomwfc, (1.d0,0.d0), dwfc, npwx )
       !$acc end host_data
-      !$acc end data
       !
       ! ... 3. Final step: compute dproj0 = <dwfc|spsi>
       !
@@ -1493,8 +1487,7 @@ SUBROUTINE calc_doverlap_inv( alpha, ipol, ik, ijkb0 )
    !
    ALLOCATE( doverlap(natomwfc,natomwfc) )
    !
-   !$acc data present_or_copyin(wfcatom,swfcatom,eigenval) &
-   !$acc&          create(doverlap_inv,eigenvect)
+   !$acc data present_or_copyin(wfcatom,swfcatom) 
    !
    !$acc kernels
    doverlap_inv(:,:) = (0.0d0,0.0d0)
@@ -1563,19 +1556,8 @@ SUBROUTINE calc_doverlap_inv( alpha, ipol, ik, ijkb0 )
    ! ... Now compute dO^{-1/2}_JI/d\tau(alpha,ipol) using dO_IJ/d\tau(alpha,ipol)
    ! ... Note the transposition!
    !
-   !$acc update device(eigenvect)
-   !
-#if defined(__CUDA)
-   !$acc host_data use_device(eigenval,eigenvect,doverlap,doverlap_inv)
-   CALL calculate_doverlap_inv_gpu( natomwfc, eigenval, eigenvect, &
-                                    doverlap, doverlap_inv )
-   !$acc end host_data
-#else
    CALL calculate_doverlap_inv( natomwfc, eigenval, eigenvect, &
                                 doverlap, doverlap_inv )
-#endif
-   !
-   !$acc update self(doverlap_inv)
    !
    !$acc end data
    !$acc end data
