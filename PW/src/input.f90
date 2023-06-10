@@ -93,7 +93,9 @@ SUBROUTINE iosys()
                             smearing_          => smearing, &
                             degauss_           => degauss, &
                             tot_charge_        => tot_charge, &
-                            tot_magnetization_ => tot_magnetization
+                            tot_magnetization_ => tot_magnetization, &
+                            degauss_cond_      => degauss_cond, &
+                            nelec_cond_        => nelec_cond
   USE ktetra,        ONLY : tetra_type
   USE start_k,       ONLY : init_start_k
   !
@@ -163,7 +165,7 @@ SUBROUTINE iosys()
   USE control_flags, ONLY : isolve, max_cg_iter, max_ppcg_iter, david, &
                             rmm_ndim, rmm_conv, gs_nblock, rmm_with_davidson, &
                             tr2, imix, gamma_only, &
-                            nmix, iverbosity, smallmem, niter, &
+                            nmix, iverbosity, smallmem, nexxiter, niter, &
                             io_level, ethr, lscf, lbfgs, lmd, &
                             lbands, lconstrain, restart, &
                             llondon, ldftd3, do_makov_payne, lxdm, &
@@ -188,7 +190,11 @@ SUBROUTINE iosys()
                             max_xml_steps_    => max_xml_steps 
   USE check_stop,    ONLY : max_seconds_ => max_seconds
   !
-  USE wvfct,         ONLY : nbnd_ => nbnd
+  USE wvfct,         ONLY : nbnd_ => nbnd, &
+                            nbnd_cond_ => nbnd_cond              
+  !
+  USE two_chem,      ONLY : twochem_ => twochem
+  !  
   USE gvecw,         ONLY : ecfixed_ => ecfixed, &
                             qcutz_   => qcutz, &
                             q2sigma_ => q2sigma
@@ -241,7 +247,8 @@ SUBROUTINE iosys()
                                gdir, nppstr, wf_collect,lelfield,lorbm,efield, &
                                nberrycyc, efield_cart, lecrpa,                 &
                                lfcp, vdw_table_name, memory, max_seconds,      &
-                               tqmmm, efield_phase, gate, max_xml_steps, trism
+                               tqmmm, efield_phase, gate, max_xml_steps,       &
+                               trism, twochem
 
   !
   ! ... SYSTEM namelist
@@ -277,11 +284,12 @@ SUBROUTINE iosys()
                                esm_bc, esm_efield, esm_w, esm_nfit, esm_a,    &
                                lgcscf,                                        &
                                zgate, relaxz, block, block_1, block_2,        &
-                               block_height, lgcscf
+                               block_height, lgcscf, nbnd_cond, nelec_cond,   &
+                               degauss_cond
   !
   ! ... ELECTRONS namelist
   !
-  USE input_parameters, ONLY : electron_maxstep, mixing_mode, mixing_beta, &
+  USE input_parameters, ONLY : exx_maxstep, electron_maxstep, mixing_mode, mixing_beta, &
                                mixing_ndim, mixing_fixed_ns, conv_thr,     &
                                tqr, tq_smoothing, tbeta_smoothing,         &
                                diago_thr_init,                             &
@@ -343,6 +351,11 @@ SUBROUTINE iosys()
 #if defined (__ENVIRON)
   USE plugin_flags,          ONLY : use_environ
   USE environ_base_module,   ONLY : read_environ_input, init_environ_setup
+#endif
+#if defined (__OSCDFT)
+  USE plugin_flags,          ONLY : use_oscdft
+  USE oscdft_base,           ONLY : oscdft_ctx
+  USE oscdft_input,          ONLY : oscdft_read_input
 #endif
   !
   IMPLICIT NONE
@@ -666,6 +679,8 @@ SUBROUTINE iosys()
   !
   degauss_ = degauss
   smearing_ = smearing
+  degauss_cond_ = degauss_cond
+  nelec_cond_ = nelec_cond
   !
   IF( ltetra ) THEN
      IF( lforce ) CALL infomsg( 'iosys', &
@@ -675,6 +690,7 @@ SUBROUTINE iosys()
   END IF
   IF( nbnd < 1 ) CALL errore( 'iosys', 'nbnd less than 1', nbnd ) 
   nbnd_    = nbnd
+  nbnd_cond_ = nbnd_cond
   !
   two_fermi_energies = ( tot_magnetization /= -10000._DP)
   IF ( two_fermi_energies .and. tot_magnetization < -9999._DP) &
@@ -1058,6 +1074,7 @@ SUBROUTINE iosys()
   !
   ethr = diago_thr_init
   tr2   = conv_thr
+  nexxiter = exx_maxstep
   niter = electron_maxstep
   adapt_thr = adaptive_thr
   tr2_init  = conv_thr_init
@@ -1259,6 +1276,7 @@ SUBROUTINE iosys()
   efield_     = efield
   nberrycyc_  = nberrycyc
   efield_cart_ = efield_cart
+  twochem_    = twochem
   SELECT CASE(efield_phase)
      CASE( 'none' )
         phase_control=0
@@ -1491,10 +1509,18 @@ SUBROUTINE iosys()
   !
   ! ... once input variables have been stored, read optional plugin input files
   !
+#if defined(__LEGACY_PLUGINS)
+  CALL plugin_read_input('PW')
+#endif 
 #if defined (__ENVIRON)
   IF (use_environ) THEN
      CALL read_environ_input()
      CALL init_environ_setup('PW')
+  END IF
+#endif
+#if defined (__OSCDFT)
+  IF (use_oscdft) THEN
+     CALL oscdft_read_input(oscdft_ctx%inp)
   END IF
 #endif
   !

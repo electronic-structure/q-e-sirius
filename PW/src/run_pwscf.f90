@@ -55,7 +55,7 @@ SUBROUTINE run_pwscf( exit_status )
   USE qmmm,                 ONLY : qmmm_initialization, qmmm_shutdown, &
                                    qmmm_update_positions, qmmm_update_forces
   USE qexsd_module,         ONLY : qexsd_set_status
-  USE xc_lib,               ONLY : xclib_dft_is, stop_exx
+  USE xc_lib,               ONLY : xclib_dft_is, stop_exx, exx_is_active
   USE beef,                 ONLY : beef_energies
   USE cell_base,            ONLY : bg
   USE gvect,                ONLY : ngm, g, eigts1, eigts2, eigts3
@@ -74,6 +74,11 @@ SUBROUTINE run_pwscf( exit_status )
 #if defined (__ENVIRON)
   USE plugin_flags,      ONLY : use_environ
   USE environ_pw_module, ONLY : is_ms_gcs, init_ms_gcs
+#endif
+#if defined (__OSCDFT)
+  USE plugin_flags,      ONLY : use_oscdft
+  USE oscdft_base,       ONLY : oscdft_ctx
+  USE oscdft_functions,  ONLY : oscdft_run_pwscf
 #endif
   !
   IMPLICIT NONE
@@ -128,6 +133,9 @@ SUBROUTINE run_pwscf( exit_status )
   !
   ! call to void routine for user defined / plugin patches initializations
   !
+#if defined(__LEGACY_PLUGINS)
+  CALL plugin_initialization()
+#endif 
 #if defined (__ENVIRON)
   IF (use_environ) THEN
      IF (is_ms_gcs()) CALL init_ms_gcs()
@@ -175,11 +183,19 @@ SUBROUTINE run_pwscf( exit_status )
      !
      ! ... electronic self-consistency or band structure calculation
      !
+#if defined (__OSCDFT)
+     IF (use_oscdft) THEN
+        CALL oscdft_run_pwscf(oscdft_ctx)
+     ELSE
+#endif
      IF ( .NOT. lscf) THEN
         CALL non_scf()
      ELSE
         CALL electrons()
      END IF
+#if defined (__OSCDFT)
+     END IF
+#endif
      !
      ! ... code stopped by user or not converged
      !
@@ -194,7 +210,11 @@ SUBROUTINE run_pwscf( exit_status )
            ENDIF
         ENDIF
         CALL qexsd_set_status(exit_status)
-        CALL punch( 'config' )
+        IF(exx_is_active()) then
+          CALL punch( 'all' )
+        ELSE
+          CALL punch( 'config' )
+        ENDIF
         RETURN
      ENDIF
      !
