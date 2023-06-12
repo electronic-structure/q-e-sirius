@@ -140,7 +140,12 @@ SUBROUTINE forces()
     forcescc = 0.d0
     CALL sirius_get_forces(gs_handler, "usnl", forcenl)
     forcenl = forcenl * 2 ! convert to Ry
+
+    IF(.NOT.use_sirius_nlcg) THEN
+      ! scf correction term isn't present when using nlcg
     CALL sirius_get_forces(gs_handler, "scf_corr", forcescc)
+    ENDIF
+
     forcescc = forcescc * 2 ! convert to Ry
     IF ( use_veff_callback ) THEN
      CALL force_lc( nat, tau, ityp, alat, omega, ngm, ngl, igtongl, &

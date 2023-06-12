@@ -909,6 +909,8 @@ MODULE mod_sirius
     SELECT CASE(ngauss)
       CASE (0)
         CALL sirius_set_parameters(sctx, smearing="gaussian")
+      CASE (1)
+        CALL sirius_set_parameters(sctx, smearing="methfessel_paxton")
       CASE(-1)
         CALL sirius_set_parameters(sctx, smearing="cold")
       CASE(-99)

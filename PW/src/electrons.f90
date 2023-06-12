@@ -587,6 +587,26 @@ SUBROUTINE electrons_scf ( printout, exxen )
     CALL sirius_get_energy(gs_handler, "descf", descf)
     descf = descf * 2.d0 ! convert to Ry
 
+    IF (use_sirius_nlcg) THEN
+            WRITE(*,*)''
+            WRITE(*,*)'============================='
+            WRITE(*,*)'* running NLCG ground state *'
+            WRITE(*,*)'============================='
+
+            !CALL insert_xc_functional_to_sirius
+            CALL sirius_nlcg_params(gs_handler, ks_handler, nlcg_T, TRIM(ADJUSTL(nlcg_smearing))&
+                    &, nlcg_kappa, nlcg_tau, nlcg_tol, nlcg_maxiter, nlcg_restart,&
+                    & TRIM(ADJUSTL(nlcg_processing_unit)))
+            conv_elec = .TRUE.
+    END IF
+
+    CALL stop_clock( 'electrons' )
+
+    ! scf correction is meaningless when nlcg was run
+    IF (use_sirius_nlcg) THEN
+      descf = 0
+    ENDIF
+
     CALL sirius_get_energy(gs_handler, "fermi", ef)
     ef = ef * 2.d0 ! convert to Ry
 
@@ -672,11 +692,11 @@ SUBROUTINE electrons_scf ( printout, exxen )
     WRITE(*,*)'* running NLCG ground state *'
     WRITE(*,*)'============================='
 
-    !CALL insert_xc_functional_to_sirius
-    CALL sirius_nlcg_params(gs_handler, ks_handler, nlcg_T, TRIM(ADJUSTL(nlcg_smearing))&
-      &, nlcg_kappa, nlcg_tau, nlcg_tol, nlcg_maxiter, nlcg_restart,&
-      & TRIM(ADJUSTL(nlcg_processing_unit)), conv_elec)
-    !conv_elec = .TRUE.
+    CALL sirius_nlcg_params(gs_handler, ks_handler, temp=nlcg_T, smearing&
+      &=TRIM(ADJUSTL(nlcg_smearing)) , kappa=nlcg_pseudo_precond, tau&
+      &=nlcg_bt_step_length, tol=nlcg_conv_thr, maxiter=nlcg_maxiter,&
+      & restart=nlcg_restart, processing_unit&
+      &=TRIM(ADJUSTL(nlcg_processing_unit)), converged=conv_elec)
   END IF
   !
   IF (use_sirius_scf.OR.use_sirius_nlcg) THEN

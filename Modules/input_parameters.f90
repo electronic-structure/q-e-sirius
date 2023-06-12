@@ -1091,8 +1091,8 @@ MODULE input_parameters
         REAL(DP)          :: nlcg_kappa
         REAL(DP)          :: nlcg_tol
         CHARACTER(len=80) :: nlcg_smearing
-        CHARACTER(len=80) :: nlcg_smearing_allowed(2)
-        DATA nlcg_smearing_allowed / 'FD', 'GS' /
+        CHARACTER(len=80) :: nlcg_smearing_allowed(5)
+        DATA nlcg_smearing_allowed / 'FD', 'GS', 'MP', 'COLD', 'GAUSS' /
         CHARACTER(len=80) :: nlcg_processing_unit = 'none'
         CHARACTER(len=80) :: nlcg_processing_unit_allowed(3)
         DATA nlcg_processing_unit_allowed / 'none', 'cpu', 'gpu' /
