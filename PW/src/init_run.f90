@@ -38,6 +38,7 @@ SUBROUTINE init_run()
   USE tsvdw_module,       ONLY : tsvdw_initialize
   USE libmbd_interface,   ONLY : init_mbd
   USE Coul_cut_2D,        ONLY : do_cutoff_2D, cutoff_fact 
+  USE two_chem,           ONLY : init_twochem, twochem
   USE lsda_mod,           ONLY : nspin
   USE noncollin_module,   ONLY : domag
   USE xc_lib,             ONLY : xclib_dft_is_libxc, xclib_init_libxc, xclib_dft_is 
@@ -110,6 +111,10 @@ SUBROUTINE init_run()
   !
   IF (do_cutoff_2D) CALL cutoff_fact()
   !
+  ! ... setup two chemical potentials calculation
+  !
+  IF (twochem) CALL init_twochem()
+  !
   CALL gshells ( lmovecell )
   !
   ! ... variable initialization for parallel symmetrization
@@ -130,6 +135,9 @@ SUBROUTINE init_run()
   IF (lrism) CALL rism_alloc3d()
   !
   call plugin_initbase()
+#if defined (__LEGACY_PLUGINS)
+  CALL plugin_initbase()
+#endif 
 #if defined (__ENVIRON)
   IF (use_environ) THEN
     IF (alat < 1.D-8) CALL errore('init_run', "Wrong alat", 1)
