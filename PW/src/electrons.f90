@@ -590,17 +590,17 @@ SUBROUTINE electrons_scf ( printout, exxen )
     descf = descf * 2.d0 ! convert to Ry
 
     IF (use_sirius_nlcg) THEN
-            WRITE(*,*)''
-            WRITE(*,*)'============================='
-            WRITE(*,*)'* running NLCG ground state *'
-            WRITE(*,*)'============================='
+      WRITE(*,*)''
+      WRITE(*,*)'============================='
+      WRITE(*,*)'* running NLCG ground state *'
+      WRITE(*,*)'============================='
 
-            !CALL insert_xc_functional_to_sirius
-            CALL sirius_nlcg_params(gs_handler, ks_handler, temp=nlcg_T, smearing&
-              &=TRIM(ADJUSTL(nlcg_smearing)) , kappa=nlcg_pseudo_precond, tau&
-              &=nlcg_bt_step_length, tol=nlcg_conv_thr, maxiter=nlcg_maxiter,&
-              & restart=nlcg_restart, processing_unit&
-              &=TRIM(ADJUSTL(nlcg_processing_unit)), converged=conv_elec)
+      !CALL insert_xc_functional_to_sirius
+      CALL sirius_nlcg_params(gs_handler, ks_handler, temp=nlcg_T,&
+        &smearin=TRIM(ADJUSTL(nlcg_smearing)), kappa=nlcg_pseudo_precond,
+        &tau=nlcg_bt_step_length, tol=nlcg_conv_thr, maxiter=nlcg_maxiter,&
+        &restart=nlcg_restart, processing_unit=TRIM(ADJUSTL(nlcg_processing_unit)),
+        &converged=conv_elec)
     END IF
 
     CALL stop_clock( 'electrons' )
@@ -697,11 +697,11 @@ SUBROUTINE electrons_scf ( printout, exxen )
     WRITE(*,*)'* running NLCG ground state *'
     WRITE(*,*)'============================='
 
-    CALL sirius_nlcg_params(gs_handler, ks_handler, temp=nlcg_T, smearing&
-      &=TRIM(ADJUSTL(nlcg_smearing)) , kappa=nlcg_pseudo_precond, tau&
-      &=nlcg_bt_step_length, tol=nlcg_conv_thr, maxiter=nlcg_maxiter,&
-      & restart=nlcg_restart, processing_unit&
-      &=TRIM(ADJUSTL(nlcg_processing_unit)), converged=conv_elec)
+    CALL sirius_nlcg_params(gs_handler, ks_handler, temp=nlcg_T,&
+      &smearing=TRIM(ADJUSTL(nlcg_smearing)) , kappa=nlcg_pseudo_precond,
+      &tau=nlcg_bt_step_length, tol=nlcg_conv_thr, maxiter=nlcg_maxiter,&
+      &restart=nlcg_restart, processing_unit=TRIM(ADJUSTL(nlcg_processing_unit)),&
+      &converged=conv_elec)
   END IF
   !
   IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
