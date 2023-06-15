@@ -14,7 +14,9 @@ RUN spack install $SPEC_GCC_CPU
 ## copy source files of the pull request into container
 COPY . /qe-src
 
-RUN spack --color always dev-build --source-path /qe-src q-e-sirius@develop-ristretto
+RUN spack spec -I q-e-sirius@develop-ristretto ^$SPEC_GCC_CPU
+
+RUN spack --color always dev-build --source-path /qe-src q-e-sirius@develop-ristretto ^$SPEC_GCC_CPU
 #
 ## we need a fixed name for the build directory
 ## here is a hacky workaround to link ./spack-build-{hash} to ./spack-build
