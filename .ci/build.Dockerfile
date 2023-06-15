@@ -11,7 +11,7 @@ RUN spack external find --all --scope system --not-buildable
 ## copy source files of the pull request into container
 COPY . /qe-src
 
-ENV SPEC_QE="q-e-sirius@develop-ristretto ^intel-oneapi-mkl+cluster ^${SPEC_GCC_CPU}"
+ENV SPEC_QE="q-e-sirius@develop-ristretto ^fftw+openmp ^${SPEC_GCC_CPU}"
 
 RUN spack spec -I $SPEC_QE
 
