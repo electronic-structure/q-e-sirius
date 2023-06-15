@@ -1,4 +1,4 @@
-FROM electronicstructure/sirius
+FROM docker.io/electronicstructure/sirius
 
 RUN spack spec -I $SPEC_GCC_CPU
 
