@@ -597,7 +597,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
 
       !CALL insert_xc_functional_to_sirius
       CALL sirius_nlcg_params(gs_handler, ks_handler, temp=nlcg_T,&
-        &smearin=TRIM(ADJUSTL(nlcg_smearing)), kappa=nlcg_pseudo_precond,
+        &smearin=TRIM(ADJUSTL(nlcg_smearing)), kappa=nlcg_pseudo_precond,&
         &tau=nlcg_bt_step_length, tol=nlcg_conv_thr, maxiter=nlcg_maxiter,&
         &restart=nlcg_restart, processing_unit=TRIM(ADJUSTL(nlcg_processing_unit)),
         &converged=conv_elec)
@@ -698,7 +698,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
     WRITE(*,*)'============================='
 
     CALL sirius_nlcg_params(gs_handler, ks_handler, temp=nlcg_T,&
-      &smearing=TRIM(ADJUSTL(nlcg_smearing)) , kappa=nlcg_pseudo_precond,
+      &smearing=TRIM(ADJUSTL(nlcg_smearing)) , kappa=nlcg_pseudo_precond,&
       &tau=nlcg_bt_step_length, tol=nlcg_conv_thr, maxiter=nlcg_maxiter,&
       &restart=nlcg_restart, processing_unit=TRIM(ADJUSTL(nlcg_processing_unit)),&
       &converged=conv_elec)
