@@ -1,0 +1,31 @@
+{
+    "source_dirs": [
+        "PP",
+        "HP",
+        "PW",
+        "atomic",
+        "Modules",
+        "PW/src",
+        "upflib",
+        "XClib",
+        "LAXlib",
+        "KS_Solvers",
+        "UtilXlib"
+    ],
+    "excl_suffixes": [
+        "_skip.f90"
+    ],
+    "pp_suffixes": [
+        ".f03",
+        ".F90",
+        ".f90"
+    ],
+    "pp_defs": {
+        "HAVE_PACKAGE": "",
+        "__MPI": "",
+        "__TRACE": "",
+        "__SIRIUS": ""
+    },
+    "lowercase_intrinsics": true,
+    "debug_log": false
+}

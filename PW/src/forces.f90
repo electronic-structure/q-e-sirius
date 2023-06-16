@@ -140,19 +140,23 @@ SUBROUTINE forces()
     forcescc = 0.d0
     CALL sirius_get_forces(gs_handler, "usnl", forcenl)
     forcenl = forcenl * 2 ! convert to Ry
-    CALL sirius_get_forces(gs_handler, "scf_corr", forcescc)
+
+    IF(.NOT.use_sirius_nlcg) THEN
+      ! scf correction term isn't present when using nlcg
+      CALL sirius_get_forces(gs_handler, "scf_corr", forcescc)
+    ENDIF
+
     forcescc = forcescc * 2 ! convert to Ry
     IF ( use_veff_callback ) THEN
-     CALL force_lc( nat, tau, ityp, alat, omega, ngm, ngl, igtongl, &
-                 g, rho%of_r(:,1), gstart, gamma_only, vloc, &
-                 forcelc )
-     IF( do_comp_esm ) THEN
+      CALL force_lc( nat, tau, ityp, alat, omega, ngm, ngl, igtongl, &
+                 g, rho%of_r(:,1), gstart, gamma_only, vloc, forcelc )
+      IF( do_comp_esm ) THEN
         CALL esm_force_ew( forceion )
-     ELSE
+      ELSE
         CALL force_ew( alat, nat, ntyp, ityp, zv, at, bg, tau, omega, g, &
                        gg, ngm, gstart, gamma_only, gcutm, strf, forceion )
-     ENDIF
-     CALL force_cc( forcecc )
+      ENDIF
+      CALL force_cc( forcecc )
     ELSE
       CALL sirius_get_forces(gs_handler,"vloc", forcelc)
       forcelc = forcelc * 2 ! convert to Ry

@@ -466,7 +466,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
   USE input_parameters,     ONLY : diago_thr_init
 #if defined(__SIRIUS)
   USE mod_sirius
-  USE input_parameters,     ONLY : nlcg_T, nlcg_tau, nlcg_tol, nlcg_kappa, nlcg_maxiter,&
+  USE input_parameters,     ONLY : nlcg_T, nlcg_bt_step_length, nlcg_conv_thr, nlcg_pseudo_precond, nlcg_maxiter,&
                                  & nlcg_restart, nlcg_smearing, nlcg_processing_unit
 #endif
   USE add_dmft_occ,         ONLY : dmft, dmft_update, v_dmft, dmft_updated
@@ -582,10 +582,33 @@ SUBROUTINE electrons_scf ( printout, exxen )
     ! look only for the convergence of the density; converge total energy only to 10^-4
     CALL sirius_find_ground_state(gs_handler, density_tol=tr2, energy_tol=1d-4, max_niter=niter,&
         &iter_solver_tol=ethr, save_state=.false., converged=conv_elec, niter=iter)
-    CALL stop_clock( 'electrons' )
+    IF (conv_elec) THEN
+      n_scf_steps = iter
+    ENDIF
 
     CALL sirius_get_energy(gs_handler, "descf", descf)
     descf = descf * 2.d0 ! convert to Ry
+
+    IF (use_sirius_nlcg) THEN
+      WRITE(*,*)''
+      WRITE(*,*)'============================='
+      WRITE(*,*)'* running NLCG ground state *'
+      WRITE(*,*)'============================='
+
+      !CALL insert_xc_functional_to_sirius
+      CALL sirius_nlcg_params(gs_handler, ks_handler, temp=nlcg_T,&
+        &smearing=TRIM(ADJUSTL(nlcg_smearing)), kappa=nlcg_pseudo_precond,&
+        &tau=nlcg_bt_step_length, tol=nlcg_conv_thr, maxiter=nlcg_maxiter,&
+        &restart=nlcg_restart, processing_unit=TRIM(ADJUSTL(nlcg_processing_unit)),&
+        &converged=conv_elec)
+    END IF
+
+    CALL stop_clock( 'electrons' )
+
+    ! scf correction is meaningless when nlcg was run
+    IF (use_sirius_nlcg) THEN
+      descf = 0
+    ENDIF
 
     CALL sirius_get_energy(gs_handler, "fermi", ef)
     ef = ef * 2.d0 ! convert to Ry
@@ -663,20 +686,9 @@ SUBROUTINE electrons_scf ( printout, exxen )
 
     IF (conv_elec) THEN
       WRITE( stdout, 9110 ) iter
+    ELSE
+      WRITE( stdout, 9120 ) iter
     END IF
-  END IF
-  !
-  IF (use_sirius_nlcg) THEN
-    WRITE(*,*)''
-    WRITE(*,*)'============================='
-    WRITE(*,*)'* running NLCG ground state *'
-    WRITE(*,*)'============================='
-
-    !CALL insert_xc_functional_to_sirius
-    CALL sirius_nlcg_params(gs_handler, ks_handler, nlcg_T, TRIM(ADJUSTL(nlcg_smearing))&
-      &, nlcg_kappa, nlcg_tau, nlcg_tol, nlcg_maxiter, nlcg_restart,&
-      & TRIM(ADJUSTL(nlcg_processing_unit)), conv_elec)
-    !conv_elec = .TRUE.
   END IF
   !
   IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
