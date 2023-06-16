@@ -15,7 +15,7 @@ ENV SPEC_QE="q-e-sirius@develop-ristretto ^fftw+openmp ^${SPEC_GCC_CPU}"
 
 RUN spack spec -I $SPEC_QE
 
-RUN spack install --only=dependencies $SPEC_QE &> /dev/null
+RUN spack install --only=dependencies --source-path /qe-src $SPEC_QE
 
 RUN spack --color always dev-build --source-path /qe-src $SPEC_QE
 #
