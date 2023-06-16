@@ -15,10 +15,10 @@ ENV SPEC_QE="q-e-sirius@develop-ristretto ^fftw+openmp ^${SPEC_GCC_CPU}"
 
 RUN spack spec -I $SPEC_QE
 
-RUN spack install --only=dependencies --source-path /qe-src $SPEC_QE
+#RUN spack install --only=dependencies --source-path /qe-src $SPEC_QE
 
-RUN spack --color always dev-build --source-path /qe-src $SPEC_QE
-#
+RUN spack --color always dev-build --source-path /qe-src $SPEC_QE > /dev/null
+
 ## we need a fixed name for the build directory
 ## here is a hacky workaround to link ./spack-build-{hash} to ./spack-build
 #RUN cd /sirius-src && ln -s $(find . -name "spack-build-*" -type d) spack-build
