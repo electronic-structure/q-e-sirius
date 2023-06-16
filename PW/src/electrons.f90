@@ -599,7 +599,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
       CALL sirius_nlcg_params(gs_handler, ks_handler, temp=nlcg_T,&
         &smearin=TRIM(ADJUSTL(nlcg_smearing)), kappa=nlcg_pseudo_precond,&
         &tau=nlcg_bt_step_length, tol=nlcg_conv_thr, maxiter=nlcg_maxiter,&
-        &restart=nlcg_restart, processing_unit=TRIM(ADJUSTL(nlcg_processing_unit)),
+        &restart=nlcg_restart, processing_unit=TRIM(ADJUSTL(nlcg_processing_unit)),&
         &converged=conv_elec)
     END IF
 
