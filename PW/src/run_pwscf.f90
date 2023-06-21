@@ -382,6 +382,11 @@ SUBROUTINE run_pwscf( exit_status )
       ! All good
       exit_status = 0
    END IF
+#if defined(__SIRIUS)
+  IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
+    CALL sirius_save_state(gs_handler, "state.h5")
+  ENDIF
+#endif
   !
   ! ... save final data file
   !
