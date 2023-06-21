@@ -180,15 +180,6 @@ SUBROUTINE init_run()
   !
   CALL potinit()
   !
-#if defined(__SIRIUS)
-  IF (use_sirius_scf.OR.use_sirius_nlcg.OR.always_setup_sirius) THEN
-    CALL clear_sirius
-    CALL setup_sirius
-    CALL sirius_initialize_kset(ks_handler)
-    !CALL sirius_initialize_subspace(gs_handler, ks_handler)
-  ENDIF
-#endif
-  !
   IF ( use_gpu ) THEN
     !
     CALL newd_gpu()
