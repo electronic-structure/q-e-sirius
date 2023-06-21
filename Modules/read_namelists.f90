@@ -478,6 +478,7 @@ MODULE read_namelists_module
              !
        CHARACTER(LEN=2) :: prog ! .. specify the calling program
 
+#if defined(__SIRIUS)
        nlcg_method = 'mvp2'
        nlcg_maxiter = 300
        nlcg_restart = 10
@@ -500,6 +501,7 @@ MODULE read_namelists_module
        CASE DEFAULT
          nlcg_smearing = 'GAUSS'
        END SELECT
+#endif
        RETURN
      END SUBROUTINE nlcg_defaults
      !
@@ -1936,6 +1938,7 @@ MODULE read_namelists_module
        CHARACTER(LEN=20) :: sub_name = ' nlcg_checkin '
        CHARACTER(LEN=2)  :: prog   ! ... specify the calling program
        INTEGER           :: i
+#if defined(__SIRIUS)
        DO i = 1, SIZE(nlcg_method_allowed)
          IF( TRIM(nlcg_method) == nlcg_method_allowed(i) ) allowed = .TRUE.
        END DO
@@ -1970,6 +1973,7 @@ MODULE read_namelists_module
        IF ( nlcg_restart < 0 ) &
          CALL errore(sub_name, 'nlcg_restart out of range', 1)
        RETURN
+#endif
      END SUBROUTINE nlcg_checkin
      !
      !

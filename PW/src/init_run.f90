@@ -196,11 +196,13 @@ SUBROUTINE init_run()
   !
   IF(use_wannier) CALL wannier_init()
   !
+! Cleanup PAW arrays that are only used for init
 #if defined(__MPI)
-  ! Cleanup PAW arrays that are only used for init
+#if defined(__SIRIUS)
   IF (.NOT.(use_sirius_scf.OR.use_sirius_nlcg)) THEN
     IF (okpaw) CALL paw_post_init()
   ENDIF
+#endif
 #endif
   !
   IF ( lmd ) CALL allocate_dyn_vars()
