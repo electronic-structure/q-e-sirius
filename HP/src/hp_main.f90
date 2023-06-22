@@ -245,6 +245,12 @@ PROGRAM hp_main
      CALL print_clock_pw()
      CALL hp_print_clock()
   ENDIF
+  !
+  CALL environment_end(code)
+  !
+  IF ( use_para_diag ) CALL laxlib_end() 
+  !
+  !  finalize sirius at the very end
 #if defined(__SIRIUS)
   CALL sirius_finalize(call_mpi_fin=.false.)
   IF (mpime.eq.0) THEN
@@ -252,10 +258,7 @@ PROGRAM hp_main
     CALL sirius_print_timers(.true.)
   ENDIF
 #endif
-  !
-  CALL environment_end(code)
-  !
-  IF ( use_para_diag ) CALL laxlib_end() 
+
   CALL mp_global_end()
   !
 3336 FORMAT('     ',69('='))
