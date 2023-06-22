@@ -13,7 +13,7 @@ MODULE command_line_options
   USE mp,        ONLY : mp_bcast
   USE mp_world,  ONLY : root, world_comm
   USE io_global, ONLY : meta_ionode
-  USE input_parameters, ONLY : use_qe_scf, use_sirius_nlcg, use_sirius_scf, sirius_cfg
+  USE input_parameters, ONLY : use_sirius_nlcg, use_sirius_scf, sirius_cfg
   !
   IMPLICIT NONE
   !
@@ -145,7 +145,6 @@ CONTAINS
               use_sirius_nlcg = .true.
             CASE ( '-use_qe_scf' )
               use_sirius_scf = .false.
-              use_qe_scf = .true.
            CASE ( '-sirius_cfg')
               IF (read_string) THEN
                  CALL my_getarg ( input_command_line, narg, sirius_cfg)

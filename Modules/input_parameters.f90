@@ -1929,8 +1929,7 @@ MODULE input_parameters
       LOGICAL :: xmloutput = .false.
       !! if TRUE PW produce an xml output
 
-      LOGICAL :: use_qe_scf = .FALSE.
-      LOGICAL  :: use_sirius_scf = .true.
+      LOGICAL  :: use_sirius_scf = .TRUE.
       LOGICAL  :: use_sirius_nlcg = .FALSE.
       CHARACTER(len=256) :: sirius_cfg
 
