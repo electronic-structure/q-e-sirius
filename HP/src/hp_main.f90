@@ -62,6 +62,7 @@ PROGRAM hp_main
   CALL sirius_load_state(gs_handler, "state.h5")
   !CALL sirius_generate_d_operator_matrix(gs_handler)
   CALL sirius_create_H0(gs_handler)
+  use_sirius_scf = .false.
 #endif
   !
   ! Initialization
