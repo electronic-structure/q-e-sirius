@@ -2594,7 +2594,7 @@ MODULE read_namelists_module
          use_sirius_nlcg=.false.
        ELSE
          ! found the DIRECT_MINIMIZATION namelist
-         IF (use_qe_scf) THEN
+         IF (.NOT.use_sirius_scf) THEN
            CALL errore('read_namelists', 'DIRECT_MINIMIZATION namelist present while -use_qe_scf specified.', 1)
          ENDIF
          CALL check_namelist_read(ios, unit_loc, "direct_minimization")
