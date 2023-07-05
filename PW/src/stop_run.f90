@@ -20,7 +20,6 @@ SUBROUTINE stop_run( exit_status )
   USE mp_global,          ONLY : mp_global_end
   USE environment,        ONLY : environment_end
   USE io_files,           ONLY : iuntmp, seqopn
-  USE mp_world, ONLY: mpime
   USE mod_sirius
   !
   IMPLICIT NONE
@@ -56,13 +55,6 @@ SUBROUTINE stop_run( exit_status )
   ! finalize sirius at the very end
 #if defined(__SIRIUS)
   CALL sirius_finalize(call_mpi_fin=.false.)
-  !WRITE(tname,'("timer",I4.4,".json")')mpime
-  !IF (mpime.eq.0) THEN
-  !  CALL sirius_print_timers(.false.)
-  !  CALL sirius_print_timers(.true.)
-  !  CALL sirius_serialize_timers("timers.json")
-  !ENDIF
-  !CALL sirius_serialize_timers(string(trim(tname)))
 #endif
   !
   CALL mp_global_end()
