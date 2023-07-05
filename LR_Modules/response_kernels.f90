@@ -298,6 +298,9 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
           enddo
           write(*,*)'band=',i,' diff=',diff
         enddo
+
+        dpsi = ref1
+
         deallocate(ref1,dpsi1,dvpsi1)
 #else
          CALL cgsolve_all(ch_psi_all, cg_psi, et(1, ikmk), dvpsi, dpsi, h_diag, &
