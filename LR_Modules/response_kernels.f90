@@ -131,7 +131,9 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
    !! temporary storage used in apply_dpot_bands
    INTEGER, ALLOCATABLE :: vg_kq(:,:)
    !
-   INTEGER :: ig
+   INTEGER :: ig, i
+   real(8) diff
+   complex(8), allocatable :: dpsi1(:,:),dvpsi1(:,:),ref1(:,:)
    !
    EXTERNAL ch_psi_all, cg_psi
    !! functions passed to cgsolve_all
@@ -254,6 +256,14 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
          !
          ! TODO: should nbnd_occ(ikk) be nbnd_occ(ikmk)?
 #if defined(__SIRIUS)
+
+         ALLOCATE (dvpsi1(npwx*npol,nbnd))
+         ALLOCATE (dpsi1(npwx*npol,nbnd))
+         ALLOCATE (ref1(npwx*npol,nbnd))
+
+         dvpsi1 = dvpsi
+         dpsi1 = dpsi
+
          ALLOCATE(vg_kq(3,ngk(ikq)))
          DO ig = 1, npwq
            vg_kq(:, ig) = mill(:, igk_k(ig, ikq))
@@ -265,9 +275,26 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
          CALL sirius_linear_solver( gs_handler, vkq=MATMUL(TRANSPOSE(at), xk(:,ikq)),&
             &num_gvec_kq_loc=npwq, gvec_kq_loc=vg_kq(:,:), dpsi=dpsi(1, 1),&
             &psi=evq(:, :), eigvals=et(1, ikmk), dvpsi=dvpsi(1,1), ld=npwx, num_spin_comp=npol,&
-            &alpha_pv=alpha_pv, spin=current_spin)
+            &alpha_pv=alpha_pv, spin=current_spin, nbnd_occ=nbnd_occ(ikk))
+
+            ref1 = dpsi ! output from SIRIUS LR
          !
          DEALLOCATE(vg_kq)
+         dvpsi = dvpsi1 ! reset needed for QE cg
+         dpsi = dpsi1   ! reset needed for QE cg
+
+         CALL cgsolve_all(ch_psi_all, cg_psi, et(1, ikmk), dvpsi, dpsi, h_diag, &
+            npwx, npwq, thresh, ik, num_iter, conv_root, anorm, nbnd_occ(ikk), npol)
+
+         do i = 1, nbnd
+            diff = 0.d0
+            do ig = 1, npwq
+               diff = diff + abs(dpsi(ig,i)-ref1(ig,i))
+            enddo
+            write(*,*)'band=',i,' diff=',diff
+         enddo
+         dpsi = ref1
+         deallocate(ref1,dpsi1,dvpsi1)
 #else
          CALL cgsolve_all(ch_psi_all, cg_psi, et(1, ikmk), dvpsi, dpsi, h_diag, &
             npwx, npwq, thresh, ik, num_iter, conv_root, anorm, nbnd_occ(ikk), npol)
