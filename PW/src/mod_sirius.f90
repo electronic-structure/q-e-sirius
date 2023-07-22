@@ -161,9 +161,7 @@ MODULE mod_sirius
     USE mp_bands,             ONLY : intra_bgrp_comm
     USE lsda_mod,             ONLY : nspin
     USE fft_base,             ONLY : dfftp
-    USE fft_interfaces,       ONLY : invfft
-    USE wavefunctions,        ONLY : psic
-    USE control_flags,        ONLY : gamma_only
+    USE fft_rho,              ONLY : rho_g2r
     !
     IMPLICIT NONE
     !
@@ -180,16 +178,9 @@ MODULE mod_sirius
       CALL sirius_get_pw_coeffs( gs_handler, "magy", rho%of_g(:, 3), ngm, mill, intra_bgrp_comm )
       CALL sirius_get_pw_coeffs( gs_handler, "magz", rho%of_g(:, 4), ngm, mill, intra_bgrp_comm )
     ENDIF
-    ! get density matrix
-    !CALL get_density_matrix_from_sirius
-    DO ispn = 1, nspin
-      psic(:) = 0.d0
-      psic(dfftp%nl(:)) = rho%of_g(:, ispn)
-      IF (gamma_only) psic(dfftp%nlm(:)) = CONJG(rho%of_g(:, ispn))
-      CALL invfft( 'Rho', psic, dfftp )
-      rho%of_r(:,ispn) = psic(:)
-    ENDDO
-    !
+    CALL rho_g2r (dfftp, rho%of_g, rho%of_r)
+    !! get density matrix
+    !!CALL get_density_matrix_from_sirius
   END SUBROUTINE get_density_from_sirius
   !
   !--------------------------------------------------------------------
@@ -771,6 +762,8 @@ MODULE mod_sirius
     USE esm,                  ONLY : do_comp_esm
     USE Coul_cut_2D,          ONLY : do_cutoff_2D
     USE constants,            ONLY : RYTOEV
+    USE kinds,                ONLY : DP
+    USE scf,                  ONLY : rho
     !
     IMPLICIT NONE
     !
@@ -782,6 +775,9 @@ MODULE mod_sirius
     CHARACTER(LEN=1024) :: conf_str
     INTEGER, EXTERNAL :: global_kpoint_index
     REAL(8), PARAMETER :: spglib_tol=1e-4
+    REAL(DP), ALLOCATABLE :: r_loc(:)
+    REAL(DP), ALLOCATABLE :: m_loc(:,:), initial_magn(:,:)
+    INTEGER, ALLOCATABLE :: nat_of_type(:)
 
     CALL sirius_start_timer("setup_sirius")
 
@@ -1229,25 +1225,44 @@ MODULE mod_sirius
       END DO
     END IF
     !
+    ! compute initial magnetization for each atom type
+    ALLOCATE(initial_magn(3, nsp))
+    initial_magn = 0.d0
+    ALLOCATE(nat_of_type(nsp))
+    nat_of_type = 0
+
+    IF ( nspin .NE. 1 ) THEN
+      ALLOCATE( r_loc(nat), m_loc(nspin-1, nat) )
+      CALL get_locals( r_loc, m_loc, rho%of_r )
+      DO ia = 1, nat
+        IF (noncolin) THEN
+          initial_magn(:, ityp(ia)) = initial_magn(:, ityp(ia)) + m_loc(:, ia)
+        ELSE
+          initial_magn(3, ityp(ia)) = initial_magn(3, ityp(ia)) + m_loc(1, ia)
+        ENDIF
+        nat_of_type(ityp(ia)) = nat_of_type(ityp(ia)) + 1
+      ENDDO
+      DO iat = 1, nsp
+        initial_magn(:, iat) = initial_magn(:, iat) / nat_of_type(iat)
+        IF (SUM(ABS(initial_magn(:, iat))) .LT. 1e-6) THEN
+          initial_magn(:, iat) = 0.d0
+        END IF
+      ENDDO
+      DEALLOCATE(r_loc, m_loc)
+    END IF
+    !
     ! add atoms to the unit cell
-    ! WARNING: sirius accepts only fractional coordinates;
+    ! WARNING: sirius accepts only fractional coordinates
     DO ia = 1, nat
       iat = ityp(ia)
       ! Cartesian coordinates
       v1(:) = tau(:, ia) * alat
       ! fractional coordinates
       v1(:) = MATMUL(vlat_inv, v1)
-      ! reduce coordinates to [0, 1) interval
-      IF (noncolin) THEN
-        v2(1) = zv(iat) * starting_magnetization(iat) * SIN(angle1(iat)) * COS(angle2(iat))
-        v2(2) = zv(iat) * starting_magnetization(iat) * SIN(angle1(iat)) * SIN(angle2(iat))
-        v2(3) = zv(iat) * starting_magnetization(iat) * COS(angle1(iat))
-      ELSE
-        v2 = 0
-        v2(3) = zv(iat) * starting_magnetization(iat)
-      ENDIF
-      CALL sirius_add_atom(sctx, TRIM(atom_type(iat)%label), v1, v2)
+      CALL sirius_add_atom(sctx, TRIM(atom_type(iat)%label), v1, initial_magn(:, iat))
     ENDDO
+    !
+    DEALLOCATE(initial_magn, nat_of_type)
     !
     CALL put_xc_functional_to_sirius()
     !
