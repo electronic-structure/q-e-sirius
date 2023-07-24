@@ -264,9 +264,6 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
         dvpsi1 = dvpsi
         dpsi1 = dpsi
 
-
-
-
          ALLOCATE(vg_kq(3,ngk(ikq)))
          DO ig = 1, npwq
            vg_kq(:, ig) = mill(:, igk_k(ig, ikq))
@@ -278,7 +275,7 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
          CALL sirius_linear_solver( gs_handler, vkq=MATMUL(TRANSPOSE(at), xk(:,ikq)),&
             &num_gvec_kq_loc=npwq, gvec_kq_loc=vg_kq(:,:), dpsi=dpsi,&
             &psi=evq(:, :), eigvals=et(1, ikmk), dvpsi=dvpsi, ld=npwx, num_spin_comp=npol,&
-            &alpha_pv=alpha_pv, spin=current_spin)
+            &alpha_pv=alpha_pv, spin=current_spin, nbnd_occ=nbnd_occ(ikk))
 
          ref1 = dpsi
 
