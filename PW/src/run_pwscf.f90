@@ -434,6 +434,7 @@ SUBROUTINE reset_gvectors( )
   USE fft_base,   ONLY : dfftp
   USE fft_base,   ONLY : dffts
   USE xc_lib,     ONLY : xclib_dft_is
+  USE mod_sirius
   ! 
   IMPLICIT NONE
   !
@@ -455,6 +456,14 @@ SUBROUTINE reset_gvectors( )
   dffts%nr1=0; dffts%nr2=0; dffts%nr3=0
   !
   CALL init_run()
+#if defined(__SIRIUS)
+  IF (use_sirius_scf.OR.use_sirius_nlcg.OR.always_setup_sirius) THEN
+    CALL clear_sirius
+    CALL setup_sirius
+    CALL sirius_initialize_kset(ks_handler)
+    !CALL sirius_initialize_subspace(gs_handler, ks_handler)
+  ENDIF
+#endif
   !
   ! ... re-set and re-initialize EXX-related stuff
   !
