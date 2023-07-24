@@ -152,6 +152,33 @@ MODULE mod_sirius
   END SUBROUTINE put_potential_to_sirius
   !
   !--------------------------------------------------------------------
+  SUBROUTINE put_density_to_sirius()
+    !------------------------------------------------------------------
+    !! Put plane-wave coefficients of density to SIRIUS
+    !
+    USE scf,                  ONLY : rho
+    USE gvect,                ONLY : mill, ngm
+    USE mp_bands,             ONLY : intra_bgrp_comm
+    USE lsda_mod,             ONLY : nspin
+    !
+    IMPLICIT NONE
+    !
+    INTEGER iat, ig, ih, jh, ijh, na, ispn
+    COMPLEX(8) z1, z2
+    !
+    ! get rho(G)
+    CALL sirius_set_pw_coeffs( gs_handler, "rho", rho%of_g(:, 1), .TRUE., ngm, mill, intra_bgrp_comm )
+    IF (nspin.EQ.2) THEN
+      CALL sirius_set_pw_coeffs( gs_handler, "magz", rho%of_g(:, 2), .TRUE., ngm, mill, intra_bgrp_comm )
+    ENDIF
+    IF (nspin.EQ.4) THEN
+      CALL sirius_set_pw_coeffs( gs_handler, "magx", rho%of_g(:, 2), .TRUE., ngm, mill, intra_bgrp_comm )
+      CALL sirius_set_pw_coeffs( gs_handler, "magy", rho%of_g(:, 3), .TRUE., ngm, mill, intra_bgrp_comm )
+      CALL sirius_set_pw_coeffs( gs_handler, "magz", rho%of_g(:, 4), .TRUE., ngm, mill, intra_bgrp_comm )
+    ENDIF
+  END SUBROUTINE put_density_to_sirius
+  !
+  !--------------------------------------------------------------------
   SUBROUTINE get_density_from_sirius()
     !------------------------------------------------------------------
     !! Get plane-wave coefficients of density from SIRIUS
@@ -1308,6 +1335,8 @@ MODULE mod_sirius
     !
     ! create ground-state class
     CALL sirius_create_ground_state(ks_handler, gs_handler)
+    CALL put_density_to_sirius()
+    CALL sirius_generate_effective_potential(gs_handler)
     !
     CALL sirius_stop_timer("setup_sirius")
     !
