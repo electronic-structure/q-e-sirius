@@ -612,6 +612,8 @@ SUBROUTINE electrons_scf ( printout, exxen )
 
     CALL sirius_get_energy(gs_handler, "fermi", ef)
     ef = ef * 2.d0 ! convert to Ry
+    ef_up = ef
+    ef_dw = ef
 
     IF (sirius_pwpp) THEN
       CALL sirius_get_energy(gs_handler, "evalsum", eband)
