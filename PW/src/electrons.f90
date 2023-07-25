@@ -580,8 +580,9 @@ SUBROUTINE electrons_scf ( printout, exxen )
     END IF
     CALL start_clock( 'electrons' )
     ! look only for the convergence of the density; converge total energy only to 10^-4
-    CALL sirius_find_ground_state(gs_handler, density_tol=tr2, energy_tol=1d-4, max_niter=niter,&
-        &iter_solver_tol=ethr, save_state=.false., converged=conv_elec, niter=iter)
+    CALL sirius_initialize_subspace(gs_handler, ks_handler)
+    CALL sirius_find_ground_state(gs_handler, density_tol=tr2, energy_tol=1d-4, initial_guess=.false.,&
+        &max_niter=niter, iter_solver_tol=ethr, save_state=.false., converged=conv_elec, niter=iter)
     IF (conv_elec) THEN
       n_scf_steps = iter
     ENDIF
@@ -612,6 +613,8 @@ SUBROUTINE electrons_scf ( printout, exxen )
 
     CALL sirius_get_energy(gs_handler, "fermi", ef)
     ef = ef * 2.d0 ! convert to Ry
+    ef_up = ef
+    ef_dw = ef
 
     IF (sirius_pwpp) THEN
       CALL sirius_get_energy(gs_handler, "evalsum", eband)

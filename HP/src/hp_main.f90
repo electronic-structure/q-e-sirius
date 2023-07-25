@@ -25,7 +25,6 @@ PROGRAM hp_main
                                 compute_hp, sum_pertq, perturb_only_atom,   &
                                 determine_num_pert_only, tmp_dir_save,      &
                                 determine_q_mesh_only
-  USE mp_world, ONLY: mpime
   USE mod_sirius
   !
   IMPLICIT NONE
@@ -58,8 +57,8 @@ PROGRAM hp_main
   CALL hp_readin()
 #if defined(__SIRIUS)
   CALL setup_sirius()
+  !CALL sirius_load_state(gs_handler, "state.h5")
   !CALL put_potential_to_sirius()
-  CALL sirius_load_state(gs_handler, "state.h5")
   !CALL sirius_generate_d_operator_matrix(gs_handler)
   CALL sirius_create_H0(gs_handler)
   use_sirius_scf = .false.
@@ -253,10 +252,6 @@ PROGRAM hp_main
   !  finalize sirius at the very end
 #if defined(__SIRIUS)
   CALL sirius_finalize(call_mpi_fin=.false.)
-  IF (mpime.eq.0) THEN
-    CALL sirius_print_timers(.false.)
-    CALL sirius_print_timers(.true.)
-  ENDIF
 #endif
 
   CALL mp_global_end()
