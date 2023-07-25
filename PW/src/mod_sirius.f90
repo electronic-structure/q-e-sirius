@@ -1255,28 +1255,47 @@ MODULE mod_sirius
     ! compute initial magnetization for each atom type
     ALLOCATE(initial_magn(3, nsp))
     initial_magn = 0.d0
-    ALLOCATE(nat_of_type(nsp))
-    nat_of_type = 0
+    !ALLOCATE(nat_of_type(nsp))
+    !nat_of_type = 0
+    !
+    ! This pice of code is intended to compute integral atomic moments. The problem is that
+    ! get_locals() function requires some allocated and initialized arrays. It works as expected
+    ! with pw.x and doesn't work with hp.x; Attempt to allocate and initialize those arrays
+    ! resulted in a crash in another place.
+    !
+    !!IF ( nspin .NE. 1 ) THEN
+    !!  ALLOCATE( r_loc(nat), m_loc(nspin-1, nat) )
+    !!  CALL get_locals( r_loc, m_loc, rho%of_r )
+    !!  DO ia = 1, nat
+    !!    IF (noncolin) THEN
+    !!      initial_magn(:, ityp(ia)) = initial_magn(:, ityp(ia)) + m_loc(:, ia)
+    !!    ELSE
+    !!      initial_magn(3, ityp(ia)) = initial_magn(3, ityp(ia)) + m_loc(1, ia)
+    !!    ENDIF
+    !!    nat_of_type(ityp(ia)) = nat_of_type(ityp(ia)) + 1
+    !!  ENDDO
+    !!  DO iat = 1, nsp
+    !!    initial_magn(:, iat) = initial_magn(:, iat) / nat_of_type(iat)
+    !!    IF (SUM(ABS(initial_magn(:, iat))) .LT. 1e-6) THEN
+    !!      initial_magn(:, iat) = 0.d0
+    !!    END IF
+    !!  ENDDO
+    !!  DEALLOCATE(r_loc, m_loc)
+    !!END IF
 
-    IF ( nspin .NE. 1 ) THEN
-      ALLOCATE( r_loc(nat), m_loc(nspin-1, nat) )
-      CALL get_locals( r_loc, m_loc, rho%of_r )
-      DO ia = 1, nat
-        IF (noncolin) THEN
-          initial_magn(:, ityp(ia)) = initial_magn(:, ityp(ia)) + m_loc(:, ia)
-        ELSE
-          initial_magn(3, ityp(ia)) = initial_magn(3, ityp(ia)) + m_loc(1, ia)
-        ENDIF
-        nat_of_type(ityp(ia)) = nat_of_type(ityp(ia)) + 1
-      ENDDO
-      DO iat = 1, nsp
-        initial_magn(:, iat) = initial_magn(:, iat) / nat_of_type(iat)
-        IF (SUM(ABS(initial_magn(:, iat))) .LT. 1e-6) THEN
-          initial_magn(:, iat) = 0.d0
-        END IF
-      ENDDO
-      DEALLOCATE(r_loc, m_loc)
-    END IF
+    ! Fallback solution: compute magentic moments on atoms in an easy way. They will be only used
+    ! to determine the magentic symmetry and not as a starting guess for magnetization.
+    ! Starting magnetization will be set later by the call to put_density_to_sirius() using
+    ! QE values for density and magnetisation.
+    DO iat = 1, nsp
+      IF (noncolin) THEN
+        initial_magn(1, iat) = zv(iat) * starting_magnetization(iat) * SIN(angle1(iat)) * COS(angle2(iat))
+        initial_magn(2, iat) = zv(iat) * starting_magnetization(iat) * SIN(angle1(iat)) * SIN(angle2(iat))
+        initial_magn(3, iat) = zv(iat) * starting_magnetization(iat) * COS(angle1(iat))
+      ELSE
+        initial_magn(3, iat) = zv(iat) * starting_magnetization(iat)
+      ENDIF
+    ENDDO
     !
     ! add atoms to the unit cell
     ! WARNING: sirius accepts only fractional coordinates
@@ -1289,7 +1308,8 @@ MODULE mod_sirius
       CALL sirius_add_atom(sctx, TRIM(atom_type(iat)%label), v1, initial_magn(:, iat))
     ENDDO
     !
-    DEALLOCATE(initial_magn, nat_of_type)
+    !DEALLOCATE(initial_magn, nat_of_type)
+    DEALLOCATE(initial_magn)
     !
     CALL put_xc_functional_to_sirius()
     !
