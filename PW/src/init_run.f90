@@ -38,6 +38,7 @@ SUBROUTINE init_run()
   USE tsvdw_module,       ONLY : tsvdw_initialize
   USE libmbd_interface,   ONLY : init_mbd
   USE Coul_cut_2D,        ONLY : do_cutoff_2D, cutoff_fact 
+  USE two_chem,           ONLY : init_twochem, twochem
   USE lsda_mod,           ONLY : nspin
   USE noncollin_module,   ONLY : domag
   USE xc_lib,             ONLY : xclib_dft_is_libxc, xclib_init_libxc, xclib_dft_is 
@@ -110,6 +111,10 @@ SUBROUTINE init_run()
   !
   IF (do_cutoff_2D) CALL cutoff_fact()
   !
+  ! ... setup two chemical potentials calculation
+  !
+  IF (twochem) CALL init_twochem()
+  !
   CALL gshells ( lmovecell )
   !
   ! ... variable initialization for parallel symmetrization
@@ -130,6 +135,9 @@ SUBROUTINE init_run()
   IF (lrism) CALL rism_alloc3d()
   !
   call plugin_initbase()
+#if defined (__LEGACY_PLUGINS)
+  CALL plugin_initbase()
+#endif 
 #if defined (__ENVIRON)
   IF (use_environ) THEN
     IF (alat < 1.D-8) CALL errore('init_run', "Wrong alat", 1)
@@ -172,15 +180,6 @@ SUBROUTINE init_run()
   !
   CALL potinit()
   !
-#if defined(__SIRIUS)
-  IF (use_sirius_scf.OR.use_sirius_nlcg.OR.always_setup_sirius) THEN
-    CALL clear_sirius
-    CALL setup_sirius
-    CALL sirius_initialize_kset(ks_handler)
-    !CALL sirius_initialize_subspace(gs_handler, ks_handler)
-  ENDIF
-#endif
-  !
   IF ( use_gpu ) THEN
     !
     CALL newd_gpu()
@@ -197,9 +196,13 @@ SUBROUTINE init_run()
   !
   IF(use_wannier) CALL wannier_init()
   !
+! Cleanup PAW arrays that are only used for init
 #if defined(__MPI)
-  ! Cleanup PAW arrays that are only used for init
-  IF (okpaw) CALL paw_post_init() ! only parallel!
+#if defined(__SIRIUS)
+  IF (.NOT.(use_sirius_scf.OR.use_sirius_nlcg)) THEN
+    IF (okpaw) CALL paw_post_init()
+  ENDIF
+#endif
 #endif
   !
   IF ( lmd ) CALL allocate_dyn_vars()

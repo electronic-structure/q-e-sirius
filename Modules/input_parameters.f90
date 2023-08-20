@@ -32,6 +32,7 @@ MODULE input_parameters
   USE parameters, ONLY : nsx, natx, sc_size, nsolx
   USE wannier_new,ONLY : wannier_data
   USE upf_params, ONLY : lqmax
+  USE iso_c_binding, ONLY : c_char
   !
   IMPLICIT NONE
   !
@@ -197,6 +198,10 @@ MODULE input_parameters
         CHARACTER(len=80) :: disk_io = 'default'
         !! Specify the amount of I/O activities.
 
+        LOGICAL :: twochem = .FALSE.
+        !!if TRUE, the system is simulated using two chemical potentials,
+        !!one for the electrons and one for the holes (photoexcited system)
+
         LOGICAL :: tefield  = .false.
         !! if TRUE a sawtooth potential simulating a finite electric field
         !! is added to the local potential - only used in PW
@@ -288,7 +293,7 @@ MODULE input_parameters
           gdir, nppstr, wf_collect, lelfield, nberrycyc, refg,            &
           tefield2, saverho, tabps, use_wannier, lecrpa,                  &
           lfcp, tqmmm, vdw_table_name, lorbm, memory, point_label_type,   &
-          input_xml_schema_file, gate, trism
+          input_xml_schema_file, gate, trism, twochem
 !
 !=----------------------------------------------------------------------------=!
 !  SYSTEM Namelist Input Parameters
@@ -399,6 +404,14 @@ MODULE input_parameters
 
         REAL(DP) :: starting_magnetization( nsx ) = 0.0_DP
         !! PW ONLY
+
+        !!!PARAMETERS FOR TWO-CHEM-CALCULATIONS
+        REAL(DP) :: degauss_cond = 0.0_DP 
+        !broadening for conduction band
+        INTEGER ::  nbnd_cond = 0 
+        ! n_bands in conduction
+        REAL(DP) :: nelec_cond =0.0_DP 
+        !number of electrons in the conduction bands
 
         ! DFT+Hubbard
         ! Old input parameters in the SYSTEM naqmelist (removed since v7.1):
@@ -657,6 +670,7 @@ MODULE input_parameters
              nr3s, nr1b, nr2b, nr3b, nosym, nosym_evc, noinv, use_all_frac,   &
              force_symmorphic, starting_charge, starting_magnetization,       &
              occupations, degauss, nspin, ecfixed, qcutz, q2sigma,            &
+             degauss_cond,nbnd_cond,nelec_cond,                       &
              lda_plus_u, lda_plus_u_kind, U_projection_type, Hubbard_parameters, & ! obsolete
              Hubbard_U, Hubbard_J0, Hubbard_J, Hubbard_V, Hubbard_U_back,     & ! moved to HUBBARD card 
              Hubbard_alpha, Hubbard_alpha_back, Hubbard_beta, Hubbard_occ,    &
@@ -719,6 +733,9 @@ MODULE input_parameters
         !! Maximum number of iterations for orthonormalization
         !! usually between 20 and 300.
 
+        INTEGER :: exx_maxstep = 1000
+        !! maximum number of steps in the outer loop of electronic minimization
+        !! when exx is active (hybrid functionals).
         INTEGER :: electron_maxstep = 1000
         !! maximum number of steps in electronic minimization.
         !! This parameter applies only when using 'cg' electronic or
@@ -1041,7 +1058,7 @@ MODULE input_parameters
         !! CP: \(1 \text{a.u. of time} = 2.4189\cdot 10^{-17} s\), PW: twice that much.
 
         NAMELIST / electrons / emass, emass_cutoff, orthogonalization, &
-          electron_maxstep, scf_must_converge, ortho_eps, ortho_max, electron_dynamics,   &
+          exx_maxstep, electron_maxstep, scf_must_converge, ortho_eps, ortho_max, electron_dynamics,   &
           electron_damping, electron_velocities, electron_temperature, &
           ekincw, fnosee, ampre, grease,                               &
           diis_size, diis_nreset, diis_hcut,                           &
@@ -1068,21 +1085,26 @@ MODULE input_parameters
 !=----------------------------------------------------------------------------=!
 !  NLCG Namelist Input Parameters
 !=----------------------------------------------------------------------------=!
+        CHARACTER(len=80, kind=C_CHAR) :: nlcg_method = 'mvp2'
         INTEGER           :: nlcg_maxiter
         INTEGER           :: nlcg_restart
-        REAL(DP)          :: nlcg_tau
+        REAL(DP)          :: nlcg_bt_step_length
         REAL(DP)          :: nlcg_T
-        REAL(DP)          :: nlcg_kappa
-        REAL(DP)          :: nlcg_tol
-        CHARACTER(len=80) :: nlcg_smearing
-        CHARACTER(len=80) :: nlcg_smearing_allowed(2)
-        DATA nlcg_smearing_allowed / 'FD', 'GS' /
-        CHARACTER(len=80) :: nlcg_processing_unit = 'none'
+        REAL(DP)          :: nlcg_pseudo_precond
+        REAL(DP)          :: nlcg_conv_thr
+        CHARACTER(len=80, kind=C_CHAR) :: nlcg_smearing
+        CHARACTER(len=80) :: nlcg_smearing_allowed(5)
+        DATA nlcg_smearing_allowed / 'FD', 'GS', 'MP', 'COLD', 'GAUSS' /
+        CHARACTER(len=80, kind=C_CHAR) :: nlcg_processing_unit = 'none'
         CHARACTER(len=80) :: nlcg_processing_unit_allowed(3)
         DATA nlcg_processing_unit_allowed / 'none', 'cpu', 'gpu' /
+        CHARACTER(len=80) :: nlcg_method_allowed(1)
+        DATA nlcg_method_allowed / 'mvp2' /
 
-        NAMELIST / nlcg / nlcg_maxiter, nlcg_restart, nlcg_tau, nlcg_T, nlcg_kappa, &
-          nlcg_tol, nlcg_smearing, nlcg_processing_unit
+        NAMELIST / direct_minimization / nlcg_method, nlcg_maxiter, nlcg_restart, nlcg_bt_step_length, nlcg_T, &
+          nlcg_pseudo_precond, nlcg_conv_thr, nlcg_smearing, nlcg_processing_unit
+
+!
 #endif
 !
 !=----------------------------------------------------------------------------=!
@@ -1907,7 +1929,7 @@ MODULE input_parameters
       LOGICAL :: xmloutput = .false.
       !! if TRUE PW produce an xml output
 
-      LOGICAL  :: use_sirius_scf = .FALSE.
+      LOGICAL  :: use_sirius_scf = .TRUE.
       LOGICAL  :: use_sirius_nlcg = .FALSE.
       CHARACTER(len=256) :: sirius_cfg
 

@@ -23,8 +23,8 @@ PROGRAM hp_main
   USE control_flags,     ONLY : dfpt_hub, use_para_diag, use_gpu
   USE ldaU_hp,           ONLY : perturbed_atom, start_q, last_q, nqs, code, &
                                 compute_hp, sum_pertq, perturb_only_atom,   &
-                                determine_num_pert_only, tmp_dir_save
-  USE mp_world, ONLY: mpime
+                                determine_num_pert_only, tmp_dir_save,      &
+                                determine_q_mesh_only
   USE mod_sirius
   !
   IMPLICIT NONE
@@ -57,8 +57,11 @@ PROGRAM hp_main
   CALL hp_readin()
 #if defined(__SIRIUS)
   CALL setup_sirius()
-  CALL put_potential_to_sirius()
-  CALL sirius_generate_d_operator_matrix(gs_handler)
+  !CALL sirius_load_state(gs_handler, "state.h5")
+  !CALL put_potential_to_sirius()
+  !CALL sirius_generate_d_operator_matrix(gs_handler)
+  CALL sirius_create_H0(gs_handler)
+  use_sirius_scf = .false.
 #endif
   !
   ! Initialization
@@ -119,6 +122,8 @@ PROGRAM hp_main
      ! initialize the q mesh (q_points) and R mesh (R_points)
      !
      CALL hp_generate_grids()
+     !
+     IF (determine_q_mesh_only) GO TO 105
      !
      IF (sum_pertq) GO TO 102 
      !
@@ -187,6 +192,8 @@ PROGRAM hp_main
      !
      CALL hp_dealloc_1()
      !
+105  CONTINUE
+     !
      ! If perturb_only_atom(na)=.true., then this is not a full calculation
      ! but a calculation for only one Hubbard atom na. Hence, stop smoothly.
      !
@@ -237,17 +244,16 @@ PROGRAM hp_main
      CALL print_clock_pw()
      CALL hp_print_clock()
   ENDIF
-#if defined(__SIRIUS)
-  CALL sirius_finalize(call_mpi_fin=.false.)
-  IF (mpime.eq.0) THEN
-    CALL sirius_print_timers(.false.)
-    CALL sirius_print_timers(.true.)
-  ENDIF
-#endif
   !
   CALL environment_end(code)
   !
   IF ( use_para_diag ) CALL laxlib_end() 
+  !
+  !  finalize sirius at the very end
+#if defined(__SIRIUS)
+  CALL sirius_finalize(call_mpi_fin=.false.)
+#endif
+
   CALL mp_global_end()
   !
 3336 FORMAT('     ',69('='))

@@ -323,6 +323,7 @@ SUBROUTINE write_nsg
      ALLOCATE (f(ldmx,ldmx), vet(ldmx,ldmx), lambda(ldmx))
   ENDIF
   !
+
   WRITE (stdout,'(/5x,19("="), " HUBBARD OCCUPATIONS ",19("="))')
   !
   ! Construct the occupation matrix to be diagonalized

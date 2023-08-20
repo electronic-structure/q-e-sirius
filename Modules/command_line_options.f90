@@ -143,8 +143,8 @@ CONTAINS
 #if defined(__SIRIUS)
            CASE ( '-sirius_nlcg' )
               use_sirius_nlcg = .true.
-           CASE ( '-sirius_scf' )
-              use_sirius_scf = .true.
+            CASE ( '-use_qe_scf' )
+              use_sirius_scf = .false.
            CASE ( '-sirius_cfg')
               IF (read_string) THEN
                  CALL my_getarg ( input_command_line, narg, sirius_cfg)

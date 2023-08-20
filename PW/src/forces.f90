@@ -67,6 +67,14 @@ SUBROUTINE forces()
   USE environ_base_module, ONLY : calc_environ_force
   USE environ_pw_module,   ONLY : is_ms_gcs, run_ms_gcs
 #endif
+#if defined (__OSCDFT)
+  USE plugin_flags,        ONLY : use_oscdft
+  USE oscdft_base,         ONLY : oscdft_ctx
+  USE oscdft_forces_subs,  ONLY : oscdft_apply_forces, oscdft_print_forces
+#endif
+#if defined(__LEGACY_PLUGINS) 
+  USE plugin_flags,        ONLY : plugin_ext_forces, plugin_int_forces
+#endif 
   !
   IMPLICIT NONE
   !
@@ -132,19 +140,23 @@ SUBROUTINE forces()
     forcescc = 0.d0
     CALL sirius_get_forces(gs_handler, "usnl", forcenl)
     forcenl = forcenl * 2 ! convert to Ry
-    CALL sirius_get_forces(gs_handler, "scf_corr", forcescc)
+
+    IF(.NOT.use_sirius_nlcg) THEN
+      ! scf correction term isn't present when using nlcg
+      CALL sirius_get_forces(gs_handler, "scf_corr", forcescc)
+    ENDIF
+
     forcescc = forcescc * 2 ! convert to Ry
     IF ( use_veff_callback ) THEN
-     CALL force_lc( nat, tau, ityp, alat, omega, ngm, ngl, igtongl, &
-                 g, rho%of_r(:,1), gstart, gamma_only, vloc, &
-                 forcelc )
-     IF( do_comp_esm ) THEN
+      CALL force_lc( nat, tau, ityp, alat, omega, ngm, ngl, igtongl, &
+                 g, rho%of_r(:,1), gstart, gamma_only, vloc, forcelc )
+      IF( do_comp_esm ) THEN
         CALL esm_force_ew( forceion )
-     ELSE
+      ELSE
         CALL force_ew( alat, nat, ntyp, ityp, zv, at, bg, tau, omega, g, &
                        gg, ngm, gstart, gamma_only, gcutm, strf, forceion )
-     ENDIF
-     CALL force_cc( forcecc )
+      ENDIF
+      CALL force_cc( forcecc )
     ELSE
       CALL sirius_get_forces(gs_handler,"vloc", forcelc)
       forcelc = forcelc * 2 ! convert to Ry
@@ -256,8 +268,14 @@ SUBROUTINE forces()
   !
   ! ... call void routine for user define/ plugin patches on internal forces
   !
+#if defined(__LEGACY_PLUGINS)
+  CALL plugin_int_forces() 
+#endif 
 #if defined (__ENVIRON)
   IF (use_environ) CALL calc_environ_force(force)
+#endif
+#if defined (__OSCDFT)
+  IF (use_oscdft) CALL oscdft_apply_forces(oscdft_ctx)
 #endif
   !
   ! ... Berry's phase electric field terms
@@ -364,6 +382,9 @@ SUBROUTINE forces()
   !
   ! ... call void routine for user define/ plugin patches on external forces
   !
+#if defined(__LEGACY_PLUGINS)
+  CALL plugin_ext_forces() 
+#endif 
 #if defined (__ENVIRON)
   IF (use_environ) THEN
      IF (is_ms_gcs()) CALL run_ms_gcs()
@@ -382,7 +403,10 @@ SUBROUTINE forces()
   force(:,:)    = force(:,:)    * DBLE( if_pos )
   forcescc(:,:) = forcescc(:,:) * DBLE( if_pos )
   !
-  IF ( iverbosity > 0 ) THEN
+!civn 
+! IF ( iverbosity > 0 ) THEN
+  IF ( .true.         ) THEN
+!
      IF ( do_comp_mt ) THEN
         WRITE( stdout, '(5x,"The Martyna-Tuckerman correction term to forces")')
         DO na = 1, nat
@@ -466,6 +490,9 @@ SUBROUTINE forces()
      END IF
      !
   END IF
+#if defined (__OSCDFT)
+  IF (use_oscdft) CALL oscdft_print_forces(oscdft_ctx)
+#endif
   !
   sumfor = 0.D0
   sumscf = 0.D0

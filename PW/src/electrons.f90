@@ -29,7 +29,7 @@ SUBROUTINE electrons()
   USE tsvdw_module,         ONLY : EtsvdW
   USE scf,                  ONLY : rho, rho_core, rhog_core, v, vltot, vrs, &
                                    kedtau, vnew
-  USE control_flags,        ONLY : tr2, niter, conv_elec, restart, lmd, &
+  USE control_flags,        ONLY : tr2, nexxiter, conv_elec, restart, lmd, &
                                    do_makov_payne, sic
   USE sic_mod,              ONLY : sic_energy, occ_f2fn, occ_fn2f, save_rhon, sic_first
   USE io_files,             ONLY : iunres, seqopn
@@ -39,8 +39,9 @@ SUBROUTINE electrons()
   USE klist,                ONLY : nks
   USE uspp,                 ONLY : okvan
   USE exx,                  ONLY : aceinit,exxinit, exxenergy2, exxbuff, &
-                                   fock0, fock1, fock2, fock3, dexx, use_ace, local_thr 
-  USE xc_lib,               ONLY : xclib_dft_is, exx_is_active
+                                   fock0, fock1, fock2, fock3, dexx, use_ace, local_thr, &
+                                   domat
+  USE xc_lib,               ONLY : xclib_dft_is, exx_is_active, stop_exx
   USE control_flags,        ONLY : adapt_thr, tr2_init, tr2_multi, gamma_only
   !
   USE paw_variables,        ONLY : okpaw, ddd_paw, total_core_energy, only_paw
@@ -53,6 +54,7 @@ SUBROUTINE electrons()
   USE wvfct_gpum,           ONLY : using_et, using_wg, using_wg_d
   USE scf_gpum,             ONLY : using_vrs
   !
+  USE add_dmft_occ,         ONLY : dmft
   USE rism_module,          ONLY : lrism, rism_calc3d
   !
   IMPLICIT NONE
@@ -97,6 +99,7 @@ SUBROUTINE electrons()
   fock0 = 0.D0
   fock1 = 0.D0
   fock3 = 0.D0
+  !force higher verbosity for the printout in DMFT case
   IF (.NOT. exx_is_active () ) fock2 = 0.D0
   !
   !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -110,7 +113,7 @@ SUBROUTINE electrons()
         READ (iunres, *, iostat=ios) iter, tr2, dexx
         IF ( ios /= 0 ) THEN
            iter = 0
-        ELSE IF ( iter < 0 .OR. iter > niter ) THEN
+        ELSE IF ( iter < 0 .OR. iter > nexxiter ) THEN
            iter = 0
         ELSE 
            READ (iunres, *) exxen, fock0, fock1, fock2
@@ -125,6 +128,9 @@ SUBROUTINE electrons()
            ! ... if restarting here, exx was already active
            ! ... initialize stuff for exx
            first = .false.
+!civn  see non-scf comment about this
+           Call stop_exx()
+!
            CALL exxinit(DoLoc)
            IF( DoLoc.and.gamma_only) THEN
              CALL localize_orbitals( )
@@ -135,7 +141,10 @@ SUBROUTINE electrons()
            CALL seqopn (iunres, 'restart_exx', 'unformatted', exst)
            IF (exst) READ (iunres, iostat=ios) exxbuff
            IF (ios /= 0) WRITE(stdout,'(5x,"Error in EXX restart!")')
-           IF (use_ace) CALL aceinit ( DoLoc )
+!civn 
+           !IF (use_ace) CALL aceinit ( DoLoc )
+           domat = .false.
+! 
            !
            CALL v_of_rho( rho, rho_core, rhog_core, &
                ehart, etxc, vtxc, eth, etotefield, charge, v)
@@ -170,7 +179,7 @@ SUBROUTINE electrons()
      sic_first = .false.
   END IF
   !
-  DO idum=1,niter
+  DO idum=1,nexxiter
      !
      iter = iter + 1
      !
@@ -336,11 +345,12 @@ SUBROUTINE electrons()
      !
      WRITE( stdout,'(/5x,"EXX: now go back to refine exchange calculation")')
      !
-     IF ( check_stop_now() ) THEN
+     IF ( check_stop_now() .or. (iter.ge.nexxiter) ) THEN
         CALL using_et(0)
         WRITE(stdout,'(5x,"Calculation (EXX) stopped after iteration #", &
                         & i6)') iter
         conv_elec=.FALSE.
+        IF(iter.ge.nexxiter) conv_elec=.TRUE. ! it will print ace and wfc files for restart
         CALL seqopn (iunres, 'restart_e', 'formatted', exst)
         WRITE (iunres, *) iter, tr2, dexx
         WRITE (iunres, *) exxen, fock0, fock1, fock2
@@ -456,7 +466,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
   USE input_parameters,     ONLY : diago_thr_init
 #if defined(__SIRIUS)
   USE mod_sirius
-  USE input_parameters,     ONLY : nlcg_T, nlcg_tau, nlcg_tol, nlcg_kappa, nlcg_maxiter,&
+  USE input_parameters,     ONLY : nlcg_T, nlcg_bt_step_length, nlcg_conv_thr, nlcg_pseudo_precond, nlcg_maxiter,&
                                  & nlcg_restart, nlcg_smearing, nlcg_processing_unit
 #endif
   USE add_dmft_occ,         ONLY : dmft, dmft_update, v_dmft, dmft_updated
@@ -470,6 +480,14 @@ SUBROUTINE electrons_scf ( printout, exxen )
   USE plugin_flags,         ONLY : use_environ
   USE environ_base_module,  ONLY : calc_environ_energy, print_environ_energies
   USE environ_pw_module,    ONLY : calc_environ_potential
+#endif
+#if defined (__OSCDFT)
+  USE plugin_flags,         ONLY : use_oscdft
+  USE oscdft_base,          ONLY : oscdft_ctx
+  USE oscdft_functions,     ONLY : oscdft_electrons,&
+                                   oscdft_scf_energy,&
+                                   oscdft_print_energies,&
+                                   oscdft_print_ns
 #endif
   !
   IMPLICIT NONE
@@ -562,15 +580,41 @@ SUBROUTINE electrons_scf ( printout, exxen )
     END IF
     CALL start_clock( 'electrons' )
     ! look only for the convergence of the density; converge total energy only to 10^-4
-    CALL sirius_find_ground_state(gs_handler, density_tol=tr2, energy_tol=1d-4, max_niter=niter,&
-        &iter_solver_tol=ethr, save_state=.false., converged=conv_elec, niter=iter)
-    CALL stop_clock( 'electrons' )
+    CALL sirius_initialize_subspace(gs_handler, ks_handler)
+    CALL sirius_find_ground_state(gs_handler, density_tol=tr2, energy_tol=1d-4, initial_guess=.false.,&
+        &max_niter=niter, iter_solver_tol=ethr, save_state=.false., converged=conv_elec, niter=iter)
+    IF (conv_elec) THEN
+      n_scf_steps = iter
+    ENDIF
 
     CALL sirius_get_energy(gs_handler, "descf", descf)
     descf = descf * 2.d0 ! convert to Ry
 
+    IF (use_sirius_nlcg) THEN
+      WRITE(*,*)''
+      WRITE(*,*)'============================='
+      WRITE(*,*)'* running NLCG ground state *'
+      WRITE(*,*)'============================='
+
+      !CALL insert_xc_functional_to_sirius
+      CALL sirius_nlcg_params(gs_handler, ks_handler, temp=nlcg_T,&
+        &smearing=TRIM(ADJUSTL(nlcg_smearing)), kappa=nlcg_pseudo_precond,&
+        &tau=nlcg_bt_step_length, tol=nlcg_conv_thr, maxiter=nlcg_maxiter,&
+        &restart=nlcg_restart, processing_unit=TRIM(ADJUSTL(nlcg_processing_unit)),&
+        &converged=conv_elec)
+    END IF
+
+    CALL stop_clock( 'electrons' )
+
+    ! scf correction is meaningless when nlcg was run
+    IF (use_sirius_nlcg) THEN
+      descf = 0
+    ENDIF
+
     CALL sirius_get_energy(gs_handler, "fermi", ef)
     ef = ef * 2.d0 ! convert to Ry
+    ef_up = ef
+    ef_dw = ef
 
     IF (sirius_pwpp) THEN
       CALL sirius_get_energy(gs_handler, "evalsum", eband)
@@ -639,25 +683,15 @@ SUBROUTINE electrons_scf ( printout, exxen )
       etot = etot + descf
     ENDIF
 
+    CALL get_density_from_sirius()
     IF ( lsda .OR. noncolin ) CALL compute_magnetization()
     CALL print_energies ( printout )
 
     IF (conv_elec) THEN
       WRITE( stdout, 9110 ) iter
+    ELSE
+      WRITE( stdout, 9120 ) iter
     END IF
-  END IF
-  !
-  IF (use_sirius_nlcg) THEN
-    WRITE(*,*)''
-    WRITE(*,*)'============================='
-    WRITE(*,*)'* running NLCG ground state *'
-    WRITE(*,*)'============================='
-
-    !CALL insert_xc_functional_to_sirius
-    CALL sirius_nlcg_params(gs_handler, ks_handler, nlcg_T, TRIM(ADJUSTL(nlcg_smearing))&
-      &, nlcg_kappa, nlcg_tau, nlcg_tol, nlcg_maxiter, nlcg_restart,&
-      & TRIM(ADJUSTL(nlcg_processing_unit)))
-    conv_elec = .TRUE.
   END IF
   !
   IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
@@ -784,11 +818,19 @@ SUBROUTINE electrons_scf ( printout, exxen )
         !
         ! ... diagonalization of the KS hamiltonian
         !
+#if defined (__OSCDFT)
+        IF (use_oscdft) THEN
+           CALL oscdft_electrons(oscdft_ctx, iter, et, nbnd, nkstot, nks)
+        ELSE
+#endif
         IF ( lelfield ) THEN
            CALL c_bands_efield( iter )
         ELSE
            CALL c_bands( iter )
         ENDIF
+#if defined (__OSCDFT)
+        END IF
+#endif
         !
         IF ( stopped_by_user ) THEN
            conv_elec=.FALSE.
@@ -1059,10 +1101,20 @@ SUBROUTINE electrons_scf ( printout, exxen )
      !
      plugin_etot = 0.0_dp
      !
+#if defined (__LEGACY_PLUGINS) 
+     CALL plugin_scf_energy (plugin_etot, rhoin) 
+     !
+     CALL plugin_scf_potential(rhoin, conv_elec, dr2, vltot)
+#endif 
 #if defined (__ENVIRON)
      IF (use_environ) THEN
         CALL calc_environ_energy(plugin_etot, .TRUE.)
         CALL calc_environ_potential(rhoin, conv_elec, dr2, vltot)
+     END IF
+#endif
+#if defined (__OSCDFT)
+     IF (use_oscdft) THEN
+        CALL oscdft_scf_energy(oscdft_ctx, plugin_etot)
      END IF
 #endif
      !
@@ -1133,6 +1185,11 @@ SUBROUTINE electrons_scf ( printout, exxen )
            ENDIF
            !
         ENDIF
+#if defined (__OSCDFT)
+        IF (use_oscdft) THEN
+           CALL oscdft_print_ns(oscdft_ctx)
+        END IF
+#endif
         CALL print_ks_energies()
         !
      ENDIF
@@ -1734,6 +1791,11 @@ SUBROUTINE electrons_scf ( printout, exxen )
        ELSE
           !
           WRITE( stdout, 9080 ) etot
+          IF (dmft) THEN
+            WRITE( stdout, *) "    DMFT detected, writing all energy contributions"
+            WRITE( stdout, 9062 ) (eband + deband), ehart, ( etxc - etxcc ), ewld
+            WRITE( stdout, 9301 ) eband
+          ENDIF
           IF ( iverbosity > 1 ) WRITE( stdout, 9082 ) hwf_energy
           IF ( dr2 > eps8 ) THEN
              WRITE( stdout, 9083 ) dr2
@@ -1748,8 +1810,14 @@ SUBROUTINE electrons_scf ( printout, exxen )
        WRITE(stdout,*)''
        WRITE(stdout, 9990)eband
        !
+#if defined(__LEGACY_PLUGINS)
+       CALL plugin_print_energies()
+#endif 
 #if defined (__ENVIRON)
        IF (use_environ) CALL print_environ_energies('PW')
+#endif
+#if defined (__OSCDFT)
+       IF (use_oscdft .AND. conv_elec) CALL oscdft_print_energies(oscdft_ctx)
 #endif
        !
        IF ( lsda ) WRITE( stdout, 9017 ) magtot, absmag
@@ -1810,6 +1878,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
             /'     total charge of GC-SCF    =',0PF17.8,' e'  &
             /'     the Fermi energy          =',0PF17.8,' eV' &
             /'                        (error :',0PF17.8,' eV)')
+9301 FORMAT( '     band energy (sum(wg*et))  =',F17.8,' Ry' )
 
 9902 FORMAT( '     solvation energy (RISM)   =',F17.8,' Ry' )
 9903 FORMAT( '     level-shifting contrib.   =',F17.8,' Ry' )

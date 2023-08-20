@@ -152,6 +152,33 @@ MODULE mod_sirius
   END SUBROUTINE put_potential_to_sirius
   !
   !--------------------------------------------------------------------
+  SUBROUTINE put_density_to_sirius()
+    !------------------------------------------------------------------
+    !! Put plane-wave coefficients of density to SIRIUS
+    !
+    USE scf,                  ONLY : rho
+    USE gvect,                ONLY : mill, ngm
+    USE mp_bands,             ONLY : intra_bgrp_comm
+    USE lsda_mod,             ONLY : nspin
+    !
+    IMPLICIT NONE
+    !
+    INTEGER iat, ig, ih, jh, ijh, na, ispn
+    COMPLEX(8) z1, z2
+    !
+    ! get rho(G)
+    CALL sirius_set_pw_coeffs( gs_handler, "rho", rho%of_g(:, 1), .TRUE., ngm, mill, intra_bgrp_comm )
+    IF (nspin.EQ.2) THEN
+      CALL sirius_set_pw_coeffs( gs_handler, "magz", rho%of_g(:, 2), .TRUE., ngm, mill, intra_bgrp_comm )
+    ENDIF
+    IF (nspin.EQ.4) THEN
+      CALL sirius_set_pw_coeffs( gs_handler, "magx", rho%of_g(:, 2), .TRUE., ngm, mill, intra_bgrp_comm )
+      CALL sirius_set_pw_coeffs( gs_handler, "magy", rho%of_g(:, 3), .TRUE., ngm, mill, intra_bgrp_comm )
+      CALL sirius_set_pw_coeffs( gs_handler, "magz", rho%of_g(:, 4), .TRUE., ngm, mill, intra_bgrp_comm )
+    ENDIF
+  END SUBROUTINE put_density_to_sirius
+  !
+  !--------------------------------------------------------------------
   SUBROUTINE get_density_from_sirius()
     !------------------------------------------------------------------
     !! Get plane-wave coefficients of density from SIRIUS
@@ -161,9 +188,7 @@ MODULE mod_sirius
     USE mp_bands,             ONLY : intra_bgrp_comm
     USE lsda_mod,             ONLY : nspin
     USE fft_base,             ONLY : dfftp
-    USE fft_interfaces,       ONLY : invfft
-    USE wavefunctions,        ONLY : psic
-    USE control_flags,        ONLY : gamma_only
+    USE fft_rho,              ONLY : rho_g2r
     !
     IMPLICIT NONE
     !
@@ -180,16 +205,9 @@ MODULE mod_sirius
       CALL sirius_get_pw_coeffs( gs_handler, "magy", rho%of_g(:, 3), ngm, mill, intra_bgrp_comm )
       CALL sirius_get_pw_coeffs( gs_handler, "magz", rho%of_g(:, 4), ngm, mill, intra_bgrp_comm )
     ENDIF
-    ! get density matrix
-    !CALL get_density_matrix_from_sirius
-    DO ispn = 1, nspin
-      psic(:) = 0.d0
-      psic(dfftp%nl(:)) = rho%of_g(:, ispn)
-      IF (gamma_only) psic(dfftp%nlm(:)) = CONJG(rho%of_g(:, ispn))
-      CALL invfft( 'Rho', psic, dfftp )
-      rho%of_r(:,ispn) = psic(:)
-    ENDDO
-    !
+    CALL rho_g2r (dfftp, rho%of_g, rho%of_r)
+    !! get density matrix
+    !!CALL get_density_matrix_from_sirius
   END SUBROUTINE get_density_from_sirius
   !
   !--------------------------------------------------------------------
@@ -771,6 +789,8 @@ MODULE mod_sirius
     USE esm,                  ONLY : do_comp_esm
     USE Coul_cut_2D,          ONLY : do_cutoff_2D
     USE constants,            ONLY : RYTOEV
+    USE kinds,                ONLY : DP
+    USE scf,                  ONLY : rho
     !
     IMPLICIT NONE
     !
@@ -782,6 +802,9 @@ MODULE mod_sirius
     CHARACTER(LEN=1024) :: conf_str
     INTEGER, EXTERNAL :: global_kpoint_index
     REAL(8), PARAMETER :: spglib_tol=1e-4
+    REAL(DP), ALLOCATABLE :: r_loc(:)
+    REAL(DP), ALLOCATABLE :: m_loc(:,:), initial_magn(:,:)
+    INTEGER, ALLOCATABLE :: nat_of_type(:)
 
     CALL sirius_start_timer("setup_sirius")
 
@@ -909,6 +932,8 @@ MODULE mod_sirius
     SELECT CASE(ngauss)
       CASE (0)
         CALL sirius_set_parameters(sctx, smearing="gaussian")
+      CASE (1)
+        CALL sirius_set_parameters(sctx, smearing="methfessel_paxton")
       CASE(-1)
         CALL sirius_set_parameters(sctx, smearing="cold")
       CASE(-99)
@@ -1236,25 +1261,64 @@ MODULE mod_sirius
       END DO
     END IF
     !
+    ! compute initial magnetization for each atom type
+    ALLOCATE(initial_magn(3, nsp))
+    initial_magn = 0.d0
+    !ALLOCATE(nat_of_type(nsp))
+    !nat_of_type = 0
+    !
+    ! This pice of code is intended to compute integral atomic moments. The problem is that
+    ! get_locals() function requires some allocated and initialized arrays. It works as expected
+    ! with pw.x and doesn't work with hp.x; Attempt to allocate and initialize those arrays
+    ! resulted in a crash in another place.
+    !
+    !!IF ( nspin .NE. 1 ) THEN
+    !!  ALLOCATE( r_loc(nat), m_loc(nspin-1, nat) )
+    !!  CALL get_locals( r_loc, m_loc, rho%of_r )
+    !!  DO ia = 1, nat
+    !!    IF (noncolin) THEN
+    !!      initial_magn(:, ityp(ia)) = initial_magn(:, ityp(ia)) + m_loc(:, ia)
+    !!    ELSE
+    !!      initial_magn(3, ityp(ia)) = initial_magn(3, ityp(ia)) + m_loc(1, ia)
+    !!    ENDIF
+    !!    nat_of_type(ityp(ia)) = nat_of_type(ityp(ia)) + 1
+    !!  ENDDO
+    !!  DO iat = 1, nsp
+    !!    initial_magn(:, iat) = initial_magn(:, iat) / nat_of_type(iat)
+    !!    IF (SUM(ABS(initial_magn(:, iat))) .LT. 1e-6) THEN
+    !!      initial_magn(:, iat) = 0.d0
+    !!    END IF
+    !!  ENDDO
+    !!  DEALLOCATE(r_loc, m_loc)
+    !!END IF
+
+    ! Fallback solution: compute magentic moments on atoms in an easy way. They will be only used
+    ! to determine the magentic symmetry and not as a starting guess for magnetization.
+    ! Starting magnetization will be set later by the call to put_density_to_sirius() using
+    ! QE values for density and magnetisation.
+    DO iat = 1, nsp
+      IF (noncolin) THEN
+        initial_magn(1, iat) = zv(iat) * starting_magnetization(iat) * SIN(angle1(iat)) * COS(angle2(iat))
+        initial_magn(2, iat) = zv(iat) * starting_magnetization(iat) * SIN(angle1(iat)) * SIN(angle2(iat))
+        initial_magn(3, iat) = zv(iat) * starting_magnetization(iat) * COS(angle1(iat))
+      ELSE
+        initial_magn(3, iat) = zv(iat) * starting_magnetization(iat)
+      ENDIF
+    ENDDO
+    !
     ! add atoms to the unit cell
-    ! WARNING: sirius accepts only fractional coordinates;
+    ! WARNING: sirius accepts only fractional coordinates
     DO ia = 1, nat
       iat = ityp(ia)
       ! Cartesian coordinates
       v1(:) = tau(:, ia) * alat
       ! fractional coordinates
       v1(:) = MATMUL(vlat_inv, v1)
-      ! reduce coordinates to [0, 1) interval
-      IF (noncolin) THEN
-        v2(1) = zv(iat) * starting_magnetization(iat) * SIN(angle1(iat)) * COS(angle2(iat))
-        v2(2) = zv(iat) * starting_magnetization(iat) * SIN(angle1(iat)) * SIN(angle2(iat))
-        v2(3) = zv(iat) * starting_magnetization(iat) * COS(angle1(iat))
-      ELSE
-        v2 = 0
-        v2(3) = zv(iat) * starting_magnetization(iat)
-      ENDIF
-      CALL sirius_add_atom(sctx, TRIM(atom_type(iat)%label), v1, v2)
+      CALL sirius_add_atom(sctx, TRIM(atom_type(iat)%label), v1, initial_magn(:, iat))
     ENDDO
+    !
+    !DEALLOCATE(initial_magn, nat_of_type)
+    DEALLOCATE(initial_magn)
     !
     CALL put_xc_functional_to_sirius()
     !
@@ -1300,6 +1364,8 @@ MODULE mod_sirius
     !
     ! create ground-state class
     CALL sirius_create_ground_state(ks_handler, gs_handler)
+    CALL put_density_to_sirius()
+    CALL sirius_generate_effective_potential(gs_handler)
     !
     CALL sirius_stop_timer("setup_sirius")
     !
@@ -1408,8 +1474,6 @@ MODULE mod_sirius
     !
     IMPLICIT NONE
     !
-    INTEGER, EXTERNAL :: global_kpoint_index
-    !
     REAL(8), ALLOCATABLE :: band_e(:,:)
     INTEGER :: ik, nk, nb, nfv
     !
@@ -1431,7 +1495,7 @@ MODULE mod_sirius
     ENDIF
     ! convert to Ry
     DO ik = 1, nkstot
-      et(:, ik) = 2.d0 * band_e(:, global_kpoint_index(nkstot, ik))
+      et(:, ik) = 2.d0 * band_e(:, ik)
     ENDDO
     !
     DEALLOCATE(band_e)
@@ -1498,8 +1562,6 @@ MODULE mod_sirius
     !
     IMPLICIT NONE
     !
-    INTEGER, EXTERNAL :: global_kpoint_index
-    !
     REAL(8), ALLOCATABLE :: bnd_occ(:, :)
     REAL(8) :: maxocc
     INTEGER :: ik, ierr, nk, n
@@ -1524,7 +1586,7 @@ MODULE mod_sirius
       maxocc = 1.d0
     ENDIF
     DO ik = 1, nkstot
-      wg(:, ik) = bnd_occ(:, global_kpoint_index(nkstot, ik)) / maxocc * wk(ik)
+      wg(:, ik) = bnd_occ(:, ik) / maxocc * wk(ik)
     ENDDO
     !
     DEALLOCATE(bnd_occ)
@@ -1672,6 +1734,8 @@ MODULE mod_sirius
         CALL sirius_add_xc_functional(sctx, "XC_GGA_X_PBE")
       CASE(109)
         CALL sirius_add_xc_functional(sctx, "XC_GGA_X_PW91")
+      CASE(116)
+        CALL sirius_add_xc_functional(sctx, "XC_GGA_X_PBE_SOL")
       CASE default
         WRITE(*,*)igcx
         STOP ("interface for this gradient exchange functional is not implemented")
@@ -1710,6 +1774,8 @@ MODULE mod_sirius
       SELECT CASE(igcc)
       CASE(130)
         CALL sirius_add_xc_functional(sctx, "XC_GGA_C_PBE")
+      CASE(133)
+        CALL sirius_add_xc_functional(sctx, "XC_GGA_C_PBE_SOL")
       CASE(134)
         CALL sirius_add_xc_functional(sctx, "XC_GGA_C_PW91")
       CASE default
