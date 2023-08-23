@@ -211,6 +211,73 @@ MODULE mod_sirius
   END SUBROUTINE get_density_from_sirius
   !
   !--------------------------------------------------------------------
+  SUBROUTINE put_density_matrix_to_sirius
+    !------------------------------------------------------------------
+    !! Put QE density matrix to SIRIUS
+    !
+    USE scf,        ONLY : rho
+    USE ions_base,  ONLY : nat, nsp, ityp
+    USE lsda_mod,   ONLY : nspin
+    USE uspp_param, ONLY : nhm, nh
+    USE uspp,       ONLY : becsum
+    IMPLICIT NONE
+    !
+    INTEGER iat, na, ih, jh, ijh, ispn
+    COMPLEX(8), ALLOCATABLE :: dens_mtrx(:,:,:)
+    REAL(8), ALLOCATABLE :: dens_mtrx_tmp(:, :, :)
+    REAL(8) fact
+    ! set density matrix
+    ! complex density matrix in SIRIUS has at maximum three components
+    ALLOCATE(dens_mtrx_tmp(nhm * (nhm + 1) / 2, nat, nspin))
+    !if (allocated(rho%bec)) then
+      dens_mtrx_tmp = rho%bec
+    !else
+    !  dens_mtrx_tmp = becsum
+    !endif
+
+    ALLOCATE(dens_mtrx(nhm, nhm, 3))
+    DO iat = 1, nsp
+      DO na = 1, nat
+        IF (ityp(na).EQ.iat) THEN
+          dens_mtrx = (0.d0, 0.d0)
+          ijh = 0
+          DO ih = 1, nh(iat)
+            DO jh = ih, nh(iat)
+              ijh = ijh + 1
+              ! off-diagonal elements have a weight of 2
+              IF (ih.NE.jh) THEN
+                fact = 0.5d0
+              ELSE
+                fact = 1.d0
+              ENDIF
+              IF (nspin.LE.2) THEN
+                DO ispn = 1, nspin
+                  dens_mtrx(ih, jh, ispn) = fact * dens_mtrx_tmp(ijh, na, ispn)
+                  dens_mtrx(jh, ih, ispn) = fact * dens_mtrx_tmp(ijh, na, ispn)
+                  ENDDO
+              ENDIF
+              IF (nspin.EQ.4) THEN
+                ! 0.5 * (rho + mz)
+                dens_mtrx(ih, jh, 1) = fact * 0.5 * (dens_mtrx_tmp(ijh, na, 1) + dens_mtrx_tmp(ijh, na, 4))
+                dens_mtrx(jh, ih, 1) = fact * 0.5 * (dens_mtrx_tmp(ijh, na, 1) + dens_mtrx_tmp(ijh, na, 4))
+                ! 0.5 * (rho - mz)
+                dens_mtrx(ih, jh, 2) = fact * 0.5 * (dens_mtrx_tmp(ijh, na, 1) - dens_mtrx_tmp(ijh, na, 4))
+                dens_mtrx(jh, ih, 2) = fact * 0.5 * (dens_mtrx_tmp(ijh, na, 1) - dens_mtrx_tmp(ijh, na, 4))
+                ! 0.5 * (mx - I * my)
+                dens_mtrx(ih, jh, 3) = fact * 0.5 * dcmplx(dens_mtrx_tmp(ijh, na, 2), -dens_mtrx_tmp(ijh, na, 3))
+                dens_mtrx(jh, ih, 3) = fact * 0.5 * dcmplx(dens_mtrx_tmp(ijh, na, 2), -dens_mtrx_tmp(ijh, na, 3))
+              ENDIF
+            ENDDO
+          ENDDO
+          CALL sirius_set_density_matrix(gs_handler, na, dens_mtrx(1, 1, 1), nhm)
+        ENDIF
+      ENDDO
+    ENDDO
+    DEALLOCATE(dens_mtrx)
+    DEALLOCATE(dens_mtrx_tmp)
+  END SUBROUTINE put_density_matrix_to_sirius
+  !
+  !--------------------------------------------------------------------
   SUBROUTINE calc_veff() BIND(C)
     !------------------------------------------------------------------
     !! Callback function to compute effective potential by QE
@@ -883,17 +950,14 @@ MODULE mod_sirius
     ! create initial configuration dictionary in JSON
     WRITE(conf_str, 10)diago_david_ndim, mixing_beta, nmix
     10 FORMAT('{"parameters"       : {"electronic_structure_method" : "pseudopotential", "use_scf_correction" : true}, &
-               &"iterative_solver" : {"residual_tolerance" : 1e-6, "locking" : true, "subspace_size" : ',I4,'}, &
+               &"iterative_solver" : {"subspace_size" : ',I4,'}, &
                &"mixer"            : {"beta"        : ', F12.6, ',&
                &                      "max_history" : ', I4, ', &
-               &                      "use_hartree" : true, &
-               &                      "type"        : "anderson"},&
-               &"settings"         : {"itsol_tol_scale" : [0.1, 0.95]}, &
-               &"control"          : {"verification" : 0}}')
+               &                      "use_hartree" : true}}')
     ! set initial parameters
     CALL sirius_import_parameters(sctx, conf_str)
     ! set default verbosity
-    CALL sirius_set_parameters(sctx, verbosity=MIN(1, iverbosity))
+    !CALL sirius_set_parameters(sctx, verbosity=MIN(1, iverbosity))
     ! import config file
     CALL sirius_import_parameters(sctx, TRIM(ADJUSTL(sirius_cfg)))
     !
@@ -951,11 +1015,11 @@ MODULE mod_sirius
     ENDIF
     CALL sirius_set_mpi_grid_dims(sctx, 2, dims(1))
     !
-    IF (diago_full_acc) THEN
-      CALL sirius_set_parameters(sctx, iter_solver_tol_empty=0.d0)
-    ELSE
-      CALL sirius_set_parameters(sctx, iter_solver_tol_empty=1d-5)
-    ENDIF
+    !IF (diago_full_acc) THEN
+    !  CALL sirius_set_parameters(sctx, iter_solver_tol_empty=0.d0)
+    !ELSE
+    !  CALL sirius_set_parameters(sctx, iter_solver_tol_empty=1d-5)
+    !ENDIF
     !
     CALL sirius_set_callback_function(sctx, "beta_ri", C_FUNLOC(calc_beta_radial_integrals))
     CALL sirius_set_callback_function(sctx, "beta_ri_djl", C_FUNLOC(calc_beta_dj_radial_integrals))
@@ -1356,6 +1420,7 @@ MODULE mod_sirius
     ! create ground-state class
     CALL sirius_create_ground_state(ks_handler, gs_handler)
     CALL put_density_to_sirius()
+    CALL put_density_matrix_to_sirius()
     CALL sirius_generate_effective_potential(gs_handler)
     !
     CALL sirius_stop_timer("setup_sirius")
