@@ -1,6 +1,7 @@
 {
     "source_dirs": [
         "PP",
+        "dft-d3",
         "HP",
         "PW",
         "atomic",
