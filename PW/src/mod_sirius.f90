@@ -269,7 +269,7 @@ MODULE mod_sirius
               ENDIF
             ENDDO
           ENDDO
-          CALL sirius_set_density_matrix(gs_handler, na, dens_mtrx(1, 1, 1), nhm)
+          CALL sirius_set_density_matrix(gs_handler, na, dens_mtrx, nhm)
         ENDIF
       ENDDO
     ENDDO
@@ -1430,6 +1430,7 @@ MODULE mod_sirius
     CALL sirius_create_ground_state(ks_handler, gs_handler)
     CALL put_density_to_sirius()
     CALL put_density_matrix_to_sirius()
+    CALL sirius_generate_density(gs_handler, paw_only=.TRUE.)
     CALL sirius_generate_effective_potential(gs_handler)
     !
     CALL sirius_stop_timer("setup_sirius")
