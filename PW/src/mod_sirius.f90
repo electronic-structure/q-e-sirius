@@ -858,6 +858,7 @@ MODULE mod_sirius
     USE constants,            ONLY : RYTOEV
     USE kinds,                ONLY : DP
     USE scf,                  ONLY : rho
+    USE paw_variables,        ONLY : okpaw
     !
     IMPLICIT NONE
     !
@@ -1429,8 +1430,10 @@ MODULE mod_sirius
     ! create ground-state class
     CALL sirius_create_ground_state(ks_handler, gs_handler)
     CALL put_density_to_sirius()
-    CALL put_density_matrix_to_sirius()
-    CALL sirius_generate_density(gs_handler, paw_only=.TRUE.)
+    IF (okpaw) THEN
+      CALL put_density_matrix_to_sirius()
+      CALL sirius_generate_density(gs_handler, paw_only=.TRUE.)
+    ENDIF
     CALL sirius_generate_effective_potential(gs_handler)
     !
     CALL sirius_stop_timer("setup_sirius")
