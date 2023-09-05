@@ -577,6 +577,24 @@ SUBROUTINE electrons_scf ( printout, exxen )
         ewld = ewald( alat, nat, nsp, ityp, zv, at, bg, tau, &
                      omega, g, gg, ngm, gcutm, gstart, gamma_only, strf )
       END IF
+      !
+      ! Grimme-D3 correction to the energy
+      !
+      IF (ldftd3) THEN
+        CALL start_clock('energy_dftd3')
+        latvecs(:,:)=at(:,:)*alat
+        tau(:,:)=tau(:,:)*alat
+        DO na = 1, nat
+          atnum(na) = get_atomic_number(TRIM(atm(ityp(na))))
+        ENDDO
+        call dftd3_pbc_dispersion(dftd3,tau,atnum,latvecs,edftd3)
+        edftd3=edftd3*2.d0
+        tau(:,:)=tau(:,:)/alat
+        CALL stop_clock('energy_dftd3')
+      ELSE
+        edftd3= 0.0
+      ENDIF
+      !
     END IF
     CALL start_clock( 'electrons' )
     ! look only for the convergence of the density; converge total energy only to 10^-4
