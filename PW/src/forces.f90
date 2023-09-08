@@ -169,8 +169,27 @@ SUBROUTINE forces()
       CALL sirius_get_forces(gs_handler,"hubbard", forceh)
       forceh = forceh * 2 ! convert to Ry
     ENDIF
+    !
+    ! ... The Grimme-D3 dispersion correction
+    !
+    IF ( ldftd3 ) THEN
+      !
+      CALL start_clock('force_dftd3')
+      ALLOCATE( force_d3(3, nat) )
+      force_d3(:,:) = 0.0_DP
+      latvecs(:,:) = at(:,:)*alat
+      tau(:,:) = tau(:,:)*alat
+      atnum(:) = get_atomic_number(atm(ityp(:)))
+      CALL dftd3_pbc_gdisp( dftd3, tau, atnum, latvecs, &
+        force_d3, stress_dftd3 )
+      force_d3 = -2.d0*force_d3
+      tau(:,:) = tau(:,:)/alat
+      CALL stop_clock('force_dftd3')
+    ENDIF
+    !
   ELSE
-#endif
+#endif ! __SIRIUS
+  ! IF NOT use_sirius_scf .AND. NOT use_sirius_nlcg
   !
   ! ... The nonlocal contribution is computed here
   !
