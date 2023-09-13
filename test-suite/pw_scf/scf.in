@@ -1,6 +1,7 @@
  &control
     calculation = 'scf'
     tstress=.true.
+    pseudo_dir = '/home/gcistaro/codes/q-e-sirius/pseudo'
  /
  &system
     ibrav=2, celldm(1) =10.20, 
@@ -10,7 +11,7 @@
  &electrons
  /
 ATOMIC_SPECIES
- Si  28.086  Si.pz-vbc.UPF
+ Si  28.086 Si.bhs
 ATOMIC_POSITIONS (alat)
  Si 0.00 0.00 0.00
  Si 0.25 0.25 0.25
