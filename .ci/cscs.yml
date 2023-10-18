@@ -29,7 +29,7 @@ build image:
     SLURM_UNBUFFEREDIO: ''
     SLURM_WAIT: 0
     SLURM_TIMELIMIT: "30:00"
-#    USE_MPI: 'YES'
+    USE_MPI: 'YES'
 
 gpu serial:
   extends: .run_tests
