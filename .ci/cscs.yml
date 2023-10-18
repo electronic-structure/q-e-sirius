@@ -18,14 +18,6 @@ build image:
   extends: .container-runner-daint-gpu
   needs: ["build image"]
   stage: test
-#  script:
-#    - cd /sirius-src/spack-build
-#    - |
-#      if [ "$SLURM_PROCID" == "0" ]; then
-#        $TEST_COMMAND -V
-#      else
-#        $TEST_COMMAND --output-on-failure
-#      fi
   image: $CSCS_REGISTRY_PATH/q-e-sirius/q-e-sirius-ci:$CI_COMMIT_SHA
   variables:
     CRAY_CUDA_MPS: 1
@@ -37,6 +29,8 @@ build image:
     SLURM_JOB_NUM_NODES: 1
     SLURM_UNBUFFEREDIO: ''
     SLURM_WAIT: 0
+    SLURM_TIMELIMIT: "30:00"
+    USE_MPI: 'YES'
 
 gpu serial:
   extends: .run_tests
@@ -45,7 +39,6 @@ gpu serial:
     SLURM_CONSTRAINT: gpu
     SLURM_CPUS_PER_TASK: 12
     SLURM_NTASKS: 1
-    SLURM_TIMELIMIT: "30:00"
     script:
       - cd /qe-src/ci-tests/CdO
       - /apps/bin/pw.x -i CdO.in
