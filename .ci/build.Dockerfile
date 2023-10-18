@@ -1,16 +1,14 @@
 FROM docker.io/electronicstructure/sirius
 
-RUN spack external find --all --scope system --not-buildable
-
 # copy source files of the pull request into container
 COPY . /qe-src
 
-ENV SPEC_QE="q-e-sirius@develop-ristretto ^fftw+openmp ^${SPEC_GCC_CPU}"
+RUN spack env create -d /build-env  --with-view /apps
+RUN spack -e /build-env add q-e-sirius@develop-ristretto ^fftw+openmp ^${SPEC_GCC_GPU}
+RUN spack -e /build-env develop -p /qe-src q-e-sirius@develop-ristretto
 
-RUN spack spec -I $SPEC_QE
+RUN spack -e /build-env concretize
+RUN spack -e /build-env install
 
-RUN spack --color always dev-build --quiet --source-path /qe-src $SPEC_QE
+RUN spack clean --all
 
-## we need a fixed name for the build directory
-## here is a hacky workaround to link ./spack-build-{hash} to ./spack-build
-#RUN cd /sirius-src && ln -s $(find . -name "spack-build-*" -type d) spack-build
