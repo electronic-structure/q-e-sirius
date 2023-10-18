@@ -12,7 +12,6 @@ build image:
   variables:
     DOCKERFILE: .ci/build.Dockerfile
     PERSIST_IMAGE_NAME: $CSCS_REGISTRY_PATH/q-e-sirius/q-e-sirius-ci:$CI_COMMIT_SHA
-    DOCKER_BUILD_ARGS: ''
 
 .run_tests:
   extends: .container-runner-daint-gpu
