@@ -26,7 +26,6 @@ build image:
     CSCS_REGISTRY_LOGIN: 'YES'
     PULL_IMAGE: 'YES'
     SLURM_HINT: nomultithread
-    SLURM_JOB_NUM_NODES: 1
     SLURM_UNBUFFEREDIO: ''
     SLURM_WAIT: 0
     SLURM_TIMELIMIT: "30:00"
@@ -35,10 +34,11 @@ build image:
 gpu serial:
   extends: .run_tests
   variables:
-    OMP_NUM_THREADS: 12
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SLURM_CONSTRAINT: gpu
     SLURM_CPUS_PER_TASK: 12
     SLURM_NTASKS: 1
+    SLURM_JOB_NUM_NODES: 1
   script:
     - cd /qe-src/ci-tests/CdO
     - /apps/bin/pw.x -i CdO.in
