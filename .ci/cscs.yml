@@ -39,6 +39,6 @@ gpu serial:
     SLURM_CONSTRAINT: gpu
     SLURM_CPUS_PER_TASK: 12
     SLURM_NTASKS: 1
-    script:
-      - cd /qe-src/ci-tests/CdO
-      - /apps/bin/pw.x -i CdO.in
+  script:
+    - cd /qe-src/ci-tests/CdO
+    - /apps/bin/pw.x -i CdO.in
