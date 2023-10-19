@@ -55,3 +55,4 @@ test LiCoO2:
     - cd /qe-src/ci-tests/LiCoO2
     - /apps/bin/pw.x -i LiCoO2.scf.in -use_qe_scf
     - /apps/bin/hp.x -i LiCoO2.hp.in
+    - cat LiCoO2.Hubbard_parameters.dat
