@@ -69,7 +69,12 @@ test Si_koopmans:
   script:
     - cd /qe-src/ci-tests/Si_koopmans
     - /apps/bin/pw.x -i Si.scf.in -use_qe_scf
-    - /apps/bin/wannier90.x -pp Si.win
+    - /apps/bin/wannier90.x -pp Si
     - /apps/bin/pw2wannier90.x -i Si.pw2wann.in
-    - /apps/bin/pw2wannier90.x
-    - cat LiCoO2.Hubbard_parameters.dat
+    - /apps/bin/wannier90.x Si
+    - /apps/bin/wannier90.x -pp Si_emp
+    - /apps/bin/pw2wannier90.x -i Si_emp.pw2wann.in
+    - /apps/bin/wannier90.x Si_emp
+    - /apps/bin/kcw.x -i Si.kcw-wann2kcw.in
+    - /apps/bin/kcw.x -i Si.kcw-screen.in > Si.kcw-screen.out
+    - cat Si.kcw-screen.out
