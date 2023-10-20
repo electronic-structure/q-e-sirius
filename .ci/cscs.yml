@@ -56,3 +56,20 @@ test LiCoO2:
     - /apps/bin/pw.x -i LiCoO2.scf.in -use_qe_scf
     - /apps/bin/hp.x -i LiCoO2.hp.in
     - cat LiCoO2.Hubbard_parameters.dat
+
+test Si_koopmans:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CONSTRAINT: gpu
+    SLURM_CPUS_PER_TASK: 12
+    SLURM_NTASKS: 1
+    SLURM_JOB_NUM_NODES: 1
+  script:
+    - cd /qe-src/ci-tests/Si_koopmans
+    - /apps/bin/pw.x -i Si.scf.in -use_qe_scf
+    - /apps/bin/wannier90.x -pp Si.win
+    - /apps/bin/pw2wannier90.x -i Si.pw2wann.in
+    - /apps/bin/pw2wannier90.x
+    - cat LiCoO2.Hubbard_parameters.dat
