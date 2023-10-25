@@ -1,4 +1,6 @@
-FROM docker.io/electronicstructure/sirius
+#FROM docker.io/electronicstructure/sirius
+ARG BASE_IMAGE
+FROM $BASE_IMAGE
 
 # copy source files of the pull request into container
 COPY . /qe-src

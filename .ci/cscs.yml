@@ -2,22 +2,42 @@ include:
   - remote: 'https://gitlab.com/cscs-ci/recipes/-/raw/master/templates/v2/.ci-ext.yml'
 
 stages:
+  - baseimage
   - build
   - test
 
-build image:
-  extends: .container-builder
-  stage: build
+build base cuda image:
+  extends: .container-builder-dynamic-name
+  stage: baseimage
   timeout: 2h
+  variables:
+    DOCKERFILE: .ci/baseimage.cuda.Dockerfile
+    WATCH_FILECHANGES: .ci/baseimage.cuda.Dockerfile
+    PERSIST_IMAGE_NAME: $CSCS_REGISTRY_PATH/base/q-e-sirius-ci
+    DOCKER_BUILD_ARGS: '["CUDA_ARCH=60"]'
+
+build cuda image:
+  extends: .container-builder
+  needs: ["build base cuda image"]
+  stage: build
   variables:
     DOCKERFILE: .ci/build.Dockerfile
     PERSIST_IMAGE_NAME: $CSCS_REGISTRY_PATH/q-e-sirius/q-e-sirius-ci:$CI_COMMIT_SHA
-    #CSCS_REBUILD_POLICY: if-not-exists
-    CSCS_REBUILD_POLICY: always
+    DOCKER_BUILD_ARGS: '["BASE_IMAGE=${BASE_IMAGE}"]'
+
+#build image:
+#  extends: .container-builder
+#  stage: build
+#  timeout: 2h
+#  variables:
+#    DOCKERFILE: .ci/build.Dockerfile
+#    PERSIST_IMAGE_NAME: $CSCS_REGISTRY_PATH/q-e-sirius/q-e-sirius-ci:$CI_COMMIT_SHA
+#    #CSCS_REBUILD_POLICY: if-not-exists
+#    CSCS_REBUILD_POLICY: always
 
 .run_tests:
   extends: .container-runner-daint-gpu
-  needs: ["build image"]
+  needs: ["build cuda image"]
   stage: test
   image: $CSCS_REGISTRY_PATH/q-e-sirius/q-e-sirius-ci:$CI_COMMIT_SHA
   variables:
