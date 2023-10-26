@@ -588,16 +588,20 @@ SUBROUTINE electrons_scf ( printout, exxen )
       ! Grimme-D3 correction to the energy
       !
       IF (ldftd3) THEN
-        CALL start_clock('energy_dftd3')
-        latvecs(:,:)=at(:,:)*alat
-        tau(:,:)=tau(:,:)*alat
-        DO na = 1, nat
-          atnum(na) = get_atomic_number(TRIM(atm(ityp(na))))
-        ENDDO
-        call dftd3_pbc_dispersion(dftd3,tau,atnum,latvecs,edftd3)
-        edftd3=edftd3*2.d0
-        tau(:,:)=tau(:,:)/alat
-        CALL stop_clock('energy_dftd3')
+         CALL start_clock('energy_dftd3')
+         ! taupbc are atomic positions in alat units, centered around r=0
+         ALLOCATE ( taupbc(3,nat) )
+         taupbc(:,:) = tau(:,:)
+         CALL cryst_to_cart( nat, taupbc, bg, -1 ) 
+         taupbc(:,:) = taupbc(:,:) - NINT(taupbc(:,:))
+         CALL cryst_to_cart( nat, taupbc, at,  1 ) 
+         DO na = 1, nat
+            atnum(na) = get_atomic_number(TRIM(atm(ityp(na))))
+         ENDDO
+         call dftd3_pbc_dispersion(dftd3, alat*taupbc, atnum, alat*at, edftd3)
+         edftd3=edftd3*2.d0
+         DEALLOCATE( taupbc)
+         CALL stop_clock('energy_dftd3')
       ELSE
         edftd3= 0.0
       ENDIF

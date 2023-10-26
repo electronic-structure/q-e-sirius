@@ -174,13 +174,17 @@ SUBROUTINE forces()
       CALL start_clock('force_dftd3')
       ALLOCATE( force_d3(3, nat) )
       force_d3(:,:) = 0.0_DP
-      latvecs(:,:) = at(:,:)*alat
-      tau(:,:) = tau(:,:)*alat
+      ! taupbc are atomic positions in alat units, centered around r=0
+      ALLOCATE ( taupbc(3,nat) )
+      taupbc(:,:) = tau(:,:)
+      CALL cryst_to_cart( nat, taupbc, bg, -1 ) 
+      taupbc(:,:) = taupbc(:,:) - NINT(taupbc(:,:))
+      CALL cryst_to_cart( nat, taupbc, at,  1 ) 
       atnum(:) = get_atomic_number(atm(ityp(:)))
-      CALL dftd3_pbc_gdisp( dftd3, tau, atnum, latvecs, &
-        force_d3, stress_dftd3 )
+      CALL dftd3_pbc_gdisp( dftd3, alat*taupbc, atnum, alat*at, &
+                            force_d3, stress_dftd3 )
       force_d3 = -2.d0*force_d3
-      tau(:,:) = tau(:,:)/alat
+      DEALLOCATE( taupbc)
       CALL stop_clock('force_dftd3')
     ENDIF
     !
