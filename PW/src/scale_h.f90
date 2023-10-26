@@ -30,6 +30,9 @@ SUBROUTINE scale_h
   USE mp,             ONLY : mp_max
   USE mp_bands,       ONLY : intra_bgrp_comm
   USE mod_sirius
+  USE vloc_mod,       ONLY : scale_tab_vloc
+  USE rhoc_mod,       ONLY : scale_tab_rhc
+  USE rhoat_mod,      ONLY : scale_tab_rhoat
   !
   IMPLICIT NONE
   !
@@ -88,7 +91,8 @@ SUBROUTINE scale_h
   ! scale the non-local pseudopotential tables
   !
   call scale_uspp_data( omega_old/omega )
-
+  CALL scale_tab_rhc( omega_old/omega )
+  CALL scale_tab_rhoat( omega_old/omega )
   !
   ! recalculate the local part of the pseudopotential
   !
@@ -98,6 +102,7 @@ SUBROUTINE scale_h
   ELSE
 #endif
   !
+  CALL scale_tab_vloc( omega_old/omega )
   CALL init_vloc( )
   !
 #if defined(__SIRIUS)
