@@ -16,6 +16,7 @@ SUBROUTINE hp_load_q()
   USE qpoint,       ONLY : nksq, ikks, ikqs
   USE control_lr,   ONLY : lgamma
   USE ldaU_hp,      ONLY : code
+  USE mod_lr_addons
   !
   IMPLICIT NONE
   INTEGER :: ik
@@ -66,6 +67,7 @@ SUBROUTINE hp_load_q()
   WRITE( stdout, '(/5x,"Total time spent up to now is:")')
   !
   CALL print_clock (code)
+  CALL generate_qpw()
   !
   RETURN
   !
