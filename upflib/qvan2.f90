@@ -70,6 +70,8 @@ SUBROUTINE qvan2( ngy, ih, jh, np, qmod, qg, ylmk0 )
   IF ( INT(qmod(ngy)/dq)+4 > size(qrad,1) ) CALL upf_error &
        ('qvan2', 'internal error: dimension of interpolation table', 1 )
   !
+  CALL start_clock( 'qvan2' )
+  !
   ! ... computes the indices which correspond to ih,jh
   !
   dqi = 1.0_DP / dq
@@ -170,6 +172,7 @@ SUBROUTINE qvan2( ngy, ih, jh, np, qmod, qg, ylmk0 )
   !
   ENDDO
   !
+  CALL stop_clock( 'qvan2' )
   !
   RETURN
   !
