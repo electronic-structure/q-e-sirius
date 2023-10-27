@@ -23,6 +23,7 @@ SUBROUTINE hp_prepare_q (iq, do_iq, setup_pw)
   USE qpoint,          ONLY : xq
   USE control_lr,      ONLY : lgamma
   USE ldaU_hp,         ONLY : recalc_sym, x_q, comp_iq
+  USE mod_lr_addons
   !
   IMPLICIT NONE
   !
@@ -68,6 +69,7 @@ SUBROUTINE hp_prepare_q (iq, do_iq, setup_pw)
   IF (lgamma .AND. recalc_sym) &
      WRITE( stdout, '(/,5X,"Do NSCF calculation at q=0 because the number of symmetries was reduced")')
   !
+  CALL generate_qpw()
   RETURN
   !
 END SUBROUTINE hp_prepare_q
