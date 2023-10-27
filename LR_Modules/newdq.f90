@@ -53,6 +53,7 @@ subroutine newdq (dvscf, npe)
   ! the spherical harmonics
 
   complex(DP), allocatable :: aux1 (:), aux2 (:,:), veff (:), qgm(:)
+  complex(DP) :: z1
   ! work space
 
   if (.not.okvan) return
@@ -74,14 +75,18 @@ subroutine newdq (dvscf, npe)
   if (.not.lgamma) then
      call setqmod (ngm, xq, g, qmod, qg)
      call ylmr2 (lmaxq * lmaxq, ngm, qg, qmod, ylmk0)
+!$omp parallel do default(shared)
      do ig = 1, ngm
         qmod (ig) = sqrt (qmod (ig) ) * tpiba
      enddo
+!$omp end parallel do
   else
      call ylmr2 (lmaxq * lmaxq, ngm, g, gg, ylmk0)
+!$omp parallel do default(shared)
      do ig = 1, ngm
         qmod (ig) = sqrt (gg (ig) ) * tpiba
      enddo
+!$omp end parallel do
   endif
   !
   !     and for each perturbation of this irreducible representation
@@ -107,16 +112,28 @@ subroutine newdq (dvscf, npe)
                  call qvan2 (ngm, ih, jh, nt, qmod, qgm, ylmk0)
                  do na = 1, nat
                     if (ityp (na) == nt) then
-                       do ig = 1, ngm
-                          aux1(ig) = qgm(ig) * eigts1(mill(1,ig),na) * &
-                                               eigts2(mill(2,ig),na) * &
-                                               eigts3(mill(3,ig),na) * &
-                                               eigqts(na)
-                       enddo
                        do is = 1, nspin_mag
-                          int3(ih,jh,na,is,ipert) = omega * &
-                                             dot_product(aux1(:),aux2(:,is))
-                       enddo
+                          z1 = (0.d0, 0.d0)
+!$omp parallel do default(shared) reduction(+:z1)
+                          do ig = 1, ngm
+                             z1 = z1 + qgm(ig) * eigts1(mill(1,ig),na) * &
+                                                 eigts2(mill(2,ig),na) * &
+                                                 eigts3(mill(3,ig),na) * &
+                                                 eigqts(na) * aux2(ig, is)
+                          enddo
+!$omp end parallel do
+                           int3(ih,jh,na,is,ipert) = z1 * omega
+                       enddo !is
+                       !do ig = 1, ngm
+                       !   aux1(ig) = qgm(ig) * eigts1(mill(1,ig),na) * &
+                       !                        eigts2(mill(2,ig),na) * &
+                       !                        eigts3(mill(3,ig),na) * &
+                       !                        eigqts(na)
+                       !enddo
+                       !do is = 1, nspin_mag
+                       !   int3(ih,jh,na,is,ipert) = omega * &
+                       !                      dot_product(aux1(:),aux2(:,is))
+                       !enddo
                     endif
                  enddo
               enddo
