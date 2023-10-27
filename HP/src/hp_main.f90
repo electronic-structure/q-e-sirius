@@ -26,6 +26,7 @@ PROGRAM hp_main
                                 determine_num_pert_only, tmp_dir_save,      &
                                 determine_q_mesh_only
   USE mod_sirius
+  USE mod_lr_addons
   !
   IMPLICIT NONE
   !
@@ -134,6 +135,7 @@ PROGRAM hp_main
         ! Setup a calculation for a specific q point
         !
         CALL hp_prepare_q(iq, do_iq, setup_pw)
+        CALL generate_qpw()
         !
         !  If this q is not done in this run, cycle
         !

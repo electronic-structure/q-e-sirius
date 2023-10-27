@@ -837,7 +837,7 @@ MODULE mod_sirius
     USE atom,                 ONLY : rgrid, msh
     USE fft_base,             ONLY : dfftp
     USE klist,                ONLY : nks, nkstot, degauss, ngauss
-    USE gvect,                ONLY : ngm_g, ecutrho
+    USE gvect,                ONLY : ngm_g, ecutrho, ngm
     USE gvecw,                ONLY : ecutwfc
     USE control_flags,        ONLY : gamma_only, diago_full_acc, mixing_beta, nmix, iverbosity
     USE mp_world,             ONLY : mpime
@@ -907,6 +907,7 @@ MODULE mod_sirius
       ALLOCATE(atom_type(iat)%chi( msh(iat), atom_type(iat)%num_chi) )
       ALLOCATE(atom_type(iat)%idx_chi( 2, atom_type(iat)%num_chi) )
       ALLOCATE(atom_type(iat)%occ( atom_type(iat)%num_chi) )
+      ALLOCATE(atom_type(iat)%qpw( ngm, nh(iat) * (1 + nh(iat)) / 2 ))
 
       iwf = 1
       j = 1
@@ -1100,16 +1101,16 @@ MODULE mod_sirius
         ! there is a bug in QE that is not fixed. 
         ! I do not set the hubbard properties right away because the Hubbard_U(iat) is not set 
         ! when the V notation is also used for onsite interaction
-        
+
         IF (is_hubbard(iat)) THEN
-        ! they use the second notation for onsite. I take care of this case later on
-        if (Hubbard_U(iat) .NE. 0.0) then
-           CALL sirius_set_atom_type_hubbard(sctx, TRIM(atom_type(iat)%label), &
-                & l=Hubbard_l(iat), n=Hubbard_n(iat), occ=Hubbard_occ(iat, 1), &
-                & U=Hubbard_U(iat) / 2.0, J=Hubbard_J(1,iat) / 2.0, &
-                & alpha=Hubbard_alpha(iat) / 2.0, beta=Hubbard_beta(iat) / 2.0, &
-                & J0=Hubbard_J0(iat) / 2.0)
-        ENDIF
+           ! they use the second notation for onsite. I take care of this case later on
+           IF (Hubbard_U(iat) .NE. 0.0) THEN
+              CALL sirius_set_atom_type_hubbard(sctx, TRIM(atom_type(iat)%label), &
+                   & l=Hubbard_l(iat), n=Hubbard_n(iat), occ=Hubbard_occ(iat, 1), &
+                   & U=Hubbard_U(iat) / 2.0, J=Hubbard_J(1,iat) / 2.0, &
+                   & alpha=Hubbard_alpha(iat) / 2.0, beta=Hubbard_beta(iat) / 2.0, &
+                   & J0=Hubbard_J0(iat) / 2.0)
+           ENDIF
         ENDIF
         ALLOCATE(dion(upf(iat)%nbeta, upf(iat)%nbeta))
         ! convert to hartree
@@ -1408,6 +1409,9 @@ MODULE mod_sirius
     IF (sirius_pwpp) THEN
       DO iat = 1, nsp
         CALL sirius_get_num_beta_projectors(sctx, TRIM(atom_type(iat)%label), atom_type(iat)%num_beta_projectors)
+        IF (atom_type(iat)%num_beta_projectors .NE. nh(iat)) THEN
+          STOP "different number of beta-projectors"
+        END IF
       ENDDO
     END IF
     !

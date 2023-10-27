@@ -31,6 +31,8 @@ subroutine newdq (dvscf, npe)
   USE lrus,                 ONLY : int3, int3_paw
   USE qpoint,               ONLY : xq, eigqts
   USE control_lr,           ONLY : lgamma
+  USE mod_lr_addons
+  USE mod_sirius
 
   implicit none
   !
@@ -44,7 +46,7 @@ subroutine newdq (dvscf, npe)
   !
   !   And the local variables
   !
-  integer :: na, ig, nt, ir, ipert, is, ih, jh
+  integer :: na, ig, nt, ir, ipert, is, ih, jh, idx
   ! countera
 
   real(DP), allocatable :: qmod (:), qg (:,:), ylmk0 (:,:)
@@ -107,16 +109,23 @@ subroutine newdq (dvscf, npe)
 
      do nt = 1, ntyp
         if (upf(nt)%tvanp ) then
+           idx = 1
            do ih = 1, nh (nt)
               do jh = ih, nh (nt)
-                 call qvan2 (ngm, ih, jh, nt, qmod, qgm, ylmk0)
+                 !call qvan2 (ngm, ih, jh, nt, qmod, qgm, ylmk0)
                  do na = 1, nat
                     if (ityp (na) == nt) then
                        do is = 1, nspin_mag
                           z1 = (0.d0, 0.d0)
 !$omp parallel do default(shared) reduction(+:z1)
+                          !do ig = 1, ngm
+                          !   z1 = z1 + qgm(ig) * eigts1(mill(1,ig),na) * &
+                          !                       eigts2(mill(2,ig),na) * &
+                          !                       eigts3(mill(3,ig),na) * &
+                          !                       eigqts(na) * aux2(ig, is)
+                          !enddo
                           do ig = 1, ngm
-                             z1 = z1 + qgm(ig) * eigts1(mill(1,ig),na) * &
+                             z1 = z1 + atom_type(nt)%qpw(ig, idx) * eigts1(mill(1,ig),na) * &
                                                  eigts2(mill(2,ig),na) * &
                                                  eigts3(mill(3,ig),na) * &
                                                  eigqts(na) * aux2(ig, is)
@@ -136,6 +145,7 @@ subroutine newdq (dvscf, npe)
                        !enddo
                     endif
                  enddo
+                 idx = idx + 1
               enddo
            enddo
            do na = 1, nat
