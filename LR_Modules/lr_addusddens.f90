@@ -28,6 +28,8 @@ SUBROUTINE lr_addusddens (drhoscf, dbecsum)
   USE uspp_param,           ONLY : upf, lmaxq, nh, nhm
   USE qpoint,               ONLY : xq, eigqts
   USE noncollin_module,     ONLY : nspin_mag
+  USE mod_lr_addons
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -90,7 +92,7 @@ SUBROUTINE lr_addusddens (drhoscf, dbecsum)
               ! Calculate the Fourier transform of the Q functions,
               ! and put the result in qgm.
               !
-              CALL qvan2 (ngm, ih, jh, nt, qmod, qgm, ylmk0)
+              !CALL qvan2 (ngm, ih, jh, nt, qmod, qgm, ylmk0)
               !
               ijh = ijh + 1
               DO na = 1, nat
@@ -109,7 +111,8 @@ SUBROUTINE lr_addusddens (drhoscf, dbecsum)
                                eigts3(mill(3,ig),na) * &
                                eigqts(na) 
                           !
-                          aux(ig,is) = aux(ig,is) + 2.0d0 * qgm(ig) * z1 * dbecsum(ijh,na,is)
+                          !aux(ig,is) = aux(ig,is) + 2.0d0 * qgm(ig) * z1 * dbecsum(ijh,na,is)
+                          aux(ig,is) = aux(ig,is) + 2.0d0 * atom_type(nt)%qpw(ig, ijh) * z1 * dbecsum(ijh,na,is)
                           !
                        ENDDO
 !$omp end parallel do
