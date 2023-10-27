@@ -20,6 +20,7 @@ CONTAINS
     ALLOCATE (qmod (ngm))
 
     IF (.NOT.lgamma) THEN
+      ALLOCATE (qg (3,  ngm))
       CALL setqmod (ngm, xq, g, qmod, qg)
       CALL ylmr2 (lmaxq * lmaxq, ngm, qg, qmod, ylmk0)
 !$omp parallel do default(shared)
@@ -27,6 +28,7 @@ CONTAINS
         qmod (ig) = SQRT (qmod (ig) ) * tpiba
       ENDDO
 !$omp end parallel do
+      DEALLOCATE(qg)
     ELSE
       CALL ylmr2 (lmaxq * lmaxq, ngm, g, gg, ylmk0)
 !$omp parallel do default(shared)
