@@ -66,7 +66,7 @@ test LiCoO2:
     - /apps/bin/pw.x -i LiCoO2.scf.in -use_qe_scf
     - /apps/bin/hp.x -i LiCoO2.hp.in
     - cat LiCoO2.Hubbard_parameters.dat
-    - python ../hp_diff.py hp.ref.yml hp.yml
+    - python3 ../hp_diff.py hp.ref.yml hp.yml
 
 test LiCoO2 parallel:
   extends: .run_tests
@@ -82,7 +82,7 @@ test LiCoO2 parallel:
     - /apps/bin/pw.x -i LiCoO2.scf.in -use_qe_scf -npool 2
     - /apps/bin/hp.x -i LiCoO2.hp.in -npool 2
     - cat LiCoO2.Hubbard_parameters.dat
-    - python ../hp_diff.py hp.ref.yml hp.yml
+    - python3 ../hp_diff.py hp.ref.yml hp.yml
 
 test Si_koopmans:
   extends: .run_tests
