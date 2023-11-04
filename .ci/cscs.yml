@@ -25,16 +25,6 @@ build cuda image:
     PERSIST_IMAGE_NAME: $CSCS_REGISTRY_PATH/q-e-sirius/q-e-sirius-ci:$CI_COMMIT_SHA
     DOCKER_BUILD_ARGS: '["BASE_IMAGE=${BASE_IMAGE}"]'
 
-#build image:
-#  extends: .container-builder
-#  stage: build
-#  timeout: 2h
-#  variables:
-#    DOCKERFILE: .ci/build.Dockerfile
-#    PERSIST_IMAGE_NAME: $CSCS_REGISTRY_PATH/q-e-sirius/q-e-sirius-ci:$CI_COMMIT_SHA
-#    #CSCS_REBUILD_POLICY: if-not-exists
-#    CSCS_REBUILD_POLICY: always
-
 .run_tests:
   extends: .container-runner-daint-gpu
   needs: ["build cuda image"]
@@ -76,6 +66,23 @@ test LiCoO2:
     - /apps/bin/pw.x -i LiCoO2.scf.in -use_qe_scf
     - /apps/bin/hp.x -i LiCoO2.hp.in
     - cat LiCoO2.Hubbard_parameters.dat
+    - python ../hp_diff.py hp.ref.yml hp.yml
+
+test LiCoO2i parallel:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CONSTRAINT: gpu
+    SLURM_CPUS_PER_TASK: 3
+    SLURM_NTASKS: 4
+    SLURM_JOB_NUM_NODES: 1
+  script:
+    - cd /qe-src/ci-tests/LiCoO2
+    - /apps/bin/pw.x -i LiCoO2.scf.in -use_qe_scf -npool 2
+    - /apps/bin/hp.x -i LiCoO2.hp.in -npool 2
+    - cat LiCoO2.Hubbard_parameters.dat
+    - python ../hp_diff.py hp.ref.yml hp.yml
 
 test Si_koopmans:
   extends: .run_tests
