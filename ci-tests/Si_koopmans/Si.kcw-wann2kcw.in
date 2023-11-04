@@ -1,0 +1,20 @@
+W2K Silicon
+&control
+  prefix='Si'
+  outdir='./out/'
+  kcw_iverbosity = 2
+  kcw_at_ks=.false.
+  read_unitary_matrix = .true.
+  calculation = 'wann2kcw'
+  mp1 = 2
+  mp2 = 2
+  mp3 = 2
+/
+&wannier
+  seedname = 'Si'
+  check_ks = .true.
+  num_wann_occ = 4
+  num_wann_emp = 4
+  have_empty = .true.
+  has_disentangle = .true.
+/
