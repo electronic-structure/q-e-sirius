@@ -68,7 +68,7 @@ test LiCoO2:
     - cat LiCoO2.Hubbard_parameters.dat
     - python ../hp_diff.py hp.ref.yml hp.yml
 
-test LiCoO2i parallel:
+test LiCoO2 parallel:
   extends: .run_tests
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
