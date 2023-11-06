@@ -78,8 +78,7 @@ test LiCoO2 parallel:
     SLURM_NTASKS: 4
     SLURM_JOB_NUM_NODES: 4
   script:
-    - cd /qe-src/ci-tests/LiCoO2
-    - ./run_parallel.x
+    - /qe-src/ci-tests/LiCoO2/run_parallel.x
     #- cd /qe-src/ci-tests/LiCoO2
     #- /apps/bin/pw.x -i LiCoO2.scf.in -use_qe_scf -npool 2
     #- /apps/bin/hp.x -i LiCoO2.hp.in -npool 2
