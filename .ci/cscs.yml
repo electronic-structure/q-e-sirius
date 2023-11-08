@@ -79,11 +79,25 @@ test LiCoO2 parallel:
     SLURM_JOB_NUM_NODES: 4
   script:
     - /qe-src/ci-tests/LiCoO2/run_parallel.x
+    - cat $PWD/LiCoO2/LiCoO2.Hubbard_parameters.dat
+    - python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/LiCoO2/hp.ref.yml $PWD/LiCoO2/hp.yml
+
+test CrI3 parallel:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CONSTRAINT: gpu
+    SLURM_CPUS_PER_TASK: 12
+    SLURM_NTASKS: 4
+    SLURM_JOB_NUM_NODES: 4
+  script:
+    - /qe-src/ci-tests/CrI3/run_parallel.x
     #- cd /qe-src/ci-tests/LiCoO2
     #- /apps/bin/pw.x -i LiCoO2.scf.in -use_qe_scf -npool 2
     #- /apps/bin/hp.x -i LiCoO2.hp.in -npool 2
-    - cat $PWD/LiCoO2/LiCoO2.Hubbard_parameters.dat
-    - python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/LiCoO2/hp.ref.yml $PWD/LiCoO2/hp.yml
+    - cat $PWD/CrI3/CrI3.Hubbard_parameters.dat
+    - python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/CrI3/hp.ref.yml $PWD/CrI3/hp.yml
 
 test Si_koopmans:
   extends: .run_tests
