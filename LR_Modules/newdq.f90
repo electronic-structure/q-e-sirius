@@ -31,6 +31,7 @@ subroutine newdq (dvscf, npe)
   USE lrus,                 ONLY : int3, int3_paw
   USE qpoint,               ONLY : xq, eigqts
   USE control_lr,           ONLY : lgamma
+  USE mod_sirius
 
   implicit none
   !
@@ -44,7 +45,7 @@ subroutine newdq (dvscf, npe)
   !
   !   And the local variables
   !
-  integer :: na, ig, nt, ir, ipert, is, ih, jh
+  integer :: na, ig, nt, ir, ipert, is, ih, jh, ijh
   ! countera
 
   real(DP), allocatable :: qmod (:), qg (:,:), ylmk0 (:,:)
@@ -54,6 +55,7 @@ subroutine newdq (dvscf, npe)
 
   complex(DP), allocatable :: aux1 (:), aux2 (:,:), veff (:), qgm(:)
   ! work space
+  real(8) :: diff
 
   if (.not.okvan) return
   !
@@ -83,6 +85,7 @@ subroutine newdq (dvscf, npe)
         qmod (ig) = sqrt (gg (ig) ) * tpiba
      enddo
   endif
+  write(*,*)'newdq: q-point:', xq
   !
   !     and for each perturbation of this irreducible representation
   !     integrate the change of the self consistent potential and
@@ -102,9 +105,16 @@ subroutine newdq (dvscf, npe)
 
      do nt = 1, ntyp
         if (upf(nt)%tvanp ) then
+          ijh = 0
            do ih = 1, nh (nt)
               do jh = ih, nh (nt)
+                 ijh = ijh + 1
                  call qvan2 (ngm, ih, jh, nt, qmod, qgm, ylmk0)
+                 diff=0
+                 do ig = 1, ngm
+                   diff = diff + abs(atom_type(nt)%qpw(ig, ijh) -  qgm(ig))
+                 enddo
+                 write(*,*)'diff=',diff
                  do na = 1, nat
                     if (ityp (na) == nt) then
                        do ig = 1, ngm

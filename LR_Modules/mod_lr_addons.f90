@@ -13,13 +13,14 @@ CONTAINS
     USE cell_base,  ONLY : tpiba
     !
     IMPLICIT NONE
-    INTEGER :: iat, ih, jh, idx, ig
+    INTEGER :: iat, ih, jh, ijh, ig
     REAL(DP), ALLOCATABLE :: qmod (:), qg (:,:), ylmk0 (:,:)
 
     ALLOCATE (ylmk0(ngm , lmaxq * lmaxq))
     ALLOCATE (qmod (ngm))
 
     IF (.NOT.lgamma) THEN
+      write(*,*)'generate_qpw: computing for q=',xq
       ALLOCATE (qg (3,  ngm))
       CALL setqmod (ngm, xq, g, qmod, qg)
       CALL ylmr2 (lmaxq * lmaxq, ngm, qg, qmod, ylmk0)
@@ -39,11 +40,13 @@ CONTAINS
     ENDIF
 
     DO iat = 1, nsp
-      idx = 1
+      IF (ALLOCATED(atom_type(iat)%qpw)) DEALLOCATE(atom_type(iat)%qpw)
+      ALLOCATE(atom_type(iat)%qpw( ngm, nh(iat) * (1 + nh(iat)) / 2 ))
+      ijh = 0
       DO ih = 1, nh (iat)
         DO jh = ih, nh (iat)
-          CALL qvan2 (ngm, ih, jh, iat, qmod, atom_type(iat)%qpw(:, idx), ylmk0)
-          idx = idx + 1
+          ijh = ijh + 1
+          CALL qvan2 (ngm, ih, jh, iat, qmod, atom_type(iat)%qpw(:, ijh), ylmk0)
         ENDDO
       ENDDO
     ENDDO

@@ -907,7 +907,6 @@ MODULE mod_sirius
       ALLOCATE(atom_type(iat)%chi( msh(iat), atom_type(iat)%num_chi) )
       ALLOCATE(atom_type(iat)%idx_chi( 2, atom_type(iat)%num_chi) )
       ALLOCATE(atom_type(iat)%occ( atom_type(iat)%num_chi) )
-      ALLOCATE(atom_type(iat)%qpw( ngm, nh(iat) * (1 + nh(iat)) / 2 ))
 
       iwf = 1
       j = 1
