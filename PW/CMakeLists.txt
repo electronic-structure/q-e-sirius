@@ -134,6 +134,7 @@ set(src_pw
    src/move_ions.f90 
    src/multable.f90 
    src/n_plane_waves.f90 
+   src/ns_constraint.f90
    src/new_ns.f90 
    src/new_nsb.f90 
    src/new_nsg.f90 

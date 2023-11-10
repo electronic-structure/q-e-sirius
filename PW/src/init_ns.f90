@@ -24,6 +24,7 @@ SUBROUTINE init_ns
    USE scf,          ONLY : rho
    USE uspp_param,   ONLY : upf
    USE io_global,    ONLY : stdout
+   USE ns_constraint, ONLY : Hubbard_constraining, Hubbard_occupations, Hubbard_constraint_type
    !
    IMPLICIT NONE
    !
@@ -40,42 +41,52 @@ SUBROUTINE init_ns
       IF (is_hubbard(nt)) THEN
          !
          ldim = 2*Hubbard_l(nt)+1
-         nm = .TRUE.
-         !
-         totoc = hubbard_occ(nt,1)
-         !
-         IF (nspin==2) THEN
-            IF (starting_magnetization(nt) > 0.d0) THEN  
-               nm = .FALSE.
-               majs = 1  
-               mins = 2  
-            ELSEIF (starting_magnetization(nt) < 0.d0) THEN  
-               nm = .FALSE.
-               majs = 2  
-               mins = 1  
+         if (ANY(Hubbard_constraining) .AND. Hubbard_constraint_type /= "occupations") then
+            DO is = 1,nspin
+               DO m1 = 1, ldim
+                  do majs = 1,ldim
+                     rho%ns(m1, majs, is, na) = Hubbard_occupations(m1, majs, is, na)
+                  enddo
+               enddo
+            enddo
+         else
+            nm = .TRUE.
+            !
+            totoc = hubbard_occ(nt,1)
+            !
+            IF (nspin==2) THEN
+               IF (starting_magnetization(nt) > 0.d0) THEN  
+                  nm = .FALSE.
+                  majs = 1  
+                  mins = 2  
+               ELSEIF (starting_magnetization(nt) < 0.d0) THEN  
+                  nm = .FALSE.
+                  majs = 2  
+                  mins = 1  
+               ENDIF  
+            ENDIF
+            !
+            IF (.NOT.nm) THEN  
+               ! Atom is magnetic
+               IF (totoc>ldim) THEN  
+                  DO m1 = 1, ldim  
+                     rho%ns(m1,m1,majs,na) = 1.d0  
+                     rho%ns(m1,m1,mins,na) = (totoc - ldim) / ldim
+                  ENDDO  
+               ELSE  
+                  DO m1 = 1, ldim  
+                     rho%ns(m1,m1,majs,na) = totoc / ldim
+                  ENDDO  
+               ENDIF  
+            ELSE  
+               ! Atom is non-magnetic
+               DO is = 1,nspin
+                  DO m1 = 1, ldim  
+                     rho%ns(m1,m1,is,na) = totoc /  2.d0 / ldim
+                  ENDDO  
+               ENDDO  
             ENDIF  
          ENDIF
-         !
-         IF (.NOT.nm) THEN  
-            ! Atom is magnetic
-            IF (totoc>ldim) THEN  
-               DO m1 = 1, ldim  
-                  rho%ns(m1,m1,majs,na) = 1.d0  
-                  rho%ns(m1,m1,mins,na) = (totoc - ldim) / ldim
-               ENDDO  
-            ELSE  
-               DO m1 = 1, ldim  
-                  rho%ns(m1,m1,majs,na) = totoc / ldim
-               ENDDO  
-            ENDIF  
-         ELSE  
-            ! Atom is non-magnetic
-            DO is = 1,nspin
-               DO m1 = 1, ldim  
-                  rho%ns(m1,m1,is,na) = totoc /  2.d0 / ldim
-               ENDDO  
-            ENDDO  
-         ENDIF  
       ENDIF  
       !
       ! Background part

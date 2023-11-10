@@ -24,6 +24,7 @@ SUBROUTINE vhpsi( ldap, np, mps, psip, hpsi )
   USE ions_base,     ONLY : nat, ntyp => nsp, ityp
   USE control_flags, ONLY : gamma_only
   USE mp,            ONLY : mp_sum
+  USE ns_constraint, ONLY : Hubbard_constraining
   !
   IMPLICIT NONE
   !
@@ -54,7 +55,7 @@ SUBROUTINE vhpsi( ldap, np, mps, psip, hpsi )
   ! proj = <wfcU|psip>
   CALL calbec (np, wfcU, psip, proj)
   ! 
-  IF ( lda_plus_u_kind.EQ.0 .OR. lda_plus_u_kind.EQ.1 ) THEN
+  IF ( lda_plus_u_kind.EQ.0 .OR. lda_plus_u_kind.EQ.1 .OR. ANY(Hubbard_constraining)) THEN
      CALL vhpsi_U ()  ! DFT+U
   ELSEIF ( lda_plus_u_kind.EQ.2 ) THEN
      CALL vhpsi_UV () ! DFT+U+V

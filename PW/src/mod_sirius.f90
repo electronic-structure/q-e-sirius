@@ -850,15 +850,19 @@ MODULE mod_sirius
     USE lsda_mod,             ONLY : lsda, nspin, starting_magnetization
     USE symm_base,            ONLY : nosym, nsym
     USE ldaU,                 ONLY : lda_plus_U, Hubbard_J, Hubbard_U, Hubbard_alpha, &
-                                   & Hubbard_beta, is_Hubbard, lda_plus_u_kind, &
-                                   & Hubbard_J0, Hubbard_projectors, Hubbard_l, Hubbard_n, Hubbard_occ, &
-                                   & ldim_u, neighood, at_sc, Hubbard_V
+      Hubbard_beta, is_Hubbard, lda_plus_u_kind, &
+      Hubbard_J0, Hubbard_projectors, Hubbard_l, Hubbard_n, Hubbard_occ, &
+      ldim_u, neighood, at_sc, Hubbard_V, Hubbard_lmax
     USE esm,                  ONLY : do_comp_esm
     USE Coul_cut_2D,          ONLY : do_cutoff_2D
     USE constants,            ONLY : RYTOEV
     USE kinds,                ONLY : DP
     USE scf,                  ONLY : rho
     USE paw_variables,        ONLY : okpaw
+    USE ns_constraint,        ONLY : Hubbard_constraints, Hubbard_occupations, Hubbard_constraining, &
+      Hubbard_conv_thr, Hubbard_mixing_beta, &
+      Hubbard_occupations, Hubbard_strength, &
+      Hubbard_maxstep, Hubbard_constraint_type, setup_constraints
     !
     IMPLICIT NONE
     !
@@ -871,8 +875,10 @@ MODULE mod_sirius
     INTEGER, EXTERNAL :: global_kpoint_index
     REAL(8), PARAMETER :: spglib_tol=1e-4
     REAL(DP), ALLOCATABLE :: r_loc(:)
+    REAL(DP), ALLOCATABLE :: ns_s(:,:,:,:)
     REAL(DP), ALLOCATABLE :: m_loc(:,:), initial_magn(:,:)
     INTEGER, ALLOCATABLE :: nat_of_type(:)
+    INTEGER, ALLOCATABLE :: lm_order(:)
 
     CALL sirius_start_timer("setup_sirius")
 
@@ -958,7 +964,7 @@ MODULE mod_sirius
     ! set initial parameters
     CALL sirius_import_parameters(sctx, conf_str)
     ! set default verbosity
-    !CALL sirius_set_parameters(sctx, verbosity=MIN(1, iverbosity))
+    CALL sirius_set_parameters(sctx, verbosity=MIN(1, iverbosity))
     ! import config file
     CALL sirius_import_parameters(sctx, TRIM(ADJUSTL(sirius_cfg)))
     !
@@ -986,6 +992,7 @@ MODULE mod_sirius
     ! set |G| cutoff of the dense FFT grid: convert from G^2/2 Rydbergs to |G| in [a.u.^-1]
     ! set |G+k| cutoff for the wave-functions: onvert from |G+k|^2/2 Rydbergs to |G+k| in [a.u.^-1]
     ! use symmetrization either on SIRIUS or QE side
+
     CALL sirius_set_parameters(sctx, num_bands=nbnd, num_mag_dims=nmagd, gamma_point=gamma_only,&
       &use_symmetry=(use_sirius_scf.OR.use_sirius_nlcg).AND..NOT.nosym, so_correction=lspinorb,&
       &pw_cutoff=SQRT(ecutrho), gk_cutoff=SQRT(ecutwfc),&
@@ -1111,6 +1118,7 @@ MODULE mod_sirius
                    & J0=Hubbard_J0(iat) / 2.0)
            ENDIF
         ENDIF
+
         ALLOCATE(dion(upf(iat)%nbeta, upf(iat)%nbeta))
         ! convert to hartree
         DO i = 1, upf(iat)%nbeta
@@ -1193,6 +1201,41 @@ MODULE mod_sirius
         ENDIF
       ENDDO ! iat
 
+      ALLOCATE(ns_s(2*Hubbard_lmax+1, 2*Hubbard_lmax+1, 2, nat), source=0.0_dp)
+      call setup_constraints(ns_s)
+      DEALLOCATE(ns_s)
+
+      if (ANY(Hubbard_constraining(:) .EQV. .TRUE.)) then
+        !!! we go up to lmax = 11
+        ALLOCATE(lm_order(23));
+
+        CALL sirius_set_parameters(sctx, hubbard_constrained_calculation = .TRUE.)
+        CALL sirius_set_hubbard_contrained_parameters(sctx, Hubbard_conv_thr=Hubbard_conv_thr, &
+        & Hubbard_mixing_beta=Hubbard_mixing_beta, Hubbard_strength=Hubbard_strength, &
+        & Hubbard_maxstep = Hubbard_maxstep, Hubbard_constraint_type = TRIM(ADJUSTL(Hubbard_constraint_type)))
+        DO ia = 1, nat
+          IF (Hubbard_constraining(ia) .EQV. .TRUE.) THEN
+              ! we do not which principal quantum number the constraints are
+              ! applied, so SIRIUS will consider the largest n for each atom....
+            DO i = -Hubbard_l(ia), Hubbard_l(ia)
+              if (i .eq. 0) then
+                lm_order(1) = 0;
+                endif
+                if (i < 0) then
+                  lm_order(2 * abs(i)) = i;
+                endif
+                if (i > 0) then
+                  lm_order(2 * i + 1) = i;
+                endif
+              ENDDO
+              iat = ityp(ia)
+            CALL sirius_add_hubbard_atom_constraint(sctx, ia, Hubbard_n(iat), &
+              & Hubbard_l(iat), Hubbard_lmax, Hubbard_occupations(:, :, :, ia), lm_order)
+          ENDIF
+        ENDDO
+        DEALLOCATE(lm_order)
+      endif
+
       IF (lda_plus_U) THEN
         DO ia = 1, nat
           !
@@ -1222,11 +1265,9 @@ MODULE mod_sirius
                           & alpha=0.0D0, beta=0.0D0, &
                           & J0=0.0D0)
                 ELSE
-                  if (ia /= ia2) then
-                        ! standard-standard term in QE language
-                        CALL sirius_add_hubbard_atom_pair(sctx, atom_pair(1:2), at_sc(ia2)%n(1:3), &
-                                                          n_pair(1:2), l_pair(1:2), Hubbard_V(ia,ia2,1) / 2.0)
-                  END IF
+                  ! standard-standard term in QE language
+                  CALL sirius_add_hubbard_atom_pair(sctx, atom_pair(1:2), at_sc(ia2)%n(1:3), &
+                                                    n_pair(1:2), l_pair(1:2), Hubbard_V(ia,ia2,1) / 2.0)
                 ENDIF
                 !
               END DO
@@ -1234,98 +1275,6 @@ MODULE mod_sirius
             END IF
             !
           END IF
-          !=  IF (ldim_u(nt1).GT.0) THEN
-          !=    DO viz = 1, neighood(iat)%num_neigh
-          !=      atom_pair(1) = iat - 1
-          !=      ia2 = neighood(iat)%neigh(viz)
-          !=      atom_pair(2) = at_sc(ia2)%at - 1
-          !=      nt2 = ityp(atom_pair(2) + 1)
-          !=      !     sirius does not make any distinction
-          !=      ! between orbitals contributing to the U
-          !=      ! correction and orbitals with U = 0.
-          !=      ! Add them to the list of interacting
-          !=      ! orbitals if (V \neq 0) but (U = 0)
-          !=      ! terms contributing to the standard-standard term in QE language
-          !=      n_pair(1) = set_hubbard_n(upf(nt1)%psd)
-          !=      n_pair(2) = set_hubbard_n(upf(nt2)%psd)
-          !=      l_pair(1) = Hubbard_l(nt1)
-          !=      l_pair(2) = Hubbard_l(nt2)
-          !=      V_ = Hubbard_V(iat,ia2,1) * RYTOEV
-          !=      if (iat /= ia2) then
-          !=        call sirius_add_hubbard_atom_pair(sctx, &
-          !=                atom_pair, &
-          !=                at_sc(ia2)%n, &
-          !=                n_pair, &
-          !=                l_pair, &
-          !=                V_)
-          !=        ! terms contributing to the standard-background term in QE language
-          !=        if (Abs(Hubbard_V(iat,ia2,2)) > 1e-8) then
-          !=          n2 = set_hubbard_n(upf(nt2)%psd)
-          !=          DO iwf = 1, upf(nt2)%nwfc
-          !=            if (n2 /= upf(nt2)%nchi(iwf)) then
-          !=              n_pair(2) = upf(nt2)%nchi(iwf)
-          !=              l_pair(2) = upf(nt2)%lchi(iwf)
-          !=              V_ = Hubbard_V(iat,ia2,2)  * RYTOEV
-          !=              call sirius_add_hubbard_atom_pair(sctx, &
-          !=                      atom_pair, &
-          !=                      at_sc(ia2)%n, &
-          !=                      n_pair, &
-          !=                      l_pair, &
-          !=                      V_)
-          !=            end if
-          !=          end DO
-          !=         end if
-          !=         ! terms contributing to the background-background  term in QE language
-          !=         if (Hubbard_V(iat,ia2,3) > 1e-8) then
-          !=           n1 = set_hubbard_n(upf(nt1)%psd)
-          !=           n2 = set_hubbard_n(upf(nt2)%psd)
-          !=           DO iwf1 = 1, upf(nt1)%nwfc
-          !=             DO iwf2 = 1, upf(nt2)%nwfc
-          !=               if ((n1 /= upf(nt1)%nchi(iwf)) .AND. (n2 /= upf(nt2)%nchi(iwf))) then
-          !=                 n_pair(1) = upf(nt1)%nchi(iwf)
-          !=                 n_pair(2) = upf(nt2)%nchi(iwf)
-          !=                 l_pair(1) = upf(nt1)%lchi(iwf)
-          !=                 l_pair(2) = upf(nt2)%lchi(iwf)
-          !=                 V_ = Hubbard_V(iat, ia2, 3)  * RYTOEV
-          !=                 call sirius_add_hubbard_atom_pair(sctx, &
-          !=                         atom_pair, &
-          !=                         at_sc(ia2)%n, &
-          !=                         n_pair, &
-          !=                         l_pair, &
-          !=                         V_)
-          !=               end if
-          !=             end DO
-          !=           end do
-          !=         END if
-          !=       else
-          !=         CALL sirius_set_atom_type_hubbard(sctx, &
-          !=                 & TRIM(atom_type(nt1)%label), &
-          !=                 & Hubbard_l(nt1), &
-          !=                 & set_hubbard_n(upf(nt1)%psd), &
-          !=                 & hubbard_occ ( upf(nt1)%psd ), &
-          !=                 & Hubbard_V(iat,ia2,1) * RYTOEV, &
-          !=                 & 0.0d0, &
-          !=                 & 0.0d0, &
-          !=                 & 0.0d0, &
-          !=                 & 0.0d0)
-          !=       end if
-          !=     END DO
-          !=   end if
-          != else
-          !=   !IF (is_hubbard(iat)) THEN
-          !=   !  nt1 = ityp(iat)
-          !=   !  CALL sirius_set_atom_type_hubbard(sctx, &
-          !=   !          & TRIM(atom_type(nt1)%label), &
-          !=   !          & Hubbard_l(nt1), &
-          !=   !          & set_hubbard_n(upf(nt1)%psd), &
-          !=   !             & hubbard_occ ( upf(nt1)%psd ), &
-          !=   !          & Hubbard_U(nt1) * RYTOEV, &
-          !=   !          & Hubbard_J(1,nt1) * RYTOEV, &
-          !=   !          & Hubbard_alpha(nt1) * RYTOEV, &
-          !=   !          & Hubbard_beta(nt1) * RYTOEV, &
-          !=   !          & Hubbard_J0(nt1) * RYTOEV)
-          !=   !ENDIF
-          != END IF
         END DO ! ia
       END IF
     ELSE

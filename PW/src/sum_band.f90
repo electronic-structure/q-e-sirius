@@ -56,6 +56,7 @@ SUBROUTINE sum_band()
   USE oscdft_base,      ONLY : oscdft_ctx
   USE oscdft_functions, ONLY : oscdft_sum_band
 #endif
+  USE ns_constraint, ONLY: Hubbard_constraining
   !
   IMPLICIT NONE
   !
@@ -118,7 +119,7 @@ SUBROUTINE sum_band()
   ! ... Needed for DFT+U(+V): compute occupations of Hubbard states
   !
   IF (lda_plus_u) THEN
-    IF (lda_plus_u_kind==0) THEN
+    IF (lda_plus_u_kind==0 .OR. ANY(Hubbard_constraining)) THEN
        !
        CALL new_ns( rho%ns )
        !

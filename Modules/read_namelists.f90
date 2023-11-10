@@ -337,6 +337,13 @@ MODULE read_namelists_module
        ! ... Extffield
        !
        nextffield = 0
+              
+       Hubbard_occupations = -1.0_DP
+       Hubbard_strength = 1.0_DP
+       Hubbard_conv_thr = 1.0e-2_DP
+       Hubbard_mixing_beta = 1.0e-2_DP
+       Hubbard_maxstep = 100000
+       Hubbard_constraint_type = 'energy'
        !
        RETURN
        !
@@ -1138,6 +1145,14 @@ MODULE read_namelists_module
        ! ... Extffield information
        !
        CALL mp_bcast( nextffield,         ionode_id, intra_image_comm )
+       
+       ! Hubbard constraining
+       CALL mp_bcast( Hubbard_occupations,     ionode_id, intra_image_comm )
+       CALL mp_bcast( Hubbard_constraint_type,     ionode_id, intra_image_comm )
+       CALL mp_bcast( Hubbard_conv_thr,     ionode_id, intra_image_comm )
+       CALL mp_bcast( Hubbard_mixing_beta,     ionode_id, intra_image_comm )
+       CALL mp_bcast( Hubbard_strength,     ionode_id, intra_image_comm )
+       CALL mp_bcast( Hubbard_maxstep,     ionode_id, intra_image_comm )
 
        RETURN
        !

@@ -140,7 +140,8 @@ SUBROUTINE ns_adj
    ENDIF
    !
    ! Reset starting_ns so that this step is not repeated
-   starting_ns = -1.0_dp
+   ! LP: this never happens anyway and I'm using starting_ns in hubbard constraining
+   ! starting_ns = -1.0_dp
    !
    RETURN
    !

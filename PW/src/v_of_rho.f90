@@ -29,6 +29,7 @@ SUBROUTINE v_of_rho( rho, rho_core, rhog_core, &
   USE tsvdw_module,     ONLY : tsvdw_calculate, UtsvdW
   USE libmbd_interface, ONLY : mbd_interface
   USE sic_mod,          ONLY : add_vsic
+  use ns_constraint, ONLY: Hubbard_constraining
   !
   IMPLICIT NONE
   !
@@ -116,6 +117,13 @@ SUBROUTINE v_of_rho( rho, rho_core, rhog_core, &
         !
      ENDIF
      !
+  ENDIF
+  
+  IF (ANY(Hubbard_constraining)) THEN
+     if (lda_plus_u_kind /= 0) then
+        v%ns = 0
+     endif
+     CALL v_hubbard_constraining(rho%ns, v%ns, eth)
   ENDIF
   !
   ! ... add an electric field
@@ -1584,3 +1592,60 @@ SUBROUTINE gradv_h_of_rho_r( rho, gradv )
   RETURN
   !
 END SUBROUTINE gradv_h_of_rho_r
+
+SUBROUTINE v_hubbard_constraining(ns, v_hub, eth)
+   !
+   ! Computes the contribution to the potential from the Lagrange multipliers used
+   ! to constrain the occupation matrix to the target.
+   USE kinds,     ONLY: DP
+   USE ions_base, ONLY: nat, ityp
+   USE ldaU,      ONLY: Hubbard_l, is_hubbard, Hubbard_lmax
+   USE ns_constraint, ONLY : Hubbard_constraint_type, Hubbard_strength, &
+                                    Hubbard_constraints, Hubbard_occupations, Hubbard_constraining
+   USE lsda_mod,  ONLY: nspin
+   USE io_global, ONLY: stdout
+   USE control_flags, ONLY: iverbosity
+   IMPLICIT NONE
+
+   REAL(DP), INTENT(IN)    :: ns(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat)
+   REAL(DP), INTENT(INOUT) :: v_hub(2 * Hubbard_lmax + 1, 2 * Hubbard_lmax + 1, nspin, nat)
+   REAL(DP), INTENT(INOUT) :: eth
+
+   REAL(DP) :: ec
+   INTEGER :: is, na, nt, ldim, m1, m2
+
+   ec = 0
+   do na = 1, nat
+      if (Hubbard_constraining(na)) then
+         nt   = ityp(na)
+         ldim = 2 * Hubbard_l(nt) + 1
+         do is = 1, nspin
+         if (Hubbard_constraint_type == "occupations") then
+            	do m1 = 1, ldim
+                  	do m2 = 1, ldim
+                     	if (Hubbard_occupations(m1, m2, is, na) /= -1.0_DP) then
+                        	v_hub(m1, m2, is, na) = v_hub(m1, m2, is, na) + &
+                           Hubbard_strength * Hubbard_occupations(m1, m2, is, na)
+                     	endif
+                  	enddo
+            	enddo
+            else
+            	v_hub(1:ldim, 1:ldim, is, na) = v_hub(1:ldim, 1:ldim, is, na) + &
+               Hubbard_strength * Hubbard_constraints(1:ldim, 1:ldim, is, na)
+            	ec = ec + Hubbard_strength * sum(Hubbard_constraints(1:ldim, 1:ldim, is ,na) * &
+            	     (ns(1:ldim, 1:ldim, is, na) - Hubbard_occupations(1:ldim, 1:ldim, is, na)))
+            	
+            endif
+         enddo
+      endif
+   enddo
+   if (nspin == 1) then
+      	ec = 2.d0 * ec
+   endif
+   eth = eth + ec
+   if (iverbosity > 0 .AND. ec /= 0) then
+      write(stdout, '(/5x,"CONSTRAINTS ENERGY = ", f9.4, 1x," (Ry)")') ec
+   endif
+   RETURN	
+
+END SUBROUTINE v_hubbard_constraining

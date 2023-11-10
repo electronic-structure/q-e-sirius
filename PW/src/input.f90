@@ -123,6 +123,12 @@ SUBROUTINE iosys()
                             reserv_ => reserv, &
                             backall_ => backall, &
                             reserv_back_ => reserv_back
+  USE ns_constraint, ONLY : Hubbard_conv_thr_ => hubbard_conv_thr, &
+                            Hubbard_mixing_beta_ => hubbard_mixing_beta, &
+                            Hubbard_strength_ => hubbard_strength, &
+                            Hubbard_maxstep_ => hubbard_maxstep, &
+                            input_Hubbard_occupations, &
+                            Hubbard_constraint_type_ => hubbard_constraint_type
   !
   USE add_dmft_occ,  ONLY : dmft_ => dmft, &
                             dmft_prefix_ => dmft_prefix
@@ -335,8 +341,11 @@ SUBROUTINE iosys()
   USE input_parameters,      ONLY : Hubbard_U, Hubbard_J, Hubbard_J0, Hubbard_V, Hubbard_U2, &
                                     Hubbard_n, Hubbard_l, Hubbard_projectors, &
                                     Hubbard_n2, Hubbard_l2, Hubbard_n3, Hubbard_l3, &
-                                    lda_plus_u, lda_plus_u_kind
-
+                                    lda_plus_u, lda_plus_u_kind, &
+                                    Hubbard_conv_thr, Hubbard_mixing_beta, &
+                                    Hubbard_occupations, Hubbard_strength,&
+                                    Hubbard_maxstep, Hubbard_constraint_type
+  
   USE constraints_module,    ONLY : init_constraint
   USE read_namelists_module, ONLY : read_namelists, sm_not_set
   USE london_module,         ONLY : init_london, lon_rcut, scal6, in_c6, in_rvdw
@@ -1333,6 +1342,13 @@ SUBROUTINE iosys()
   hub_pot_fix_                = hub_pot_fix
   reserv_                     = reserv
   reserv_back_                = reserv_back
+  
+  Hubbard_conv_thr_ = hubbard_conv_thr
+  Hubbard_mixing_beta_ = hubbard_mixing_beta
+  Hubbard_strength_ = hubbard_strength
+  Hubbard_maxstep_ = hubbard_maxstep
+  input_Hubbard_occupations = hubbard_occupations
+  Hubbard_constraint_type_ = hubbard_constraint_type
   !
   ! REAL-SPACE TREATMENT
   !

@@ -489,6 +489,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
                                    oscdft_print_energies,&
                                    oscdft_print_ns
 #endif
+  USE ns_constraint, ONLY : Hubbard_constraining, setup_constraints, Hubbard_constraints, Hubbard_conv
   !
   IMPLICIT NONE
   !
@@ -927,10 +928,10 @@ SUBROUTINE electrons_scf ( printout, exxen )
            ! in a self-consistent way.
            !
            IF (hub_pot_fix) THEN
-             IF (lda_plus_u_kind.EQ.0) THEN
+             IF (lda_plus_u_kind.EQ.0 .OR. ANY(Hubbard_constraining)) THEN
                 rho%ns = rhoin%ns ! back to input values
                 IF (lhb) rho%nsb = rhoin%nsb
-             ELSEIF (lda_plus_u_kind.EQ.1) THEN
+             ELSEIF (lda_plus_u_kind.EQ.1 .OR. ANY(Hubbard_constraining)) THEN
                 CALL errore('electrons_scf', &
                   & 'hub_pot_fix is not implemented for lda_plus_u_kind=1',1)
              ELSEIF (lda_plus_u_kind.EQ.2) THEN
@@ -941,6 +942,8 @@ SUBROUTINE electrons_scf ( printout, exxen )
            IF ( first .AND. starting_pot == 'atomic' ) THEN
               IF (lda_plus_u_kind.EQ.0) THEN
                  CALL ns_adj()
+                 CALL setup_constraints(rho%ns)
+                 CALL write_ns
                  rhoin%ns = rho%ns
                  IF (lhb) rhoin%nsb = rho%nsb
               ELSEIF (lda_plus_u_kind.EQ.1) THEN
@@ -956,7 +959,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
            ENDIF
            IF ( iter <= niter_with_fixed_ns ) THEN
               WRITE( stdout, '(/,5X,"RESET ns to initial values (iter <= mixing_fixed_ns)",/)')
-              IF (lda_plus_u_kind.EQ.0) THEN
+              IF (lda_plus_u_kind.EQ.0 .OR. ANY(Hubbard_constraining)) THEN
                  rho%ns = rhoin%ns
                  IF (lhb) rhoin%nsb = rho%nsb
               ELSEIF (lda_plus_u_kind.EQ.1) THEN
@@ -1006,6 +1009,11 @@ SUBROUTINE electrons_scf ( printout, exxen )
            IF (lda_plus_u_kind.EQ.2) THEN
               IF (ALLOCATED(nsg) ) CALL mp_bcast ( nsg, root_pool, inter_pool_comm)
            ENDIF
+        ENDIF
+        
+        IF (ANY(Hubbard_constraining)) then
+           call mp_bcast( Hubbard_constraints, root_pool, inter_pool_comm)
+           call mp_bcast( Hubbard_conv, root_pool, inter_pool_comm)
         ENDIF
         !
         CALL bcast_scf_type( rhoin, root_pool, inter_pool_comm )
@@ -1181,7 +1189,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
            ! Recompute the occupation matrix:
            ! needed when computing U (and V) in a SCF way
            IF (hub_pot_fix) THEN
-              IF (lda_plus_u_kind.EQ.0) THEN
+              IF (lda_plus_u_kind.EQ.0 .OR. ANY(Hubbard_constraining)) THEN
                  CALL new_ns(rho%ns)
                  IF (lhb) CALL new_nsb(rho%nsb)
               ELSEIF (lda_plus_u_kind.EQ.2) THEN

@@ -662,6 +662,13 @@ MODULE input_parameters
         INTEGER :: nextffield = 0 
         !! Number of activated external force fields 
         !
+        REAL(DP) :: hubbard_occupations(lqmax, lqmax, nspinx, natx) = -1.0_DP
+        REAL(DP) :: hubbard_conv_thr = 1.0E-2_DP
+        REAL(DP) :: hubbard_mixing_beta = 1.0E-2_DP
+        REAL(DP) :: hubbard_delta_strength = 0.1
+        REAL(DP) :: hubbard_strength = 1.0_DP
+        INTEGER :: hubbard_maxstep = 100000
+        CHARACTER(LEN=30) :: hubbard_constraint_type = 'energy'
 
 
 
@@ -699,7 +706,10 @@ MODULE input_parameters
              gcscf_gk, gcscf_gh, gcscf_beta,                                  &
              space_group, uniqueb, origin_choice, rhombohedral,               &
              zgate, relaxz, block, block_1, block_2, block_height,            &
-             nextffield
+             nextffield, &
+             Hubbard_conv_thr, Hubbard_mixing_beta, Hubbard_maxstep,          &
+             Hubbard_occupations, Hubbard_delta_strength,                     &
+             Hubbard_constraint_type, Hubbard_strength                        
 
 !=----------------------------------------------------------------------------=!
 !  ELECTRONS Namelist Input Parameters

@@ -27,6 +27,7 @@ MODULE scf
   USE uspp_param,      ONLY : nhm
   USE extfield,        ONLY : dipfield, emaxpos, eopreg, edir
   USE control_flags,   ONLY : lxdm, sic
+  USE ns_constraint, ONLY : Hubbard_constraining
   !
   SAVE
   !
@@ -152,7 +153,7 @@ CONTAINS
       ALLOCATE( rho%kin_g(1,1) )
    ENDIF
    !
-   lda_plus_u_co  = lda_plus_u .AND. .NOT. ( nspin == 4 ) .AND. .NOT. ( lda_plus_u_kind == 2)
+   lda_plus_u_co  = lda_plus_u .AND. .NOT. ( nspin == 4 ) .AND. .NOT. ( lda_plus_u_kind == 2) .OR. ANY(Hubbard_constraining)
    lda_plus_u_nc  = lda_plus_u .AND.       ( nspin == 4 ) .AND. .NOT. ( lda_plus_u_kind == 2)
    lda_plus_u_cob = .FALSE.
    IF (lda_plus_u_co) THEN
@@ -227,7 +228,7 @@ CONTAINS
       rho%kin_g = 0._dp
    ENDIF
    !
-   lda_plus_u_co = lda_plus_u .AND. .NOT. (nspin == 4 ) .AND. .NOT. ( lda_plus_u_kind == 2)
+   lda_plus_u_co = lda_plus_u .AND. .NOT. (nspin == 4 ) .AND. .NOT. ( lda_plus_u_kind == 2) .OR. ANY(Hubbard_constraining)   
    lda_plus_u_nc = lda_plus_u .AND.       (nspin == 4 ) .AND. .NOT. ( lda_plus_u_kind == 2)
    lda_plus_u_cob = .FALSE.
    IF (lda_plus_u_co) THEN
