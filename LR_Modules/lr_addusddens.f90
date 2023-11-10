@@ -28,8 +28,6 @@ SUBROUTINE lr_addusddens (drhoscf, dbecsum)
   USE uspp_param,           ONLY : upf, lmaxq, nh, nhm
   USE qpoint,               ONLY : xq, eigqts
   USE noncollin_module,     ONLY : nspin_mag
-  USE mod_lr_addons
-  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -55,17 +53,17 @@ SUBROUTINE lr_addusddens (drhoscf, dbecsum)
   ! the values of q+G
   ! the spherical harmonics
   !
-  COMPLEX(DP), ALLOCATABLE :: qgm(:), aux(:,:)
+  COMPLEX(DP), ALLOCATABLE :: sk(:), qgm(:), aux(:,:)
   ! the structure factor
   ! q_lm(G)
   ! auxiliary variable for drho(G)
-  COMPLEX(DP) :: z1
   !
   IF (.NOT.okvan) RETURN
   !
   CALL start_clock ('lr_addusddens')
   !
   ALLOCATE (aux(ngm,nspin_mag))
+  ALLOCATE (sk(ngm))
   ALLOCATE (ylmk0(ngm,lmaxq * lmaxq))
   ALLOCATE (qgm(ngm))
   ALLOCATE (qmod(ngm))
@@ -92,7 +90,7 @@ SUBROUTINE lr_addusddens (drhoscf, dbecsum)
               ! Calculate the Fourier transform of the Q functions,
               ! and put the result in qgm.
               !
-              !CALL qvan2 (ngm, ih, jh, nt, qmod, qgm, ylmk0)
+              CALL qvan2 (ngm, ih, jh, nt, qmod, qgm, ylmk0)
               !
               ijh = ijh + 1
               DO na = 1, nat
@@ -101,21 +99,18 @@ SUBROUTINE lr_addusddens (drhoscf, dbecsum)
                     ! Calculate the second term in Eq.(36) of the ultrasoft paper.
                     !
                     DO is = 1, nspin_mag
-!$omp parallel do default(shared) private(z1)
                        DO ig = 1, ngm
                           !
                           ! Calculate the structure factor
                           !
-                          z1 = eigts1(mill(1,ig),na) * &
-                               eigts2(mill(2,ig),na) * &
-                               eigts3(mill(3,ig),na) * &
-                               eigqts(na) 
+                          sk(ig) = eigts1(mill(1,ig),na) * &
+                                   eigts2(mill(2,ig),na) * &
+                                   eigts3(mill(3,ig),na) * &
+                                   eigqts(na) 
                           !
-                          !aux(ig,is) = aux(ig,is) + 2.0d0 * qgm(ig) * z1 * dbecsum(ijh,na,is)
-                          aux(ig,is) = aux(ig,is) + 2.0d0 * atom_type(nt)%qpw(ig, ijh) * z1 * dbecsum(ijh,na,is)
+                          aux(ig,is) = aux(ig,is) + 2.0d0 * qgm(ig) * sk(ig) * dbecsum(ijh,na,is)
                           !
                        ENDDO
-!$omp end parallel do
                     ENDDO
                     !
                  ENDIF
@@ -147,6 +142,7 @@ SUBROUTINE lr_addusddens (drhoscf, dbecsum)
   DEALLOCATE (qmod)
   DEALLOCATE (qgm)
   DEALLOCATE (ylmk0)
+  DEALLOCATE (sk)
   DEALLOCATE (aux)
   !
   CALL stop_clock ('lr_addusddens')
