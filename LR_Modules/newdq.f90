@@ -55,7 +55,6 @@ subroutine newdq (dvscf, npe)
 
   complex(DP), allocatable :: aux1 (:), aux2 (:,:), veff (:), qgm(:)
   ! work space
-  real(8) :: diff
 
   if (.not.okvan) return
   !
@@ -85,7 +84,6 @@ subroutine newdq (dvscf, npe)
         qmod (ig) = sqrt (gg (ig) ) * tpiba
      enddo
   endif
-  write(*,*)'newdq: q-point:', xq
   !
   !     and for each perturbation of this irreducible representation
   !     integrate the change of the self consistent potential and
@@ -109,16 +107,11 @@ subroutine newdq (dvscf, npe)
            do ih = 1, nh (nt)
               do jh = ih, nh (nt)
                  ijh = ijh + 1
-                 call qvan2 (ngm, ih, jh, nt, qmod, qgm, ylmk0)
-                 diff=0
-                 do ig = 1, ngm
-                   diff = diff + abs(atom_type(nt)%qpw(ig, ijh) -  qgm(ig))
-                 enddo
-                 write(*,*)'diff=',diff
+                 !call qvan2 (ngm, ih, jh, nt, qmod, qgm, ylmk0)
                  do na = 1, nat
                     if (ityp (na) == nt) then
                        do ig = 1, ngm
-                          aux1(ig) = qgm(ig) * eigts1(mill(1,ig),na) * &
+                          aux1(ig) = atom_type(nt)%qpw(ig, ijh) * eigts1(mill(1,ig),na) * &
                                                eigts2(mill(2,ig),na) * &
                                                eigts3(mill(3,ig),na) * &
                                                eigqts(na)
