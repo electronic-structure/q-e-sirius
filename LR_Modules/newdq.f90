@@ -48,13 +48,9 @@ subroutine newdq (dvscf, npe)
   integer :: na, ig, nt, ir, ipert, is, ih, jh, ijh
   ! countera
 
-  real(DP), allocatable :: qmod (:), qg (:,:), ylmk0 (:,:)
-  ! the modulus of q+G
-  ! the values of q+G
-  ! the spherical harmonics
-
-  complex(DP), allocatable :: aux1 (:), aux2 (:,:), veff (:), qgm(:)
+  complex(DP), allocatable :: aux1 (:), aux2 (:,:), veff (:)
   ! work space
+  complex(DP) z1(nspin_mag), z2
 
   if (.not.okvan) return
   !
@@ -64,26 +60,7 @@ subroutine newdq (dvscf, npe)
   allocate (aux1 (ngm))
   allocate (aux2 (ngm , nspin_mag))
   allocate (veff (dfftp%nnr))
-  allocate (ylmk0(ngm , lmaxq * lmaxq))
-  allocate (qgm  (ngm))
-  allocate (qmod (ngm))
-  !
-  if (.not.lgamma) allocate (qg (3,  ngm))
-  !
-  !    first compute the spherical harmonics
-  !
-  if (.not.lgamma) then
-     call setqmod (ngm, xq, g, qmod, qg)
-     call ylmr2 (lmaxq * lmaxq, ngm, qg, qmod, ylmk0)
-     do ig = 1, ngm
-        qmod (ig) = sqrt (qmod (ig) ) * tpiba
-     enddo
-  else
-     call ylmr2 (lmaxq * lmaxq, ngm, g, gg, ylmk0)
-     do ig = 1, ngm
-        qmod (ig) = sqrt (gg (ig) ) * tpiba
-     enddo
-  endif
+
   !
   !     and for each perturbation of this irreducible representation
   !     integrate the change of the self consistent potential and
@@ -110,15 +87,21 @@ subroutine newdq (dvscf, npe)
                  !call qvan2 (ngm, ih, jh, nt, qmod, qgm, ylmk0)
                  do na = 1, nat
                     if (ityp (na) == nt) then
+                       z1 = (0.d0, 0.d0)
+!$omp parallel do default(shared) private(z2, is) reduction(+:z1)
                        do ig = 1, ngm
-                          aux1(ig) = atom_type(nt)%qpw(ig, ijh) * eigts1(mill(1,ig),na) * &
-                                               eigts2(mill(2,ig),na) * &
-                                               eigts3(mill(3,ig),na) * &
-                                               eigqts(na)
-                       enddo
+                          z2 = atom_type(nt)%qpw(ig, ijh) * &
+                                eigts1(mill(1,ig),na) * &
+                                eigts2(mill(2,ig),na) * &
+                                eigts3(mill(3,ig),na) * &
+                                eigqts(na)
+                          do is = 1, nspin_mag
+                             z1(is) = z1(is) + conjg(z2) * aux2(ig, is)
+                          enddo
+                       enddo !ig
+!$omp end parallel do
                        do is = 1, nspin_mag
-                          int3(ih,jh,na,is,ipert) = omega * &
-                                             dot_product(aux1(:),aux2(:,is))
+                          int3(ih,jh,na,is,ipert) = omega * z1(is)
                        enddo
                     endif
                  enddo
@@ -153,10 +136,6 @@ subroutine newdq (dvscf, npe)
   !
   IF (okpaw) int3 = int3 + int3_paw
   !
-  if (.not.lgamma) deallocate (qg)
-  deallocate (qmod)
-  deallocate (qgm)
-  deallocate (ylmk0)
   deallocate (veff)
   deallocate (aux2)
   deallocate (aux1)
