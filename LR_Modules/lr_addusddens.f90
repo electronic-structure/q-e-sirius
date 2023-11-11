@@ -28,6 +28,7 @@ SUBROUTINE lr_addusddens (drhoscf, dbecsum)
   USE uspp_param,           ONLY : upf, lmaxq, nh, nhm
   USE qpoint,               ONLY : xq, eigqts
   USE noncollin_module,     ONLY : nspin_mag
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -108,7 +109,8 @@ SUBROUTINE lr_addusddens (drhoscf, dbecsum)
                                    eigts3(mill(3,ig),na) * &
                                    eigqts(na) 
                           !
-                          aux(ig,is) = aux(ig,is) + 2.0d0 * qgm(ig) * sk(ig) * dbecsum(ijh,na,is)
+                          !aux(ig,is) = aux(ig,is) + 2.0d0 * qgm(ig) * sk(ig) * dbecsum(ijh,na,is)
+                          aux(ig,is) = aux(ig,is) + 2.0d0 * atom_type(nt)%qpw(ig, ijh) * sk(ig) * dbecsum(ijh,na,is)
                           !
                        ENDDO
                     ENDDO
