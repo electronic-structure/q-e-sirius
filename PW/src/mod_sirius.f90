@@ -78,6 +78,10 @@ MODULE mod_sirius
   !
   TYPE(sirius_kpoint_set_handler) :: ks_handler
   !! SIRIUS k-point set handler
+
+  TYPE(sirius_md_extrapolation) :: md_handler
+  !! SIRIUS k-point set handler
+
   !
  CONTAINS
   !
@@ -1098,9 +1102,9 @@ MODULE mod_sirius
                &n=atom_type(iat)%n_chi(j))
         ENDDO
 
-        ! QE input allow two different notations for entering the hubbard onsite interaction because 
+        ! QE input allow two different notations for entering the hubbard onsite interaction because
         ! there is a bug in QE that is not fixed.
-        ! I do not set the hubbard properties right away because the Hubbard_U(iat) is not set 
+        ! I do not set the hubbard properties right away because the Hubbard_U(iat) is not set
         ! when the V notation is also used for onsite interaction
         IF (is_hubbard(iat)) THEN
            ! they use the second notation for onsite. I take care of this case later on
@@ -1328,6 +1332,7 @@ MODULE mod_sirius
     !
     ! create ground-state class
     CALL sirius_create_ground_state(ks_handler, gs_handler)
+    CALL sirius_create_md_extrapolation(md_handler, gs_handler)
     CALL put_density_to_sirius(gs_handler)
     IF (okpaw) THEN
       CALL put_density_matrix_to_sirius(gs_handler)
@@ -1507,7 +1512,7 @@ MODULE mod_sirius
   !-------------------------------------------------------------------------
   SUBROUTINE setup_kpoints()
     !-----------------------------------------------------------------------
-    !! Auxiliary function to setup arrays kpoints and wkpoints 
+    !! Auxiliary function to setup arrays kpoints and wkpoints
     !! that are then used to initialize kset_handler
     !
     USE klist,              ONLY : xk, wk, nkstot, qnorm
@@ -1566,16 +1571,16 @@ MODULE mod_sirius
     ENDIF
     ! convert to Ry and also:
     !using qe way of storing eigenvalues:
-    !- rank=0 keeps all the eigenvalues 
+    !- rank=0 keeps all the eigenvalues
     !- all other ranks keeps only local eigenvalues from 1 to nks using local index
     IF ( mpime .eq. 0) THEN
       DO ik = 1, nkstot
         et(:, ik) = 2.d0 * band_e(:, ik)
-      ENDDO    
-    ELSE 
+      ENDDO
+    ELSE
       DO ik = 1, nks
         et(:, ik) = 2.d0 * band_e( : , global_kpoint_index(nkstot, ik) )
-      ENDDO    
+      ENDDO
     END IF
     !
     DEALLOCATE(band_e)
