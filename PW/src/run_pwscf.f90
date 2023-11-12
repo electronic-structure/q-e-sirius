@@ -12,8 +12,8 @@ SUBROUTINE run_pwscf( exit_status )
   !! License: GNU
   !! Summary: Run an instance of the Plane Wave Self-Consistent Field code
   !
-  !! Run an instance of the Plane Wave Self-Consistent Field code 
-  !! MPI initialization and input data reading is performed in the 
+  !! Run an instance of the Plane Wave Self-Consistent Field code
+  !! MPI initialization and input data reading is performed in the
   !! calling code - returns in exit_status the exit code for pw.x:
   !! * 0: completed successfully
   !! * 1: an error has occurred (value returned by the errore() routine)
@@ -137,7 +137,7 @@ SUBROUTINE run_pwscf( exit_status )
   !
 #if defined(__LEGACY_PLUGINS)
   CALL plugin_initialization()
-#endif 
+#endif
 #if defined (__ENVIRON)
   IF (use_environ) THEN
      IF (is_ms_gcs()) CALL init_ms_gcs()
@@ -171,11 +171,12 @@ SUBROUTINE run_pwscf( exit_status )
     CALL clear_sirius
     CALL setup_sirius
     CALL sirius_initialize_kset(ks_handler)
+    CALL sirius_initialize_subspace(gs_handler, ks_handler)
   ENDIF
 #endif
   !
   !  read external force fields parameters
-  ! 
+  !
   IF ( nextffield > 0 .AND. ionode) THEN
      !
      CALL init_extffield( 'PW', nextffield )
@@ -261,6 +262,11 @@ SUBROUTINE run_pwscf( exit_status )
         ! ... save data needed for potential and wavefunction extrapolation
         !
         CALL update_file()
+#if defined(__SIRIUS)
+        IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
+          CALL sirius_md_store(md_handler, gs_handler)
+        ENDIF
+#endif
         !
         ! ... ionic step (for molecular dynamics or optimization)
         !
@@ -347,7 +353,8 @@ SUBROUTINE run_pwscf( exit_status )
                    CALL potinit
                    CALL newd
                  END IF
-                 CALL sirius_initialize_subspace(gs_handler, ks_handler)
+                 ! CALL sirius_initialize_subspace(gs_handler, ks_handler)
+                 CALL sirius_md_extrapolate(md_handler, gs_handler)
                  CALL sirius_stop_timer("qe|update")
               ELSE
 #endif
@@ -436,7 +443,7 @@ SUBROUTINE reset_gvectors( )
   USE fft_base,   ONLY : dffts
   USE xc_lib,     ONLY : xclib_dft_is
   USE mod_sirius
-  ! 
+  !
   IMPLICIT NONE
   !
   ! ... get magnetic moments from previous run before charge is deleted
@@ -462,6 +469,7 @@ SUBROUTINE reset_gvectors( )
     CALL clear_sirius()
     CALL setup_sirius()
     CALL sirius_initialize_kset(ks_handler)
+    CALL sirius_initialize_subspace(gs_handler, ks_handler)
   ENDIF
 #endif
   !
