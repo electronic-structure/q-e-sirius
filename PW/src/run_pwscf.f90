@@ -169,7 +169,7 @@ SUBROUTINE run_pwscf( exit_status )
     CALL clear_sirius
     CALL setup_sirius
     CALL sirius_initialize_kset(ks_handler)
-    !CALL sirius_initialize_subspace(gs_handler, ks_handler)
+    CALL sirius_initialize_subspace(gs_handler, ks_handler)
   ENDIF
 #endif
   !
@@ -260,6 +260,11 @@ SUBROUTINE run_pwscf( exit_status )
         ! ... save data needed for potential and wavefunction extrapolation
         !
         CALL update_file()
+#if defined(__SIRIUS)
+        IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
+          CALL sirius_md_store(md_handler, gs_handler)
+        ENDIF
+#endif
         !
         ! ... ionic step (for molecular dynamics or optimization)
         !
@@ -346,7 +351,8 @@ SUBROUTINE run_pwscf( exit_status )
                    CALL potinit
                    CALL newd
                  END IF
-                 CALL sirius_initialize_subspace(gs_handler, ks_handler)
+                 ! CALL sirius_initialize_subspace(gs_handler, ks_handler)
+                 CALL sirius_md_extrapolate(md_handler, gs_handler)
                  CALL sirius_stop_timer("qe|update")
               ELSE
 #endif

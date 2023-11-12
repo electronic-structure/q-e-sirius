@@ -78,6 +78,10 @@ MODULE mod_sirius
   !
   TYPE(sirius_kpoint_set_handler) :: ks_handler
   !! SIRIUS k-point set handler
+
+  TYPE(sirius_md_extrapolation) :: md_handler
+  !! SIRIUS k-point set handler
+
   !
  CONTAINS
   !
@@ -1350,6 +1354,7 @@ MODULE mod_sirius
     !
     ! create ground-state class
     CALL sirius_create_ground_state(ks_handler, gs_handler)
+    CALL sirius_create_md_extrapolation(md_handler, gs_handler)
     CALL put_density_to_sirius()
     IF (okpaw) THEN
       CALL put_density_matrix_to_sirius()
