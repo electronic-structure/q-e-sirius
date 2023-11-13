@@ -20,7 +20,6 @@ CONTAINS
     ALLOCATE (qmod (ngm))
 
     IF (.NOT.lgamma) THEN
-      write(*,*)'generate_qpw: computing for q=',xq
       ALLOCATE (qg (3,  ngm))
       CALL setqmod (ngm, xq, g, qmod, qg)
       CALL ylmr2 (lmaxq * lmaxq, ngm, qg, qmod, ylmk0)
