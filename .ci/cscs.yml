@@ -2,14 +2,136 @@ include:
   - remote: 'https://gitlab.com/cscs-ci/recipes/-/raw/master/templates/v2/.ci-ext.yml'
 
 stages:
+  - baseimage
   - build
   - test
 
-build image:
-  extends: .container-builder
-  stage: build
+build base cuda image:
+  extends: .container-builder-dynamic-name
+  stage: baseimage
   timeout: 2h
   variables:
+    DOCKERFILE: .ci/baseimage.cuda.Dockerfile
+    WATCH_FILECHANGES: .ci/baseimage.cuda.Dockerfile
+    PERSIST_IMAGE_NAME: $CSCS_REGISTRY_PATH/base/q-e-sirius-ci
+    DOCKER_BUILD_ARGS: '["CUDA_ARCH=60"]'
+
+build cuda image:
+  extends: .container-builder
+  needs: ["build base cuda image"]
+  stage: build
+  variables:
     DOCKERFILE: .ci/build.Dockerfile
-    PERSIST_IMAGE_NAME: $CSCS_REGISTRY_PATH/sirius/sirius-ci:$CI_COMMIT_SHA
-    DOCKER_BUILD_ARGS: '["BASE_IMAGEIMAGE}", "SPECDEV=$SPEC"]'
+    PERSIST_IMAGE_NAME: $CSCS_REGISTRY_PATH/q-e-sirius/q-e-sirius-ci:$CI_COMMIT_SHA
+    DOCKER_BUILD_ARGS: '["BASE_IMAGE=${BASE_IMAGE}"]'
+
+.run_tests:
+  extends: .container-runner-daint-gpu
+  needs: ["build cuda image"]
+  stage: test
+  image: $CSCS_REGISTRY_PATH/q-e-sirius/q-e-sirius-ci:$CI_COMMIT_SHA
+  variables:
+    CRAY_CUDA_MPS: 1
+    MPICH_MAX_THREAD_SAFETY: multiple
+    SLURM_HINT: nomultithread
+    SLURM_WAIT: 0
+    SLURM_TIMELIMIT: "30:00"
+    USE_MPI: 'YES'
+
+test CdO:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CONSTRAINT: gpu
+    SLURM_CPUS_PER_TASK: 12
+    SLURM_NTASKS: 1
+    SLURM_JOB_NUM_NODES: 1
+  script:
+    - cd /qe-src/ci-tests/CdO
+    - /apps/bin/pw.x -i CdO.in > out.txt
+    - python3 ../qe_diff.py ref.txt out.txt
+
+test LiCoO2:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CONSTRAINT: gpu
+    SLURM_CPUS_PER_TASK: 12
+    SLURM_NTASKS: 1
+    SLURM_JOB_NUM_NODES: 1
+  script:
+    - cd /qe-src/ci-tests/LiCoO2
+    - /apps/bin/pw.x -i LiCoO2.scf.in -use_qe_scf
+    - /apps/bin/hp.x -i LiCoO2.hp.in
+    - cat LiCoO2.Hubbard_parameters.dat
+    - python3 ../hp_diff.py hp.ref.yml hp.yml
+
+test LiCoO2 parallel:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CONSTRAINT: gpu
+    SLURM_CPUS_PER_TASK: 12
+    SLURM_NTASKS: 4
+    SLURM_JOB_NUM_NODES: 4
+  script:
+    - /qe-src/ci-tests/LiCoO2/run_parallel.x
+    - cat $PWD/LiCoO2/LiCoO2.Hubbard_parameters.dat
+    - python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/LiCoO2/hp.ref.yml $PWD/LiCoO2/hp.yml
+
+test CrI3 parallel:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CONSTRAINT: gpu
+    SLURM_CPUS_PER_TASK: 12
+    SLURM_NTASKS: 4
+    SLURM_JOB_NUM_NODES: 4
+    SLURM_TIMELIMIT: "1:30:00"
+  script:
+    - /qe-src/ci-tests/CrI3/run_parallel.x
+    #- cd /qe-src/ci-tests/LiCoO2
+    #- /apps/bin/pw.x -i LiCoO2.scf.in -use_qe_scf -npool 2
+    #- /apps/bin/hp.x -i LiCoO2.hp.in -npool 2
+    - cat $PWD/CrI3/CrI3.Hubbard_parameters.dat
+    - python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/CrI3/hp.ref.yml $PWD/CrI3/hp.yml
+
+test Si_koopmans:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CONSTRAINT: gpu
+    SLURM_CPUS_PER_TASK: 12
+    SLURM_NTASKS: 1
+    SLURM_JOB_NUM_NODES: 1
+  script:
+    - cd /qe-src/ci-tests/Si_koopmans
+    - /apps/bin/pw.x -i Si.scf.in -use_qe_scf
+    - /apps/bin/wannier90.x -pp Si
+    - /apps/bin/pw2wannier90.x -i Si.pw2wann.in
+    - /apps/bin/wannier90.x Si
+    - cat Si.wout
+    - /apps/bin/wannier90.x -pp Si_emp
+    - /apps/bin/pw2wannier90.x -i Si_emp.pw2wann.in
+    - /apps/bin/wannier90.x Si_emp
+    - cat Si_emp.wout
+    - /apps/bin/kcw.x -i Si.kcw-wann2kcw.in
+    - /apps/bin/kcw.x -i Si.kcw-screen.in 
+
+test koopmans:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CONSTRAINT: gpu
+    SLURM_CPUS_PER_TASK: 12
+    SLURM_NTASKS: 1
+    SLURM_JOB_NUM_NODES: 1
+  script:
+    - cd /qe-src/test-suite
+    - make run-tests-kcw-serial

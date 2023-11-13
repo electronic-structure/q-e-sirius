@@ -28,6 +28,7 @@ SUBROUTINE lr_addusddens (drhoscf, dbecsum)
   USE uspp_param,           ONLY : upf, lmaxq, nh, nhm
   USE qpoint,               ONLY : xq, eigqts
   USE noncollin_module,     ONLY : nspin_mag
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -48,12 +49,8 @@ SUBROUTINE lr_addusddens (drhoscf, dbecsum)
   ! counter on spin
   ! counter on combined beta functions
   !
-  REAL(DP), ALLOCATABLE :: qmod(:), qpg(:,:), ylmk0(:,:)
-  ! the modulus of q+G
-  ! the values of q+G
-  ! the spherical harmonics
-  !
-  COMPLEX(DP), ALLOCATABLE :: sk(:), qgm(:), aux(:,:)
+  COMPLEX(DP), ALLOCATABLE :: aux(:,:)
+  COMPLEX(DP) :: z1
   ! the structure factor
   ! q_lm(G)
   ! auxiliary variable for drho(G)
@@ -63,23 +60,8 @@ SUBROUTINE lr_addusddens (drhoscf, dbecsum)
   CALL start_clock ('lr_addusddens')
   !
   ALLOCATE (aux(ngm,nspin_mag))
-  ALLOCATE (sk(ngm))
-  ALLOCATE (ylmk0(ngm,lmaxq * lmaxq))
-  ALLOCATE (qgm(ngm))
-  ALLOCATE (qmod(ngm))
-  ALLOCATE (qpg(3,ngm))
   !
   aux(:,:) = (0.d0, 0.d0)
-  !
-  ! Calculate the q+G vector, its modulus, and the spherical harmonics.
-  !
-  CALL setqmod (ngm, xq, g, qmod, qpg)
-  !
-  CALL ylmr2 (lmaxq * lmaxq, ngm, qpg, qmod, ylmk0)
-  !
-  DO ig = 1, ngm
-     qmod(ig) = sqrt(qmod(ig)) * tpiba
-  ENDDO
   !
   DO nt = 1, ntyp
      IF (upf(nt)%tvanp) THEN
@@ -87,31 +69,30 @@ SUBROUTINE lr_addusddens (drhoscf, dbecsum)
         DO ih = 1, nh (nt)
            DO jh = ih, nh (nt)
               !
-              ! Calculate the Fourier transform of the Q functions,
-              ! and put the result in qgm.
-              !
-              CALL qvan2 (ngm, ih, jh, nt, qmod, qgm, ylmk0)
-              !
               ijh = ijh + 1
               DO na = 1, nat
                  IF (ityp (na) .eq.nt) THEN
                     !
                     ! Calculate the second term in Eq.(36) of the ultrasoft paper.
                     !
+!$omp parallel default(shared) private(is, z1)
                     DO is = 1, nspin_mag
+!$omp do
                        DO ig = 1, ngm
                           !
                           ! Calculate the structure factor
                           !
-                          sk(ig) = eigts1(mill(1,ig),na) * &
-                                   eigts2(mill(2,ig),na) * &
-                                   eigts3(mill(3,ig),na) * &
-                                   eigqts(na) 
+                          z1 = eigts1(mill(1,ig),na) * &
+                               eigts2(mill(2,ig),na) * &
+                               eigts3(mill(3,ig),na) * &
+                               eigqts(na)
                           !
-                          aux(ig,is) = aux(ig,is) + 2.0d0 * qgm(ig) * sk(ig) * dbecsum(ijh,na,is)
+                          aux(ig,is) = aux(ig,is) + 2.0d0 * atom_type(nt)%qpw(ig, ijh) * z1 * dbecsum(ijh,na,is)
                           !
                        ENDDO
+!$omp end do nowait
                     ENDDO
+!$omp end parallel
                     !
                  ENDIF
               ENDDO
@@ -138,11 +119,6 @@ SUBROUTINE lr_addusddens (drhoscf, dbecsum)
       !
   ENDDO
   !
-  DEALLOCATE (qpg)
-  DEALLOCATE (qmod)
-  DEALLOCATE (qgm)
-  DEALLOCATE (ylmk0)
-  DEALLOCATE (sk)
   DEALLOCATE (aux)
   !
   CALL stop_clock ('lr_addusddens')
