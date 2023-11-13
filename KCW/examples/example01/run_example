@@ -3,9 +3,10 @@
 # run from directory where this script is
 cd `dirname $0`
 EXAMPLE_DIR=`pwd`
-BIN_DIR="/home/gcistaro/codes/q-e-sirius/spack-build-tklfvgi/bin/"
+
 # check whether ECHO has the -e option
 if test "`echo -e`" = "-e" ; then ECHO=echo ; else ECHO="echo -e" ; fi
+
 $ECHO
 $ECHO "$EXAMPLE_DIR : starting"
 $ECHO
@@ -107,9 +108,9 @@ cat > $PREFIX.scf.in << EOF
   celldm(1)=10.263101844
   nat= 2, ntyp= 1,
   ecutwfc = 20.0,
-  !!!nbnd=20
-  nspin = 1 
-  !!!!tot_magnetization = 0.0
+  nbnd=20
+  nspin = 2
+  tot_magnetization = 0.0
 /
 &ELECTRONS
   diagonalization='david'
@@ -145,7 +146,7 @@ cat > $SEEDNAME.win << EOF
 num_bands         =   4
 num_wann          =   4
 exclude_bands     = 5-20
-!!!!spin              = up
+spin              = up
 use_ws_distance   = .true.
 
 write_hr = .true.
@@ -210,7 +211,7 @@ cat > $PREFIX.pw2wann.in << EOF
   outdir='$TMP_DIR/'
   seedname = '$SEEDNAME'
   wan_mode   =  'standalone'
-  !!!!spin_component = 'up'
+  spin_component = 'up'
 /
 EOF
 $ECHO "  Running PW2W90 for $PREFIX...\c"
@@ -230,7 +231,7 @@ cat > ${SEEDNAME}_emp.win << EOF
 num_bands         =   16
 num_wann          =   4
 exclude_bands     =  1-4
-!!!!!!!!spin              = up
+spin              = up
 use_ws_distance   = .true.
 
 dis_froz_max      = 9.2
@@ -298,7 +299,7 @@ cat > ${PREFIX}_emp.pw2wann.in << EOF
   outdir='$TMP_DIR/'
   seedname = '${SEEDNAME}_emp'
   wan_mode   =  'standalone'
-  !!!!!!spin_component = 'up'
+  spin_component = 'up'
 /
 EOF
 $ECHO "  Running PW2W90 for $PREFIX EMPTY...\c"
