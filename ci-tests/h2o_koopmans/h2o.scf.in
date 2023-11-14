@@ -7,7 +7,7 @@
   verbosity='high'
  /
 &SYSTEM
-  ecutwfc =   45.0
+  ecutwfc =   80.0
   ibrav = 0
   input_dft = 'PBE'
   nat = 3
