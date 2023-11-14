@@ -9,12 +9,12 @@
 &SYSTEM
   ecutwfc =   80.0
   ibrav = 0
-  input_dft = 'PBE'
+  !!!input_dft = 'PBE'
   nat = 3
   nspin = 2
   ntyp = 2
   nbnd = 8
-  assume_isolated='mt'
+  !!!assume_isolated='mt'
   tot_magnetization = 0.0
 /
 &ELECTRONS
