@@ -30,6 +30,8 @@ PROGRAM kcw
   USE coulomb,           ONLY : setup_coulomb
   USE control_flags,     ONLY : use_gpu
   !
+  USE mod_sirius
+  !
   IMPLICIT NONE
   !
   CHARACTER(LEN=9) :: code='KCW'
@@ -40,6 +42,9 @@ PROGRAM kcw
   !
   ! 1) Initialize MPI, clocks, print initial messages
   CALL mp_startup ( )
+#if defined(__SIRIUS)
+  CALL sirius_initialize(call_mpi_init=.false.)
+#endif
   !
   CALL header ()
   !
@@ -49,6 +54,14 @@ PROGRAM kcw
   !
   ! 2) Read the input file and the PW outputs
   CALL kcw_readin( ) 
+#if defined(__SIRIUS)
+  CALL setup_sirius()
+  !CALL sirius_load_state(gs_handler, "state.h5")
+  !CALL put_potential_to_sirius()
+  !CALL sirius_generate_d_operator_matrix(gs_handler)
+  CALL sirius_create_H0(gs_handler)
+  use_sirius_scf = .false.
+#endif
   !
   IF (calculation == 'cc') call setup_coulomb()
   IF (calculation == 'wann2kcw') CALL wann2kcw ( )
@@ -61,6 +74,9 @@ PROGRAM kcw
   CALL mp_global_end()
   CALL environment_end( code )
   !
+#if defined(__SIRIUS)
+  CALL sirius_finalize(call_mpi_fin=.false.)
+#endif
 END PROGRAM kcw
 
 

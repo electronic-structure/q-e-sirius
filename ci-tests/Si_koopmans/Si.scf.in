@@ -10,7 +10,7 @@
   ibrav=2,
   celldm(1)=10.263101844
   nat= 2, ntyp= 1,
-  ecutwfc = 20.0,
+  ecutwfc = 40.0,
   nbnd=20
   nspin = 2
   tot_magnetization = 0.0

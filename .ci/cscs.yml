@@ -123,7 +123,7 @@ test Si_koopmans:
     - /apps/bin/kcw.x -i Si.kcw-wann2kcw.in
     - /apps/bin/kcw.x -i Si.kcw-screen.in 
 
-test koopmans:
+test h2o_koopmans:
   extends: .run_tests
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
@@ -133,5 +133,7 @@ test koopmans:
     SLURM_NTASKS: 1
     SLURM_JOB_NUM_NODES: 1
   script:
-    - cd /qe-src/test-suite
-    - make run-tests-kcw-serial
+    - cd /qe-src/ci-tests/h2o_koopmans
+    - /apps/bin/pw.x -i h2o.scf.in -use_qe_scf
+    - /apps/bin/kcw.x -i h2o.kcw-wann2kcw.in
+    - /apps/bin/kcw.x -i h2o.kcw-screen.in 
