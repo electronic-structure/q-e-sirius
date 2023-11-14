@@ -133,7 +133,7 @@ test h2o_koopmans:
     SLURM_NTASKS: 1
     SLURM_JOB_NUM_NODES: 1
   script:
-    - cd /qe-src/test-suite
+    - cd /qe-src/ci-tests/h2o_koopmans
     - /apps/bin/pw.x -i h2o.scf.in -use_qe_scf
     - /apps/bin/kcw.x -i h2o.kcw-wann2kcw.in
     - /apps/bin/kcw.x -i h2o.kcw-screen.in 
