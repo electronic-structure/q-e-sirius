@@ -123,7 +123,7 @@ test Si_koopmans:
     - /apps/bin/kcw.x -i Si.kcw-wann2kcw.in
     - /apps/bin/kcw.x -i Si.kcw-screen.in 
 
-test koopmans:
+test h2o_koopmans:
   extends: .run_tests
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
