@@ -134,4 +134,6 @@ test koopmans:
     SLURM_JOB_NUM_NODES: 1
   script:
     - cd /qe-src/test-suite
-    - make run-tests-kcw-serial
+    - /apps/bin/pw.x -i h2o.scf.in -use_qe_scf
+    - /apps/bin/kcw.x -i h2o.kcw-wann2kcw.in
+    - /apps/bin/kcw.x -i h2o.kcw-screen.in 
