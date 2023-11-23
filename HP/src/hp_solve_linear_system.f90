@@ -206,7 +206,7 @@ SUBROUTINE hp_solve_linear_system (na, iq)
   !
   DO iter = 1, niter_max
      !
-     WRITE(stdout,'(/6x,"atom #",i3,3x,"q point #",i4,3x,"iter # ",i3)') na, iq, iter
+     !WRITE(stdout,'(/6x,"atom #",i3,3x,"q point #",i4,3x,"iter # ",i3,15x,e9.3)') na, iq, iter, thresh
      !
      drhoscf(:,:)     = (0.d0, 0.d0)
      dvscfout(:,:)    = (0.d0, 0.d0)
@@ -230,7 +230,7 @@ SUBROUTINE hp_solve_linear_system (na, iq)
     ! 3) left-hand side of linear equation
     ! 4) right-hand side of linear equation
 #endif
-     !
+     WRITE(stdout,'(/6x,"atom #",i3,3x,"q point #",i4,3x,"iter # ",i3,15x,e9.3)') na, iq, iter, thresh
      ! Compute drhoscf, the charge density response to the total potential
      !
      CALL sternheimer_kernel(iter==1, .FALSE., 1, lrdvwfc, iudvwfc, &
