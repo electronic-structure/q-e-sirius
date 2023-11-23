@@ -265,7 +265,8 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
          CALL sirius_linear_solver( gs_handler, vkq=MATMUL(TRANSPOSE(at), xk(:,ikq)),&
             &num_gvec_kq_loc=npwq, gvec_kq_loc=vg_kq, dpsi=dpsi,&
             &psi=evq, eigvals=et(:, ikmk), dvpsi=dvpsi, ld=npwx, num_spin_comp=npol,&
-            &alpha_pv=alpha_pv, spin=current_spin, nbnd_occ=nbnd_occ(ikk))
+            &alpha_pv=alpha_pv, spin=current_spin, nbnd_occ=nbnd_occ(ikk), tol=thresh, &
+            & niter=num_iter)
          !
          DEALLOCATE(vg_kq)
 #else
