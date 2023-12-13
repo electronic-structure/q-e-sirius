@@ -40,12 +40,15 @@ CONTAINS
 
     DO iat = 1, nsp
       IF (ALLOCATED(atom_type(iat)%qpw)) DEALLOCATE(atom_type(iat)%qpw)
+      IF (ALLOCATED(atom_type(iat)%qpw1)) DEALLOCATE(atom_type(iat)%qpw1)
       ALLOCATE(atom_type(iat)%qpw( ngm, nh(iat) * (1 + nh(iat)) / 2 ))
+      ALLOCATE(atom_type(iat)%qpw1( nh(iat) * (1 + nh(iat)) / 2, ngm))
       ijh = 0
       DO ih = 1, nh (iat)
         DO jh = ih, nh (iat)
           ijh = ijh + 1
           CALL qvan2 (ngm, ih, jh, iat, qmod, atom_type(iat)%qpw(:, ijh), ylmk0)
+          atom_type(iat)%qpw1(ijh, :) = atom_type(iat)%qpw(:, ijh)
         ENDDO
       ENDDO
     ENDDO
