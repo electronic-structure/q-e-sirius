@@ -24,6 +24,7 @@ SUBROUTINE kcw_run_nscf (do_band)
   USE control_lr,      ONLY : ethr_nscf
   USE control_kcw,     ONLY : tmp_dir_kcwq
   USE klist,           ONLY : nelec
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -64,10 +65,42 @@ SUBROUTINE kcw_run_nscf (do_band)
   !
   CALL setup_nscf ( .FALSE., xq, .TRUE. )
   !
+#if defined(__SIRIUS)
+  CALL clear_sirius()
+#endif
   CALL init_run()
   !
+#if defined(__SIRIUS)
+    !WARNING: This is a copy of the last part of setup sirius. Factorize?
+    !
+    ! create k-point set
+    ! WARNING: k-points must be provided in fractional coordinates of the reciprocal lattice and
+    !          without x2 multiplication for the lsda case
+    !WRITE(*,*) "Gonna create kset"
+    WRITE(*,*) "nkpt", num_kpoints
+    WRITE(*,*) kpoints(:,:)
+    WRITE(*,*) wkpoints(:)
+    !CALL setup_sirius()
+
+
+    CALL setup_sirius()
+    !CALL sirius_create_kset(sctx, num_kpoints, kpoints, wkpoints, .TRUE., ks_handler)
+    !
+    ! create ground-state class
+    !CALL sirius_create_ground_state(ks_handler, gs_handler)
+    !CALL sirius_create_H0(gs_handler)
+    !CALL put_density_to_sirius()
+    !CALL put_density_matrix_to_sirius()
+    !CALL sirius_generate_density(gs_handler, paw_only=.TRUE.)
+    !CALL sirius_generate_effective_potential(gs_handler)
+#endif
   IF (do_band) THEN
+#if defined(__SIRIUS)
+     CALL sirius_find_eigen_states(gs_handler, ks_handler)!, precompute_pw=.true., precompute_rf=.true.,&
+                              !&precompute_ri=.true.)
+#else 
      CALL non_scf()
+#endif 
      CALL punch( 'all' )
   ENDIF
   !

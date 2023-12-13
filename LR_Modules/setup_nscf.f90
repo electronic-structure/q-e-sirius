@@ -44,6 +44,7 @@ SUBROUTINE setup_nscf ( newgrid, xq, elph_mat )
   USE ktetra,             ONLY : tetra, tetra_type, opt_tetra_init
   USE lr_symm_base,       ONLY : nsymq, invsymq, minus_q
   USE control_lr,         ONLY : lgamma, ethr_nscf
+  USE mod_sirius,         ONLY : num_kpoints, kpoints, wkpoints, invert_mtrx
   !
   IMPLICIT NONE
   !
@@ -55,6 +56,7 @@ SUBROUTINE setup_nscf ( newgrid, xq, elph_mat )
   INTEGER  :: t_rev_eff(48), ik
   LOGICAL  :: magnetic_sym, sym(48)
   LOGICAL  :: skip_equivalence
+  REAL(DP) :: bg_inv(3, 3)
   !
   IF ( .NOT. ALLOCATED( force ) ) ALLOCATE( force( 3, nat ) )
   !
@@ -151,6 +153,20 @@ SUBROUTINE setup_nscf ( newgrid, xq, elph_mat )
           npk, k1, k2, k3, nk1, nk2, nk3, nkstot, xk, kunit)
   END IF
   !
+#if defined(__SIRIUS)
+  ! get inverse of the reciprocal lattice vectors
+  CALL invert_mtrx(bg, bg_inv)
+  num_kpoints = nkstot
+  IF (ALLOCATED(kpoints)) DEALLOCATE(kpoints)
+  ALLOCATE(kpoints(3, num_kpoints))
+  ! save the k-point list in lattice coordinates
+  DO ik = 1, num_kpoints
+    kpoints(:, ik) =  MATMUL(bg_inv, xk(:, ik))
+  ENDDO
+  IF (ALLOCATED(wkpoints)) DEALLOCATE(wkpoints)
+  ALLOCATE(wkpoints(num_kpoints))
+  wkpoints(1:num_kpoints) = wk(1:num_kpoints)
+#endif
   IF ( lsda ) THEN
      !
      ! ... LSDA case: two different spin polarizations,
@@ -186,6 +202,7 @@ SUBROUTINE setup_nscf ( newgrid, xq, elph_mat )
   !
   qnorm = sqrt(xq(1)**2 + xq(2)**2 + xq(3)**2) * tpiba
   !
+
   ! ... distribute k-points (and their weights and spin indices)
   !
   CALL divide_et_impera( nkstot, xk, wk, isk, nks )

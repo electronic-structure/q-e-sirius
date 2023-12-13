@@ -40,6 +40,8 @@ SUBROUTINE screen_coeff ()
   !
   USE cell_base,            ONLY : omega
   !
+  USE mod_sirius
+  !
   IMPLICIT NONE
   ! 
   INTEGER :: iq, nqs, spin_ref, is
@@ -75,6 +77,9 @@ SUBROUTINE screen_coeff ()
   !
   nqs = nqstot
   !
+#if defined(__SIRIUS)
+  CALL sirius_initialize(call_mpi_init=.false.)
+#endif
   IF (nqs == 1) do_real_space = .TRUE. 
   IF (do_real_space) THEN 
      ALLOCATE ( drhor_scf(dffts%nnr,nspin) ) 
@@ -106,6 +111,14 @@ SUBROUTINE screen_coeff ()
   !
   drho_zero = ZERO
   !
+#if defined(__SIRIUS)
+  CALL setup_sirius()
+  !CALL sirius_load_state(gs_handler, "state.h5")
+  !CALL put_potential_to_sirius()
+  !CALL sirius_generate_d_operator_matrix(gs_handler)
+  CALL sirius_create_H0(gs_handler)
+  use_sirius_scf = .false.
+#endif
   WRITE(stdout,'(/)')
   WRITE( stdout, '(5X,"INFO: LR CALCULATION ...")')
   !

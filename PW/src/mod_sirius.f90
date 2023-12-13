@@ -77,6 +77,7 @@ MODULE mod_sirius
   !
   TYPE(sirius_kpoint_set_handler) :: ks_handler
   !! SIRIUS k-point set handler
+  TYPE(C_PTR) :: error_code
   !
  CONTAINS
   !
@@ -1438,7 +1439,7 @@ MODULE mod_sirius
     ! create k-point set
     ! WARNING: k-points must be provided in fractional coordinates of the reciprocal lattice and
     !          without x2 multiplication for the lsda case
-    CALL sirius_create_kset(sctx, num_kpoints, kpoints, wkpoints, .FALSE., ks_handler)
+    CALL sirius_create_kset(sctx, num_kpoints, kpoints, wkpoints, .TRUE., ks_handler)!.FALSE., ks_handler)
     !
     ! create ground-state class
     CALL sirius_create_ground_state(ks_handler, gs_handler)
