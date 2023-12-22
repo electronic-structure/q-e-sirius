@@ -467,7 +467,7 @@ SUBROUTINE reset_gvectors( )
     CALL clear_sirius
     CALL setup_sirius
     CALL sirius_initialize_kset(ks_handler)
-    !CALL sirius_initialize_subspace(gs_handler, ks_handler)
+    CALL sirius_initialize_subspace(gs_handler, ks_handler)
   ENDIF
 #endif
   !
