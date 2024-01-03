@@ -45,12 +45,14 @@ subroutine newdq (dvscf, npe)
   !
   !   And the local variables
   !
-  integer :: na, ig, nt, ir, ipert, is, ih, jh, ijh
+  integer :: na, ig, nt, ir, ipert, is, ih, jh, ijh, nij, N_nt, na_
   ! countera
 
-  complex(DP), allocatable :: aux1 (:), aux2 (:,:), veff (:)
+  complex(DP), allocatable :: aux1 (:), aux2 (:,:), veff (:), tmp(:,:), res1(:,:), res2(:,:)
+  complex(DP), allocatable :: int3_new(:,:,:,:,:)
   ! work space
   complex(DP) z1(nspin_mag), z2
+  real(8) :: diff
 
   if (.not.okvan) return
   !
@@ -60,7 +62,8 @@ subroutine newdq (dvscf, npe)
   allocate (aux1 (ngm))
   allocate (aux2 (ngm , nspin_mag))
   allocate (veff (dfftp%nnr))
-
+  allocate (int3_new(nhm,nhm,nat,nspin_mag,npe))
+  int3_new (:,:,:,:,:) = (0.d0, 0.0d0)
   !
   !     and for each perturbation of this irreducible representation
   !     integrate the change of the self consistent potential and
@@ -122,10 +125,73 @@ subroutine newdq (dvscf, npe)
                  enddo
               endif
            enddo
+           !======================================================================= my changes below
+           ijh = 0
+           ! composite index for ih and jh (ksi and ksi')
+           nij = nh(nt)*(nh(nt)+1)/2 ! max number of (ih,jh) pairs per atom type nt
+           N_nt = 0 ! number of atoms of type nt
+           DO na = 1, nat
+              IF ( ityp(na) == nt ) N_nt = N_nt + 1
+           ENDDO
 
+           allocate (tmp(ngm, N_nt))
+           allocate (res1(N_nt, nij))
+           allocate (res2(nij, N_nt))
+           res1(:,:) = (0.d0, 0.d0)
+           res2(:,:) = (0.d0, 0.d0)
+
+           do is = 1, nspin_mag ! loop over spins
+               na_ = 0 ! count atoms of type nt
+               !=============== compute potential (aux2) * phase factors
+               do na = 1, nat ! loop over all atoms
+                  if (ityp(na) == nt) then
+                     na_ = na_ + 1
+                     do ig = 1, ngm ! loop over G-vectors
+                         tmp(ig, na_) = aux2(ig, is) * CONJG( eigts1(mill(1,ig),na) * &
+                                                              eigts2(mill(2,ig),na) * &
+                                                              eigts3(mill(3,ig),na) * &
+                                                              eigqts(na) )
+                     enddo
+                  endif
+               enddo
+               !=============== compute Q*V for all atoms of type nt
+               !    DGEMM( TA,  TB,    M,   N,   K, ALPHA,   A, LDA,                        B, LDB,  BETA,   C,  LDC)
+               call ZGEMM('T', 'N', N_nt, nij, ngm, 1.0d0, tmp, ngm, CONJG(atom_type(nt)%qpw), ngm, 0.0d0, res1, N_nt)
+               call ZGEMM('C', 'N', nij, N_nt, ngm, 1.0d0, atom_type(nt)%qpw, ngm, tmp, ngm, 0.0d0, res2, nij)
+
+               ! tmp is a complex array of dimension (ngm, N_nt)
+               ! qpw is a complex array of dimension (ngm, nij)
+               ! --- (tmp)^T * qpw : (N_nt, ngm) x (ngm, nij)  = (N_nt, nij), dimensions of res1
+               ! --- (qpw)^H * tmp : (nij,  ngm) x (ngm, N_nt) = (nij, N_nt), dimensions of res2
+
+               na_ = 0
+               do na = 1, nat ! loop over all atoms
+                  if (ityp(na) == nt) then
+                     na_ = na_ + 1
+                     ijh = 0
+                     diff = 0
+                     do ih = 1, nh(nt) ! loop over ksi
+                        do jh = ih, nh(nt) ! loop over ksi'
+                           ijh = ijh + 1
+!                          int3_new(ih,jh,na,is,ipert) = omega * res1(na_, ijh)
+                           int3_new(ih,jh,na,is,ipert) = omega * res2(ijh, na_)
+                           !                     lower triangle                upper triangle   
+                           IF (jh > ih) int3_new(jh,ih,na,is,ipert) = int3_new(ih,jh,na,is,ipert)
+                           diff = diff + abs(int3_new(ih,jh,na,is,ipert) - int3(ih,jh,na,is,ipert))
+                        enddo
+                     enddo
+                     write(*,*)'na, diff = ',na, diff
+                  endif
+               enddo
+           enddo ! loop over spins
+           !
+           deallocate (tmp)
+           deallocate (res1)
+           deallocate (res2)
         endif ! if US-PP
      enddo ! nt
   enddo ! ipert
+int3 = int3_new
 #if defined(__MPI)
   call mp_sum ( int3, intra_bgrp_comm )
 #endif
