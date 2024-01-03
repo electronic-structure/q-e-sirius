@@ -78,7 +78,7 @@ subroutine newdq (dvscf, npe)
         enddo
      enddo
 
-     do nt = 1, ntyp
+     do nt = 1, ntyp ! loop over atom types
         if (upf(nt)%tvanp ) then
           ijh = 0
            do ih = 1, nh (nt)
@@ -104,9 +104,9 @@ subroutine newdq (dvscf, npe)
                           int3(ih,jh,na,is,ipert) = omega * z1(is)
                        enddo
                     endif
-                 enddo
-              enddo
-           enddo
+                 enddo !na
+              enddo !jh
+           enddo !ih
            do na = 1, nat
               if (ityp(na) == nt) then
                  !
@@ -115,16 +115,17 @@ subroutine newdq (dvscf, npe)
                  do ih = 1, nh (nt)
                     do jh = ih, nh (nt)
                        do is = 1, nspin_mag
+                          !    lower triangle            upper triangle   
                           int3(jh,ih,na,is,ipert) = int3(ih,jh,na,is,ipert)
                        enddo
                     enddo
                  enddo
               endif
            enddo
-        endif
-     enddo
 
-  enddo
+        endif ! if US-PP
+     enddo ! nt
+  enddo ! ipert
 #if defined(__MPI)
   call mp_sum ( int3, intra_bgrp_comm )
 #endif
