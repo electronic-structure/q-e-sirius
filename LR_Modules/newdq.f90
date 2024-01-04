@@ -52,7 +52,6 @@ subroutine newdq (dvscf, npe)
   complex(DP), allocatable :: int3_new(:,:,:,:,:)
   ! work space
   complex(DP) z1(nspin_mag), z2
-  real(8) :: diff
 
   if (.not.okvan) return
   !
@@ -169,7 +168,6 @@ subroutine newdq (dvscf, npe)
                   if (ityp(na) == nt) then
                      na_ = na_ + 1
                      ijh = 0
-                     diff = 0
                      do ih = 1, nh(nt) ! loop over ksi
                         do jh = ih, nh(nt) ! loop over ksi'
                            ijh = ijh + 1
@@ -177,10 +175,8 @@ subroutine newdq (dvscf, npe)
                            int3_new(ih,jh,na,is,ipert) = omega * res2(ijh, na_)
                            !                     lower triangle                upper triangle   
                            IF (jh > ih) int3_new(jh,ih,na,is,ipert) = int3_new(ih,jh,na,is,ipert)
-                           diff = diff + abs(int3_new(ih,jh,na,is,ipert) - int3(ih,jh,na,is,ipert))
                         enddo
                      enddo
-                     write(*,*)'na, diff = ',na, diff
                   endif
                enddo
            enddo ! loop over spins
