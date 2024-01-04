@@ -82,48 +82,6 @@ subroutine newdq (dvscf, npe)
 
      do nt = 1, ntyp ! loop over atom types
         if (upf(nt)%tvanp ) then
-!           ijh = 0
-!            do ih = 1, nh (nt)
-!               do jh = ih, nh (nt)
-!                  ijh = ijh + 1
-!                  !call qvan2 (ngm, ih, jh, nt, qmod, qgm, ylmk0)
-!                  do na = 1, nat
-!                     if (ityp (na) == nt) then
-!                        z1 = (0.d0, 0.d0)
-! !$omp parallel do default(shared) private(z2, is) reduction(+:z1)
-!                        do ig = 1, ngm
-!                           z2 = atom_type(nt)%qpw(ig, ijh) * &
-!                                 eigts1(mill(1,ig),na) * &
-!                                 eigts2(mill(2,ig),na) * &
-!                                 eigts3(mill(3,ig),na) * &
-!                                 eigqts(na)
-!                           do is = 1, nspin_mag
-!                              z1(is) = z1(is) + conjg(z2) * aux2(ig, is)
-!                           enddo
-!                        enddo !ig
-! !$omp end parallel do
-!                        do is = 1, nspin_mag
-!                           int3(ih,jh,na,is,ipert) = omega * z1(is)
-!                        enddo
-!                     endif
-!                  enddo !na
-!               enddo !jh
-!            enddo !ih
-!            do na = 1, nat
-!               if (ityp(na) == nt) then
-!                  !
-!                  !    We use the symmetry properties of the ps factor
-!                  !
-!                  do ih = 1, nh (nt)
-!                     do jh = ih, nh (nt)
-!                        do is = 1, nspin_mag
-!                           !    lower triangle            upper triangle   
-!                           int3(jh,ih,na,is,ipert) = int3(ih,jh,na,is,ipert)
-!                        enddo
-!                     enddo
-!                  enddo
-!               endif
-!            enddo
            !======================================================================= my changes below
            ijh = 0
            ! composite index for ih and jh (ksi and ksi')
