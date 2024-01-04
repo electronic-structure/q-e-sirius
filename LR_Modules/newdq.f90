@@ -156,7 +156,7 @@ subroutine newdq (dvscf, npe)
                !=============== compute Q*V for all atoms of type nt
                !    DGEMM( TA,  TB,    M,   N,   K, ALPHA,   A, LDA,                        B, LDB,  BETA,   C,  LDC)
                call ZGEMM('T', 'N', N_nt, nij, ngm, 1.0d0, tmp, ngm, CONJG(atom_type(nt)%qpw), ngm, 0.0d0, res1, N_nt)
-               call ZGEMM('C', 'N', nij, N_nt, ngm, 1.0d0, atom_type(nt)%qpw, ngm, tmp, ngm, 0.0d0, res2, nij)
+!              call ZGEMM('C', 'N', nij, N_nt, ngm, 1.0d0, atom_type(nt)%qpw, ngm, tmp, ngm, 0.0d0, res2, nij)
 
                ! tmp is a complex array of dimension (ngm, N_nt)
                ! qpw is a complex array of dimension (ngm, nij)
@@ -171,8 +171,8 @@ subroutine newdq (dvscf, npe)
                      do ih = 1, nh(nt) ! loop over ksi
                         do jh = ih, nh(nt) ! loop over ksi'
                            ijh = ijh + 1
-!                          int3_new(ih,jh,na,is,ipert) = omega * res1(na_, ijh)
-                           int3_new(ih,jh,na,is,ipert) = omega * res2(ijh, na_)
+                           int3_new(ih,jh,na,is,ipert) = omega * res1(na_, ijh)
+!                          int3_new(ih,jh,na,is,ipert) = omega * res2(ijh, na_)
                            !                     lower triangle                upper triangle   
                            IF (jh > ih) int3_new(jh,ih,na,is,ipert) = int3_new(ih,jh,na,is,ipert)
                         enddo
