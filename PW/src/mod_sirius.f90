@@ -73,9 +73,11 @@ MODULE mod_sirius
   !! SIRIUS simulation context handler
   !
   TYPE(sirius_ground_state_handler) :: gs_handler
+  TYPE(sirius_ground_state_handler) :: gs_handler1
   !! SIRIUS ground state handler
   !
   TYPE(sirius_kpoint_set_handler) :: ks_handler
+  TYPE(sirius_kpoint_set_handler) :: ks_handler1
   !! SIRIUS k-point set handler
   TYPE(C_PTR) :: error_code
   !
@@ -153,7 +155,7 @@ MODULE mod_sirius
   END SUBROUTINE put_potential_to_sirius
   !
   !--------------------------------------------------------------------
-  SUBROUTINE put_density_to_sirius()
+  SUBROUTINE put_density_to_sirius(gs_handler_)
     !------------------------------------------------------------------
     !! Put plane-wave coefficients of density to SIRIUS
     !
@@ -166,7 +168,8 @@ MODULE mod_sirius
     !
     INTEGER iat, ig, ih, jh, ijh, na, ispn
     COMPLEX(8) z1, z2
-    !
+    TYPE(sirius_ground_state_handler) :: gs_handler_
+  !
     ! get rho(G)
     CALL sirius_set_pw_coeffs( gs_handler, "rho", rho%of_g(:, 1), .TRUE., ngm, mill, intra_bgrp_comm )
     IF (nspin.EQ.2) THEN
@@ -212,7 +215,7 @@ MODULE mod_sirius
   END SUBROUTINE get_density_from_sirius
   !
   !--------------------------------------------------------------------
-  SUBROUTINE put_density_matrix_to_sirius
+  SUBROUTINE put_density_matrix_to_sirius(gs_handler_)
     !------------------------------------------------------------------
     !! Put QE density matrix to SIRIUS
     !
@@ -227,6 +230,7 @@ MODULE mod_sirius
     COMPLEX(8), ALLOCATABLE :: dens_mtrx(:,:,:)
     REAL(8), ALLOCATABLE :: dens_mtrx_tmp(:, :, :)
     REAL(8) fact
+    TYPE(sirius_ground_state_handler) :: gs_handler_
     ! set density matrix
     ! complex density matrix in SIRIUS has at maximum three components
     ALLOCATE(dens_mtrx_tmp(nhm * (nhm + 1) / 2, nat, nspin))
@@ -277,6 +281,7 @@ MODULE mod_sirius
     DEALLOCATE(dens_mtrx)
     DEALLOCATE(dens_mtrx_tmp)
   END SUBROUTINE put_density_matrix_to_sirius
+
   !
   !--------------------------------------------------------------------
   SUBROUTINE calc_veff() BIND(C)
@@ -1439,13 +1444,13 @@ MODULE mod_sirius
     ! create k-point set
     ! WARNING: k-points must be provided in fractional coordinates of the reciprocal lattice and
     !          without x2 multiplication for the lsda case
-    CALL sirius_create_kset(sctx, num_kpoints, kpoints, wkpoints, .TRUE., ks_handler)!.FALSE., ks_handler)
+    CALL sirius_create_kset(sctx, num_kpoints, kpoints, wkpoints, .FALSE., ks_handler)
     !
     ! create ground-state class
     CALL sirius_create_ground_state(ks_handler, gs_handler)
-    CALL put_density_to_sirius()
+    CALL put_density_to_sirius(gs_handler)
     IF (okpaw) THEN
-      CALL put_density_matrix_to_sirius()
+      CALL put_density_matrix_to_sirius(gs_handler)
       CALL sirius_generate_density(gs_handler, paw_only=.TRUE.)
     ENDIF
     CALL sirius_generate_effective_potential(gs_handler)

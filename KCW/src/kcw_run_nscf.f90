@@ -24,6 +24,9 @@ SUBROUTINE kcw_run_nscf (do_band)
   USE control_lr,      ONLY : ethr_nscf
   USE control_kcw,     ONLY : tmp_dir_kcwq
   USE klist,           ONLY : nelec
+  USE paw_variables,   ONLY : okpaw
+  USE mp_pools,        ONLY : inter_pool_comm, intra_pool_comm, npool
+  USE mp_images,       ONLY : nproc_image, intra_image_comm
   USE mod_sirius
   !
   IMPLICIT NONE
@@ -65,39 +68,42 @@ SUBROUTINE kcw_run_nscf (do_band)
   !
   CALL setup_nscf ( .FALSE., xq, .TRUE. )
   !
-#if defined(__SIRIUS)
-  CALL clear_sirius()
-#endif
   CALL init_run()
   !
-#if defined(__SIRIUS)
-    !WARNING: This is a copy of the last part of setup sirius. Factorize?
-    !
-    ! create k-point set
-    ! WARNING: k-points must be provided in fractional coordinates of the reciprocal lattice and
-    !          without x2 multiplication for the lsda case
-    !WRITE(*,*) "Gonna create kset"
-    WRITE(*,*) "nkpt", num_kpoints
-    WRITE(*,*) kpoints(:,:)
-    WRITE(*,*) wkpoints(:)
-    !CALL setup_sirius()
-
-
-    CALL setup_sirius()
-    !CALL sirius_create_kset(sctx, num_kpoints, kpoints, wkpoints, .TRUE., ks_handler)
-    !
-    ! create ground-state class
-    !CALL sirius_create_ground_state(ks_handler, gs_handler)
-    !CALL sirius_create_H0(gs_handler)
-    !CALL put_density_to_sirius()
-    !CALL put_density_matrix_to_sirius()
-    !CALL sirius_generate_density(gs_handler, paw_only=.TRUE.)
-    !CALL sirius_generate_effective_potential(gs_handler)
-#endif
   IF (do_band) THEN
 #if defined(__SIRIUS)
-     CALL sirius_find_eigen_states(gs_handler, ks_handler)!, precompute_pw=.true., precompute_rf=.true.,&
-                              !&precompute_ri=.true.)
+     !WARNING: This is a copy of the last part of setup sirius. Factorize?
+     !WRITE(*,*) "Gonna create kset"
+     WRITE(*,*) "nkpt", num_kpoints
+     WRITE(*,*) kpoints(:,:)
+     WRITE(*,*) wkpoints(:)
+    !
+    ! create context of simulation
+     WRITE(*,*) "Gonna create ctx"
+     CALL sirius_initialize_context(sctx)
+
+     !
+     ! create k-point set
+     ! WARNING: k-points must be provided in fractional coordinates of the reciprocal lattice and
+     !          without x2 multiplication for the lsda case
+     WRITE(*,*) "Gonna create kset"
+     CALL sirius_create_kset(sctx, num_kpoints, kpoints, wkpoints, .FALSE., ks_handler1)    !
+     !
+     ! create ground-state class    
+     WRITE(*,*) "Gonna create ground state"
+     CALL sirius_create_ground_state(ks_handler1, gs_handler1)
+     WRITE(*,*) "Gonna put density to sirius"
+     CALL put_density_to_sirius(gs_handler1)
+     IF (okpaw) THEN
+       CALL put_density_matrix_to_sirius(gs_handler1)
+       CALL sirius_generate_density(gs_handler1, paw_only=.TRUE.)
+     ENDIF
+     WRITE(*,*) "Gonna generate effective potential"
+     CALL sirius_generate_effective_potential(gs_handler1)
+     WRITE(*,*) "Gonna initialize subspace"
+     CALL sirius_initialize_subspace(gs_handler1, ks_handler1)
+     WRITE(*,*) "Gonna find eigenstates"
+     CALL sirius_find_eigen_states(gs_handler1, ks_handler1, iter_solver_tol=1.d-13)!, iter_solver_steps=100)
 #else 
      CALL non_scf()
 #endif 
