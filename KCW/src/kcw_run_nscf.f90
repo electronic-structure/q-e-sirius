@@ -77,10 +77,12 @@ SUBROUTINE kcw_run_nscf (do_band)
      WRITE(*,*) "nkpt", num_kpoints
      WRITE(*,*) kpoints(:,:)
      WRITE(*,*) wkpoints(:)
+
+     CALL setup_sirius()
     !
     ! create context of simulation
-     WRITE(*,*) "Gonna create ctx"
-     CALL sirius_initialize_context(sctx)
+     !WRITE(*,*) "Gonna create ctx"
+     !CALL sirius_initialize_context(sctx)
 
      !
      ! create k-point set
@@ -88,6 +90,7 @@ SUBROUTINE kcw_run_nscf (do_band)
      !          without x2 multiplication for the lsda case
      WRITE(*,*) "Gonna create kset"
      CALL sirius_create_kset(sctx, num_kpoints, kpoints, wkpoints, .FALSE., ks_handler1)    !
+     CALL sirius_initialize_kset(ks_handler1)
      !
      ! create ground-state class    
      WRITE(*,*) "Gonna create ground state"
