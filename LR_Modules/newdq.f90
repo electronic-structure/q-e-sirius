@@ -48,7 +48,7 @@ subroutine newdq (dvscf, npe)
   integer :: na, ig, nt, ir, ipert, is, ih, jh, ijh, nij, N_nt, na_
   ! countera
 
-  complex(DP), allocatable :: aux1 (:), aux2 (:,:), veff (:), tmp(:,:), res1(:,:), res2(:,:)
+  complex(DP), allocatable :: aux2 (:,:), veff (:), tmp(:,:), res2(:,:)
   complex(DP), allocatable :: int3_new(:,:,:,:,:)
   ! work space
   complex(DP) z1(nspin_mag), z2
@@ -58,7 +58,6 @@ subroutine newdq (dvscf, npe)
   call start_clock ('newdq')
   !
   int3 (:,:,:,:,:) = (0.d0, 0.0d0)
-  allocate (aux1 (ngm))
   allocate (aux2 (ngm , nspin_mag))
   allocate (veff (dfftp%nnr))
   allocate (int3_new(nhm,nhm,nat,nspin_mag,npe))
@@ -92,10 +91,7 @@ subroutine newdq (dvscf, npe)
            ENDDO
 
            allocate (tmp(ngm, N_nt))
-           allocate (res1(N_nt, nij))
            allocate (res2(nij, N_nt))
-           res1(:,:) = (0.d0, 0.d0)
-           res2(:,:) = (0.d0, 0.d0)
 
            do is = 1, nspin_mag ! loop over spins
                na_ = 0 ! count atoms of type nt
@@ -112,7 +108,6 @@ subroutine newdq (dvscf, npe)
                   endif
                enddo
                !=============== compute Q*V for all atoms of type nt
-               !    DGEMM( TA,  TB,    M,   N,   K, ALPHA,   A, LDA,                        B, LDB,  BETA,   C,  LDC)
 !              call ZGEMM('T', 'N', N_nt, nij, ngm, dcmplx(1.d0, 0.d0), tmp, ngm, &
 !                         CONJG(atom_type(nt)%qpw), ngm, dcmplx(0.d0, 0.d0), res1, N_nt)
                call ZGEMM('C', 'N', nij, N_nt, ngm, dcmplx(1.d0, 0.d0), atom_type(nt)%qpw, &
@@ -131,7 +126,6 @@ subroutine newdq (dvscf, npe)
                      do ih = 1, nh(nt) ! loop over ksi
                         do jh = ih, nh(nt) ! loop over ksi'
                            ijh = ijh + 1
-!                          int3_new(ih,jh,na,is,ipert) = omega * res1(na_, ijh)
                            int3_new(ih,jh,na,is,ipert) = omega * res2(ijh, na_)
                            !                     lower triangle                upper triangle   
                            IF (jh > ih) int3_new(jh,ih,na,is,ipert) = int3_new(ih,jh,na,is,ipert)
@@ -142,7 +136,6 @@ subroutine newdq (dvscf, npe)
            enddo ! loop over spins
            !
            deallocate (tmp)
-           deallocate (res1)
            deallocate (res2)
         endif ! if US-PP
      enddo ! nt
@@ -161,7 +154,6 @@ int3 = int3_new
   !
   deallocate (veff)
   deallocate (aux2)
-  deallocate (aux1)
   !
   call stop_clock ('newdq')
   !
