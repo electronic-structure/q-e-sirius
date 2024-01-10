@@ -99,12 +99,14 @@ subroutine newdq (dvscf, npe)
                do na = 1, nat ! loop over all atoms
                   if (ityp(na) == nt) then
                      na_ = na_ + 1
+                     !$omp parallel do default(shared) private(ig)
                      do ig = 1, ngm ! loop over G-vectors
                          tmp(ig, na_) = aux2(ig, is) * CONJG( eigts1(mill(1,ig),na) * &
                                                               eigts2(mill(2,ig),na) * &
                                                               eigts3(mill(3,ig),na) * &
                                                               eigqts(na) )
                      enddo
+                     !$omp end parallel do
                   endif
                enddo
                !=============== compute Q*V for all atoms of type nt
