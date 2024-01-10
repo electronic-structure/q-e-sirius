@@ -81,8 +81,6 @@ subroutine newdq (dvscf, npe)
 
      do nt = 1, ntyp ! loop over atom types
         if (upf(nt)%tvanp ) then
-           !======================================================================= my changes below
-           ijh = 0
            ! composite index for ih and jh (ksi and ksi')
            nij = nh(nt)*(nh(nt)+1)/2 ! max number of (ih,jh) pairs per atom type nt
            N_nt = 0 ! number of atoms of type nt
@@ -96,6 +94,7 @@ subroutine newdq (dvscf, npe)
            do is = 1, nspin_mag ! loop over spins
                na_ = 0 ! count atoms of type nt
                !=============== compute potential (aux2) * phase factors
+               call start_clock ('aux2_x_phases')
                do na = 1, nat ! loop over all atoms
                   if (ityp(na) == nt) then
                      na_ = na_ + 1
@@ -109,11 +108,14 @@ subroutine newdq (dvscf, npe)
                      !$omp end parallel do
                   endif
                enddo
+               call stop_clock ('aux2_x_phases')
                !=============== compute Q*V for all atoms of type nt
 !              call ZGEMM('T', 'N', N_nt, nij, ngm, dcmplx(1.d0, 0.d0), tmp, ngm, &
 !                         CONJG(atom_type(nt)%qpw), ngm, dcmplx(0.d0, 0.d0), res1, N_nt)
+               call start_clock ('newdq_ZGEMM')
                call ZGEMM('C', 'N', nij, N_nt, ngm, dcmplx(1.d0, 0.d0), atom_type(nt)%qpw, &
                           ngm, tmp, ngm, dcmplx(0.d0, 0.d0), res2, nij)
+               call stop_clock ('newdq_ZGEMM')
 
                ! tmp is a complex array of dimension (ngm, N_nt)
                ! qpw is a complex array of dimension (ngm, nij)
