@@ -80,7 +80,16 @@ SUBROUTINE screen_coeff ()
 #if defined(__SIRIUS)
   CALL sirius_initialize(call_mpi_init=.false.)
 #endif
-  IF (nqs == 1) do_real_space = .TRUE. 
+
+#if defined(__SIRIUS)
+    CALL setup_sirius()
+    !CALL sirius_load_state(gs_handler, "state.h5")
+    !CALL put_potential_to_sirius()
+    !CALL sirius_generate_d_operator_matrix(gs_handler)
+    use_sirius_scf = .true.
+#endif
+
+IF (nqs == 1) do_real_space = .TRUE. 
   IF (do_real_space) THEN 
      ALLOCATE ( drhor_scf(dffts%nnr,nspin) ) 
      drhor_scf = ZERO
@@ -111,14 +120,6 @@ SUBROUTINE screen_coeff ()
   !
   drho_zero = ZERO
   !
-#if defined(__SIRIUS)
-  CALL setup_sirius()
-  !CALL sirius_load_state(gs_handler, "state.h5")
-  !CALL put_potential_to_sirius()
-  !CALL sirius_generate_d_operator_matrix(gs_handler)
-  CALL sirius_create_H0(gs_handler)
-  use_sirius_scf = .false.
-#endif
   WRITE(stdout,'(/)')
   WRITE( stdout, '(5X,"INFO: LR CALCULATION ...")')
   !
@@ -126,7 +127,7 @@ SUBROUTINE screen_coeff ()
   OPEN (iun_res, file = TRIM(tmp_dir_kcw)//TRIM(prefix)//'.LR_res.txt')
   CALL restart_screen (num_wann, iq_start, vki_r, vki_u, sh, do_real_space)
   !
-  DO iq = iq_start, nqs
+  DO iq = iq_start, nqs!2, nqs
     !! For each q in the mesh 
     !
     CALL kcw_prepare_q ( do_band, setup_pw, iq )
@@ -142,6 +143,10 @@ SUBROUTINE screen_coeff ()
     IF (kcw_iverbosity .gt. -1 ) WRITE(stdout,'(8X, "INFO: rhowan_q(r) RETRIEVED"/)') 
     !
     IF (setup_pw) CALL kcw_run_nscf(do_band)
+    !
+#if defined(__SIRIUS)
+    CALL sirius_create_H0(gs_handler)
+#endif
     !
     IF (kcw_iverbosity .gt. -1 .AND. setup_pw) WRITE(stdout,'(/,8X, "INFO: NSCF calculation DONE",/)')
     ! ... IF needed run a nscf calculation for k+q

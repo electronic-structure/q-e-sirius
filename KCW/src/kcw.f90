@@ -60,7 +60,7 @@ PROGRAM kcw
 !  !CALL put_potential_to_sirius()
 !  !CALL sirius_generate_d_operator_matrix(gs_handler)
 !  CALL sirius_create_H0(gs_handler)
-!  use_sirius_scf = .true.
+!  use_sirius_scf = .false.
 !#endif
   !
   IF (calculation == 'cc') call setup_coulomb()
