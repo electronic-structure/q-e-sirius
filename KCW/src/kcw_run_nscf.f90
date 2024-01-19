@@ -71,70 +71,7 @@ SUBROUTINE kcw_run_nscf (do_band)
   CALL init_run()
   !
   IF (do_band) THEN
-<<<<<<< HEAD
-!#if defined(__SIRIUS)
-!     CALL setup_sirius()
-!     !
-!     ! create k-point set
-!     ! WARNING: k-points must be provided in fractional coordinates of the reciprocal lattice and
-!     !          without x2 multiplication for the lsda case
-!     CALL sirius_create_kset(sctx, num_kpoints, kpoints, wkpoints, .FALSE., ks_handler1)    
-!     CALL sirius_initialize_kset(ks_handler1)
-!     !
-!     ! create ground-state class    
-!     CALL sirius_create_ground_state(ks_handler1, gs_handler1)
-!     CALL put_density_to_sirius(gs_handler1)
-!     IF (okpaw) THEN
-!       CALL put_density_matrix_to_sirius(gs_handler1)
-!       CALL sirius_generate_density(gs_handler1, paw_only=.TRUE.)
-!     ENDIF
-!     CALL sirius_generate_effective_potential(gs_handler1)
-!     CALL sirius_initialize_subspace(gs_handler1, ks_handler1)
-!     CALL sirius_find_eigen_states(gs_handler1, ks_handler1, iter_solver_tol=1.d-13)!, iter_solver_steps=100)
-!     !save wfs
-!     CALL get_wave_functions_from_sirius(ks_handler1)
-!#else 
-=======
-#if defined(__SIRIUS)
-     !WARNING: This is a copy of the last part of setup sirius. Factorize?
-     !WRITE(*,*) "Gonna create kset"
-     WRITE(*,*) "nkpt", num_kpoints
-     WRITE(*,*) kpoints(:,:)
-     WRITE(*,*) wkpoints(:)
-
-     CALL setup_sirius()
-    !
-    ! create context of simulation
-     !WRITE(*,*) "Gonna create ctx"
-     !CALL sirius_initialize_context(sctx)
-
-     !
-     ! create k-point set
-     ! WARNING: k-points must be provided in fractional coordinates of the reciprocal lattice and
-     !          without x2 multiplication for the lsda case
-     WRITE(*,*) "Gonna create kset"
-     CALL sirius_create_kset(sctx, num_kpoints, kpoints, wkpoints, .FALSE., ks_handler1)    !
-     CALL sirius_initialize_kset(ks_handler1)
-     !
-     ! create ground-state class    
-     WRITE(*,*) "Gonna create ground state"
-     CALL sirius_create_ground_state(ks_handler1, gs_handler1)
-     WRITE(*,*) "Gonna put density to sirius"
-     CALL put_density_to_sirius(gs_handler1)
-     IF (okpaw) THEN
-       CALL put_density_matrix_to_sirius(gs_handler1)
-       CALL sirius_generate_density(gs_handler1, paw_only=.TRUE.)
-     ENDIF
-     WRITE(*,*) "Gonna generate effective potential"
-     CALL sirius_generate_effective_potential(gs_handler1)
-     WRITE(*,*) "Gonna initialize subspace"
-     CALL sirius_initialize_subspace(gs_handler1, ks_handler1)
-     WRITE(*,*) "Gonna find eigenstates"
-     CALL sirius_find_eigen_states(gs_handler1, ks_handler1, iter_solver_tol=1.d-13)!, iter_solver_steps=100)
-#else 
->>>>>>> c065fddbb542b256b77efd7b9228d0b5243f7f8b
      CALL non_scf()
-!#endif 
      CALL punch( 'all' )
   ENDIF
   !
