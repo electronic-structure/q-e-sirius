@@ -127,7 +127,7 @@ IF (nqs == 1) do_real_space = .TRUE.
   OPEN (iun_res, file = TRIM(tmp_dir_kcw)//TRIM(prefix)//'.LR_res.txt')
   CALL restart_screen (num_wann, iq_start, vki_r, vki_u, sh, do_real_space)
   !
-  DO iq = iq_start, nqs!2, nqs
+  DO iq = iq_start, nqs
     !! For each q in the mesh 
     !
     CALL kcw_prepare_q ( do_band, setup_pw, iq )
@@ -355,6 +355,10 @@ IF (nqs == 1) do_real_space = .TRUE.
     ENDDO
   ENDIF
   !
+  !
+#if defined(__SIRIUS)
+  CALL sirius_finalize(call_mpi_fin=.false.)
+#endif
 
 
 9010 FORMAT(/, 8x, "iq =", i4, 3x, "iwann =", i4, 3x, "rPi_q =", 2f15.8, 3x, & 

@@ -89,8 +89,8 @@ SUBROUTINE non_scf( )
    CALL sirius_generate_effective_potential(gs_handler1)
    CALL sirius_initialize_subspace(gs_handler1, ks_handler1)
 
-   CALL sirius_find_eigen_states(gs_handler1, ks_handler1, iter_solver_tol=1.d-13)!, iter_solver_steps=100)
-   
+   !CALL sirius_set_parameters(sctx, iter_solver_num_steps=100)
+   CALL sirius_find_eigen_states(gs_handler1, ks_handler1, iter_solver_tol=1.d-13, iter_solver_steps=100)
    !save wfs
    CALL get_wave_functions_from_sirius(ks_handler1)
    !transfer eigenvalues to QE
