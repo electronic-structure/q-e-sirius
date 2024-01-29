@@ -24,9 +24,6 @@ SUBROUTINE kcw_run_nscf (do_band)
   USE control_lr,      ONLY : ethr_nscf
   USE control_kcw,     ONLY : tmp_dir_kcwq
   USE klist,           ONLY : nelec
-  USE paw_variables,   ONLY : okpaw
-  USE mp_pools,        ONLY : inter_pool_comm, intra_pool_comm, npool
-  USE mp_images,       ONLY : nproc_image, intra_image_comm
   !
   IMPLICIT NONE
   !
