@@ -29,7 +29,6 @@ SUBROUTINE kcw_run_nscf (do_band)
   !
   LOGICAL, INTENT(IN) :: do_band
   INTEGER :: verbosity_save
-  INTEGER :: ik
   !
   CALL start_clock( 'kcw_run_nscf' )
   !
