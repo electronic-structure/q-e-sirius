@@ -106,17 +106,14 @@ subroutine newdq (dvscf, npe)
                enddo
                call stop_clock ('aux2_x_phases')
                !=============== compute Q*V for all atoms of type nt
-!              call ZGEMM('T', 'N', N_nt, nij, ngm, dcmplx(1.d0, 0.d0), tmp, ngm, &
-!                         CONJG(atom_type(nt)%qpw), ngm, dcmplx(0.d0, 0.d0), res1, N_nt)
                call start_clock ('newdq_ZGEMM')
+               ! qpw is a complex array of dimension (ngm, nij)
+               ! tmp is a complex array of dimension (ngm, N_nt)
+               ! --- (qpw)^H * tmp : (nij,  ngm) x (ngm, N_nt) = (nij, N_nt), dimensions of res2
+
                call ZGEMM('C', 'N', nij, N_nt, ngm, dcmplx(1.d0, 0.d0), atom_type(nt)%qpw, &
                           ngm, tmp, ngm, dcmplx(0.d0, 0.d0), res2, nij)
                call stop_clock ('newdq_ZGEMM')
-
-               ! tmp is a complex array of dimension (ngm, N_nt)
-               ! qpw is a complex array of dimension (ngm, nij)
-               ! --- (tmp)^T * qpw : (N_nt, ngm) x (ngm, nij)  = (N_nt, nij), dimensions of res1
-               ! --- (qpw)^H * tmp : (nij,  ngm) x (ngm, N_nt) = (nij, N_nt), dimensions of res2
 
                na_ = 0
                do na = 1, nat ! loop over all atoms

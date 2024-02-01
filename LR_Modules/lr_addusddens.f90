@@ -65,7 +65,7 @@ SUBROUTINE lr_addusddens (drhoscf, dbecsum)
 #if defined(__SIRIUS)
   DO nt = 1, ntyp
      IF (upf(nt)%tvanp) THEN
-        CALL sirius_generate_rhoaug_q(gs_handler, nt, nat, ngm, nspin_mag, atom_type(nt)%qpw1, &
+        CALL sirius_generate_rhoaug_q(gs_handler, nt, nat, ngm, nspin_mag, atom_type(nt)%qpw_t, &
             & nh(nt) * (nh(nt) + 1) / 2, eigqts, mill, dbecsum, nhm * (nhm + 1) / 2, aux)
      ENDIF
   ENDDO

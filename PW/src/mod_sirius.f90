@@ -46,7 +46,7 @@ MODULE mod_sirius
     !! lmax for beta-projectors
     !
     COMPLEX(8), ALLOCATABLE :: qpw(:, :)
-    COMPLEX(8), ALLOCATABLE :: qpw1(:, :)
+    COMPLEX(8), ALLOCATABLE :: qpw_t(:, :)
     !! plane-wave coefficients of Q-operator
     !
     INTEGER                 :: num_chi
@@ -1508,7 +1508,7 @@ MODULE mod_sirius
     IF (ALLOCATED(atom_type)) THEN
       DO iat = 1, nsp
         IF (ALLOCATED(atom_type(iat)%qpw)) DEALLOCATE(atom_type(iat)%qpw)
-        IF (ALLOCATED(atom_type(iat)%qpw1)) DEALLOCATE(atom_type(iat)%qpw1)
+        IF (ALLOCATED(atom_type(iat)%qpw_t)) DEALLOCATE(atom_type(iat)%qpw_t)
         IF (ALLOCATED(atom_type(iat)%l_chi)) DEALLOCATE(atom_type(iat)%l_chi)
         IF (ALLOCATED(atom_type(iat)%n_chi)) DEALLOCATE(atom_type(iat)%n_chi)
         IF (ALLOCATED(atom_type(iat)%chi)) DEALLOCATE(atom_type(iat)%chi)
