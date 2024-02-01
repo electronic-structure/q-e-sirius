@@ -45,22 +45,19 @@ subroutine newdq (dvscf, npe)
   !
   !   And the local variables
   !
-  integer :: na, ig, nt, ir, ipert, is, ih, jh, ijh
+  integer :: na, ig, nt, ir, ipert, is, ih, jh, ijh, nij, N_nt, na_
   ! countera
 
-  complex(DP), allocatable :: aux1 (:), aux2 (:,:), veff (:)
+  complex(DP), allocatable :: aux2 (:,:), veff (:), tmp(:,:), res2(:,:)
   ! work space
-  complex(DP) z1(nspin_mag), z2
 
   if (.not.okvan) return
   !
   call start_clock ('newdq')
   !
   int3 (:,:,:,:,:) = (0.d0, 0.0d0)
-  allocate (aux1 (ngm))
   allocate (aux2 (ngm , nspin_mag))
   allocate (veff (dfftp%nnr))
-
   !
   !     and for each perturbation of this irreducible representation
   !     integrate the change of the self consistent potential and
@@ -78,53 +75,68 @@ subroutine newdq (dvscf, npe)
         enddo
      enddo
 
-     do nt = 1, ntyp
+     do nt = 1, ntyp ! loop over atom types
         if (upf(nt)%tvanp ) then
-          ijh = 0
-           do ih = 1, nh (nt)
-              do jh = ih, nh (nt)
-                 ijh = ijh + 1
-                 !call qvan2 (ngm, ih, jh, nt, qmod, qgm, ylmk0)
-                 do na = 1, nat
-                    if (ityp (na) == nt) then
-                       z1 = (0.d0, 0.d0)
-!$omp parallel do default(shared) private(z2, is) reduction(+:z1)
-                       do ig = 1, ngm
-                          z2 = atom_type(nt)%qpw(ig, ijh) * &
-                                eigts1(mill(1,ig),na) * &
-                                eigts2(mill(2,ig),na) * &
-                                eigts3(mill(3,ig),na) * &
-                                eigqts(na)
-                          do is = 1, nspin_mag
-                             z1(is) = z1(is) + conjg(z2) * aux2(ig, is)
-                          enddo
-                       enddo !ig
-!$omp end parallel do
-                       do is = 1, nspin_mag
-                          int3(ih,jh,na,is,ipert) = omega * z1(is)
-                       enddo
-                    endif
-                 enddo
-              enddo
-           enddo
-           do na = 1, nat
-              if (ityp(na) == nt) then
-                 !
-                 !    We use the symmetry properties of the ps factor
-                 !
-                 do ih = 1, nh (nt)
-                    do jh = ih, nh (nt)
-                       do is = 1, nspin_mag
-                          int3(jh,ih,na,is,ipert) = int3(ih,jh,na,is,ipert)
-                       enddo
-                    enddo
-                 enddo
-              endif
-           enddo
-        endif
-     enddo
+           ! composite index for ih and jh (ksi and ksi')
+           nij = nh(nt)*(nh(nt)+1)/2 ! max number of (ih,jh) pairs per atom type nt
+           N_nt = 0 ! number of atoms of type nt
+           DO na = 1, nat
+              IF ( ityp(na) == nt ) N_nt = N_nt + 1
+           ENDDO
 
-  enddo
+           allocate (tmp(ngm, N_nt))
+           allocate (res2(nij, N_nt))
+
+           do is = 1, nspin_mag ! loop over spins
+               na_ = 0 ! count atoms of type nt
+               !=============== compute potential (aux2) * phase factors
+               call start_clock ('aux2_x_phases')
+               do na = 1, nat ! loop over all atoms
+                  if (ityp(na) == nt) then
+                     na_ = na_ + 1
+                     !$omp parallel do default(shared) private(ig)
+                     do ig = 1, ngm ! loop over G-vectors
+                         tmp(ig, na_) = aux2(ig, is) * CONJG( eigts1(mill(1,ig),na) * &
+                                                              eigts2(mill(2,ig),na) * &
+                                                              eigts3(mill(3,ig),na) * &
+                                                              eigqts(na) )
+                     enddo
+                     !$omp end parallel do
+                  endif
+               enddo
+               call stop_clock ('aux2_x_phases')
+               !=============== compute Q*V for all atoms of type nt
+               call start_clock ('newdq_ZGEMM')
+               ! qpw is a complex array of dimension (ngm, nij)
+               ! tmp is a complex array of dimension (ngm, N_nt)
+               ! --- (qpw)^H * tmp : (nij,  ngm) x (ngm, N_nt) = (nij, N_nt), dimensions of res2
+
+               call ZGEMM('C', 'N', nij, N_nt, ngm, dcmplx(1.d0, 0.d0), atom_type(nt)%qpw, &
+                          ngm, tmp, ngm, dcmplx(0.d0, 0.d0), res2, nij)
+               call stop_clock ('newdq_ZGEMM')
+
+               na_ = 0
+               do na = 1, nat ! loop over all atoms
+                  if (ityp(na) == nt) then
+                     na_ = na_ + 1
+                     ijh = 0
+                     do ih = 1, nh(nt) ! loop over ksi
+                        do jh = ih, nh(nt) ! loop over ksi'
+                           ijh = ijh + 1
+                           int3(ih,jh,na,is,ipert) = omega * res2(ijh, na_)
+                           !                 lower triangle            upper triangle
+                           IF (jh > ih) int3(jh,ih,na,is,ipert) = int3(ih,jh,na,is,ipert)
+                        enddo
+                     enddo
+                  endif
+               enddo
+           enddo ! loop over spins
+           !
+           deallocate (tmp)
+           deallocate (res2)
+        endif ! if US-PP
+     enddo ! nt
+  enddo ! ipert
 #if defined(__MPI)
   call mp_sum ( int3, intra_bgrp_comm )
 #endif
@@ -138,7 +150,6 @@ subroutine newdq (dvscf, npe)
   !
   deallocate (veff)
   deallocate (aux2)
-  deallocate (aux1)
   !
   call stop_clock ('newdq')
   !
