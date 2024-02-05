@@ -57,9 +57,6 @@ PROGRAM hp_main
   CALL hp_readin()
 #if defined(__SIRIUS)
   CALL setup_sirius()
-  !CALL sirius_load_state(gs_handler, "state.h5")
-  !CALL put_potential_to_sirius()
-  !CALL sirius_generate_d_operator_matrix(gs_handler)
   use_sirius_scf = .false.
 #endif
   !
