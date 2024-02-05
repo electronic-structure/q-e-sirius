@@ -62,12 +62,13 @@ SUBROUTINE non_scf( )
   FLUSH( stdout )
   !
 #if defined(__SIRIUS)
-   CALL setup_sirius()
+
    IF ( use_sirius_scf ) THEN
      !
      ! create k-point set
      ! WARNING: k-points must be provided in fractional coordinates of the reciprocal lattice and
      !          without x2 multiplication for the lsda case
+     CALL setup_sirius()
      CALL sirius_create_kset(sctx, num_kpoints, kpoints, wkpoints, .FALSE., ks_handler1)    
      CALL sirius_initialize_kset(ks_handler1)
      !
