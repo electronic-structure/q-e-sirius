@@ -73,11 +73,11 @@ MODULE mod_sirius
   !! SIRIUS simulation context handler
   !
   TYPE(sirius_ground_state_handler) :: gs_handler
-  TYPE(sirius_ground_state_handler) :: gs_handler1
+  !TYPE(sirius_ground_state_handler) :: gs_handler1
   !! SIRIUS ground state handler
   !
   TYPE(sirius_kpoint_set_handler) :: ks_handler
-  TYPE(sirius_kpoint_set_handler) :: ks_handler1
+  !TYPE(sirius_kpoint_set_handler) :: ks_handler1
   !! SIRIUS k-point set handler
   TYPE(C_PTR) :: error_code
   !

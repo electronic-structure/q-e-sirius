@@ -69,25 +69,25 @@ SUBROUTINE non_scf( )
      ! WARNING: k-points must be provided in fractional coordinates of the reciprocal lattice and
      !          without x2 multiplication for the lsda case
      CALL setup_sirius()
-     CALL sirius_create_kset(sctx, num_kpoints, kpoints, wkpoints, .FALSE., ks_handler1)    
-     CALL sirius_initialize_kset(ks_handler1)
+     CALL sirius_create_kset(sctx, num_kpoints, kpoints, wkpoints, .FALSE., ks_handler)
+     CALL sirius_initialize_kset(ks_handler)
      !
      ! create ground-state class    
-     CALL sirius_create_ground_state(ks_handler1, gs_handler1)
-     CALL put_density_to_sirius(gs_handler1)
+     CALL sirius_create_ground_state(ks_handler, gs_handler)
+     CALL put_density_to_sirius(gs_handler)
      IF (okpaw) THEN
-       CALL put_density_matrix_to_sirius(gs_handler1)
-       CALL sirius_generate_density(gs_handler1, paw_only=.TRUE.)
+       CALL put_density_matrix_to_sirius(gs_handler)
+       CALL sirius_generate_density(gs_handler, paw_only=.TRUE.)
      ENDIF
-     CALL sirius_generate_effective_potential(gs_handler1)
-     CALL sirius_initialize_subspace(gs_handler1, ks_handler1)
+     CALL sirius_generate_effective_potential(gs_handler)
+     CALL sirius_initialize_subspace(gs_handler, ks_handler)
 
      !CALL sirius_set_parameters(sctx, iter_solver_num_steps=100)
-     CALL sirius_find_eigen_states(gs_handler1, ks_handler1, iter_solver_tol=1.d-13, iter_solver_steps=200)
+     CALL sirius_find_eigen_states(gs_handler, ks_handler, iter_solver_tol=1.d-13, iter_solver_steps=100)
      !save wfs
-     CALL get_wave_functions_from_sirius(ks_handler1)
+     CALL get_wave_functions_from_sirius(ks_handler)
      !transfer eigenvalues to QE
-     CALL get_band_energies_from_sirius(ks_handler1)
+     CALL get_band_energies_from_sirius(ks_handler)
      !CALL sirius_get_energy(gs_handler1, "fermi", ef)
   ELSE
     IF ( lelfield ) THEN
