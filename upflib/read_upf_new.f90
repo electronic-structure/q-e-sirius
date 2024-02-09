@@ -537,7 +537,6 @@ CONTAINS
        END IF
        call get_attr( 'occupation', upf%oc(nw) )
        call get_attr( 'n', upf%nchi(nw) )
-       
        call get_attr( 'pseudo_energy', upf%epseu(nw) )
        call get_attr( 'cutoff_radius', upf%rcut_chi(nw) )
        call get_attr( 'ultrasoft_cutoff_radius', upf%rcutus_chi(nw) )
