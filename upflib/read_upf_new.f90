@@ -540,6 +540,20 @@ CONTAINS
        call get_attr( 'pseudo_energy', upf%epseu(nw) )
        call get_attr( 'cutoff_radius', upf%rcut_chi(nw) )
        call get_attr( 'ultrasoft_cutoff_radius', upf%rcutus_chi(nw) )
+       !
+       !fix reading of n if its value is not explicit in the file
+       !
+       if ( upf%nchi(nw) .EQ. 0 ) then
+         if (upf%els(nw)(1:1) == '1') upf%nchi (nw) = 1
+         if (upf%els(nw)(1:1) == '2') upf%nchi (nw) = 2
+         if (upf%els(nw)(1:1) == '3') upf%nchi (nw) = 3
+         if (upf%els(nw)(1:1) == '4') upf%nchi (nw) = 4
+         if (upf%els(nw)(1:1) == '5') upf%nchi (nw) = 5
+         if (upf%els(nw)(1:1) == '6') upf%nchi (nw) = 6
+         if (upf%els(nw)(1:1) == '7') upf%nchi (nw) = 7
+       end if         
+       !
+       !end fix
     END DO
     CALL xmlr_closetag( ) ! end pp_pswfc
     !

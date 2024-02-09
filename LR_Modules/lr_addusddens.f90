@@ -62,6 +62,14 @@ SUBROUTINE lr_addusddens (drhoscf, dbecsum)
   ALLOCATE (aux(ngm,nspin_mag))
   !
   aux(:,:) = (0.d0, 0.d0)
+#if defined(__SIRIUS)
+  DO nt = 1, ntyp
+     IF (upf(nt)%tvanp) THEN
+        CALL sirius_generate_rhoaug_q(gs_handler, nt, nat, ngm, nspin_mag, atom_type(nt)%qpw_t, &
+            & nh(nt) * (nh(nt) + 1) / 2, eigqts, mill, dbecsum, nhm * (nhm + 1) / 2, aux)
+     ENDIF
+  ENDDO
+#else
   !
   DO nt = 1, ntyp
      IF (upf(nt)%tvanp) THEN
@@ -100,6 +108,7 @@ SUBROUTINE lr_addusddens (drhoscf, dbecsum)
         ENDDO
      ENDIF
   ENDDO
+#endif
   !
   ! Convert aux to real space, and add to the charge density.
   !
