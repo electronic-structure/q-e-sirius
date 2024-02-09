@@ -64,7 +64,10 @@ SUBROUTINE non_scf( )
 #if defined(__SIRIUS)
 
    IF ( use_sirius_scf ) THEN
-     !
+     WRITE(*,*)''
+     WRITE(*,*)'============================'
+     WRITE(*,*)'*       running NSCF       *'
+     WRITE(*,*)'============================'
      ! create k-point set
      ! WARNING: k-points must be provided in fractional coordinates of the reciprocal lattice and
      !          without x2 multiplication for the lsda case
