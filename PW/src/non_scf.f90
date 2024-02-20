@@ -62,36 +62,21 @@ SUBROUTINE non_scf( )
   FLUSH( stdout )
   !
 #if defined(__SIRIUS)
-
-   IF ( use_sirius_scf ) THEN
-     WRITE(*,*)''
-     WRITE(*,*)'============================'
-     WRITE(*,*)'*       running NSCF       *'
-     WRITE(*,*)'============================'
-     ! create k-point set
-     ! WARNING: k-points must be provided in fractional coordinates of the reciprocal lattice and
-     !          without x2 multiplication for the lsda case
-     CALL setup_sirius()
-     CALL sirius_create_kset(sctx, num_kpoints, kpoints, wkpoints, .FALSE., ks_handler)
-     CALL sirius_initialize_kset(ks_handler)
-     !
-     ! create ground-state class    
-     CALL sirius_create_ground_state(ks_handler, gs_handler)
-     CALL put_density_to_sirius(gs_handler)
-     IF (okpaw) THEN
-       CALL put_density_matrix_to_sirius(gs_handler)
-       CALL sirius_generate_density(gs_handler, paw_only=.TRUE.)
-     ENDIF
-     CALL sirius_generate_effective_potential(gs_handler)
-     CALL sirius_initialize_subspace(gs_handler, ks_handler)
-
-     !CALL sirius_set_parameters(sctx, iter_solver_num_steps=100)
-     CALL sirius_find_eigen_states(gs_handler, ks_handler, iter_solver_tol=1.d-13, iter_solver_steps=100)
-     !save wfs
-     CALL get_wave_functions_from_sirius(ks_handler)
-     !transfer eigenvalues to QE
-     CALL get_band_energies_from_sirius(ks_handler)
-     !CALL sirius_get_energy(gs_handler1, "fermi", ef)
+  IF ( use_sirius_scf ) THEN
+    WRITE(*,*)''
+    WRITE(*,*)'============================'
+    WRITE(*,*)'*       running NSCF       *'
+    WRITE(*,*)'============================'
+    ! create k-point set
+    ! WARNING: k-points must be provided in fractional coordinates of the reciprocal lattice and
+    !          without x2 multiplication for the lsda case
+    CALL clear_sirius()
+    CALL setup_sirius()
+    CALL sirius_initialize_kset(ks_handler)
+    CALL sirius_initialize_subspace(gs_handler, ks_handler)
+    CALL sirius_find_eigen_states(gs_handler, ks_handler, iter_solver_tol=1.d-13, iter_solver_steps=100)
+    !save wfs
+    CALL get_wave_functions_from_sirius(ks_handler)
   ELSE
     IF ( lelfield ) THEN
     !
@@ -104,15 +89,15 @@ SUBROUTINE non_scf( )
     ENDIF
   END IF
 #else   
-   IF ( lelfield ) THEN
-   !
-   CALL c_bands_efield( iter )
-   !
-   ELSE
-   !
-   CALL c_bands_nscf()
-   !
-   ENDIF
+  IF ( lelfield ) THEN
+  !
+  CALL c_bands_efield( iter )
+  !
+  ELSE
+  !
+  CALL c_bands_nscf()
+  !
+  ENDIF
 #endif
   !
   ! ... check if calculation was stopped in c_bands
@@ -130,6 +115,11 @@ SUBROUTINE non_scf( )
   !
   CALL using_et(1)
   CALL poolrecover( et, nbnd, nkstot, nks )
+#if defined(__SIRIUS)
+  IF ( use_sirius_scf ) THEN
+    CALL get_band_energies_from_sirius(ks_handler)
+  END IF
+#endif
   !
   ! ... the new density is computed here. For PAW:
   ! ... sum_band computes new becsum (stored in uspp modules)
