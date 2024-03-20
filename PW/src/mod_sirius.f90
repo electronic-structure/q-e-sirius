@@ -1559,12 +1559,14 @@ MODULE mod_sirius
     USE wvfct,    ONLY : nbnd, et
     USE klist,    ONLY : nkstot, nks
     USE lsda_mod, ONLY : nspin
+    USE mp_world, ONLY : mpime
     !
     IMPLICIT NONE
     !
     REAL(8), ALLOCATABLE :: band_e(:,:)
     INTEGER :: ik, nk, nb, nfv
     TYPE(sirius_kpoint_set_handler) :: ks_handler_
+    INTEGER, EXTERNAL :: global_kpoint_index
     !
     ALLOCATE(band_e(nbnd, nkstot))
     ! get band energies
@@ -1582,10 +1584,19 @@ MODULE mod_sirius
         CALL sirius_get_band_energies(ks_handler_, ik, 2, band_e(:, nk + ik))
       END DO
     ENDIF
-    ! convert to Ry
-    DO ik = 1, nkstot
-      et(:, ik) = 2.d0 * band_e(:, ik)
-    ENDDO
+    ! convert to Ry and also:
+    !using qe way of storing eigenvalues:
+    !- rank=0 keeps all the eigenvalues 
+    !- all other ranks keeps only local eigenvalues from 1 to nks using local index
+    IF ( mpime .eq. 0) THEN
+      DO ik = 1, nkstot
+        et(:, ik) = 2.d0 * band_e(:, ik)
+      ENDDO    
+    ELSE 
+      DO ik = 1, nks
+        et(:, ik) = 2.d0 * band_e( : , global_kpoint_index(nkstot, ik) )
+      ENDDO    
+    END IF
     !
     DEALLOCATE(band_e)
     !
@@ -1699,10 +1710,13 @@ MODULE mod_sirius
     USE lsda_mod,         ONLY : isk, lsda
     USE mp_pools,         ONLY : inter_pool_comm
     USE parallel_include
+    USE klist,            ONLY : xk
+    USE cell_base,        ONLY : at
     !
     IMPLICIT NONE
     !
     INTEGER, EXTERNAL :: global_kpoint_index
+    INTEGER, EXTERNAL :: local_kpoint_index
     INTEGER, ALLOCATABLE :: vgl(:,:)
     INTEGER ig, ik, ik_, ik1, i, j, ispn, rank, ierr, nksmax, ikloc
     COMPLEX(8) z1
@@ -1711,33 +1725,60 @@ MODULE mod_sirius
     TYPE(sirius_kpoint_set_handler) :: ks_handler_
     !
     ! rank of communicator that distributes k-points
-    CALL mpi_comm_rank(inter_pool_comm, rank, ierr)
+    !CALL mpi_comm_rank(inter_pool_comm, rank, ierr)
     !
     ALLOCATE(vgl(3, npwx))
     !
+    
     DO ik = 1, nkstot
-      ik1 = MOD(ik - 1, num_kpoints) + 1
-      ispn = 1
-      IF (ik .GT. num_kpoints) THEN
-        ispn = 2
-      ENDIF
-      IF (kpoint_index_map(1, ik) .EQ. rank) THEN
-        ikloc = kpoint_index_map(2, ik)
+      ikloc = local_kpoint_index ( nkstot, ik )
+      IF ( ikloc .eq. -1 ) THEN
+        !
+        !if the k point is not local, we just call sirius_get_wave_functions
+        !so that if it is local in sirius, the wfs can be sent to the qe-local rank
+        !
+        CALL sirius_get_wave_functions( ks_handler_ )
+      ELSE
+        !
+        !if the k point is local, we retrieve the wavefunction and save it to buffer
+        !
         DO ig = 1, ngk(ikloc)
           vgl(:,ig) = mill(:, igk_k(ig, ikloc))
         ENDDO
-        CALL sirius_get_wave_functions( ks_handler_, vkl=kpoints(:, ik1), spin=ispn, num_gvec_loc=ngk(ikloc), &
-                                      & gvec_loc=vgl, evec=evc, ld=npwx, num_spin_comp=npol )
+        CALL sirius_get_wave_functions( ks_handler_, vkl=MATMUL(TRANSPOSE(at), xk(:,ikloc)), spin=isk(ikloc), &
+                                        num_gvec_loc=ngk(ikloc), gvec_loc=vgl, evec=evc, ld=npwx, num_spin_comp=1 )
         IF (nks > 1 .OR. lelfield) THEN
           CALL save_buffer ( evc, nwordwfc, iunwfc, ikloc )        
         ENDIF
-      ELSE
-        CALL sirius_get_wave_functions( ks_handler_ )
       ENDIF
-      !
       CALL mpi_barrier(inter_pool_comm, ierr)
-      !
-    ENDDO
+    END DO
+    
+    
+    
+    !DO ik = 1, nkstot
+    !  ik1 = MOD(ik - 1, num_kpoints) + 1
+    !  ispn = 1
+    !  IF (ik .GT. num_kpoints) THEN
+    !    ispn = 2
+    !  ENDIF
+    !  IF (kpoint_index_map(1, ik) .EQ. rank) THEN
+    !    ikloc = kpoint_index_map(2, ik)
+    !    DO ig = 1, ngk(ikloc)
+    !      vgl(:,ig) = mill(:, igk_k(ig, ikloc))
+    !    ENDDO
+    !    CALL sirius_get_wave_functions( ks_handler_, vkl=kpoints(:, ik1), spin=ispn, num_gvec_loc=ngk(ikloc), &
+    !                                  & gvec_loc=vgl, evec=evc, ld=npwx, num_spin_comp=npol )
+    !    IF (nks > 1 .OR. lelfield) THEN
+    !      CALL save_buffer ( evc, nwordwfc, iunwfc, ikloc )        
+    !    ENDIF
+    !  ELSE
+    !    CALL sirius_get_wave_functions( ks_handler_ )
+    !  ENDIF
+    !  !
+    !  CALL mpi_barrier(inter_pool_comm, ierr)
+    !  !
+    !ENDDO
     !
     !CALL mpi_allreduce(nks, nksmax, 1, MPI_INTEGER, MPI_MAX, inter_pool_comm, ierr)
     !
