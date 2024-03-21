@@ -58,7 +58,7 @@ PROGRAM hp_main
 #if defined(__SIRIUS)
   CALL setup_sirius()
   use_sirius_scf = .true.
-#endif
+#endif 
   !
   ! Initialization
   !
