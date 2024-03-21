@@ -286,6 +286,8 @@ IF (nqs == 1) do_real_space = .TRUE.
     WRITE(876,'(i5)') num_wann
   ENDIF
   !
+  !opening a file for the alpha values in yml format
+  OPEN (954, file = 'kcw.yml')
   DO jwann = iorb_start, iorb_end
     !
     iwann = group_alpha(jwann)
@@ -304,6 +306,11 @@ IF (nqs == 1) do_real_space = .TRUE.
     ! store the final value of alpha
     alpha_final(iwann) = alpha
     IF (i_orb == -1) WRITE(876,'(i5, 2(3x, F16.12))') iwann, alpha, REAL(sh(iwann))
+    !
+    !filling yml file
+    !
+    WRITE(954,'("iwann",I4.4,":")') iwann
+    WRITE(954,'(2X,"alpha:",F12.6)') alpha
     !
   ENDDO
   !
