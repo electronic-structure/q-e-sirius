@@ -1694,7 +1694,7 @@ MODULE mod_sirius
   END SUBROUTINE get_band_occupancies_from_sirius
   !
   !-------------------------------------------------------------------------
-  SUBROUTINE get_wave_functions_from_sirius
+  SUBROUTINE get_wave_functions_from_sirius(ks_handler_)
     !-------------------------------------------------------------------------
     !! Get KS wave-functions.
     !
@@ -1718,6 +1718,7 @@ MODULE mod_sirius
     INTEGER ig, ik, ik_, ik1, i, j, ispn, rank, ierr, nksmax, ikloc
     COMPLEX(8) z1
     LOGICAL exst_file,exst_mem
+    TYPE(sirius_kpoint_set_handler) :: ks_handler_
     !
     ! rank of communicator that distributes k-points
     CALL mpi_comm_rank(inter_pool_comm, rank, ierr)
