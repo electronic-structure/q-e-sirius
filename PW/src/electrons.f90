@@ -714,9 +714,9 @@ SUBROUTINE electrons_scf ( printout, exxen )
   !
   IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
     CALL get_band_occupancies_from_sirius()
-    CALL get_band_energies_from_sirius()
+    CALL get_band_energies_from_sirius(ks_handler)
     IF (sirius_pwpp) THEN
-      CALL get_wave_functions_from_sirius
+      CALL get_wave_functions_from_sirius(ks_handler)
     END IF
     IF (conv_elec)  THEN
       CALL print_ks_energies()

@@ -74,10 +74,13 @@ MODULE mod_sirius
   !! SIRIUS simulation context handler
   !
   TYPE(sirius_ground_state_handler) :: gs_handler
+  TYPE(sirius_ground_state_handler) :: gs_handler1
   !! SIRIUS ground state handler
   !
   TYPE(sirius_kpoint_set_handler) :: ks_handler
+  TYPE(sirius_kpoint_set_handler) :: ks_handler1
   !! SIRIUS k-point set handler
+  TYPE(C_PTR) :: error_code
   !
  CONTAINS
   !
@@ -153,7 +156,7 @@ MODULE mod_sirius
   END SUBROUTINE put_potential_to_sirius
   !
   !--------------------------------------------------------------------
-  SUBROUTINE put_density_to_sirius()
+  SUBROUTINE put_density_to_sirius(gs_handler_)
     !------------------------------------------------------------------
     !! Put plane-wave coefficients of density to SIRIUS
     !
@@ -166,16 +169,17 @@ MODULE mod_sirius
     !
     INTEGER iat, ig, ih, jh, ijh, na, ispn
     COMPLEX(8) z1, z2
-    !
+    TYPE(sirius_ground_state_handler) :: gs_handler_
+  !
     ! get rho(G)
-    CALL sirius_set_pw_coeffs( gs_handler, "rho", rho%of_g(:, 1), .TRUE., ngm, mill, intra_bgrp_comm )
+    CALL sirius_set_pw_coeffs( gs_handler_, "rho", rho%of_g(:, 1), .TRUE., ngm, mill, intra_bgrp_comm )
     IF (nspin.EQ.2) THEN
-      CALL sirius_set_pw_coeffs( gs_handler, "magz", rho%of_g(:, 2), .TRUE., ngm, mill, intra_bgrp_comm )
+      CALL sirius_set_pw_coeffs( gs_handler_, "magz", rho%of_g(:, 2), .TRUE., ngm, mill, intra_bgrp_comm )
     ENDIF
     IF (nspin.EQ.4) THEN
-      CALL sirius_set_pw_coeffs( gs_handler, "magx", rho%of_g(:, 2), .TRUE., ngm, mill, intra_bgrp_comm )
-      CALL sirius_set_pw_coeffs( gs_handler, "magy", rho%of_g(:, 3), .TRUE., ngm, mill, intra_bgrp_comm )
-      CALL sirius_set_pw_coeffs( gs_handler, "magz", rho%of_g(:, 4), .TRUE., ngm, mill, intra_bgrp_comm )
+      CALL sirius_set_pw_coeffs( gs_handler_, "magx", rho%of_g(:, 2), .TRUE., ngm, mill, intra_bgrp_comm )
+      CALL sirius_set_pw_coeffs( gs_handler_, "magy", rho%of_g(:, 3), .TRUE., ngm, mill, intra_bgrp_comm )
+      CALL sirius_set_pw_coeffs( gs_handler_, "magz", rho%of_g(:, 4), .TRUE., ngm, mill, intra_bgrp_comm )
     ENDIF
   END SUBROUTINE put_density_to_sirius
   !
@@ -212,7 +216,7 @@ MODULE mod_sirius
   END SUBROUTINE get_density_from_sirius
   !
   !--------------------------------------------------------------------
-  SUBROUTINE put_density_matrix_to_sirius
+  SUBROUTINE put_density_matrix_to_sirius(gs_handler_)
     !------------------------------------------------------------------
     !! Put QE density matrix to SIRIUS
     !
@@ -227,6 +231,7 @@ MODULE mod_sirius
     COMPLEX(8), ALLOCATABLE :: dens_mtrx(:,:,:)
     REAL(8), ALLOCATABLE :: dens_mtrx_tmp(:, :, :)
     REAL(8) fact
+    TYPE(sirius_ground_state_handler) :: gs_handler_
     ! set density matrix
     ! complex density matrix in SIRIUS has at maximum three components
     ALLOCATE(dens_mtrx_tmp(nhm * (nhm + 1) / 2, nat, nspin))
@@ -270,13 +275,14 @@ MODULE mod_sirius
               ENDIF
             ENDDO
           ENDDO
-          CALL sirius_set_density_matrix(gs_handler, na, dens_mtrx, nhm)
+          CALL sirius_set_density_matrix(gs_handler_, na, dens_mtrx, nhm)
         ENDIF
       ENDDO
     ENDDO
     DEALLOCATE(dens_mtrx)
     DEALLOCATE(dens_mtrx_tmp)
   END SUBROUTINE put_density_matrix_to_sirius
+
   !
   !--------------------------------------------------------------------
   SUBROUTINE calc_veff() BIND(C)
@@ -1443,9 +1449,9 @@ MODULE mod_sirius
     !
     ! create ground-state class
     CALL sirius_create_ground_state(ks_handler, gs_handler)
-    CALL put_density_to_sirius()
+    CALL put_density_to_sirius(gs_handler)
     IF (okpaw) THEN
-      CALL put_density_matrix_to_sirius()
+      CALL put_density_matrix_to_sirius(gs_handler)
       CALL sirius_generate_density(gs_handler, paw_only=.TRUE.)
     ENDIF
     CALL sirius_generate_effective_potential(gs_handler)
@@ -1548,7 +1554,7 @@ MODULE mod_sirius
   END SUBROUTINE
   !
   !-------------------------------------------------------------------------
-  SUBROUTINE get_band_energies_from_sirius()
+  SUBROUTINE get_band_energies_from_sirius(ks_handler_)
     !-----------------------------------------------------------------------
     !! Get KS energies from SIRIUS.
     !
@@ -1560,21 +1566,22 @@ MODULE mod_sirius
     !
     REAL(8), ALLOCATABLE :: band_e(:,:)
     INTEGER :: ik, nk, nb, nfv
+    TYPE(sirius_kpoint_set_handler) :: ks_handler_
     !
     ALLOCATE(band_e(nbnd, nkstot))
     ! get band energies
     IF (nspin.NE.2) THEN
       ! non-magnetic or non-collinear case
       DO ik = 1, nkstot
-        CALL sirius_get_band_energies(ks_handler, ik, 1, band_e(:, ik))
+        CALL sirius_get_band_energies(ks_handler_, ik, 1, band_e(:, ik))
       END DO
     ELSE
       ! collinear magnetic case
       nk = nkstot / 2
       ! get band energies
       DO ik = 1, nk
-        CALL sirius_get_band_energies(ks_handler, ik, 1, band_e(:, ik))
-        CALL sirius_get_band_energies(ks_handler, ik, 2, band_e(:, nk + ik))
+        CALL sirius_get_band_energies(ks_handler_, ik, 1, band_e(:, ik))
+        CALL sirius_get_band_energies(ks_handler_, ik, 2, band_e(:, nk + ik))
       END DO
     ENDIF
     ! convert to Ry
@@ -1678,7 +1685,7 @@ MODULE mod_sirius
   END SUBROUTINE get_band_occupancies_from_sirius
   !
   !-------------------------------------------------------------------------
-  SUBROUTINE get_wave_functions_from_sirius
+  SUBROUTINE get_wave_functions_from_sirius(ks_handler_)
     !-------------------------------------------------------------------------
     !! Get KS wave-functions.
     !
@@ -1703,6 +1710,8 @@ MODULE mod_sirius
     COMPLEX(8) z1
     LOGICAL exst_file,exst_mem
     !
+    TYPE(sirius_kpoint_set_handler) :: ks_handler_
+    !
     ! rank of communicator that distributes k-points
     CALL mpi_comm_rank(inter_pool_comm, rank, ierr)
     !
@@ -1719,13 +1728,13 @@ MODULE mod_sirius
         DO ig = 1, ngk(ikloc)
           vgl(:,ig) = mill(:, igk_k(ig, ikloc))
         ENDDO
-        CALL sirius_get_wave_functions( ks_handler, vkl=kpoints(:, ik1), spin=ispn, num_gvec_loc=ngk(ikloc), &
+        CALL sirius_get_wave_functions( ks_handler_, vkl=kpoints(:, ik1), spin=ispn, num_gvec_loc=ngk(ikloc), &
                                       & gvec_loc=vgl, evec=evc, ld=npwx, num_spin_comp=npol )
         IF (nks > 1 .OR. lelfield) THEN
-          CALL save_buffer ( evc, nwordwfc, iunwfc, ikloc )
+          CALL save_buffer ( evc, nwordwfc, iunwfc, ikloc )        
         ENDIF
       ELSE
-        CALL sirius_get_wave_functions( ks_handler )
+        CALL sirius_get_wave_functions( ks_handler_ )
       ENDIF
       !
       CALL mpi_barrier(inter_pool_comm, ierr)
@@ -1759,6 +1768,7 @@ MODULE mod_sirius
     DEALLOCATE(vgl)
     !
   END SUBROUTINE get_wave_functions_from_sirius
+  !
   !
   !-------------------------------------------------------------------------
   SUBROUTINE put_xc_functional_to_sirius
