@@ -131,6 +131,7 @@ iweights.o \
 intersite_V.o \
 init_nsg.o \
 nsg_adj.o \
+ns_constraint.o \
 start_k.o \
 kpoint_grid.o \
 lchk_tauxk.o \

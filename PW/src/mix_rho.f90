@@ -50,6 +50,7 @@ SUBROUTINE mix_rho( input_rhout, rhoin, alphamix, dr2, tr2_min, iter, n_iter,&
   USE oscdft_base,      ONLY : oscdft_ctx
   USE oscdft_functions, ONLY : oscdft_mix_rho
 #endif
+  USE ns_constraint, ONLY : Hubbard_conv, Hubbard_constraining, Hubbard_constraints, constrain_ns
   !
   IMPLICIT NONE
   !
@@ -89,12 +90,19 @@ SUBROUTINE mix_rho( input_rhout, rhoin, alphamix, dr2, tr2_min, iter, n_iter,&
     ldim,          &! 2 * Hubbard_lmax + 1
     iunmix_nsg,    &! the unit for Hubbard mixing within DFT+U+V
     nt,            &! index of the atomic type
-    nword           ! size the DFT+U+V-related arrays
+    nword,         &! size the DFT+U+V-related arrays
+    iunmix_hub_cons, nword_hub, m1, m2 ! For mixing hubbard lagrange multipliers
+    
   REAL(DP),ALLOCATABLE :: betamix(:,:), work(:)
   INTEGER, ALLOCATABLE :: iwork(:)
   COMPLEX(DP), ALLOCATABLE :: nsginsave(:,:,:,:,:),  nsgoutsave(:,:,:,:,:)
   COMPLEX(DP), ALLOCATABLE :: deltansg(:,:,:,:,:)
-  LOGICAL :: exst, exst_mem, exst_file
+  
+  COMPLEX(DP), ALLOCATABLE :: hub_cons_insave(:,:,:,:),  hub_cons_outsave(:,:,:,:)
+  COMPLEX(DP), ALLOCATABLE :: delta_hub_cons(:,:,:,:)
+  COMPLEX(DP),ALLOCATABLE :: t_hub_cons1(:,:,:, :),t_hub_cons2(:,:,:, :)
+  
+  LOGICAL :: exst, exst_mem, exst_file, hub_constraining, exst_mem_hub, exst_file_hub
   REAL(DP) :: gamma0
 #if defined(__NORMALIZE_BETAMIX)
   REAL(DP) :: norm2, obn
@@ -115,8 +123,14 @@ SUBROUTINE mix_rho( input_rhout, rhoin, alphamix, dr2, tr2_min, iter, n_iter,&
   INTEGER, EXTERNAL :: find_free_unit
   !
   COMPLEX(DP), ALLOCATABLE :: df_nsg(:,:,:,:,:,:), dv_nsg(:,:,:,:,:,:)
+  COMPLEX(DP), ALLOCATABLE :: df_hub_cons(:,:,:,:,:), dv_hub_cons(:,:,:,:,:)
   !
   CALL start_clock( 'mix_rho' )
+  !
+  hub_constraining = ANY(Hubbard_constraining)
+  if (.not. hub_constraining) then
+     Hubbard_conv = .TRUE.
+  endif
   !
   ngm0 = ngms
   !
@@ -131,11 +145,14 @@ SUBROUTINE mix_rho( input_rhout, rhoin, alphamix, dr2, tr2_min, iter, n_iter,&
   !
   ! DFT+U+V case
   !
-  IF (lda_plus_u .AND. lda_plus_u_kind.EQ.2) THEN
+  IF (lda_plus_u .OR. hub_constraining) then
      ldim = 0
      DO nt = 1, ntyp
         ldim = MAX(ldim, ldim_u(nt))
      ENDDO
+  ENDIF
+  
+  IF (lda_plus_u .AND. lda_plus_u_kind.EQ.2) THEN
      ALLOCATE ( deltansg (ldim, ldim, max_num_neighbors, nat, nspin) )
      deltansg(:,:,:,:,:) = nsgnew(:,:,:,:,:) - nsg(:,:,:,:,:)
   ENDIF
@@ -199,6 +216,11 @@ SUBROUTINE mix_rho( input_rhout, rhoin, alphamix, dr2, tr2_min, iter, n_iter,&
         nsgnew(:,:,:,:,:) = deltansg(:,:,:,:,:) + nsg(:,:,:,:,:)
         DEALLOCATE(deltansg)
      ENDIF
+     if (hub_constraining .AND. Hubbard_conv) then
+        if (ALLOCATED(dv_hub_cons) ) DEALLOCATE( dv_hub_cons )
+        if (ALLOCATED(df_hub_cons) ) DEALLOCATE( df_hub_cons )
+        if (ALLOCATED(delta_hub_cons) ) DEALLOCATE( delta_hub_cons )
+     endif
      ! 
      CALL stop_clock( 'mix_rho' )
      !
@@ -214,6 +236,28 @@ SUBROUTINE mix_rho( input_rhout, rhoin, alphamix, dr2, tr2_min, iter, n_iter,&
      ALLOCATE( dv_nsg(ldim,ldim,max_num_neighbors,nat,nspin,n_iter) )
   ENDIF
   !
+  IF (hub_constraining) THEN
+     ALLOCATE (t_hub_cons1(ldim, ldim, nspin, nat))
+     ALLOCATE (t_hub_cons2(ldim, ldim, nspin, nat))
+     ALLOCATE (delta_hub_cons(ldim, ldim, nspin, nat))
+
+     t_hub_cons1(:, :, :, :) = Hubbard_constraints(:, :, :, :)
+
+     call constrain_ns(input_rhout%ns, Hubbard_conv, dr2, tr2, iter)
+  
+     if (.not. Hubbard_conv) then
+        delta_hub_cons(:, :, :, :) = Hubbard_constraints(:, :, :, :) - t_hub_cons1(:, :, :, :)
+        t_hub_cons2(:, :, :, :) = Hubbard_constraints(:, :, :, :)
+     endif
+  endif
+  if (hub_constraining .AND. .not. Hubbard_conv) then
+     iunmix_hub_cons = find_free_unit() + 1
+     nword_hub = ldim * ldim * nat * nspin * n_iter
+     CALL open_buffer( iunmix_hub_cons, 'mix.hubcons', nword_hub, io_level, exst_mem_hub, exst_file_hub)
+     ALLOCATE( df_hub_cons(ldim,ldim,nspin, nat, n_iter) )
+     ALLOCATE( dv_hub_cons(ldim,ldim,nspin, nat, n_iter) )
+  endif
+   
   IF ( .NOT. ALLOCATED( df ) ) THEN
      ALLOCATE( df( n_iter ) )
      DO i=1,n_iter
@@ -252,6 +296,13 @@ SUBROUTINE mix_rho( input_rhout, rhoin, alphamix, dr2, tr2_min, iter, n_iter,&
         dv_nsg(:,:,:,:,:,ipos) = dv_nsg(:,:,:,:,:,ipos) - nsg
      ENDIF
      !
+     if (hub_constraining .AND. .not. Hubbard_conv) then
+        CALL get_buffer ( df_hub_cons, nword_hub, iunmix_hub_cons, 1 )
+        CALL get_buffer ( dv_hub_cons, nword_hub, iunmix_hub_cons, 2 )
+        df_hub_cons(:,:,:,:,ipos) = df_hub_cons(:,:,:,:,ipos) - delta_hub_cons
+        dv_hub_cons(:,:,:,:,ipos) = dv_hub_cons(:,:,:,:,ipos) - t_hub_cons2
+     endif
+     
 #if defined(__NORMALIZE_BETAMIX)
      ! NORMALIZE
      ! TODO: need to check compatibility gcscf and lda_plus_u
@@ -270,6 +321,10 @@ SUBROUTINE mix_rho( input_rhout, rhoin, alphamix, dr2, tr2_min, iter, n_iter,&
         df_nsg(:,:,:,:,:,ipos) = df_nsg(:,:,:,:,:,ipos) * obn
         dv_nsg(:,:,:,:,:,ipos) = dv_nsg(:,:,:,:,:,ipos) * obn
      ENDIF
+     if (hub_constraining .AND. .not. Hubbard_conv) then
+        df_hub_cons(:,:,:,:,ipos) = df_hub_cons(:,:,:,:,ipos) * obn
+        dv_hub_cons(:,:,:,:,ipos) = dv_hub_cons(:,:,:,:,ipos) * obn
+     endif
 #endif
      !
   END IF
@@ -302,6 +357,14 @@ SUBROUTINE mix_rho( input_rhout, rhoin, alphamix, dr2, tr2_min, iter, n_iter,&
      nsgoutsave = deltansg !nsgnew
      !
   ENDIF
+  if (hub_constraining .AND. .not. Hubbard_conv) then
+     ALLOCATE( hub_cons_insave(  ldim,ldim,nspin, nat), &
+               hub_cons_outsave( ldim,ldim,nspin, nat ) )
+     hub_cons_insave  = (0.d0, 0.d0)
+     hub_cons_outsave = (0.d0, 0.d0)
+     hub_cons_insave(:, :, :, :)  = t_hub_cons2(:, :, :, :)
+     hub_cons_outsave(:, :, :, :) = delta_hub_cons(:, :, :, :)
+  endif
   !
   ! Nothing else to do on first iteration
   skip_on_first: &
@@ -372,6 +435,11 @@ SUBROUTINE mix_rho( input_rhout, rhoin, alphamix, dr2, tr2_min, iter, n_iter,&
            nsg(:,:,:,:,:) = nsg(:,:,:,:,:) - gamma0*dv_nsg(:,:,:,:,:,i)
            deltansg(:,:,:,:,:) = deltansg(:,:,:,:,:) - gamma0*df_nsg(:,:,:,:,:,i)
         ENDIF
+        
+        if (hub_constraining .AND. .not. Hubbard_conv) then
+           t_hub_cons2(:, :, :, :) = t_hub_cons2(:, :, :, :) - gamma0 * dv_hub_cons(:, :, :, :, i)
+           delta_hub_cons(:, :, :, :) = delta_hub_cons(:, :, :, :) - gamma0 * df_hub_cons(:, :, :, :, i)
+        endif
         !
     END DO
     DEALLOCATE(betamix, work)
@@ -400,6 +468,13 @@ SUBROUTINE mix_rho( input_rhout, rhoin, alphamix, dr2, tr2_min, iter, n_iter,&
      IF (ALLOCATED(nsginsave))  DEALLOCATE(nsginsave)
      IF (ALLOCATED(nsgoutsave)) DEALLOCATE(nsgoutsave)
   ENDIF
+  if (hub_constraining .AND. .not. Hubbard_conv) then
+     inext = mixrho_iter - ( ( mixrho_iter - 1 ) / n_iter ) * n_iter
+     df_hub_cons(:,:,:,:,inext) = hub_cons_outsave(:, :, :, :)
+     dv_hub_cons(:,:,:,:,inext) = hub_cons_insave(:, :, :, :)
+  endif
+  IF (ALLOCATED(hub_cons_insave))  DEALLOCATE(hub_cons_insave)
+  IF (ALLOCATED(hub_cons_outsave)) DEALLOCATE(hub_cons_outsave)
   !
   ! ... preconditioning the new search direction
   !
@@ -420,6 +495,15 @@ SUBROUTINE mix_rho( input_rhout, rhoin, alphamix, dr2, tr2_min, iter, n_iter,&
      nsg = nsg + alphamix * deltansg
      IF (ALLOCATED(deltansg)) DEALLOCATE(deltansg)
   ENDIF
+  
+  if (hub_constraining) then
+     if (.not. Hubbard_conv) then
+        Hubbard_constraints(:, :, :, :) = t_hub_cons2(:, :, :, :) + alphamix * delta_hub_cons(:, :, :, :)
+     else
+        Hubbard_constraints(:, :, :, :) = 0.8 * t_hub_cons1(:, :, :, :)
+     endif
+     DEALLOCATE(delta_hub_cons)
+  endif
   ! ... simple mixing for high_frequencies (and set to zero the smooth ones)
   call high_frequency_mixing ( rhoin, input_rhout, alphamix )
   ! ... add the mixed rho for the smooth frequencies
@@ -436,6 +520,16 @@ SUBROUTINE mix_rho( input_rhout, rhoin, alphamix, dr2, tr2_min, iter, n_iter,&
      CALL close_buffer(iunmix_nsg, 'keep')
   ENDIF
   !
+  if (hub_constraining .AND. .not. Hubbard_conv) then
+     CALL save_buffer ( df_hub_cons, nword_hub, iunmix_hub_cons, 1 )
+     CALL save_buffer ( dv_hub_cons, nword_hub, iunmix_hub_cons, 2 )
+     DEALLOCATE( dv_hub_cons )
+     DEALLOCATE( df_hub_cons )
+     CALL close_buffer(iunmix_hub_cons, 'keep')
+   endif 
+  IF (ALLOCATED(t_hub_cons1)) DEALLOCATE( t_hub_cons1 )
+  IF (ALLOCATED(t_hub_cons2)) DEALLOCATE( t_hub_cons2 )
+  
   CALL stop_clock( 'mix_rho' )
   !
   RETURN

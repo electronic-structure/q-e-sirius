@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2001-2022 Quantum ESPRESSO group
+! Copyright (C) 2001-2020 Quantum ESPRESSO group
 ! This file is distributed under the terms of the
 ! GNU General Public License. See the file `License'
 ! in the root directory of the present distribution,
@@ -19,12 +19,15 @@ SUBROUTINE new_ns( ns )
   !! ns is symmetric (and real for collinear case, due to time reversal),
   !! hence the order of m1 and m2 does not matter.  
   !
-  USE io_global,            ONLY : stdout
+  use io_global,            ONLY : stdout
   USE kinds,                ONLY : DP
   USE ions_base,            ONLY : nat, ityp
   USE klist,                ONLY : nks, ngk
   USE ldaU,                 ONLY : ldmx, Hubbard_l, q_ae, wfcU, &
                                    Hubbard_projectors, is_hubbard, nwfcU, offsetU
+                                   
+  USE ns_constraint, ONLY : Hubbard_conv                                 
+                                   
   USE symm_base,            ONLY : d1, d2, d3
   USE lsda_mod,             ONLY : lsda, current_spin, nspin, isk
   USE symm_base,            ONLY : nsym, irt
@@ -49,9 +52,8 @@ SUBROUTINE new_ns( ns )
   TYPE(bec_type) :: proj
   ! proj(nwfcU,nbnd)
   INTEGER :: ik, ibnd, is, i, na, nb, nt, isym, m1, m2, m0, m00, npw
+
   ! counter on k points
-  !    "    "  bands
-  !    "    "  spins
   REAL(DP), ALLOCATABLE :: nr(:,:,:,:)
   REAL(DP) :: psum
   !
@@ -140,8 +142,36 @@ SUBROUTINE new_ns( ns )
   !
   ! symmetrize the quantities nr -> ns
   !
-  ns (:,:,:,:) = 0.d0
+  if (Hubbard_conv) then
+     ns (:,:,:,:) = 0.d0
+     call symmetrize_ns(nr, ns, .true.)
+  else
+  ! We don't symmetrize until hubbard convergence is reached
+     ns(:,:,:,:) = nr(:, :, :, :)
+  endif
   !
+  DEALLOCATE( nr )
+  !
+  CALL stop_clock( 'new_ns' )
+  !
+  RETURN
+  !
+END SUBROUTINE new_ns
+
+SUBROUTINE symmetrize_ns(nr, ns, check_hermitian)
+  use io_global,            ONLY : stdout
+  USE kinds,                ONLY : DP
+  USE ions_base,            ONLY : nat, ityp
+  USE ldaU,                 ONLY : ldmx, Hubbard_l, is_hubbard
+  USE symm_base,            ONLY : d1, d2, d3
+  USE lsda_mod,             ONLY : lsda, current_spin, nspin, isk
+  USE symm_base,            ONLY : nsym, irt
+  
+  REAL(DP), INTENT(INOUT) :: ns(ldmx,ldmx,nspin,nat)
+  REAL(DP), INTENT(IN)  :: nr(ldmx,ldmx,nspin,nat)
+  LOGICAL, INTENT(IN) :: check_hermitian
+  INTEGER :: ik, ibnd, is, i, na, nb, nt, isym, m1, m2, m0, m00, npw
+
   DO na = 1, nat  
      nt = ityp(na)
      IF ( is_hubbard(nt) ) THEN
@@ -188,11 +218,8 @@ SUBROUTINE new_ns( ns )
         ENDDO
      ENDIF
   ENDDO
-  !
-  DEALLOCATE( nr )
-  !
+  
   ! Now we make the matrix ns(m1,m2) strictly hermitean
-  !
   DO na = 1, nat  
      nt = ityp (na)  
      IF ( is_hubbard(nt) ) THEN  
@@ -200,7 +227,7 @@ SUBROUTINE new_ns( ns )
            DO m1 = 1, 2*Hubbard_l(nt)+1
               DO m2 = m1, 2*Hubbard_l(nt)+1
                  psum = ABS( ns(m1,m2,is,na) - ns(m2,m1,is,na) )  
-                 IF (psum > 1.d-10) THEN  
+                 IF (psum > 1.d-10 .AND. check_hermitian) THEN  
                     WRITE( stdout, * ) na, is, m1, m2  
                     WRITE( stdout, * ) ns(m1,m2,is,na)  
                     WRITE( stdout, * ) ns(m2,m1,is,na)  
@@ -215,12 +242,9 @@ SUBROUTINE new_ns( ns )
         ENDDO
      ENDIF 
   ENDDO
-  !
-  CALL stop_clock( 'new_ns' )
-  !
-  RETURN
-  !
-END SUBROUTINE new_ns
+END SUBROUTINE symmetrize_ns
+
+
 
 !--------------------------------------------------------------------
 SUBROUTINE compute_pproj( ik, q, p )
