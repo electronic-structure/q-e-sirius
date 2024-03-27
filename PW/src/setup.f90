@@ -100,6 +100,8 @@ SUBROUTINE setup()
 #if defined(__SIRIUS)
   USE mod_sirius,         ONLY : num_kpoints, kpoints, wkpoints, invert_mtrx
 #endif
+  USE random_numbers,     ONLY : set_random_seed
+  USE dynamics_module,    ONLY : control_temp
   !
   IMPLICIT NONE
   !
@@ -694,14 +696,18 @@ SUBROUTINE setup()
   ! ... checks and initializations to be performed after parallelization setup
   !
   IF ( lberry .OR. lelfield .OR. lorbm ) THEN
-     IF ( npool > 1 ) CALL errore( 'iosys', &
+     IF ( npool > 1 ) CALL errore( 'setup', &
           'Berry Phase/electric fields not implemented with pools', 1 )
   END IF
+  IF ( gamma_only .AND. nkstot == 1 .AND. npool > 1 ) CALL errore( 'setup', &
+          'Gamma-only calculations not allowed with pools', 1 )
   IF ( xclib_dft_is('hybrid') ) THEN
      IF ( nks == 0 ) CALL errore('setup','pools with no k-points' &
           & // ' not allowed for hybrid functionals',1)
      IF ( tstress .and. npool > 1 )  CALL errore('setup', &
          'stress for hybrid functionals not available with pools', 1)
+     !!!IF ( tstress )  CALL errore('setup', &
+     !!!    'stress for hybrid functionals not available', 1)
      !
      CALL setup_exx  ()
      !
@@ -718,7 +724,10 @@ SUBROUTINE setup()
      IF (sic_energy) CALL occ_f2fn()
   END IF
   !
-  RETURN
+  ! ... next command prevents different MD runs to start
+  ! ... with exactly the same "random" velocities
+  !
+  IF (lmd.AND.control_temp) CALL set_random_seed( )
   !
 END SUBROUTINE setup
 !
