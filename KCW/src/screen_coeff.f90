@@ -83,7 +83,7 @@ SUBROUTINE screen_coeff ()
 
 #if defined(__SIRIUS)
     CALL setup_sirius()
-    use_sirius_scf = .true.
+    !use_sirius_scf = .true.
 #endif
 
 IF (nqs == 1) do_real_space = .TRUE. 
