@@ -29,6 +29,7 @@ SUBROUTINE hp_run_nscf (do_band)
   USE lr_symm_base,    ONLY : nsymq, invsymq
   USE ldaU_hp,         ONLY : tmp_dir_save, tmp_dir_hp
   USE rism_module,     ONLY : lrism, rism_set_restart
+  use mod_sirius
   !
   IMPLICIT NONE
   !
@@ -83,6 +84,8 @@ SUBROUTINE hp_run_nscf (do_band)
      CALL non_scf()
      CALL punch( 'all' )
   ENDIF
+  !
+  CALL psiHpsi()
   !
   IF (iverbosity.EQ.0) iverbosity = verbosity_save 
   !
