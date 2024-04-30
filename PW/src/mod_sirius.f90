@@ -864,7 +864,7 @@ MODULE mod_sirius
     IMPLICIT NONE
     !
     INTEGER :: dims(3), i, ia, iat, rank, ierr, ijv, j, l, ir, num_gvec, num_ranks_k, &
-             & iwf, nmagd, viz, ia2, iat2, atom_pair(2), n_pair(2), l_pair(2)
+             & iwf, nmagd, viz, ia2, iat2, atom_pair(2), n_pair(2), l_pair(2), mmax, is
     REAL(8) :: a1(3), a2(3), a3(3), vlat(3, 3), vlat_inv(3, 3), v1(3), v2(3)
     REAL(8), ALLOCATABLE :: dion(:, :), vloc(:)
     INTEGER :: lmax_beta, nsymop
@@ -874,6 +874,7 @@ MODULE mod_sirius
     REAL(DP), ALLOCATABLE :: r_loc(:)
     REAL(DP), ALLOCATABLE :: m_loc(:,:), initial_magn(:,:)
     INTEGER, ALLOCATABLE :: nat_of_type(:)
+    COMPLEX(DP), ALLOCATABLE :: occm(:, :)
 
     CALL sirius_start_timer("setup_sirius")
 
@@ -1448,6 +1449,26 @@ MODULE mod_sirius
       CALL put_density_matrix_to_sirius()
       CALL sirius_generate_density(gs_handler, paw_only=.TRUE.)
     ENDIF
+    !
+    ! pass occupancy matrix
+    DO ia = 1, nat
+      !
+      iat = ityp (ia)
+      !
+      IF (Hubbard_U(iat) /= 0.d0) THEN
+        mmax = 2 * Hubbard_l(iat) + 1
+        ALLOCATE(occm(mmax, mmax))
+        IF (lda_plus_u_kind.EQ.0 .OR. lda_plus_u_kind.EQ.1) THEN
+          DO is = 1, nspin
+            occm(1:mmax, 1:mmax) = rho%ns(1:mmax, 1:mmax, is, ia)
+            CALL sirius_set_local_occupation_matrix(gs_handler, ia, Hubbard_n(iat), Hubbard_l(iat),&
+                &is, occm, mmax)
+          ENDDO !is
+        ENDIF
+        DEALLOCATE(occm)
+      ENDIF
+    ENDDO !ia
+    !
     CALL sirius_generate_effective_potential(gs_handler)
     !
     CALL sirius_stop_timer("setup_sirius")
