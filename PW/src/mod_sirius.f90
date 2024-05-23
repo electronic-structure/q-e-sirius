@@ -870,7 +870,7 @@ MODULE mod_sirius
     REAL(8), ALLOCATABLE :: dion(:, :), vloc(:)
     INTEGER :: lmax_beta, nsymop
     CHARACTER(LEN=1024) :: conf_str
-    INTEGER, EXTERNAL :: global_kpoint_index, find_viz
+    INTEGER, EXTERNAL :: global_kpoint_index
     REAL(8), PARAMETER :: spglib_tol=1e-4
     REAL(DP), ALLOCATABLE :: r_loc(:)
     REAL(DP), ALLOCATABLE :: m_loc(:,:), initial_magn(:,:)
