@@ -2,7 +2,7 @@
     calculation='scf'
     restart_mode='from_scratch',
     prefix='Ni'
-    pseudo_dir = '.'
+    pseudo_dir = './'
     outdir='./out/'
     verbosity='high'
  /
