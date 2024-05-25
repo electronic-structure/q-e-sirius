@@ -1688,6 +1688,102 @@ MODULE mod_sirius
   END SUBROUTINE get_wave_functions_from_sirius
   !
   !-------------------------------------------------------------------------
+  SUBROUTINE psiHpsi()
+    !-------------------------------------------------------------------------
+    !! Calculate <psi|H|psi> from wfs saved in a buffer
+    !! WARNING!! The wf needs to be in the buffer iunwfc
+    !
+    USE kinds,                ONLY : DP
+    USE io_global,            ONLY : stdout
+    USE wvfct,                ONLY : npw, et
+    USE uspp,                 ONLY : nkb
+    USE becmod,               ONLY : becp, allocate_bec_type, deallocate_bec_type
+    USE mp_bands,             ONLY : intra_bgrp_comm
+    USE gvect,                ONLY : ngm, g
+    USE gvecw,                ONLY : gcutw
+    USE klist,                ONLY : init_igk, xk, nkstot
+    USE mp,                   ONLY : mp_sum
+    USE constants,            ONLY : rytoev
+    USE lsda_mod,             ONLY : nspin
+    USE mp_world,             ONLY : mpime
+    USE klist,                ONLY : nks
+    USE wvfct,                ONLY : nbnd
+    USE wavefunctions,        ONLY : evc
+    USE io_files,             ONLY : iunwfc, nwordwfc
+    USE buffers,              ONLY : save_buffer, get_buffer
+    USE klist,                ONLY : nkstot, xk, nks, ngk, igk_k
+    USE uspp,                 ONLY : nkb, vkb
+    USE uspp_init,            ONLY : init_us_2
+    USE wvfct,                ONLY : npwx, current_k, npw
+    USE lsda_mod,             ONLY : lsda, isk, nspin, current_spin, starting_magnetization
+    !
+    IMPLICIT NONE
+    !
+    INTEGER :: iband, jband, ig, ik
+    ! 
+    !
+    COMPLEX(DP) :: hpsi(npwx,nbnd), ham(nbnd,nbnd), hij!, eigvc(npwx,nbnd)
+    !
+    REAL(DP) :: eigvl(nbnd), check
+    !
+    CALL allocate_bec_type ( nkb, nbnd, becp, intra_bgrp_comm )
+    !
+    !loop over local k points
+    DO ik = 1, nks
+      WRITE(mpime+1100,*) "IK: ", ik
+      !
+      !setting global variables current_k and current_spin, needed for QE functions
+      current_k = ik
+      IF ( lsda ) current_spin = isk(ik)
+      !getting the number of plane waves for the actual k point
+      npw  = ngk(ik)
+      IF ( nkb > 0 ) CALL init_us_2( npw, igk_k(1,ik), xk(1,ik), vkb ) 
+      CALL init_igk ( npwx, ngm, g, gcutw )
+      !
+      !read wf in file with unit iunwfc and save it in array evc
+      !
+      CALL get_buffer(evc, nwordwfc, iunwfc, ik)
+      !
+      !calculate kinetic energy
+      !
+      call g2_kin( ik )
+      !
+      !calculate H|psi>
+      !
+      hpsi(:,:) = (0.D0, 0.D0)
+      CALL h_psi( npwx, npw, nbnd, evc, hpsi ) 
+      ham(:,:)= (0.D0,0D0)
+      !
+      !project over <psi|
+      !
+      DO iband = 1, nbnd
+         ! 
+        DO jband = iband, nbnd
+          hij = 0.D0
+          DO ig = 1, npw
+             hij = hij + CONJG(evc(ig,iband)) * hpsi(ig,jband)
+          ENDDO
+          CALL mp_sum (hij, intra_bgrp_comm)
+          !
+          ham(iband,jband) = hij
+          ham(jband,iband) = CONJG(ham(iband,jband))
+          !
+          IF (iband==jband .and. (ABS(hij-et(iband,ik)) .le. 1.d-5)) WRITE(mpime+1100,*) iband,jband,&
+                 & REAL(hij)*rytoev, et(iband, ik)*rytoev, ABS(REAL(hij)-et(iband,ik))*rytoev
+          IF (iband==jband .and. (ABS(hij-et(iband,ik)) .gt. 1.d-5)) WRITE(mpime+1100,*) iband,jband, &
+          & REAL(hij)*rytoev, et(iband, ik)*rytoev, ABS(REAL(hij)-et(iband,ik))*rytoev, &
+          &"WARNING: mismatch in eigenvalue"
+          IF( iband /= jband .and. ABS(hij) .gt. 1.d-5 ) WRITE(mpime+1100,*) iband, jband, hij*rytoev, &
+          & "WARNING: off-diagonal non-zero"
+        ENDDO
+      ENDDO
+    END DO
+    !
+    CALL deallocate_bec_type (becp)
+    !
+    !notice: ham contains the calculated hamiltonian, if needed!
+END SUBROUTINE psiHpsi
+!-------------------------------------------------------------------------
   SUBROUTINE put_xc_functional_to_sirius
     !-----------------------------------------------------------------------
     !! Put the information about XC potentials into SIRIUS.
