@@ -1409,7 +1409,9 @@ MODULE mod_sirius
                 mmax2 = 2 * Hubbard_l(iat2) + 1
                 ALLOCATE(occm(mmax, mmax2))
                 DO is = 1, nspin
-                  occm(1:mmax, 1:mmax2) = nsg(1:mmax, 1:mmax2, viz, ia, is)
+                  DO i = 1, mmax
+                    occm(i, 1:mmax2) = nsg(1:mmax2, i, viz, ia, is)
+                  ENDDO
                   CALL sirius_set_nonlocal_occupation_matrix(gs_handler, atom_pair, n_pair, l_pair, &
                                     &is, at_sc(ia2)%n, occm, mmax, mmax2)
                 ENDDO
