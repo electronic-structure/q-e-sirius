@@ -5,7 +5,7 @@ FROM $BASE_IMAGE
 COPY . /qe-src
 #RUN git clone https://github.com/electronic-structure/q-e-sirius.git /qe-src
 
-RUN spack -e /build-env-gcc add "q-e-sirius@develop-ristretto ^fftw+openmp ^sirius" && \
+RUN spack -e /build-env-gcc add "q-e-sirius@develop-ristretto +libxc hdf5=serial ^fftw+openmp ^sirius" && \
     spack -e /build-env-gcc develop -p /qe-src q-e-sirius@develop-ristretto && \
     spack -e /build-env-gcc concretize -f && \
     spack -e /build-env-gcc install
