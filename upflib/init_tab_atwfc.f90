@@ -15,8 +15,8 @@ SUBROUTINE init_tab_atwfc( omega, intra_bgrp_comm)
   USE upf_kinds,    ONLY : DP
   USE atom,         ONLY : rgrid, msh
   USE upf_const,    ONLY : fpi
-  USE uspp_data,    ONLY : tab_at, tab_at_d, nqx, dq
-  USE uspp_param,   ONLY : nsp, upf
+  USE uspp_data,    ONLY : tab_at, nqx, dq
+  USE uspp_param,   ONLY : nsp, upf, nwfcm
   USE mp,           ONLY : mp_sum
 #if defined(__SIRIUS)
   USE uspp_data,    ONLY : wfc_ri_tab
@@ -34,6 +34,11 @@ SUBROUTINE init_tab_atwfc( omega, intra_bgrp_comm)
   !
   ndm = MAXVAL(msh(1:nsp))
   ALLOCATE( aux(ndm), vchi(ndm) )
+#if defined(__SIRIUS)
+  IF (ALLOCATED(wfc_ri_tab)) DEALLOCATE(wfc_ri_tab)
+  ALLOCATE(wfc_ri_tab(nqx, nwfcm, nsp))
+  wfc_ri_tab = 0.d0
+#endif
   !
   ! chiq = radial fourier transform of atomic orbitals chi
   !
@@ -73,10 +78,7 @@ SUBROUTINE init_tab_atwfc( omega, intra_bgrp_comm)
   CALL mp_sum( wfc_ri_tab, intra_bgrp_comm )
 #endif
   !
-#if defined __CUDA
-  ! update GPU memory (taking care of zero-dim allocations)
-  if (SIZE(tab_at)>0) tab_at_d=tab_at
-#endif
+  !$acc update device(tab_at)
   !
   DEALLOCATE( aux, vchi )
   !
