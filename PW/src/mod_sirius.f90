@@ -852,7 +852,7 @@ MODULE mod_sirius
     IMPLICIT NONE
     !
     INTEGER :: dims(3), i, ia, iat, rank, ierr, ijv, j, l, ir, num_gvec, num_ranks_k, &
-             & iwf, nmagd, viz, ia2, iat2, atom_pair(2), n_pair(2), l_pair(2), mmax, is
+             & iwf, nmagd, viz, ia2, iat2, atom_pair(2), n_pair(2), l_pair(2), mmax, is, T(3)
     REAL(8) :: a1(3), a2(3), a3(3), vlat(3, 3), vlat_inv(3, 3), v1(3), v2(3)
     REAL(8), ALLOCATABLE :: dion(:, :), vloc(:)
     INTEGER :: lmax_beta, nsymop
@@ -863,6 +863,7 @@ MODULE mod_sirius
     REAL(DP), ALLOCATABLE :: m_loc(:,:), initial_magn(:,:)
     INTEGER, ALLOCATABLE :: nat_of_type(:)
     COMPLEX(DP), ALLOCATABLE :: occm(:, :)
+    REAL(8) atom_type_U(nsp)
 
     CALL sirius_start_timer("setup_sirius")
 
@@ -1054,6 +1055,7 @@ MODULE mod_sirius
     CALL mpi_allreduce(MPI_IN_PLACE, kpoint_index_map, 2 * nkstot, MPI_INT, MPI_SUM, inter_pool_comm, ierr)
     !
     IF (sirius_pwpp) THEN
+       atom_type_U = 0.d0
 
       ! initialize atom types
       DO iat = 1, nsp
@@ -1090,10 +1092,10 @@ MODULE mod_sirius
         ! there is a bug in QE that is not fixed. 
         ! I do not set the hubbard properties right away because the Hubbard_U(iat) is not set 
         ! when the V notation is also used for onsite interaction
-
         IF (is_hubbard(iat)) THEN
            ! they use the second notation for onsite. I take care of this case later on
            IF (Hubbard_U(iat) .NE. 0.0) THEN
+              atom_type_U(iat) = Hubbard_U(iat)
               CALL sirius_set_atom_type_hubbard(sctx, TRIM(atom_type(iat)%label), &
                    & l=Hubbard_l(iat), n=Hubbard_n(iat), occ=Hubbard_occ(iat, 1), &
                    & U=Hubbard_U(iat) / 2.0, J=Hubbard_J(1,iat) / 2.0, &
@@ -1201,16 +1203,23 @@ MODULE mod_sirius
                 n_pair(2) = Hubbard_n(iat2)
                 l_pair(1) = Hubbard_l(iat)
                 l_pair(2) = Hubbard_l(iat2)
-                IF ((ia .EQ. ia2) .AND. (n_pair(1) .EQ. n_pair(2)) &
-                & .AND. (l_pair(1) .EQ. l_pair(2)) .AND. (Hubbard_U(ia) .EQ. 0.0)) THEN
-                  IF (hubbard_occ(iat,1)<0.0d0) CALL determine_hubbard_occ(iat, 1)
-                  ! it is a clumsy notation as hubbard onsite correction has two different input notations.
-                  CALL sirius_set_atom_type_hubbard(sctx, &
-                          & TRIM(atom_type(iat)%label), &
-                          & l=l_pair(1), n=n_pair(1), occ=hubbard_occ(iat, 1), &
-                          & U=Hubbard_V(ia, ia2, 1) / 2.0, J=0.0D0, &
-                          & alpha=0.0D0, beta=0.0D0, &
-                          & J0=0.0D0)
+                T = at_sc(ia2)%n(1:3)
+                ! check for on-site U
+                IF ((ia .EQ. ia2) .AND. (n_pair(1) .EQ. n_pair(2)) .AND. (l_pair(1) .EQ. l_pair(2)) .AND. &
+                    & SUM(ABS(T)) .EQ. 0) THEN
+                  IF (atom_type_U(iat) .NE. 0) THEN
+                    IF (Hubbard_V(ia, ia2, 1) .NE. atom_type_U(iat)) THEN
+                      STOP "Hubbard U values for the same atom type are different"
+                    ENDIF
+                  ELSE
+                    atom_type_U(iat) = Hubbard_V(ia, ia2, 1)
+                    CALL sirius_set_atom_type_hubbard(sctx, &
+                            & TRIM(atom_type(iat)%label), &
+                            & l=l_pair(1), n=n_pair(1), occ=hubbard_occ(iat, 1), &
+                            & U=atom_type_U(iat) / 2.0, J=0.0D0, &
+                            & alpha=0.0D0, beta=0.0D0, &
+                            & J0=0.0D0)
+                  ENDIF
                 ELSE
                   ! standard-standard term in QE language
                   CALL sirius_add_hubbard_atom_pair(sctx, atom_pair(1:2), at_sc(ia2)%n(1:3), &
