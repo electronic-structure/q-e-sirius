@@ -841,7 +841,7 @@ MODULE mod_sirius
     USE ldaU,                 ONLY : lda_plus_U, Hubbard_J, Hubbard_U, Hubbard_alpha, &
                                    & Hubbard_beta, is_Hubbard, lda_plus_u_kind, &
                                    & Hubbard_J0, Hubbard_projectors, Hubbard_l, Hubbard_n, Hubbard_occ, &
-                                   & ldim_u, neighood, at_sc, Hubbard_V
+                                   & ldim_u, neighood, at_sc, Hubbard_V, nsg
     USE esm,                  ONLY : do_comp_esm
     USE Coul_cut_2D,          ONLY : do_cutoff_2D
     USE constants,            ONLY : RYTOEV
@@ -852,18 +852,14 @@ MODULE mod_sirius
     IMPLICIT NONE
     !
     INTEGER :: dims(3), i, ia, iat, rank, ierr, ijv, j, l, ir, num_gvec, num_ranks_k, &
-             & iwf, nmagd, viz, ia2, iat2, atom_pair(2), n_pair(2), l_pair(2), mmax, is, T(3)
-    REAL(8) :: a1(3), a2(3), a3(3), vlat(3, 3), vlat_inv(3, 3), v1(3), v2(3)
-    REAL(8), ALLOCATABLE :: dion(:, :), vloc(:)
-    INTEGER :: lmax_beta, nsymop
+             & iwf, nmagd, viz, ia2, iat2, atom_pair(2), n_pair(2), l_pair(2), mmax, &
+             & mmax2, is, T(3), lmax_beta, nsymop
+    REAL(8) :: a1(3), a2(3), a3(3), vlat(3, 3), vlat_inv(3, 3), v1(3), v2(3), atom_type_U(nsp)
+    REAL(8), ALLOCATABLE :: dion(:, :), vloc(:), initial_magn(:, :)
     CHARACTER(LEN=1024) :: conf_str
-    INTEGER, EXTERNAL :: global_kpoint_index
     REAL(8), PARAMETER :: spglib_tol=1e-4
-    REAL(DP), ALLOCATABLE :: r_loc(:)
-    REAL(DP), ALLOCATABLE :: m_loc(:,:), initial_magn(:,:)
-    INTEGER, ALLOCATABLE :: nat_of_type(:)
-    COMPLEX(DP), ALLOCATABLE :: occm(:, :)
-    REAL(8) atom_type_U(nsp)
+    COMPLEX(8), ALLOCATABLE :: occm(:, :)
+    INTEGER, EXTERNAL :: global_kpoint_index
 
     CALL sirius_start_timer("setup_sirius")
 
@@ -1243,33 +1239,6 @@ MODULE mod_sirius
     ! compute initial magnetization for each atom type
     ALLOCATE(initial_magn(3, nsp))
     initial_magn = 0.d0
-    !ALLOCATE(nat_of_type(nsp))
-    !nat_of_type = 0
-    !
-    ! This pice of code is intended to compute integral atomic moments. The problem is that
-    ! get_locals() function requires some allocated and initialized arrays. It works as expected
-    ! with pw.x and doesn't work with hp.x; Attempt to allocate and initialize those arrays
-    ! resulted in a crash in another place.
-    !
-    !!IF ( nspin .NE. 1 ) THEN
-    !!  ALLOCATE( r_loc(nat), m_loc(nspin-1, nat) )
-    !!  CALL get_locals( r_loc, m_loc, rho%of_r )
-    !!  DO ia = 1, nat
-    !!    IF (noncolin) THEN
-    !!      initial_magn(:, ityp(ia)) = initial_magn(:, ityp(ia)) + m_loc(:, ia)
-    !!    ELSE
-    !!      initial_magn(3, ityp(ia)) = initial_magn(3, ityp(ia)) + m_loc(1, ia)
-    !!    ENDIF
-    !!    nat_of_type(ityp(ia)) = nat_of_type(ityp(ia)) + 1
-    !!  ENDDO
-    !!  DO iat = 1, nsp
-    !!    initial_magn(:, iat) = initial_magn(:, iat) / nat_of_type(iat)
-    !!    IF (SUM(ABS(initial_magn(:, iat))) .LT. 1e-6) THEN
-    !!      initial_magn(:, iat) = 0.d0
-    !!    END IF
-    !!  ENDDO
-    !!  DEALLOCATE(r_loc, m_loc)
-    !!END IF
 
     ! Fallback solution: compute magentic moments on atoms in an easy way. They will be only used
     ! to determine the magentic symmetry and not as a starting guess for magnetization.
@@ -1296,7 +1265,6 @@ MODULE mod_sirius
       CALL sirius_add_atom(sctx, TRIM(atom_type(iat)%label), v1, initial_magn(:, iat))
     ENDDO
     !
-    !DEALLOCATE(initial_magn, nat_of_type)
     DEALLOCATE(initial_magn)
     !
     CALL put_xc_functional_to_sirius()
@@ -1352,24 +1320,75 @@ MODULE mod_sirius
       CALL sirius_generate_density(gs_handler, paw_only=.TRUE.)
     ENDIF
     !
-    ! pass occupancy matrix
-    DO ia = 1, nat
-      !
-      iat = ityp (ia)
-      !
-      IF (Hubbard_U(iat) /= 0.d0) THEN
-        mmax = 2 * Hubbard_l(iat) + 1
-        ALLOCATE(occm(mmax, mmax))
-        IF (lda_plus_u_kind.EQ.0 .OR. lda_plus_u_kind.EQ.1) THEN
-          DO is = 1, nspin
-            occm(1:mmax, 1:mmax) = rho%ns(1:mmax, 1:mmax, is, ia)
-            CALL sirius_set_local_occupation_matrix(gs_handler, ia, Hubbard_n(iat), Hubbard_l(iat),&
-                &is, occm, mmax)
-          ENDDO !is
-        ENDIF
-        DEALLOCATE(occm)
+    IF (lda_plus_U) THEN
+      ! pass local occupancy matrix
+      IF (lda_plus_u_kind .EQ. 0 .OR. lda_plus_u_kind .EQ. 1) THEN
+        DO ia = 1, nat
+          !
+          iat = ityp (ia)
+          !
+          IF (Hubbard_U(iat) /= 0.d0) THEN
+            mmax = 2 * Hubbard_l(iat) + 1
+            ALLOCATE(occm(mmax, mmax))
+            DO is = 1, nspin
+              occm(1:mmax, 1:mmax) = rho%ns(1:mmax, 1:mmax, is, ia)
+              CALL sirius_set_local_occupation_matrix(gs_handler, ia, Hubbard_n(iat), Hubbard_l(iat),&
+                  &is, occm, mmax)
+            ENDDO !is
+            DEALLOCATE(occm)
+          ENDIF
+        ENDDO !ia
       ENDIF
-    ENDDO !ia
+      ! pass non-local occupancy matrix
+      IF (lda_plus_u_kind .EQ. 2) THEN
+        DO ia = 1, nat
+          !
+          iat = ityp(ia)
+          !
+          IF (ldim_u(iat).GT.0) THEN
+            !
+            DO viz = 1, neighood(ia)%num_neigh
+              atom_pair(1) = ia
+              ia2 = neighood(ia)%neigh(viz)
+              atom_pair(2) = at_sc(ia2)%at
+              iat2 = ityp(atom_pair(2))
+              n_pair(1) = Hubbard_n(iat)
+              n_pair(2) = Hubbard_n(iat2)
+              l_pair(1) = Hubbard_l(iat)
+              l_pair(2) = Hubbard_l(iat2)
+              T = at_sc(ia2)%n(1:3)
+              ! check for on-site U
+              IF ((ia .EQ. ia2) .AND. (n_pair(1) .EQ. n_pair(2)) .AND. (l_pair(1) .EQ. l_pair(2)) .AND. &
+                    & SUM(ABS(T)) .EQ. 0) THEN
+                ! NOTE: copy and set local part of occupation matrix
+                mmax = 2 * Hubbard_l(iat) + 1
+                ALLOCATE(occm(mmax, mmax))
+                DO is = 1, nspin
+                  occm(1:mmax, 1:mmax) = nsg(1:mmax, 1:mmax, viz, ia, is)
+                  CALL sirius_set_local_occupation_matrix(gs_handler, ia, Hubbard_n(iat), Hubbard_l(iat),&
+                      &is, occm, mmax)
+                ENDDO !is
+                DEALLOCATE(occm)
+              ELSE
+                mmax = 2 * Hubbard_l(iat) + 1
+                mmax2 = 2 * Hubbard_l(iat2) + 1
+                ALLOCATE(occm(mmax, mmax2))
+                DO is = 1, nspin
+                  DO i = 1, mmax
+                    occm(i, 1:mmax2) = nsg(1:mmax2, i, viz, ia, is)
+                  ENDDO
+                  CALL sirius_set_nonlocal_occupation_matrix(gs_handler, atom_pair, n_pair, l_pair, &
+                                    &is, at_sc(ia2)%n, occm, mmax, mmax2)
+                ENDDO
+                DEALLOCATE(occm)
+              ENDIF ! on-site / off-site
+              !
+            END DO ! viz
+            !
+          END IF
+        END DO ! ia
+      END IF ! lda_plus_u_kind .eq. 2
+    END IF ! lda_plus_U
     !
     CALL sirius_generate_effective_potential(gs_handler)
     !
