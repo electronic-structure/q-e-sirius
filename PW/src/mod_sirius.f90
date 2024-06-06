@@ -1216,9 +1216,8 @@ MODULE mod_sirius
                     CALL sirius_set_atom_type_hubbard(sctx, &
                             & TRIM(atom_type(iat)%label), &
                             & l=l_pair(1), n=n_pair(1), occ=hubbard_occ(iat, 1), &
-                            & U=atom_type_U(iat) / 2.0, J=0.0D0, &
-                            & alpha=0.0D0, beta=0.0D0, &
-                            & J0=0.0D0)
+                            & U=atom_type_U(iat) / 2.0, J=0.D0, &
+                            & alpha=0.D0, beta=0.D0, J0=0.D0)
                   ENDIF
                 ELSE
                   ! standard-standard term in QE language
