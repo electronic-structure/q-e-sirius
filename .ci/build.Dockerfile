@@ -11,6 +11,8 @@ RUN spack -e /build-env-gcc add "q-e-sirius@develop-ristretto +libxc ^fftw+openm
 
 RUN spack clean --all
 
+RUN spack arch
+
 ENV PATH="$PATH:/apps/bin"
 
 RUN apt-get install -y pip && pip install reframe-hpc
