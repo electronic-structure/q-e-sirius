@@ -480,7 +480,8 @@ MODULE mod_sirius
     !
     REAL(DP) :: aux(rgrid(iat)%mesh), r
     INTEGER :: iq, ir, nr
-    IF (.NOT. allocated( upf(iat)%rho_atc )) THEN
+    IF (.NOT.upf(iat)%nlcc) THEN
+      rhoc_ri = 0.D0
       RETURN
     ENDIF
     !
