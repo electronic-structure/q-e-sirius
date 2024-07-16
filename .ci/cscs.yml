@@ -20,7 +20,7 @@ build cuda image:
   extends: .container-builder
   needs: ["build base cuda image"]
   stage: build
-  timeout: 2h
+  timeout: 4h
   variables:
     DOCKERFILE: .ci/build.Dockerfile
     PERSIST_IMAGE_NAME: $CSCS_REGISTRY_PATH/q-e-sirius/q-e-sirius-ci:$CI_COMMIT_SHA
