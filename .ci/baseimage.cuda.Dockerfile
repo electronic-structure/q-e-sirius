@@ -50,7 +50,7 @@ RUN spack install openblas threads=openmp %gcc +fortran
 # install libvdwxc
 RUN spack install libvdwxc %gcc +mpi ^mpich@3.4.3
 
-RUN spack install nlcglib@master %gcc +cuda
+RUN spack install nlcglib@develop %gcc +cuda
 
 # create environments for several configurations and install dependencies
 RUN spack env create -d /build-env-gcc --with-view /apps && \
