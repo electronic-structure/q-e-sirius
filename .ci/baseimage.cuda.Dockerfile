@@ -19,7 +19,7 @@ RUN apt-get install -y gcc g++ gfortran clang libomp-dev libomp-14-dev git make 
 RUN apt-get -y upgrade
 
 # install CMake
-RUN wget https://github.com/Kitware/CMake/releases/download/v3.27.7/cmake-3.27.7-linux-x86_64.tar.gz -O cmake.tar.gz && \
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.29.4/cmake-3.29.4-linux-x86_64.tar.gz -O cmake.tar.gz && \
     tar zxvf cmake.tar.gz --strip-components=1 -C /usr
 
 # get latest version of spack
@@ -40,13 +40,23 @@ RUN spack external find --all --scope system --not-buildable bash perl sed gcc l
 
 RUN spack install mpich@3.4.3
 
+# for the MPI hook
 RUN echo $(spack find --format='{prefix.lib}' mpich) > /etc/ld.so.conf.d/mpich.conf
 RUN ldconfig
 
-RUN spack install openblas threads=openmp
+# install openblas
+RUN spack install openblas threads=openmp %gcc +fortran
 
-ENV SPEC_GCC_CPU="sirius@develop %gcc build_type=Release +python +scalapack +vdwxc +fortran +tests +nlcglib +elpa ^openblas threads=openmp ^mpich@3.4.3 ^nlcglib@master ^spfft+single_precision ^umpire~device_alloc target=x86_64"
-RUN spack install --fail-fast --only=dependencies $SPEC_GCC_CPU
+# install libvdwxc
+RUN spack install libvdwxc %gcc +mpi ^mpich@3.4.3
 
-ENV SPEC_GCC_GPU="sirius@develop %gcc build_type=Release +scalapack +vdwxc +fortran +tests +nlcglib +elpa +magma +cuda ^openblas threads=openmp ^mpich@3.4.3 ^nlcglib@master ^spfft+single_precision ^magma+cuda ^umpire+cuda~device_alloc target=x86_64"
-RUN spack install --fail-fast --only=dependencies $SPEC_GCC_GPU
+RUN spack install nlcglib@develop %gcc +cuda
+
+# create environments for several configurations and install dependencies
+RUN spack env create -d /build-env-gcc --with-view /apps && \
+    spack -e /build-env-gcc add "sirius@develop %gcc build_type=RelWithDebInfo +cuda +scalapack +vdwxc +fortran +tests +pugixml ^openblas%gcc ^libxc%gcc ^mpich%gcc ^umpire~device_alloc" && \
+    spack -e /build-env-gcc concretize && \
+    spack -e /build-env-gcc install --only=dependencies --fail-fast
+
+
+

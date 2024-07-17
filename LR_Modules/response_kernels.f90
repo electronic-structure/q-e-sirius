@@ -261,7 +261,6 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
          !
          ! dvpsi == d0psi  <-- right-hand side (in, destroyed on exit)
          ! dpsi   <-- left-hand side (in/out)
-         ! TODO: pass eigvals in [Ha]
          CALL sirius_linear_solver( gs_handler, vkq=MATMUL(TRANSPOSE(at), xk(:,ikq)),&
             &num_gvec_kq_loc=npwq, gvec_kq_loc=vg_kq, dpsi=dpsi,&
             &psi=evq, eigvals=et(:, ikmk), dvpsi=dvpsi, ld=npwx, num_spin_comp=npol,&
