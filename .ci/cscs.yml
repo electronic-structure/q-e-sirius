@@ -20,6 +20,7 @@ build cuda image:
   extends: .container-builder
   needs: ["build base cuda image"]
   stage: build
+  timeout: 4h
   variables:
     DOCKERFILE: .ci/build.Dockerfile
     PERSIST_IMAGE_NAME: $CSCS_REGISTRY_PATH/q-e-sirius/q-e-sirius-ci:$CI_COMMIT_SHA
@@ -81,6 +82,38 @@ test LiCoO2 parallel:
     - /qe-src/ci-tests/LiCoO2/run_parallel.x
     - cat $PWD/LiCoO2/LiCoO2.Hubbard_parameters.dat
     - python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/LiCoO2/hp.ref.yml $PWD/LiCoO2/hp.yml
+
+test Ni:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CONSTRAINT: gpu
+    SLURM_CPUS_PER_TASK: 12
+    SLURM_NTASKS: 1
+    SLURM_JOB_NUM_NODES: 1
+  script:
+    - spack arch
+    - cd /qe-src/ci-tests/Ni
+    - /apps/bin/pw.x -i Ni.scf.in -use_qe_scf
+    - /apps/bin/hp.x -i Ni.hp.in
+    - cat Ni.Hubbard_parameters.dat
+    - python3 ../hp_diff.py hp.ref.yml hp.yml
+
+test Ni parallel:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CONSTRAINT: gpu
+    SLURM_CPUS_PER_TASK: 12
+    SLURM_NTASKS: 2
+    SLURM_JOB_NUM_NODES: 2
+  script:
+    - spack arch
+    - /qe-src/ci-tests/Ni/run_parallel.x
+    - cat $PWD/Ni/Ni.Hubbard_parameters.dat
+    - python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/Ni/hp.ref.yml $PWD/Ni/hp.yml
 
 test CrI3 parallel:
   extends: .run_tests
@@ -158,7 +191,7 @@ test (KCW) H2O serial:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CONSTRAINT: gpu
-    SLURM_CPUS_PER_TASK: 12
+    SLURM_CPUS_PER_TASK: 1
     SLURM_NTASKS: 1
     SLURM_JOB_NUM_NODES: 1
   script:
