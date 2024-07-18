@@ -947,6 +947,7 @@ MODULE mod_sirius
     WRITE(conf_str, 10)diago_david_ndim, mixing_beta, nmix
     10 FORMAT('{"parameters"       : {"electronic_structure_method" : "pseudopotential", "use_scf_correction" : true}, &
                &"iterative_solver" : {"subspace_size" : ',I4,'}, &
+               &"settings"         : {"real_occupation_matrix" : true},&
                &"mixer"            : {"beta"        : ', F12.6, ',&
                &                      "max_history" : ', I4, ', &
                &                      "use_hartree" : true}}')
