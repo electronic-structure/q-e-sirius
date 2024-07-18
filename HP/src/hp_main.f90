@@ -57,7 +57,6 @@ PROGRAM hp_main
   CALL hp_readin()
 #if defined(__SIRIUS)
   CALL setup_sirius()
-  !!use_sirius_scf = .false.
 #endif 
   !
   ! Initialization
