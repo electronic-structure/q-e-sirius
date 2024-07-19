@@ -81,11 +81,6 @@ SUBROUTINE screen_coeff ()
   CALL sirius_initialize(call_mpi_init=.false.)
 #endif
 
-#if defined(__SIRIUS)
-    CALL setup_sirius()
-    !use_sirius_scf = .true.
-#endif
-
 IF (nqs == 1) do_real_space = .TRUE. 
   IF (do_real_space) THEN 
      ALLOCATE ( drhor_scf(dffts%nnr,nspin) ) 
@@ -139,6 +134,12 @@ IF (nqs == 1) do_real_space = .TRUE.
     !
     IF (kcw_iverbosity .gt. -1 ) WRITE(stdout,'(8X, "INFO: rhowan_q(r) RETRIEVED"/)') 
     !
+#if defined(__SIRIUS)
+    IF ( .not. setup_pw .and. .not. do_band ) THEN
+      CALL clear_sirius() 
+      CALL setup_sirius()
+    END IF
+#endif  
     IF (setup_pw) CALL kcw_run_nscf(do_band)
     !
 #if defined(__SIRIUS)

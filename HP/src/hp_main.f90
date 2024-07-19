@@ -55,9 +55,6 @@ PROGRAM hp_main
   ! Read the input parameters and the data produced by PWscf
   !
   CALL hp_readin()
-#if defined(__SIRIUS)
-  CALL setup_sirius()
-#endif 
   !
   ! Initialization
   !
@@ -136,6 +133,12 @@ PROGRAM hp_main
         !
         ! If necessary the bands are recalculated
         !
+#if defined(__SIRIUS)
+        IF ( .not. setup_pw ) THEN
+          CALL clear_sirius() 
+          CALL setup_sirius()
+        END IF
+#endif 
         IF (setup_pw) CALL hp_run_nscf(.true.) 
         !
 #if defined(__SIRIUS)
