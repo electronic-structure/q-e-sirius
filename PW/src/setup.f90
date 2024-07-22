@@ -100,7 +100,7 @@ SUBROUTINE setup()
   USE random_numbers,     ONLY : set_random_seed
   USE dynamics_module,    ONLY : control_temp
 #if defined(__SIRIUS)
-  USE mod_sirius,         ONLY : num_kpoints, kpoints, wkpoints, invert_mtrx
+  USE mod_sirius,         ONLY : setup_kpoints
 #endif
   !
   IMPLICIT NONE
@@ -612,18 +612,9 @@ SUBROUTINE setup()
   END IF
   !
 #if defined(__SIRIUS)
-  ! get inverse of the reciprocal lattice vectors
-  CALL invert_mtrx(bg, bg_inv)
-  num_kpoints = nkstot
-  IF (ALLOCATED(kpoints)) DEALLOCATE(kpoints)
-  ALLOCATE(kpoints(3, num_kpoints))
-  ! save the k-point list in lattice coordinates
-  DO ik = 1, num_kpoints
-    kpoints(:, ik) =  MATMUL(bg_inv, xk(:, ik))
-  ENDDO
-  IF (ALLOCATED(wkpoints)) DEALLOCATE(wkpoints)
-  ALLOCATE(wkpoints(num_kpoints))
-  wkpoints(1:num_kpoints) = wk(1:num_kpoints)
+  !
+  CALL setup_kpoints()
+  !
 #endif
   !
   IF ( lsda ) THEN
