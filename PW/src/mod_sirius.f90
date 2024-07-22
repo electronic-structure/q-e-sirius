@@ -1226,8 +1226,8 @@ MODULE mod_sirius
                   ENDIF
                 ELSE
                   ! standard-standard term in QE language
-                  CALL sirius_add_hubbard_atom_pair(sctx, atom_pair(1:2), at_sc(ia2)%n(1:3), &
-                                                    n_pair(1:2), l_pair(1:2), Hubbard_V(ia,ia2,1) / 2.0)
+                  CALL sirius_add_hubbard_atom_pair(sctx, atom_pair, T, n_pair, l_pair, &
+                      & Hubbard_V(ia,ia2,1) / 2.0)
                 ENDIF
                 !
               END DO
@@ -1387,7 +1387,7 @@ MODULE mod_sirius
                     occm(i, 1:mmax2) = nsg(1:mmax2, i, viz, ia, is)
                   ENDDO
                   CALL sirius_set_nonlocal_occupation_matrix(gs_handler, atom_pair, n_pair, l_pair, &
-                                    &is, at_sc(ia2)%n, occm, mmax, mmax2)
+                                    &is, T, occm, mmax, mmax2)
                 ENDDO
                 DEALLOCATE(occm)
               ENDIF ! on-site / off-site
