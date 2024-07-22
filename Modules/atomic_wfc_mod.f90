@@ -448,7 +448,7 @@ SUBROUTINE atomic_wfc_so( npw, npwx, npol, natomwfc, nsp, nt, &
    INTEGER :: m, lm, ig, l
    !
    l = upf(nt)%lchi(nb)
-   lphase = (0.d0,-1.d0)**l
+   lphase = (0.d0,1.d0)**l
    DO m = 1, 2 * l + 1
       lm = l**2 + m
       n_starting_wfc = n_starting_wfc + 1
