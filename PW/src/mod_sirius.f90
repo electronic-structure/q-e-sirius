@@ -1700,6 +1700,12 @@ MODULE mod_sirius
     ALLOCATE(vgl(3, npwx))
     !
     DO ik = 1, nkstot
+      !
+      !initialize wf to zero to ensure everything after ngk(ikloc)
+      !will be zero.
+      !
+      evc = 0.D0
+      !
       ik1 = MOD(ik - 1, num_kpoints) + 1
       ispn = 1
       IF (ik .GT. num_kpoints) THEN
@@ -1710,13 +1716,13 @@ MODULE mod_sirius
         DO ig = 1, ngk(ikloc)
           vgl(:,ig) = mill(:, igk_k(ig, ikloc))
         ENDDO
-        CALL sirius_get_wave_functions( ks_handler, vkl=kpoints(:, ik1), spin=ispn, num_gvec_loc=ngk(ikloc), &
+        CALL sirius_get_wave_functions( ks_h, vkl=kpoints(:, ik1), spin=ispn, num_gvec_loc=ngk(ikloc), &
                                       & gvec_loc=vgl, evec=evc, ld=npwx, num_spin_comp=npol )
         IF (nks > 1 .OR. lelfield) THEN
           CALL save_buffer ( evc, nwordwfc, iunwfc, ikloc )
         ENDIF
       ELSE
-        CALL sirius_get_wave_functions( ks_handler )
+        CALL sirius_get_wave_functions( ks_h )
       ENDIF
       !
       CALL mpi_barrier(inter_pool_comm, ierr)
