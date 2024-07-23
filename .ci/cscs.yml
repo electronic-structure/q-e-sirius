@@ -188,7 +188,7 @@ test (KCW) Si serial:
     - cat Si_emp.wout
     - /apps/bin/kcw.x -i Si.kcw-wann2kcw.in
     - /apps/bin/kcw.x -i Si.kcw-screen.in 
-    - python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/Si_koopmans/kcw.ref.yml $PWD/Si_koopmans/kcw.yml
+    - python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/Si_koopmans/kcw.ref.yml kcw.yml
 
 
 test (KCW) Si parallel:
@@ -202,20 +202,8 @@ test (KCW) Si parallel:
     SLURM_JOB_NUM_NODES: 4
     SLURM_TIMELIMIT: "1:30:00"
   script:
-    - cp -r /qe-src/ci-tests/Si_koopmans $PWD/Si_koopmans_parallel
-    - cd $PWD/Si_koopmans
-    - /apps/bin/pw.x -npool 4 -i Si.scf.in -use_qe_scf
-    - /apps/bin/wannier90.x -pp Si
-    - /apps/bin/pw2wannier90.x -i Si.pw2wann.in
-    - /apps/bin/wannier90.x Si
-    - cat Si.wout
-    - /apps/bin/wannier90.x -pp Si_emp
-    - /apps/bin/pw2wannier90.x -i Si_emp.pw2wann.in
-    - /apps/bin/wannier90.x Si_emp
-    - cat Si_emp.wout
-    - /apps/bin/kcw.x -i Si.kcw-wann2kcw.in
-    - /apps/bin/kcw.x -npool 4 -i Si.kcw-screen.in 
-    - python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/Si_koopmans/kcw.ref.yml $PWD/Si_koopmans_parallel/kcw.yml
+    - /qe-src/ci-tests/Si_koopmans/run_parallel.x
+    - python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/Si_koopmans/kcw.ref.yml $PWD/Si_koopmans/kcw.yml
 
 test (KCW) H2O serial:
   extends: .run_tests
@@ -232,7 +220,7 @@ test (KCW) H2O serial:
     - /apps/bin/pw.x -i h2o.scf.in -use_qe_scf
     - /apps/bin/kcw.x -i h2o.kcw-wann2kcw.in
     - /apps/bin/kcw.x -i h2o.kcw-screen.in 
-    - python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/h2o_koopmans/kcw.ref.yml $PWD/h2o_koopmans/kcw.yml
+    - python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/h2o_koopmans/kcw.ref.yml kcw.yml
 
 test (KCW) H2O parallel:
   extends: .run_tests
@@ -242,11 +230,7 @@ test (KCW) H2O parallel:
     SLURM_CONSTRAINT: gpu
     SLURM_CPUS_PER_TASK: 12
     SLURM_NTASKS: 4
-    SLURM_JOB_NUM_NODES: 1
+    SLURM_JOB_NUM_NODES: 4
   script:
-    - cp -r /qe-src/ci-tests/h2o_koopmans $PWD/h2o_koopmans_parallel
-    - cd $PWD/h2o_koopmans
-    - /apps/bin/pw.x -npool 4 -i h2o.scf.in -use_qe_scf
-    - /apps/bin/kcw.x -i h2o.kcw-wann2kcw.in
-    - /apps/bin/kcw.x -npool 4 -i h2o.kcw-screen.in 
+    - /qe-src/ci-tests/h2o_koopmans/run_parallel.x
     - python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/h2o_koopmans/kcw.ref.yml $PWD/h2o_koopmans_parallel/kcw.yml
