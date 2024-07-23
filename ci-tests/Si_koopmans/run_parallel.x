@@ -9,7 +9,6 @@ else
 fi
 
 cd $PWD/Si_koopmans_parallel
-cd $PWD/Si_koopmans_parallel
 /apps/bin/pw.x -npool 2 -i Si.scf.in -use_qe_scf
 /apps/bin/wannier90.x -pp Si
 /apps/bin/pw2wannier90.x -i Si.pw2wann.in
