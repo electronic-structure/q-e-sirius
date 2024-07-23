@@ -69,6 +69,22 @@ test ZrN:
     - cat NZr.Hubbard_parameters.dat
     - python3 ../hp_diff.py hp.ref.yml hp.yml
 
+test FeO:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CONSTRAINT: gpu
+    SLURM_CPUS_PER_TASK: 12
+    SLURM_NTASKS: 1
+    SLURM_JOB_NUM_NODES: 1
+  script:
+    - cd /qe-src/ci-tests/FeO
+    - /apps/bin/pw.x -i scf.in -use_qe_scf
+    - /apps/bin/hp.x -i hp.in
+    - cat FeO.Hubbard_parameters.dat
+    - python3 ../hp_diff.py hp.ref.yml hp.yml
+
 test LiCoO2:
   extends: .run_tests
   variables:

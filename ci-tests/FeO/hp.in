@@ -1,0 +1,14 @@
+&INPUTHP
+  alpha_mix(1) =   4.0000000000d-01
+  conv_thr_chi =   1.0000000000d-06
+  iverbosity = 4
+  max_seconds =   3.4200000000d+03
+  niter_max = 100
+  nmix = 8
+  nq1 = 2
+  nq2 = 2
+  nq3 = 2
+  outdir = './out'
+  prefix = 'FeO'
+  rmax =   4.2518837990d+00
+/
