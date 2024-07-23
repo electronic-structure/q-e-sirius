@@ -65,7 +65,7 @@ test ZrN:
   script:
     - cd /qe-src/ci-tests/ZrN
     - /apps/bin/pw.x -i scf.in -use_qe_scf
-    - /apps/bin/hp.x -i hp.in -use_qe_scf
+    - /apps/bin/hp.x -i hp.in
     - cat NZr.Hubbard_parameters.dat
     - python3 ../hp_diff.py hp.ref.yml hp.yml
 
