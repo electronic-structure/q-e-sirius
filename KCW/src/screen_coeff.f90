@@ -135,7 +135,7 @@ IF (nqs == 1) do_real_space = .TRUE.
     IF (kcw_iverbosity .gt. -1 ) WRITE(stdout,'(8X, "INFO: rhowan_q(r) RETRIEVED"/)') 
     !
 #if defined(__SIRIUS)
-    IF ( .not. setup_pw .and. .not. do_band ) THEN
+    IF ( .not. setup_pw ) THEN
       CALL clear_sirius() 
       CALL setup_sirius()
     END IF
