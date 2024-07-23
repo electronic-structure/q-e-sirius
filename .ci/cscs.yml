@@ -203,7 +203,7 @@ test (KCW) Si parallel:
     SLURM_TIMELIMIT: "1:30:00"
   script:
     - /qe-src/ci-tests/Si_koopmans/run_parallel.x
-    - python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/Si_koopmans/kcw.ref.yml $PWD/Si_koopmans/kcw.yml
+    - python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/Si_koopmans/kcw.ref.yml $PWD/Si_koopmans_parallel/kcw.yml
 
 test (KCW) H2O serial:
   extends: .run_tests
