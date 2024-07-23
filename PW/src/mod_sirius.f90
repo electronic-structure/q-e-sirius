@@ -1093,7 +1093,7 @@ MODULE mod_sirius
         ENDDO
 
         ! QE input allow two different notations for entering the hubbard onsite interaction because 
-        ! there is a bug in QE that is not fixed. 
+        ! there is a bug in QE that is not fixed.
         ! I do not set the hubbard properties right away because the Hubbard_U(iat) is not set 
         ! when the V notation is also used for onsite interaction
         IF (is_hubbard(iat)) THEN
