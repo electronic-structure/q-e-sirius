@@ -1,7 +1,7 @@
 &INPUTHP
   alpha_mix(1) =   4.0000000000d-01
   conv_thr_chi =   1.0000000000d-06
-  iverbosity = 4
+  iverbosity = 2
   max_seconds =   3.4200000000d+03
   niter_max = 100
   nmix = 8
