@@ -27,7 +27,7 @@ def main():
       if abs(a1 - a2) > 1e-2:
         print(f'LR parameters are different: ref: {a1}, actual: {a2}')
         sys.exit(1)     
-      print(f'LR parameters are ref: {a1}, actual: {a2} diff: {abs(a1 - a2)} -> ok!')
+      print(f'LR parameters are ref: {a1}, actual: {a2} diff: {round(abs(a1 - a2), 5)} -> ok!')
 
     sys.exit(0)
 
