@@ -14,6 +14,4 @@ cd $PWD/h2o_koopmans_parallel
 
 if [[ $SLURM_PROCID == 0 ]]; then
     python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/h2o_koopmans/kcw.ref.yml $PWD/kcw.yml
-else
-    sleep 10
 fi

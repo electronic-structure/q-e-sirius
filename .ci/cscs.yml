@@ -39,7 +39,7 @@ build cuda image:
     SLURM_TIMELIMIT: "30:00"
     USE_MPI: 'YES'
 
-test CdO:
+test (PW) CdO:
   extends: .run_tests
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
@@ -53,7 +53,7 @@ test CdO:
     - /apps/bin/pw.x -i CdO.in > out.txt
     - python3 ../qe_diff.py ref.txt out.txt
 
-test ZrN:
+test (HP) ZrN:
   extends: .run_tests
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
@@ -69,7 +69,7 @@ test ZrN:
     - cat NZr.Hubbard_parameters.dat
     - python3 ../hp_diff.py hp.ref.yml hp.yml
 
-test FeO parallel:
+test (HP) FeO parallel:
   extends: .run_tests
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
@@ -81,7 +81,7 @@ test FeO parallel:
   script:
     - /qe-src/ci-tests/FeO/run_parallel.x
 
-test CaFeO2 parallel:
+test (HP) CaFeO2 parallel:
   extends: .run_tests
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
@@ -93,7 +93,7 @@ test CaFeO2 parallel:
   script:
     - /qe-src/ci-tests/CaFeO2/run_parallel.x
 
-test LiCoO2:
+test (HP) LiCoO2:
   extends: .run_tests
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
@@ -109,7 +109,7 @@ test LiCoO2:
     - cat LiCoO2.Hubbard_parameters.dat
     - python3 ../hp_diff.py hp.ref.yml hp.yml
 
-test LiCoO2 parallel:
+test (HP) LiCoO2 parallel:
   extends: .run_tests
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
@@ -121,7 +121,7 @@ test LiCoO2 parallel:
   script:
     - /qe-src/ci-tests/LiCoO2/run_parallel.x
 
-test Ni:
+test (HP) Ni:
   extends: .run_tests
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
@@ -138,7 +138,7 @@ test Ni:
     - cat Ni.Hubbard_parameters.dat
     - python3 ../hp_diff.py hp.ref.yml hp.yml
 
-test Ni parallel:
+test (HP) Ni parallel:
   extends: .run_tests
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
@@ -153,7 +153,7 @@ test Ni parallel:
     - cat $PWD/Ni/Ni.Hubbard_parameters.dat
     - python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/Ni/hp.ref.yml $PWD/Ni/hp.yml
 
-test CrI3 parallel:
+test (HP) CrI3 parallel:
   extends: .run_tests
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
@@ -171,7 +171,7 @@ test CrI3 parallel:
     - cat $PWD/CrI3/CrI3.Hubbard_parameters.dat
     - python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/CrI3/hp.ref.yml $PWD/CrI3/hp.yml
 
-test (KCW) Si serial:
+test (KCW) Si:
   extends: .run_tests
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
@@ -209,9 +209,8 @@ test (KCW) Si parallel:
     SLURM_TIMELIMIT: "1:30:00"
   script:
     - /qe-src/ci-tests/Si_koopmans/run_parallel.x
-    - python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/Si_koopmans/kcw.ref.yml $PWD/Si_koopmans_parallel/kcw.yml
 
-test (KCW) H2O serial:
+test (KCW) H2O:
   extends: .run_tests
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
@@ -239,4 +238,3 @@ test (KCW) H2O parallel:
     SLURM_JOB_NUM_NODES: 4
   script:
     - /qe-src/ci-tests/h2o_koopmans/run_parallel.x
-    - python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/h2o_koopmans/kcw.ref.yml $PWD/h2o_koopmans_parallel/kcw.yml
