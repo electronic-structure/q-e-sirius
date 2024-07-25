@@ -45,5 +45,5 @@ fi
 /apps/bin/kcw.x -npool 2 -i Si.kcw-screen.in 
 
 if [[ $SLURM_PROCID == 0 ]]; then
-    python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/Si_koopmans/kcw.ref.yml $PWD/kcw.yml
+    python3 /qe-src/ci-tests/kcw_diff.py /qe-src/ci-tests/Si_koopmans/kcw.ref.yml $PWD/kcw.yml
 fi

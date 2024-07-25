@@ -13,5 +13,5 @@ cd $PWD/h2o_koopmans_parallel
 /apps/bin/kcw.x -npool 2 -i h2o.kcw-screen.in 
 
 if [[ $SLURM_PROCID == 0 ]]; then
-    python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/h2o_koopmans/kcw.ref.yml $PWD/kcw.yml
+    python3 /qe-src/ci-tests/kcw_diff.py /qe-src/ci-tests/h2o_koopmans/kcw.ref.yml $PWD/kcw.yml
 fi

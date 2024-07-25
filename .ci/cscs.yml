@@ -194,7 +194,7 @@ test (KCW) Si:
     - cat Si_emp.wout
     - /apps/bin/kcw.x -i Si.kcw-wann2kcw.in
     - /apps/bin/kcw.x -i Si.kcw-screen.in 
-    - python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/Si_koopmans/kcw.ref.yml kcw.yml
+    - python3 /qe-src/ci-tests/kcw_diff.py /qe-src/ci-tests/Si_koopmans/kcw.ref.yml kcw.yml
 
 
 test (KCW) Si parallel:
@@ -210,22 +210,6 @@ test (KCW) Si parallel:
   script:
     - /qe-src/ci-tests/Si_koopmans/run_parallel.x
 
-test (KCW) H2O:
-  extends: .run_tests
-  variables:
-    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
-    SIRIUS_PRINT_TIMING: 1
-    SLURM_CONSTRAINT: gpu
-    SLURM_CPUS_PER_TASK: 1
-    SLURM_NTASKS: 1
-    SLURM_JOB_NUM_NODES: 1
-  script:
-    - cp -r /qe-src/ci-tests/h2o_koopmans $PWD/h2o_koopmans
-    - cd $PWD/h2o_koopmans
-    - /apps/bin/pw.x -i h2o.scf.in -use_qe_scf
-    - /apps/bin/kcw.x -i h2o.kcw-wann2kcw.in
-    - /apps/bin/kcw.x -i h2o.kcw-screen.in 
-    - python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/h2o_koopmans/kcw.ref.yml kcw.yml
 
 test (KCW) H2O parallel:
   extends: .run_tests
