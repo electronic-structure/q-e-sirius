@@ -88,8 +88,8 @@ test (HP) CaFeO2 parallel:
     SIRIUS_PRINT_TIMING: 1
     SLURM_CONSTRAINT: gpu
     SLURM_CPUS_PER_TASK: 12
-    SLURM_NTASKS: 6
-    SLURM_JOB_NUM_NODES: 6
+    SLURM_NTASKS: 4
+    SLURM_JOB_NUM_NODES: 4
   script:
     - /qe-src/ci-tests/CaFeO2/run_parallel.x
 
