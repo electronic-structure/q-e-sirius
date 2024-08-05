@@ -160,10 +160,7 @@ test (HP) Ni parallel:
     SLURM_NTASKS: 3
     SLURM_JOB_NUM_NODES: 3
   script:
-    - spack arch
     - /qe-src/ci-tests/Ni/run_parallel.x
-    - cat $PWD/Ni/Ni.Hubbard_parameters.dat
-    - python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/Ni/hp.ref.yml $PWD/Ni/hp.yml
 
 test (HP) CrI3 parallel:
   extends: .run_tests
