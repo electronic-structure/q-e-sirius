@@ -230,7 +230,7 @@ test (KCW) H2O parallel:
     SIRIUS_PRINT_TIMING: 1
     SLURM_CONSTRAINT: gpu
     SLURM_CPUS_PER_TASK: 12
-    SLURM_NTASKS: 4
-    SLURM_JOB_NUM_NODES: 4
+    SLURM_NTASKS: 3 
+    SLURM_JOB_NUM_NODES: 3
   script:
     - /qe-src/ci-tests/h2o_koopmans/run_parallel.x
