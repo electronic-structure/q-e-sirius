@@ -157,8 +157,8 @@ test (HP) Ni parallel:
     SIRIUS_PRINT_TIMING: 1
     SLURM_CONSTRAINT: gpu
     SLURM_CPUS_PER_TASK: 12
-    SLURM_NTASKS: 2
-    SLURM_JOB_NUM_NODES: 2
+    SLURM_NTASKS: 3
+    SLURM_JOB_NUM_NODES: 3
   script:
     - spack arch
     - /qe-src/ci-tests/Ni/run_parallel.x

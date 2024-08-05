@@ -9,5 +9,5 @@ else
 fi
 
 cd $PWD/Ni
-/apps/bin/pw.x -i Ni.scf.in -use_qe_scf -npool 2
-/apps/bin/hp.x -i Ni.hp.in -npool 2
+/apps/bin/pw.x -i Ni.scf.in -use_qe_scf -npool 3
+/apps/bin/hp.x -i Ni.hp.in -npool 3
