@@ -69,6 +69,18 @@ test (HP) ZrN:
     - cat NZr.Hubbard_parameters.dat
     - python3 ../hp_diff.py hp.ref.yml hp.yml
 
+test (HP) NW parallel:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CONSTRAINT: gpu
+    SLURM_CPUS_PER_TASK: 12
+    SLURM_NTASKS: 2
+    SLURM_JOB_NUM_NODES: 2
+  script:
+    - /qe-src/ci-tests/NW/run_parallel.x
+
 test (HP) FeO parallel:
   extends: .run_tests
   variables:
@@ -244,3 +256,4 @@ test (KCW) LiF parallel:
     SLURM_TIMELIMIT: "1:30:00"
   script:
     - /qe-src/ci-tests/LiF_koopmans/run_parallel.x
+
