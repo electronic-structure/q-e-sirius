@@ -39,7 +39,7 @@ build cuda image:
     SLURM_TIMELIMIT: "30:00"
     USE_MPI: 'YES'
 
-test CdO:
+test (PW) CdO:
   extends: .run_tests
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
@@ -53,7 +53,71 @@ test CdO:
     - /apps/bin/pw.x -i CdO.in > out.txt
     - python3 ../qe_diff.py ref.txt out.txt
 
-test LiCoO2:
+test (HP) ZrN:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CONSTRAINT: gpu
+    SLURM_CPUS_PER_TASK: 12
+    SLURM_NTASKS: 1
+    SLURM_JOB_NUM_NODES: 1
+  script:
+    - cd /qe-src/ci-tests/ZrN
+    - /apps/bin/pw.x -i scf.in -use_qe_scf
+    - /apps/bin/hp.x -i hp.in
+    - cat NZr.Hubbard_parameters.dat
+    - python3 ../hp_diff.py hp.ref.yml hp.yml
+
+test (HP) NW parallel:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CONSTRAINT: gpu
+    SLURM_CPUS_PER_TASK: 12
+    SLURM_NTASKS: 2
+    SLURM_JOB_NUM_NODES: 2
+  script:
+    - /qe-src/ci-tests/NW/run_parallel.x
+
+test (HP) FeO parallel:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CONSTRAINT: gpu
+    SLURM_CPUS_PER_TASK: 12
+    SLURM_NTASKS: 4
+    SLURM_JOB_NUM_NODES: 4
+  script:
+    - /qe-src/ci-tests/FeO/run_parallel.x
+
+test (HP) CaFeO2 parallel:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CONSTRAINT: gpu
+    SLURM_CPUS_PER_TASK: 12
+    SLURM_NTASKS: 4
+    SLURM_JOB_NUM_NODES: 4
+  script:
+    - /qe-src/ci-tests/CaFeO2/run_parallel.x
+
+test (HP) NiO parallel:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CONSTRAINT: gpu
+    SLURM_CPUS_PER_TASK: 12
+    SLURM_NTASKS: 4
+    SLURM_JOB_NUM_NODES: 4
+  script:
+    - /qe-src/ci-tests/NiO/run_parallel.x
+
+test (HP) LiCoO2:
   extends: .run_tests
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
@@ -69,7 +133,7 @@ test LiCoO2:
     - cat LiCoO2.Hubbard_parameters.dat
     - python3 ../hp_diff.py hp.ref.yml hp.yml
 
-test LiCoO2 parallel:
+test (HP) LiCoO2 parallel:
   extends: .run_tests
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
@@ -80,10 +144,8 @@ test LiCoO2 parallel:
     SLURM_JOB_NUM_NODES: 4
   script:
     - /qe-src/ci-tests/LiCoO2/run_parallel.x
-    - cat $PWD/LiCoO2/LiCoO2.Hubbard_parameters.dat
-    - python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/LiCoO2/hp.ref.yml $PWD/LiCoO2/hp.yml
 
-test Ni:
+test (HP) Ni:
   extends: .run_tests
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
@@ -100,22 +162,19 @@ test Ni:
     - cat Ni.Hubbard_parameters.dat
     - python3 ../hp_diff.py hp.ref.yml hp.yml
 
-test Ni parallel:
+test (HP) Ni parallel:
   extends: .run_tests
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CONSTRAINT: gpu
     SLURM_CPUS_PER_TASK: 12
-    SLURM_NTASKS: 2
-    SLURM_JOB_NUM_NODES: 2
+    SLURM_NTASKS: 3
+    SLURM_JOB_NUM_NODES: 3
   script:
-    - spack arch
     - /qe-src/ci-tests/Ni/run_parallel.x
-    - cat $PWD/Ni/Ni.Hubbard_parameters.dat
-    - python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/Ni/hp.ref.yml $PWD/Ni/hp.yml
 
-test CrI3 parallel:
+test (HP) CrI3 parallel:
   extends: .run_tests
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
@@ -133,7 +192,7 @@ test CrI3 parallel:
     - cat $PWD/CrI3/CrI3.Hubbard_parameters.dat
     - python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/CrI3/hp.ref.yml $PWD/CrI3/hp.yml
 
-test Si_koopmans:
+test (KCW) Si:
   extends: .run_tests
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
@@ -143,7 +202,8 @@ test Si_koopmans:
     SLURM_NTASKS: 1
     SLURM_JOB_NUM_NODES: 1
   script:
-    - cd /qe-src/ci-tests/Si_koopmans
+    - cp -r /qe-src/ci-tests/Si_koopmans $PWD/Si_koopmans
+    - cd $PWD/Si_koopmans
     - /apps/bin/pw.x -i Si.scf.in -use_qe_scf
     - /apps/bin/wannier90.x -pp Si
     - /apps/bin/pw2wannier90.x -i Si.pw2wann.in
@@ -155,18 +215,45 @@ test Si_koopmans:
     - cat Si_emp.wout
     - /apps/bin/kcw.x -i Si.kcw-wann2kcw.in
     - /apps/bin/kcw.x -i Si.kcw-screen.in 
+    - python3 /qe-src/ci-tests/kcw_diff.py /qe-src/ci-tests/Si_koopmans/kcw.ref.yml kcw.yml
 
-test h2o_koopmans:
+
+test (KCW) Si parallel:
   extends: .run_tests
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CONSTRAINT: gpu
-    SLURM_CPUS_PER_TASK: 1
-    SLURM_NTASKS: 1
-    SLURM_JOB_NUM_NODES: 1
+    SLURM_CPUS_PER_TASK: 12
+    SLURM_NTASKS: 4
+    SLURM_JOB_NUM_NODES: 4
+    SLURM_TIMELIMIT: "1:30:00"
   script:
-    - cd /qe-src/ci-tests/h2o_koopmans
-    - /apps/bin/pw.x -i h2o.scf.in -use_qe_scf
-    - /apps/bin/kcw.x -i h2o.kcw-wann2kcw.in
-    - /apps/bin/kcw.x -i h2o.kcw-screen.in 
+    - /qe-src/ci-tests/Si_koopmans/run_parallel.x
+
+
+test (KCW) H2O parallel:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CONSTRAINT: gpu
+    SLURM_CPUS_PER_TASK: 12
+    SLURM_NTASKS: 3 
+    SLURM_JOB_NUM_NODES: 3
+  script:
+    - /qe-src/ci-tests/h2o_koopmans/run_parallel.x
+
+test (KCW) LiF parallel:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CONSTRAINT: gpu
+    SLURM_CPUS_PER_TASK: 12
+    SLURM_NTASKS: 4
+    SLURM_JOB_NUM_NODES: 4
+    SLURM_TIMELIMIT: "1:30:00"
+  script:
+    - /qe-src/ci-tests/LiF_koopmans/run_parallel.x
+

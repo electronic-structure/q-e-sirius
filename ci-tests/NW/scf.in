@@ -1,0 +1,51 @@
+&CONTROL
+  calculation = 'scf'
+  etot_conv_thr =   1.0000000000d-05
+  forc_conv_thr =   5.0000000000d-05
+  max_seconds =   3.4200000000d+03
+  outdir = './out/'
+  prefix = 'NW'
+  pseudo_dir = '.'
+  tprnfor = .true.
+  tstress = .true.
+  verbosity = 'high'
+/
+&SYSTEM
+  degauss =   0.01
+  ecutrho =   640.0
+  ecutwfc =   80.0
+  ibrav = 0
+  nat = 2
+  nosym = .false.
+  ntyp = 2
+  occupations = 'smearing'
+  smearing = 'cold'
+  input_dft = 'XC-000I-000I-101L-130L-000I-000I' ! pbe
+/
+&ELECTRONS
+  conv_thr =   1e-16
+  diagonalization = 'davidson'
+  electron_maxstep = 300
+  mixing_beta =   0.4
+/
+ATOMIC_SPECIES
+N      14.0067 N.pbe-n-kjpaw_psl.1.0.0.UPF
+W      183.84  W_pbe_v1.2.uspp.F.UPF
+ATOMIC_POSITIONS angstrom
+W            0.0000000000       0.0000000000       0.0000000000
+N            0.0000000000       1.6685422780       1.4150000000
+K_POINTS automatic
+7 7 6 0 0 0
+CELL_PARAMETERS angstrom
+      2.8900000000       0.0000000000       0.0000000000
+     -1.4450000000       2.5028134169       0.0000000000
+      0.0000000000       0.0000000000       2.8300000000
+HUBBARD ortho-atomic
+ V      W-5d    W-5d    1       1       4.0
+ V      W-5d    N-2p    1       4       1.0
+ V      W-5d    N-2p    1       2       1.0
+ V      W-5d    N-2p    1       6       1.0
+ V      W-5d    N-2p    1       22      1.0
+ V      W-5d    N-2p    1       28      1.0
+ V      W-5d    N-2p    1       24      1.0
+

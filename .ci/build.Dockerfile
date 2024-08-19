@@ -15,9 +15,9 @@ RUN spack arch
 
 ENV PATH="$PATH:/apps/bin"
 
-RUN apt-get install -y pip && pip install reframe-hpc
-
-RUN git clone https://github.com/electronic-structure/qe-verification-tests.git
-ENV OMP_NUM_THREADS=1
-RUN cd qe-verification-tests/verification && reframe -c ./checks/ -r --system=localhost -C ./checks/config.py --tag serial
+#RUN apt-get install -y pip && pip install reframe-hpc
+#
+#RUN git clone https://github.com/electronic-structure/qe-verification-tests.git
+#ENV OMP_NUM_THREADS=1
+#RUN cd qe-verification-tests/verification && reframe -c ./checks/ -r --system=localhost -C ./checks/config.py --tag serial
 

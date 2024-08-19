@@ -14,7 +14,7 @@
   nspin = 2
   ntyp = 2
   nbnd = 8
-  !!!assume_isolated='mt'
+  assume_isolated='mt'
   tot_magnetization = 0.0
 /
 &ELECTRONS

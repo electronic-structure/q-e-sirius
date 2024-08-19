@@ -1,0 +1,14 @@
+&INPUTHP
+  alpha_mix(1) =   4.0000000000d-01
+  conv_thr_chi =   1.0000000000d-06
+  iverbosity = 2
+  max_seconds =   3.4200000000d+03
+  niter_max = 250
+  nmix = 8
+  nq1 = 1 ! 3 
+  nq2 = 1 ! 3
+  nq3 = 2 ! 5 
+  outdir = 'out'
+  prefix = 'CaFeO2'
+  rmax =   3.9266583933d+00
+/

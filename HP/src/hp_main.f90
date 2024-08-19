@@ -55,14 +55,6 @@ PROGRAM hp_main
   ! Read the input parameters and the data produced by PWscf
   !
   CALL hp_readin()
-#if defined(__SIRIUS)
-  CALL setup_sirius()
-  !CALL sirius_load_state(gs_handler, "state.h5")
-  !CALL put_potential_to_sirius()
-  !CALL sirius_generate_d_operator_matrix(gs_handler)
-  CALL sirius_create_H0(gs_handler)
-  use_sirius_scf = .false.
-#endif
   !
   ! Initialization
   !
@@ -141,7 +133,17 @@ PROGRAM hp_main
         !
         ! If necessary the bands are recalculated
         !
+#if defined(__SIRIUS)
+        IF ( .not. setup_pw ) THEN
+          CALL clear_sirius() 
+          CALL setup_sirius()
+        END IF
+#endif 
         IF (setup_pw) CALL hp_run_nscf(.true.) 
+        !
+#if defined(__SIRIUS)
+        CALL sirius_create_H0(gs_handler)
+#endif
         !
         ! Initialize the quantities which do not depend on
         ! the linear response of the system

@@ -1,0 +1,57 @@
+ &control
+    calculation='scf'
+    restart_mode='from_scratch',
+    prefix='NiO'
+    pseudo_dir = '.'
+    outdir='./out/'
+    verbosity='high'
+ /
+ &system
+    ibrav = 0,
+    celldm(1) = 8.00,
+    nat = 4,
+    ntyp = 3,
+    nspin = 2,
+    starting_magnetization(1) =  0.5,
+    starting_magnetization(2) = -0.5,
+    ecutwfc = 65.0,
+    ecutrho = 780.0,
+    occupations = 'smearing',
+    smearing = 'mv',
+    degauss = 0.01,
+    input_dft = 'XC-000I-000I-116L-133L-000I-000I' ! pbesol
+ /
+ &electrons
+    conv_thr =  1.d-10
+    mixing_beta = 0.3
+ /
+ATOMIC_SPECIES
+Ni1 58.693 ni_pbesol_v1.4.uspp.F.UPF
+Ni2 58.693 ni_pbesol_v1.4.uspp.F.UPF
+O   15.999 o_pbesol_v1.2.uspp.F.UPF
+ATOMIC_POSITIONS {crystal}
+Ni1      0.00000000     0.00000000     0.00000000
+Ni2      0.50000000     0.50000000     0.50000000
+O        0.25000000     0.25000000     0.25000000
+O        0.75000000     0.75000000     0.75000000
+CELL_PARAMETERS {alat}
+   0.991357926   0.495192327   0.495192327
+   0.495192327   0.991357926   0.495192327
+   0.495192327   0.495192327   0.991357926
+K_POINTS {automatic}
+2 2 2 0 0 0
+HUBBARD {ortho-atomic}
+V    Ni1-3d    Ni1-3d    1     1   7.3746
+V    Ni1-3d      O-2p    1    20   0.3499
+V    Ni1-3d      O-2p    1    55   0.3499
+V    Ni1-3d      O-2p    1    47   0.3499
+V    Ni1-3d      O-2p    1    44   0.3499
+V    Ni1-3d      O-2p    1    23   0.3499
+V    Ni1-3d      O-2p    1    12   0.3499
+V    Ni2-3d    Ni2-3d    2     2   7.3746
+V    Ni2-3d      O-2p    2    91   0.3499
+V    Ni2-3d      O-2p    2    59   0.3499
+V    Ni2-3d      O-2p    2    48   0.3499
+V    Ni2-3d      O-2p    2    24   0.3499
+V    Ni2-3d      O-2p    2    67   0.3499
+V    Ni2-3d      O-2p    2    56   0.3499
