@@ -824,6 +824,7 @@ SUBROUTINE write_uv (lflag)
   LOGICAL :: lflag  ! if .true.  then write V to file
                     ! if .false. then do not write V to file
   CHARACTER(len=2) :: Hubbard_manifold, Hubbard_manifold2
+  CHARACTER(LEN=17) :: orb_label
   CHARACTER(LEN=6), EXTERNAL :: int_to_char
   !
   ! Find and open unit to write info
@@ -974,6 +975,13 @@ SUBROUTINE write_uv (lflag)
                             ADJUSTR(atm_new(nt2)), Hubbard_manifold2, &
                             na, auxindex(na,indexord(nb)),         &
                             Hubbard_matrix(na,indexord(nb))
+                   ! write yaml for SIRIUS
+                   WRITE(orb_label,'(A,"-",A,"-",A,"-",A)') &
+                                    TRIM(atm_new(nt)),  Hubbard_manifold, &
+                                    TRIM(atm_new(nt2)), Hubbard_manifold2
+                   WRITE(unithub_yml,'(A,":")') TRIM(orb_label)
+                   WRITE(unithub_yml,'(2X,I3.3,"-",I3.3":",F12.6)') &
+                                    na, auxindex(na,indexord(nb)), Hubbard_matrix(na,indexord(nb))
               ENDIF
            ELSE
               ! Print couples only
