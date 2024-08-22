@@ -976,12 +976,14 @@ SUBROUTINE write_uv (lflag)
                             na, auxindex(na,indexord(nb)),         &
                             Hubbard_matrix(na,indexord(nb))
                    ! write yaml for SIRIUS
-                   WRITE(orb_label,'(A,"-",A,"-",A,"-",A)') &
-                                    TRIM(atm_new(nt)),  Hubbard_manifold, &
-                                    TRIM(atm_new(nt2)), Hubbard_manifold2
-                   WRITE(unithub_yml,'(A,":")') TRIM(orb_label)
-                   WRITE(unithub_yml,'(2X,I3.3,"-",I3.3":",F12.6)') &
-                                    na, auxindex(na,indexord(nb)), Hubbard_matrix(na,indexord(nb))
+                   IF (na .NE. auxindex(na,indexord(nb))) THEN
+                       WRITE(orb_label,'(A,"-",I3.3,"-",A,"-",I3.3)') &
+                                    TRIM(atm_new(nt)),  na, &
+                                    TRIM(atm_new(nt2)), auxindex(na,indexord(nb))
+                       WRITE(unithub_yml,'(A,":")') TRIM(orb_label)
+                       WRITE(unithub_yml,'(2X,A2,"-",A2":",F12.6)') &
+                                 Hubbard_manifold, Hubbard_manifold2, Hubbard_matrix(na,indexord(nb))
+                   ENDIF
               ENDIF
            ELSE
               ! Print couples only
