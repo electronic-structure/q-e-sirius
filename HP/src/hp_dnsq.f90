@@ -135,6 +135,7 @@ SUBROUTINE hp_dnsq (lmetq0, iter, conv_root, dnsq)
         CALL get_buffer (dpsi, lrdwf, iudwf, nrec)
         ! 
         ! Loop on Hubbard atoms
+        CALL start_clock( 'proj1_proj2' )
         proj1 = (0.d0, 0.d0) 
         proj2 = (0.d0, 0.d0) 
         DO na = 1, nat
@@ -157,6 +158,7 @@ SUBROUTINE hp_dnsq (lmetq0, iter, conv_root, dnsq)
            ENDIF
            !
         ENDDO
+        CALL stop_clock( 'proj1_proj2' )
         !
         CALL mp_sum(proj1, intra_pool_comm)  
         CALL mp_sum(proj2, intra_pool_comm)
