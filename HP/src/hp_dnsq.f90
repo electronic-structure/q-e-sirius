@@ -67,6 +67,7 @@ SUBROUTINE hp_dnsq (lmetq0, iter, conv_root, dnsq)
   INTEGER :: npw, npwq
   ! number of plane waves at k and k+q
   COMPLEX(DP), ALLOCATABLE :: dpsi(:, :), proj1(:,:), proj2(:,:)
+  COMPLEX(DP), ALLOCATABLE :: proj1_ZG(:,:), proj2_ZG(:,:) ! for use in ZGEMM
   REAL(DP) :: weight, wdelta, w1
   REAL(DP),    EXTERNAL :: w0gauss ! an approximation to the delta function
   COMPLEX(DP) :: trace_dns(2)
@@ -82,6 +83,8 @@ SUBROUTINE hp_dnsq (lmetq0, iter, conv_root, dnsq)
   ALLOCATE (dpsi(npwx*npol,nbnd))
   ALLOCATE (proj1(nbnd,nwfcU))
   ALLOCATE (proj2(nbnd,nwfcU))
+  ALLOCATE (proj1_ZG(nwfcU, nbnd))
+  ALLOCATE (proj2_ZG(nwfcU, nbnd))
   ALLOCATE (trace_dns_tot(nat))
   ALLOCATE (conv(nat))
   ALLOCATE (diff(nat))
@@ -136,28 +139,39 @@ SUBROUTINE hp_dnsq (lmetq0, iter, conv_root, dnsq)
         ! 
         ! Loop on Hubbard atoms
         CALL start_clock( 'proj1_proj2' )
+        proj1_ZG = (0.d0, 0.d0)
+        proj2_ZG = (0.d0, 0.d0)
         proj1 = (0.d0, 0.d0) 
         proj2 = (0.d0, 0.d0) 
-        DO na = 1, nat
-           nt = ityp(na)
-           IF (is_hubbard(nt)) THEN
-              ldim = (2*Hubbard_l(nt) + 1) * npol
-              DO m = 1, ldim
-                 ihubst = offsetU(na) + m   ! I m index
-                 !
-                 !  proj1(ibnd, ihubst) = < S(k)*phi(k) | psi(k) >
-                 !  proj2(ibnd, ihubst) = < S(k+q)*phi(k+q) | dpsi(k+q) > 
-                 ! FIXME: use ZGEMM instead of dot_product
-                 DO ibnd = 1, nbnd_occ(ikk)
-                    proj1(ibnd, ihubst) = DOT_PRODUCT( swfcatomk(1:npwx*npol,ihubst), &
-                                                       evc(1:npwx*npol,ibnd) )
-                    proj2(ibnd, ihubst) = DOT_PRODUCT( swfcatomkpq(1:npwx*npol,ihubst), &
-                                                       dpsi(1:npwx*npol,ibnd) )
-                 ENDDO
-              ENDDO 
-           ENDIF
-           !
-        ENDDO
+!       DO na = 1, nat
+!          nt = ityp(na)
+!          IF (is_hubbard(nt)) THEN
+!             ldim = (2*Hubbard_l(nt) + 1) * npol
+!             DO m = 1, ldim
+!                ihubst = offsetU(na) + m   ! I m index
+!                !
+!                !  proj1(ibnd, ihubst) = < S(k)*phi(k) | psi(k) >
+!                !  proj2(ibnd, ihubst) = < S(k+q)*phi(k+q) | dpsi(k+q) > 
+!                ! FIXME: use ZGEMM instead of dot_product
+!                DO ibnd = 1, nbnd_occ(ikk)
+!                   proj1(ibnd, ihubst) = DOT_PRODUCT( swfcatomk(1:npwx*npol,ihubst), &
+!                                                      evc(1:npwx*npol,ibnd) )
+!                   proj2(ibnd, ihubst) = DOT_PRODUCT( swfcatomkpq(1:npwx*npol,ihubst), &
+!                                                      dpsi(1:npwx*npol,ibnd) )
+!                ENDDO
+!             ENDDO 
+!          ENDIF
+!          !
+!       ENDDO
+
+        ! pure ZGEMM implementation
+        CALL ZGEMM('C', 'N', nwfcU, nbnd_occ(ikk), npwx*npol, dcmplx(1.d0, 0.d0), swfcatomk, npwx*npol, &
+                   evc, npwx*npol, dcmplx(0.d0, 0.d0), proj1_ZG, nwfcU)
+        CALL ZGEMM('C', 'N', nwfcU, nbnd_occ(ikk), npwx*npol, dcmplx(1.d0, 0.d0), swfcatomkpq, npwx*npol, &
+                   dpsi, npwx*npol, dcmplx(0.d0, 0.d0), proj2_ZG, nwfcU)
+        ! use existing variables and transpose ZGEMM results
+        proj1 = transpose(proj1_ZG)
+        proj2 = transpose(proj2_ZG)
         CALL stop_clock( 'proj1_proj2' )
         !
         CALL mp_sum(proj1, intra_pool_comm)  
