@@ -483,6 +483,7 @@ MODULE mod_sirius
     !
     REAL(DP) :: aux(rgrid(iat)%mesh), r
     INTEGER :: iq, ir, nr
+    !
     IF (.NOT.upf(iat)%nlcc) THEN
       rhoc_ri = 0.D0
       RETURN
@@ -529,6 +530,11 @@ MODULE mod_sirius
     !
     REAL(DP) :: aux(rgrid(iat)%mesh), r
     INTEGER :: iq, ir, nr
+    !
+    IF (.NOT.upf(iat)%nlcc) THEN
+      rhoc_dj_ri = 0.D0
+      RETURN
+    ENDIF
     ! number of points to the effective infinity (~10 a.u. hardcoded somewhere in the code)
     nr = msh(iat)
     ! loop over q-points
