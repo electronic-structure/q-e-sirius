@@ -1,0 +1,20 @@
+Test    Name    Type                    Hubbard     values      PP      Run_as
+=================================================================================
+HP      LiCoO2  non-magn    insulator   U           1e-4        US      S+P
+HP      NZr     non-magn    metal       U+V         3.0/3.0     NC      S
+HP      NW      non-magn    metal       U+V         4.0/1.0     US/PAW  P
+HP      CrI3    FM          insulator   U           1e-4        PAW     P
+HP      Ni      FM          metal       U           1e-4        US      S+P
+HP      NiO     AFM         insulator   U+V         7.4/0.3     US      P
+HP      CaFeO2  FM          insulator   U+V         5.0/1.0     US/PAW  P
+HP      FeO     FM          metal       U+V         5.0/2.0     NC      P
+
+PW      CdO                             -           -           US/PAW  S
+
+=================================================================================
+FM:     Ferromagnetic
+AFM:    Antiferromagnetic
+PP:     Pseudopotential
+S:      Serial
+P:      Parallel
+
