@@ -1,0 +1,55 @@
+&CONTROL
+  calculation = 'scf'
+  outdir = './out/'
+  prefix = 'Mn2N2'
+  pseudo_dir = '.'
+  verbosity = 'high'
+/
+&SYSTEM
+  degauss =   0.02
+  ecutwfc =   65.0
+  ecutrho =   780.0
+  ibrav = 0
+  nat = 4
+  nspin = 2
+  ntyp = 4
+  occupations = 'smearing'
+  smearing = 'cold'
+  starting_magnetization(1) =  -1.0
+  starting_magnetization(2) =   1.0
+  starting_magnetization(3) =  -0.1
+  starting_magnetization(4) =   0.1
+  input_dft = 'XC-000I-000I-116L-133L-000I-000I' ! pbesol
+/
+&ELECTRONS
+  conv_thr =   1e-15
+  electron_maxstep = 80
+  mixing_beta =   0.8
+/
+ATOMIC_SPECIES
+Mn1    54.938045 mn_pbesol_v1.5.uspp.F.UPF
+Mn2    54.938045 mn_pbesol_v1.5.uspp.F.UPF
+N1     14.0067   N.pbesol-theos.UPF
+N2     14.0067   N.pbesol-theos.UPF
+ATOMIC_POSITIONS crystal
+Mn1          0.6666666667       0.3333333333       0.5118959041 
+Mn2          0.3333333334       0.6666666667       0.0118959041 
+N1           0.6666666667       0.3333333333       0.8661040959 
+N2           0.3333333334       0.6666666667       0.3661040959 
+K_POINTS automatic
+7 7 3 0 0 0 ! was 9 9 5
+CELL_PARAMETERS angstrom
+      2.9087526308       0.0000000000       0.0000000000
+     -1.4543763154       2.5190536716       0.0000000000
+      0.0000000000       0.0000000000       5.1679470074
+HUBBARD {ortho-atomic}
+ V    Mn1-3d    Mn1-3d    1     1   6.00
+ V    Mn1-3d     N1-2p    1     3   0.90
+ V    Mn1-3d     N2-2p    1     4   0.90
+ V    Mn1-3d     N2-2p    1    48   0.90
+ V    Mn1-3d     N2-2p    1    92   0.90
+ V    Mn2-3d    Mn2-3d    2     2   6.00
+ V    Mn2-3d     N2-2p    2     4   0.90
+ V    Mn2-3d     N1-2p    2    19   0.90
+ V    Mn2-3d     N1-2p    2    55   0.90
+ V    Mn2-3d     N1-2p    2    63   0.90

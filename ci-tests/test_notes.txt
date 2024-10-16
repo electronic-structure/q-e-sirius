@@ -8,6 +8,7 @@ HP      Ni      FM          metal       U           1e-4        US      S+P
 HP      NiO     AFM         insulator   U+V         7.4/0.3     US      P
 HP      CaFeO2  FM          insulator   U+V         5.0/1.0     US/PAW  P
 HP      FeO     FM          metal       U+V         5.0/2.0     NC      P
+HP      Mn2N2   AFM         metal       U+V         6.0/0.9     US      P
 
 PW      CdO                             -           -           US/PAW  S
 

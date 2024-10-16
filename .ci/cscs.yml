@@ -93,6 +93,18 @@ test (HP) FeO parallel:
   script:
     - /qe-src/ci-tests/FeO/run_parallel.x
 
+test (HP) Mn2N2 parallel:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CONSTRAINT: gpu
+    SLURM_CPUS_PER_TASK: 6
+    SLURM_NTASKS: 8
+    SLURM_JOB_NUM_NODES: 4
+  script:
+    - /qe-src/ci-tests/Mn2N2/run_parallel.x
+
 test (HP) CaFeO2 parallel:
   extends: .run_tests
   variables:
