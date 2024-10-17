@@ -9,8 +9,8 @@ else
 fi
 
 cd $PWD/Mn2N2
-/apps/bin/pw.x -i scf.in -use_qe_scf -npool 8
-/apps/bin/hp.x -i hp.in -npool 8
+/apps/bin/pw.x -i scf.in -use_qe_scf -npool 4
+/apps/bin/hp.x -i hp.in -npool 4
 
 if [[ $SLURM_PROCID == 0 ]]; then
     cat $PWD/Mn2N2.Hubbard_parameters.dat
