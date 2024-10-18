@@ -29,8 +29,8 @@
 ATOMIC_SPECIES
 Mn1    54.938045 mn_pbesol_v1.5.uspp.F.UPF
 Mn2    54.938045 mn_pbesol_v1.5.uspp.F.UPF
-N1     14.0067   N.pbesol-theos.UPF
-N2     14.0067   N.pbesol-theos.UPF
+N1     14.0067   N_nc-sr-04_pbesol.upf
+N2     14.0067   N_nc-sr-04_pbesol.upf
 ATOMIC_POSITIONS crystal
 Mn1          0.6666666667       0.3333333333       0.5118959041 
 Mn2          0.3333333334       0.6666666667       0.0118959041 
