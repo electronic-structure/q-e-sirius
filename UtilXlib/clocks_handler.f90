@@ -253,6 +253,9 @@ SUBROUTINE start_clock_gpu( label )
 #if defined(__CUDA)
   USE cudafor
 #endif
+#if defined(__SIRIUS)
+  USE sirius
+#endif
   !
   IMPLICIT NONE
   !
@@ -266,6 +269,10 @@ SUBROUTINE start_clock_gpu( label )
   WRITE( stdout,'(I3," depth=",I2," start_clock ",A )') mpime,trace_depth, label ; FLUSH(stdout)
   !WRITE( stdout, '("mpime = ",I2,", TRACE (depth=",I2,") Start: ",A12)') mpime, trace_depth, label
   trace_depth = trace_depth + 1
+#endif
+  !
+#if defined(__SIRIUS)
+  CALL sirius_start_timer(label)
 #endif
   !
   IF ( no .and. ( nclock == 1 ) ) RETURN
@@ -412,6 +419,9 @@ SUBROUTINE stop_clock_gpu( label )
 #if defined(__CUDA)
   USE cudafor
 #endif
+#if defined(__SIRIUS)
+  USE sirius
+#endif
   !
   IMPLICIT NONE
   !
@@ -426,6 +436,10 @@ SUBROUTINE stop_clock_gpu( label )
   if (trace_depth <= max_print_depth ) &  ! used to gauge the ammount of output
   WRITE( stdout,'(I3," depth=",I2," stop_clock ",A )') mpime, trace_depth, label ; FLUSH(stdout)
   !WRITE( *, '("mpime = ",I2,", TRACE (depth=",I2,") End: ",A12)') mpime, trace_depth, label
+#endif
+  !
+#if defined(__SIRIUS)
+  CALL sirius_stop_timer(label)
 #endif
   !
   IF ( no ) RETURN

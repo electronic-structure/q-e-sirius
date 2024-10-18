@@ -15,9 +15,10 @@ def main():
     for a in d1:
       for k in d1[a]:
         if abs(d1[a][k] - d2[a][k]) > 1e-2:
-          print(f'LR parameters are different: ref: {d1[a][k]}, actual: {d2[a][k]}')
+          print('LR parameters are different')
+          print(f'{a}\t{k}\tref: {d1[a][k]}, actual: {d2[a][k]}\tdiff: {round(abs(d1[a][k] - d2[a][k]),5)}')
           sys.exit(1)     
-        print(f'LR parameters are ref: {d1[a][k]}, actual: {d2[a][k]} diff: {round(abs(d1[a][k] - d2[a][k]),5)} -> ok!')
+        print(f'{a}\t{k}\tref: {d1[a][k]}, actual: {d2[a][k]}\tdiff: {round(abs(d1[a][k] - d2[a][k]),5)} -> ok!')
 
     sys.exit(0)
 
