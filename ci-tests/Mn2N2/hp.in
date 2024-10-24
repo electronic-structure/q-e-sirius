@@ -1,0 +1,11 @@
+&inputhp
+  prefix = 'Mn2N2'
+  outdir='./out/'
+  nq1 = 3
+  nq2 = 3
+  nq3 = 2
+  num_neigh = 4     ! default is 6
+  conv_thr_chi = 1e-8
+  iverbosity = 2
+  alpha_mix(1) = 0.1 ! default is 0.3 
+/

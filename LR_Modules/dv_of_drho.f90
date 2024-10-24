@@ -97,6 +97,7 @@ subroutine dv_of_drho (dvscf, add_nlcc, drhoc)
   ! NB: If nlcc=.true. we need to add here its contribution. 
   ! grho contains already the core charge
   !
+  CALL start_clock ('gradient_correction')
   if ( xclib_dft_is('gradient') ) call dgradcorr(dfftp, rho%of_r, grho, dvxc_rr, &
                                 dvxc_sr, dvxc_ss, dvxc_s, xq, dvscf, &
                                 nspin_mag, nspin_gga, g, dvaux) 
@@ -109,6 +110,7 @@ subroutine dv_of_drho (dvscf, add_nlcc, drhoc)
         dvscf(:, is) = dvscf(:, is) - fac * drhoc (:)
      enddo
   endif
+  CALL stop_clock ('gradient_correction')
   !
 111 continue
   !
