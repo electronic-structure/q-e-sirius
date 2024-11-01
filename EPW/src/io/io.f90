@@ -1070,9 +1070,11 @@
     ! (i.e. the rotation axis is (Ox) if axis='1', (Oy) if axis='2' and (Oz) if
     ! axis='3')
     !
-    IF ((asr /= 'simple') .AND. (asr /= 'crystal') .AND. (asr /= 'one-dim') .AND. (asr /= 'zero-dim')) THEN
+    IF ((asr /= 'simple') .AND. (asr /= 'crystal') .AND. (asr /= 'one-dim') .AND. (asr /= 'zero-dim') .AND. (asr /= 'no')) THEN
       CALL errore('set_asr','invalid Acoustic Sum Rule:' // asr, 1)
     ENDIF
+    !
+    IF (asr == 'no') RETURN
     !
     IF (asr == 'simple') THEN
       !
@@ -2267,7 +2269,7 @@
     USE ions_base,        ONLY : amass, tau, nat, ntyp => nsp, ityp
     USE global_var,       ONLY : dynq, zstar, epsi, wf_temp
     USE symm_base,        ONLY : nsym
-    USE input,            ONLY : dvscf_dir, lpolar, nqc1, nqc2, nqc3, exciton
+    USE input,            ONLY : dvscf_dir, lpolar, nqc1, nqc2, nqc3, exciton, asr_typ
     USE modes,            ONLY : nmodes
     USE control_flags,    ONLY : iverbosity
     USE noncollin_module, ONLY : nspin_mag
@@ -2528,28 +2530,32 @@
           ENDDO
         ENDDO
         !
-        ! Impose the acoustic sum rule (q=0 needs to be the first q point in the coarse grid)
-        ! [Gonze and Lee, PRB 55, 10361 (1998), Eq. (45) and (81)]
-        !
-        IF (ABS(q(1, iq)) < eps6 .AND. ABS(q(2, iq)) < eps6 .AND. ABS(q(3, iq)) < eps6) THEN
-          WRITE(stdout, '(5x,a)') 'Imposing acoustic sum rule on the dynamical matrix'
-          IF (lpolar .AND. .NOT. lrigid) CALL errore('dynmat', &
-            &'You set lpolar = .TRUE. but did not put epsil = true in the PH calculation at Gamma. ',1)
-        ENDIF
-        DO na = 1, nat
-          DO ipol = 1, 3
-            DO jpol = ipol, 3
-              !
-              IF (ABS(q(1, iq)) < eps6 .AND. ABS(q(2, iq)) < eps6 .AND. ABS(q(3, iq)) < eps6 ) THEN
-                sumr(1, ipol, na, jpol) = SUM(dynr(1, ipol, na, jpol, :))
-                sumr(2, ipol, na, jpol) = SUM(dynr(2, ipol, na, jpol, :))
-              ENDIF
-              !
-              dynr(:, ipol, na, jpol, na) = dynr(:, ipol, na, jpol, na) - sumr(:, ipol, na, jpol)
-              !
+        IF (asr_typ /= 'no') THEN
+          !
+          ! Impose the acoustic sum rule (q=0 needs to be the first q point in the coarse grid)
+          ! [Gonze and Lee, PRB 55, 10361 (1998), Eq. (45) and (81)]
+          !
+          IF (ABS(q(1, iq)) < eps6 .AND. ABS(q(2, iq)) < eps6 .AND. ABS(q(3, iq)) < eps6) THEN
+            WRITE(stdout, '(5x,a)') 'Imposing acoustic sum rule on the dynamical matrix'
+            IF (lpolar .AND. .NOT. lrigid) CALL errore('dynmat', &
+              &'You set lpolar = .TRUE. but did not put epsil = true in the PH calculation at Gamma. ',1)
+          ENDIF
+          DO na = 1, nat
+            DO ipol = 1, 3
+              DO jpol = ipol, 3
+                !
+                IF (ABS(q(1, iq)) < eps6 .AND. ABS(q(2, iq)) < eps6 .AND. ABS(q(3, iq)) < eps6 ) THEN
+                  sumr(1, ipol, na, jpol) = SUM(dynr(1, ipol, na, jpol, :))
+                  sumr(2, ipol, na, jpol) = SUM(dynr(2, ipol, na, jpol, :))
+                ENDIF
+                !
+                dynr(:, ipol, na, jpol, na) = dynr(:, ipol, na, jpol, na) - sumr(:, ipol, na, jpol)
+                !
+              ENDDO
             ENDDO
           ENDDO
-        ENDDO
+          !
+        ENDIF ! asr_typ
         !
         ! Fill the two-indices dynamical matrix in cartesian coordinates
         ! the proper index in the complete list is iq_first+iq-1
