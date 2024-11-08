@@ -862,6 +862,7 @@ MODULE mod_sirius
     USE scf,                  ONLY : rho
     USE paw_variables,        ONLY : okpaw
     USE io_files,             ONLY : pseudo_dir, psfile
+    USE start_k,              ONLY : nk1,nk2,nk3   
     !
     IMPLICIT NONE
     !
@@ -950,8 +951,9 @@ MODULE mod_sirius
     ! create context of simulation
     CALL sirius_create_context(intra_image_comm, sctx, fcomm_k=inter_pool_comm, fcomm_band=intra_pool_comm)
     ! create initial configuration dictionary in JSON
-    WRITE(conf_str, 10)diago_david_ndim, mixing_beta, nmix
-    10 FORMAT('{"parameters"       : {"electronic_structure_method" : "pseudopotential", "use_scf_correction" : true}, &
+    WRITE(conf_str, 10) nk1, nk2, nk3, diago_david_ndim, mixing_beta, nmix
+    10 FORMAT('{"parameters"       : {"electronic_structure_method" : "pseudopotential", "use_scf_correction" : true, &
+               &"ngridk" : [ ',I4,' , ',I4,' , ',I4,' ]}, &
                &"iterative_solver" : {"subspace_size" : ',I4,'}, &
                &"settings"         : {"real_occupation_matrix" : true},&
                &"mixer"            : {"beta"        : ', F12.6, ',&
