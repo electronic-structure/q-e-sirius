@@ -861,6 +861,7 @@ MODULE mod_sirius
     USE kinds,                ONLY : DP
     USE scf,                  ONLY : rho
     USE paw_variables,        ONLY : okpaw
+    USE io_files,             ONLY : pseudo_dir, psfile
     !
     IMPLICIT NONE
     !
@@ -1072,6 +1073,7 @@ MODULE mod_sirius
 
         ! add new atom type
          CALL sirius_add_atom_type(sctx, TRIM(atom_type(iat)%label), &
+              & fname=TRIM(pseudo_dir)//TRIM (psfile(iat)),  &
               & zn=NINT(zv(iat)+0.001d0), &
               & mass=amass(iat), &
               & spin_orbit=upf(iat)%has_so)
