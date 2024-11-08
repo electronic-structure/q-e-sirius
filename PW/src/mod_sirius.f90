@@ -1073,34 +1073,35 @@ MODULE mod_sirius
       ! initialize atom types
       DO iat = 1, nsp
 
+         CALL sirius_add_atom_type(sctx, TRIM(atom_type(iat)%label), fname=TRIM(pseudo_dir)//TRIM (psfile(iat)))
         ! add new atom type
-         CALL sirius_add_atom_type(sctx, TRIM(atom_type(iat)%label), &
-              & fname=TRIM(pseudo_dir)//TRIM (psfile(iat)),  &
-              & zn=NINT(zv(iat)+0.001d0), &
-              & mass=amass(iat), &
-              & spin_orbit=upf(iat)%has_so)
+        ! CALL sirius_add_atom_type(sctx, TRIM(atom_type(iat)%label), &
+        !      & fname=TRIM(pseudo_dir)//TRIM (psfile(iat)),  &
+        !      & zn=NINT(zv(iat)+0.001d0), &
+        !      & mass=amass(iat), &
+        !      & spin_orbit=upf(iat)%has_so)
 
         ! set radial grid
-        CALL sirius_set_atom_type_radial_grid(sctx, TRIM(atom_type(iat)%label), upf(iat)%mesh, upf(iat)%r)
+        !CALL sirius_set_atom_type_radial_grid(sctx, TRIM(atom_type(iat)%label), upf(iat)%mesh, upf(iat)%r)
 
-        ! set beta-projectors
-        DO i = 1, upf(iat)%nbeta
-          l = upf(iat)%lll(i);
-          IF (upf(iat)%has_so) THEN
-            IF (upf(iat)%jjj(i) .LE. upf(iat)%lll(i)) THEN
-              l = - upf(iat)%lll(i)
-            ENDIF
-          ENDIF
-          CALL sirius_add_atom_type_radial_function(sctx, TRIM(atom_type(iat)%label), "beta", &
-               & upf(iat)%beta(1:upf(iat)%kbeta(i), i), upf(iat)%kbeta(i), l=l)
-        ENDDO
+        !! set beta-projectors
+        !DO i = 1, upf(iat)%nbeta
+        !  l = upf(iat)%lll(i);
+        !  IF (upf(iat)%has_so) THEN
+        !    IF (upf(iat)%jjj(i) .LE. upf(iat)%lll(i)) THEN
+        !      l = - upf(iat)%lll(i)
+        !    ENDIF
+        !  ENDIF
+        !  CALL sirius_add_atom_type_radial_function(sctx, TRIM(atom_type(iat)%label), "beta", &
+        !       & upf(iat)%beta(1:upf(iat)%kbeta(i), i), upf(iat)%kbeta(i), l=l)
+        !ENDDO
 
-        ! set the atomic radial functions
-        DO j = 1, atom_type(iat)%num_chi
-          CALL sirius_add_atom_type_radial_function(sctx, TRIM(atom_type(iat)%label), "ps_atomic_wf", &
-               &atom_type(iat)%chi(:, j), msh(iat), l=atom_type(iat)%l_chi(j), occ=atom_type(iat)%occ(j), &
-               &n=atom_type(iat)%n_chi(j))
-        ENDDO
+        !! set the atomic radial functions
+        !DO j = 1, atom_type(iat)%num_chi
+        !  CALL sirius_add_atom_type_radial_function(sctx, TRIM(atom_type(iat)%label), "ps_atomic_wf", &
+        !       &atom_type(iat)%chi(:, j), msh(iat), l=atom_type(iat)%l_chi(j), occ=atom_type(iat)%occ(j), &
+        !       &n=atom_type(iat)%n_chi(j))
+        !ENDDO
 
         ! QE input allow two different notations for entering the hubbard onsite interaction because 
         ! there is a bug in QE that is not fixed.
