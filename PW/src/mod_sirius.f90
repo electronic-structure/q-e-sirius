@@ -167,7 +167,7 @@ MODULE mod_sirius
     INTEGER iat, ig, ih, jh, ijh, na, ispn
     COMPLEX(8) z1, z2
     TYPE(sirius_ground_state_handler) :: gs_h
-  !
+    !
     ! get rho(G)
     CALL sirius_set_pw_coeffs( gs_h, "rho", rho%of_g(:, 1), .TRUE., ngm, mill, intra_bgrp_comm )
     IF (nspin.EQ.2) THEN
@@ -209,8 +209,74 @@ MODULE mod_sirius
     ENDIF
     CALL rho_g2r (dfftp, rho%of_g, rho%of_r)
     !! get density matrix
-    !!CALL get_density_matrix_from_sirius
+    CALL get_density_matrix_from_sirius()
   END SUBROUTINE get_density_from_sirius
+  !
+  !--------------------------------------------------------------------
+  SUBROUTINE get_density_matrix_from_sirius()
+    !------------------------------------------------------------------
+    !! Get density matrix from SIRIUS
+    !
+    USE scf,        ONLY : rho
+    USE ions_base,  ONLY : nat, nsp, ityp
+    USE lsda_mod,   ONLY : nspin
+    USE uspp_param, ONLY : nhm, nh
+    IMPLICIT NONE
+    !
+    INTEGER iat, na, ijh, ih, jh, ispn
+    COMPLEX(8), ALLOCATABLE :: dens_mtrx(:,:,:)
+    REAL(8), ALLOCATABLE :: dens_mtrx_tmp(:, :, :)
+    REAL(8) fact
+    ! complex density matrix in SIRIUS has at maximum three components
+    ALLOCATE(dens_mtrx(nhm, nhm, 3))
+    ! will be used to collect the elements for rho%bec (QE's density matrix)
+    ALLOCATE(dens_mtrx_tmp(nhm * (nhm + 1) / 2, nat, nspin))
+
+    DO iat = 1, nsp ! loop over species
+      DO na = 1, nat ! loop over atoms
+        IF (ityp(na).EQ.iat) THEN
+          ! retrieve density matrix from SIRIUS
+          CALL sirius_get_density_matrix(gs_handler, na, dens_mtrx, nhm)
+          ! decompose in QE format
+          ijh = 0
+          DO ih = 1, nh(iat)
+            DO jh = ih, nh(iat) ! iterates lower triangular part
+              ijh = ijh + 1
+              ! off-diagonal elements have a weight of 2
+              IF (ih.NE.jh) THEN
+                fact = 2.d0
+              ELSE
+                fact = 1.d0
+              ENDIF
+              !
+              IF (nspin.LE.2) THEN
+                DO ispn = 1, nspin
+                  dens_mtrx_tmp(ijh, na, ispn) = fact * dens_mtrx(ih, jh, ispn)
+                  ! this is also correct
+                  !dens_mtrx_tmp(ijh, na, ispn) = fact * dens_mtrx(jh, ih, ispn)
+                ENDDO
+              ENDIF
+              !
+              IF (nspin.EQ.4) THEN
+                ! rho (1) and mz (4)
+                dens_mtrx_tmp(ijh, na, 1) = fact * (dens_mtrx(ih, jh, 1) + dens_mtrx(ih, jh, 2)) 
+                dens_mtrx_tmp(ijh, na, 4) = fact * (dens_mtrx(ih, jh, 1) - dens_mtrx(ih, jh, 2))
+                ! mx (2) and my (3)
+                dens_mtrx_tmp(ijh, na, 2) =   REAL(dens_mtrx(ih, jh, 3)) * fact * 2.d0
+                dens_mtrx_tmp(ijh, na, 3) = -AIMAG(dens_mtrx(ih, jh, 3)) * fact * 2.d0
+              ENDIF
+              !
+            ENDDO ! jh
+          ENDDO ! ih
+        ENDIF
+      ENDDO ! na
+    ENDDO ! iat
+
+    ! Store the retrieved density matrix back to rho%bec
+    rho%bec = dens_mtrx_tmp
+    DEALLOCATE(dens_mtrx)
+    DEALLOCATE(dens_mtrx_tmp)
+  END SUBROUTINE get_density_matrix_from_sirius
   !
   !--------------------------------------------------------------------
   SUBROUTINE put_density_matrix_to_sirius(gs_h)
