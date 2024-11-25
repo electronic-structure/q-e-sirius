@@ -48,7 +48,7 @@ SUBROUTINE hp_solve_linear_system (na, iq)
   USE ldaU_lr,              ONLY : dnsscf
   USE ldaU_hp,              ONLY : thresh_init, dns0, trace_dns_tot_old, &
                                    conv_thr_chi_best, iter_best, niter_max, nmix, &
-                                   alpha_mix, code, lrdvwfc, iudvwfc
+                                   alpha_mix, code, lrdvwfc, iudvwfc, lmet
   USE apply_dpot_mod,       ONLY : apply_dpot_allocate, apply_dpot_deallocate
   USE efermi_shift,         ONLY : ef_shift, def
   USE response_kernels,     ONLY : sternheimer_kernel
@@ -184,7 +184,7 @@ SUBROUTINE hp_solve_linear_system (na, iq)
   !
   ! If q=0 for a metal: allocate and compute local DOS and DOS at Ef
   !
-  lmetq0 = (lgauss .OR. ltetra) .AND. lgamma
+  lmetq0 = lmet !(lgauss .OR. ltetra) .AND. lgamma
   !
   IF (lmetq0) THEN
      ALLOCATE (ldos (dfftp%nnr, nspin_mag))

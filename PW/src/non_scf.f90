@@ -71,7 +71,7 @@ SUBROUTINE non_scf( )
     ! WARNING: k-points must be provided in fractional coordinates of the reciprocal lattice and
     !          without x2 multiplication for the lsda case
     CALL clear_sirius()
-    CALL setup_sirius()
+    CALL setup_sirius(read_state=.true.)
     CALL sirius_initialize_kset(ks_handler)
     CALL sirius_initialize_subspace(gs_handler, ks_handler)
     CALL sirius_find_eigen_states(gs_handler, ks_handler, iter_solver_tol=1.d-13, iter_solver_steps=100)

@@ -829,7 +829,7 @@ MODULE mod_sirius
   END SUBROUTINE calc_atomic_wfc_djl_radial_integrals
   !
   !-------------------------------------------------------------------------
-  SUBROUTINE setup_sirius()
+  SUBROUTINE setup_sirius(read_state)
     !-----------------------------------------------------------------------
     !! Setup SIRIUS simulation context, create k-point set and DFT ground state instance.
     !
@@ -865,6 +865,8 @@ MODULE mod_sirius
     USE start_k,              ONLY : nk1,nk2,nk3   
     !
     IMPLICIT NONE
+    !
+    LOGICAL, OPTIONAL, INTENT(IN) :: read_state
     !
     INTEGER :: dims(3), i, ia, iat, rank, ierr, ijv, j, l, ir, num_gvec, num_ranks_k, &
              & iwf, nmagd, viz, ia2, iat2, atom_pair(2), n_pair(2), l_pair(2), mmax, &
@@ -1408,6 +1410,12 @@ MODULE mod_sirius
         END DO ! ia
       END IF ! lda_plus_u_kind .eq. 2
     END IF ! lda_plus_U
+    !
+    IF (PRESENT(read_state)) THEN
+      IF (read_state) THEN
+        CALL sirius_load_state(gs_handler, "state.h5")
+      ENDIF
+    ENDIF
     !
     CALL sirius_generate_effective_potential(gs_handler)
     !
