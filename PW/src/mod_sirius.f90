@@ -240,7 +240,7 @@ MODULE mod_sirius
           ! decompose in QE format
           ijh = 0
           DO ih = 1, nh(iat)
-            DO jh = ih, nh(iat) ! iterates lower triangular part
+            DO jh = ih, nh(iat) ! iterates upper triangular part
               ijh = ijh + 1
               ! off-diagonal elements have a weight of 2
               IF (ih.NE.jh) THEN
@@ -251,20 +251,20 @@ MODULE mod_sirius
               !
               IF (nspin.LE.2) THEN
                 DO ispn = 1, nspin
-                  dens_mtrx_tmp(ijh, na, ispn) = fact * dens_mtrx(ih, jh, ispn)
+                  dens_mtrx_tmp(ijh, na, ispn) = fact * REAL(dens_mtrx(ih, jh, ispn))
                   ! this is also correct
-                  !dens_mtrx_tmp(ijh, na, ispn) = fact * dens_mtrx(jh, ih, ispn)
+                  !dens_mtrx_tmp(ijh, na, ispn) = fact * REAL(dens_mtrx(jh, ih, ispn))
                 ENDDO
               ENDIF
               !
-              IF (nspin.EQ.4) THEN
-                ! rho (1) and mz (4)
-                dens_mtrx_tmp(ijh, na, 1) = fact * (dens_mtrx(ih, jh, 1) + dens_mtrx(ih, jh, 2)) 
-                dens_mtrx_tmp(ijh, na, 4) = fact * (dens_mtrx(ih, jh, 1) - dens_mtrx(ih, jh, 2))
-                ! mx (2) and my (3)
-                dens_mtrx_tmp(ijh, na, 2) =   REAL(dens_mtrx(ih, jh, 3)) * fact * 2.d0
-                dens_mtrx_tmp(ijh, na, 3) = -AIMAG(dens_mtrx(ih, jh, 3)) * fact * 2.d0
-              ENDIF
+!             IF (nspin.EQ.4) THEN
+!               ! rho (1) and mz (4)
+!               dens_mtrx_tmp(ijh, na, 1) = fact * (dens_mtrx(ih, jh, 1) + dens_mtrx(ih, jh, 2)) 
+!               dens_mtrx_tmp(ijh, na, 4) = fact * (dens_mtrx(ih, jh, 1) - dens_mtrx(ih, jh, 2))
+!               ! mx (2) and my (3)
+!               dens_mtrx_tmp(ijh, na, 2) =   REAL(dens_mtrx(ih, jh, 3)) * fact * 2.d0
+!               dens_mtrx_tmp(ijh, na, 3) = -AIMAG(dens_mtrx(ih, jh, 3)) * fact * 2.d0
+!             ENDIF
               !
             ENDDO ! jh
           ENDDO ! ih
