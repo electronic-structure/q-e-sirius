@@ -231,6 +231,8 @@ MODULE mod_sirius
     ALLOCATE(dens_mtrx(nhm, nhm, 3))
     ! will be used to collect the elements for rho%bec (QE's density matrix)
     ALLOCATE(dens_mtrx_tmp(nhm * (nhm + 1) / 2, nat, nspin))
+    dens_mtrx = (0.d0, 0.d0)
+    dens_mtrx_tmp = 0.d0
 
     DO iat = 1, nsp ! loop over species
       DO na = 1, nat ! loop over atoms
