@@ -280,6 +280,45 @@ MODULE mod_sirius
     DEALLOCATE(dens_mtrx_tmp)
   END SUBROUTINE get_density_matrix_from_sirius
   !
+  !-----------------------------------------------------------------------
+  SUBROUTINE get_local_occupation_matrix_from_sirius()
+    USE scf,                  ONLY : rho
+    USE ions_base,            ONLY : ityp, nat
+    USE lsda_mod,             ONLY : nspin
+    USE ldaU,                 ONLY : lda_plus_u, lda_plus_u_kind, Hubbard_U, Hubbard_l, Hubbard_n
+
+    IMPLICIT NONE
+
+    INTEGER :: ia, iat, is, mmax
+    COMPLEX(8), ALLOCATABLE :: occm(:, :)
+    REAL(8), ALLOCATABLE :: occ_mtrx_tmp(:, :, :)
+
+    IF (lda_plus_u) THEN
+
+      IF (lda_plus_u_kind .EQ. 0 .OR. lda_plus_u_kind .EQ. 1) THEN
+        DO ia = 1, nat
+          iat = ityp(ia)
+          IF (Hubbard_U(iat) .NE. 0.d0) THEN
+            mmax = 2 * Hubbard_l(iat) + 1
+            ALLOCATE(occm(mmax, mmax))
+            DO is = 1, nspin
+              CALL sirius_get_local_occupation_matrix(gs_handler, ia, Hubbard_n(iat), Hubbard_l(iat),&
+                  &is, occm, mmax)
+              rho%ns(1:mmax, 1:mmax, is, ia) = occm(1:mmax, 1:mmax)
+            ENDDO ! is
+            DEALLOCATE(occm)
+          ENDIF
+        ENDDO ! ia
+      ENDIF ! lda_plus_u_kind
+
+      ! IF (lda_plus_u_kind .EQ. 2) THEN
+      !    CALL sirius_get_nonlocal_occupation_matrix()
+      ! ENDIF
+      
+    ENDIF ! lda_plus_u
+
+  END SUBROUTINE get_local_occupation_matrix_from_sirius
+  !
   !--------------------------------------------------------------------
   SUBROUTINE put_density_matrix_to_sirius(gs_h)
     !------------------------------------------------------------------
@@ -347,7 +386,6 @@ MODULE mod_sirius
     DEALLOCATE(dens_mtrx)
     DEALLOCATE(dens_mtrx_tmp)
   END SUBROUTINE put_density_matrix_to_sirius
-
   !
   !--------------------------------------------------------------------
   SUBROUTINE calc_veff() BIND(C)
