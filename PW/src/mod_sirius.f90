@@ -237,8 +237,8 @@ MODULE mod_sirius
     DO iat = 1, nsp ! loop over species
       DO na = 1, nat ! loop over atoms
         IF (ityp(na).EQ.iat) THEN
-          ! retrieve density matrix from SIRIUS
-          CALL sirius_get_density_matrix(gs_handler, na, dens_mtrx, nhm)
+          ! retrieve ("get") density matrix from SIRIUS
+          CALL sirius_access_density_matrix(gs_handler, "get", na, dens_mtrx, nhm)
           ! decompose in QE format
           ijh = 0
           DO ih = 1, nh(iat)
@@ -259,14 +259,14 @@ MODULE mod_sirius
                 ENDDO
               ENDIF
               !
-!             IF (nspin.EQ.4) THEN
-!               ! rho (1) and mz (4)
-!               dens_mtrx_tmp(ijh, na, 1) = fact * (dens_mtrx(ih, jh, 1) + dens_mtrx(ih, jh, 2)) 
-!               dens_mtrx_tmp(ijh, na, 4) = fact * (dens_mtrx(ih, jh, 1) - dens_mtrx(ih, jh, 2))
-!               ! mx (2) and my (3)
-!               dens_mtrx_tmp(ijh, na, 2) =   REAL(dens_mtrx(ih, jh, 3)) * fact * 2.d0
-!               dens_mtrx_tmp(ijh, na, 3) = -AIMAG(dens_mtrx(ih, jh, 3)) * fact * 2.d0
-!             ENDIF
+   !          IF (nspin.EQ.4) THEN
+   !            ! rho (1) and mz (4)
+   !            dens_mtrx_tmp(ijh, na, 1) = fact * (dens_mtrx(ih, jh, 1) + dens_mtrx(ih, jh, 2)) 
+   !            dens_mtrx_tmp(ijh, na, 4) = fact * (dens_mtrx(ih, jh, 1) - dens_mtrx(ih, jh, 2))
+   !            ! mx (2) and my (3)
+   !            dens_mtrx_tmp(ijh, na, 2) =   REAL(dens_mtrx(ih, jh, 3)) * fact * 2.d0
+   !            dens_mtrx_tmp(ijh, na, 3) = -AIMAG(dens_mtrx(ih, jh, 3)) * fact * 2.d0
+   !          ENDIF
               !
             ENDDO ! jh
           ENDDO ! ih
@@ -379,7 +379,8 @@ MODULE mod_sirius
               ENDIF
             ENDDO
           ENDDO
-          CALL sirius_set_density_matrix(gs_h, na, dens_mtrx, nhm)
+          ! send ("set") density matrix to SIRIUS
+          CALL sirius_access_density_matrix(gs_h, "set", na, dens_mtrx, nhm)
         ENDIF
       ENDDO
     ENDDO
