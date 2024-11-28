@@ -302,7 +302,7 @@ MODULE mod_sirius
             mmax = 2 * Hubbard_l(iat) + 1
             ALLOCATE(occm(mmax, mmax))
             DO is = 1, nspin
-              CALL sirius_get_local_occupation_matrix(gs_handler, ia, Hubbard_n(iat), Hubbard_l(iat),&
+              CALL sirius_access_local_occupation_matrix(gs_handler, "get", ia, Hubbard_n(iat), Hubbard_l(iat),&
                   &is, occm, mmax)
               rho%ns(1:mmax, 1:mmax, is, ia) = occm(1:mmax, 1:mmax)
             ENDDO ! is
@@ -1453,7 +1453,7 @@ MODULE mod_sirius
             ALLOCATE(occm(mmax, mmax))
             DO is = 1, nspin
               occm(1:mmax, 1:mmax) = rho%ns(1:mmax, 1:mmax, is, ia)
-              CALL sirius_set_local_occupation_matrix(gs_handler, ia, Hubbard_n(iat), Hubbard_l(iat),&
+              CALL sirius_access_local_occupation_matrix(gs_handler, "set", ia, Hubbard_n(iat), Hubbard_l(iat),&
                   &is, occm, mmax)
             ENDDO !is
             DEALLOCATE(occm)
@@ -1486,7 +1486,7 @@ MODULE mod_sirius
                 ALLOCATE(occm(mmax, mmax))
                 DO is = 1, nspin
                   occm(1:mmax, 1:mmax) = nsg(1:mmax, 1:mmax, viz, ia, is)
-                  CALL sirius_set_local_occupation_matrix(gs_handler, ia, Hubbard_n(iat), Hubbard_l(iat),&
+                  CALL sirius_access_local_occupation_matrix(gs_handler, "set", ia, Hubbard_n(iat), Hubbard_l(iat),&
                       &is, occm, mmax)
                 ENDDO !is
                 DEALLOCATE(occm)
@@ -1499,7 +1499,7 @@ MODULE mod_sirius
                   DO i = 1, mmax
                     occm(i, 1:mmax2) = nsg(1:mmax2, i, viz, ia, is) * j
                   ENDDO
-                  CALL sirius_set_nonlocal_occupation_matrix(gs_handler, atom_pair, n_pair, l_pair, &
+                  CALL sirius_access_nonlocal_occupation_matrix(gs_handler, "set", atom_pair, n_pair, l_pair, &
                                     &is, T, occm, mmax, mmax2)
                 ENDDO
                 DEALLOCATE(occm)
