@@ -709,7 +709,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
     ENDIF
 
     CALL get_density_from_sirius()
-    CALL get_local_occupation_matrix_from_sirius()
+    CALL get_occupation_matrices_from_sirius()
     IF ( lsda .OR. noncolin ) CALL compute_magnetization()
     CALL print_energies ( printout )
 

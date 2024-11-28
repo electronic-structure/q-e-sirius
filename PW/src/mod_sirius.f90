@@ -281,20 +281,20 @@ MODULE mod_sirius
   END SUBROUTINE get_density_matrix_from_sirius
   !
   !-----------------------------------------------------------------------
-  SUBROUTINE get_local_occupation_matrix_from_sirius()
+  SUBROUTINE get_occupation_matrices_from_sirius()
     USE scf,                  ONLY : rho
     USE ions_base,            ONLY : ityp, nat
     USE lsda_mod,             ONLY : nspin
-    USE ldaU,                 ONLY : lda_plus_u, lda_plus_u_kind, Hubbard_U, Hubbard_l, Hubbard_n
+    USE ldaU,                 ONLY : lda_plus_u, lda_plus_u_kind, Hubbard_U, Hubbard_l, Hubbard_n, &
+                                   & ldim_u, neighood, at_sc, Hubbard_V, nsg
 
     IMPLICIT NONE
 
-    INTEGER :: ia, iat, is, mmax
+    INTEGER :: i, j, ineigh, ia, ia2, iat, iat2, is, mmax, mmax2, n_pair(2), l_pair(2), atom_pair(2), T(3)
     COMPLEX(8), ALLOCATABLE :: occm(:, :)
-    REAL(8), ALLOCATABLE :: occ_mtrx_tmp(:, :, :)
 
     IF (lda_plus_u) THEN
-
+      ! get local occupation matrix
       IF (lda_plus_u_kind .EQ. 0 .OR. lda_plus_u_kind .EQ. 1) THEN
         DO ia = 1, nat
           iat = ityp(ia)
@@ -304,20 +304,49 @@ MODULE mod_sirius
             DO is = 1, nspin
               CALL sirius_access_local_occupation_matrix(gs_handler, "get", ia, Hubbard_n(iat), Hubbard_l(iat),&
                   &is, occm, mmax)
-              rho%ns(1:mmax, 1:mmax, is, ia) = occm(1:mmax, 1:mmax)
+              rho%ns(1:mmax, 1:mmax, is, ia) = occm(1:mmax, 1:mmax) ! QE <-- SIRIUS
             ENDDO ! is
             DEALLOCATE(occm)
           ENDIF
         ENDDO ! ia
       ENDIF ! lda_plus_u_kind
 
-      ! IF (lda_plus_u_kind .EQ. 2) THEN
-      !    CALL sirius_get_nonlocal_occupation_matrix()
-      ! ENDIF
-      
+      ! get nonlocal occupation matrix
+      IF (lda_plus_u_kind .EQ. 2) THEN
+        DO ia = 1, nat
+          iat = ityp(ia)
+          IF (ldim_u(iat).GT.0) THEN
+            DO ineigh = 1, neighood(ia)%num_neigh
+              atom_pair(1) = ia
+              ia2 = neighood(ia)%neigh(ineigh)
+              atom_pair(2) = at_sc(ia2)%at
+              iat2 = ityp(atom_pair(2))
+              n_pair(1) = Hubbard_n(iat)
+              n_pair(2) = Hubbard_n(iat2)
+              l_pair(1) = Hubbard_l(iat)
+              l_pair(2) = Hubbard_l(iat2)
+              T = at_sc(ia2)%n(1:3)
+              mmax = 2 * Hubbard_l(iat) + 1
+              mmax2 = 2 * Hubbard_l(iat2) + 1
+              j = (-1)**(Hubbard_l(iat) + Hubbard_l(iat2))
+
+              ALLOCATE(occm(mmax, mmax2))
+              DO is = 1, nspin
+                CALL sirius_access_nonlocal_occupation_matrix(gs_handler, "get", atom_pair, n_pair, l_pair, &
+                                                             &is, T, occm, mmax, mmax2)
+                DO i = 1, mmax
+                  nsg(1:mmax2, i, ineigh, ia, is) = occm(i, 1:mmax2) / j ! QE <-- SIRIUS
+                ENDDO
+              ENDDO ! is
+              DEALLOCATE(occm)
+            ENDDO ! ineigh
+          ENDIF ! ldim_u
+        ENDDO ! ia
+      ENDIF ! lda_plus_u_kind
+
     ENDIF ! lda_plus_u
 
-  END SUBROUTINE get_local_occupation_matrix_from_sirius
+  END SUBROUTINE get_occupation_matrices_from_sirius
   !
   !--------------------------------------------------------------------
   SUBROUTINE put_density_matrix_to_sirius(gs_h)
