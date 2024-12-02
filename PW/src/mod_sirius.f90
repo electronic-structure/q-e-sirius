@@ -168,6 +168,7 @@ MODULE mod_sirius
     COMPLEX(8) z1, z2
     TYPE(sirius_ground_state_handler) :: gs_h
     !
+    WRITE(*,*)"QE->SIRIUS: density and magnetization"
     ! get rho(G)
     CALL sirius_set_pw_coeffs( gs_h, "rho", rho%of_g(:, 1), .TRUE., ngm, mill, intra_bgrp_comm )
     IF (nspin.EQ.2) THEN
@@ -197,6 +198,7 @@ MODULE mod_sirius
     INTEGER iat, ig, ih, jh, ijh, na, ispn
     COMPLEX(8) z1, z2
     !
+    WRITE(*,*)"SIRIUS->QE: density and magnetization"
     ! get rho(G)
     CALL sirius_get_pw_coeffs( gs_handler, "rho", rho%of_g(:, 1), ngm, mill, intra_bgrp_comm )
     IF (nspin.EQ.2) THEN
@@ -227,6 +229,8 @@ MODULE mod_sirius
     COMPLEX(8), ALLOCATABLE :: dens_mtrx(:,:,:)
     REAL(8), ALLOCATABLE :: dens_mtrx_tmp(:, :, :)
     REAL(8) fact
+    !
+    WRITE(*,*)"SIRIUS->QE: density matrix"
     ! complex density matrix in SIRIUS has at maximum three components
     ALLOCATE(dens_mtrx(nhm, nhm, 3))
     ! will be used to collect the elements for rho%bec (QE's density matrix)
@@ -294,6 +298,7 @@ MODULE mod_sirius
     COMPLEX(8), ALLOCATABLE :: occm(:, :)
 
     IF (lda_plus_u) THEN
+      WRITE(*,*)"SIRIUS->QE: Hubbard occupation matrix"
       ! get local occupation matrix
       IF (lda_plus_u_kind .EQ. 0 .OR. lda_plus_u_kind .EQ. 1) THEN
         DO ia = 1, nat
@@ -378,6 +383,7 @@ MODULE mod_sirius
     REAL(8) fact
     TYPE(sirius_ground_state_handler) :: gs_h
     ! set density matrix
+    WRITE(*,*)"QE->SIRIUS: density matrix"
     ! complex density matrix in SIRIUS has at maximum three components
     ALLOCATE(dens_mtrx_tmp(nhm * (nhm + 1) / 2, nat, nspin))
     !if (allocated(rho%bec)) then
@@ -1489,6 +1495,7 @@ MODULE mod_sirius
     ENDIF
     !
     IF (lda_plus_U) THEN
+      WRITE(*,*)"QE->SIRIUS: Hubbard occupation matrix"
       ! pass local occupancy matrix
       IF (lda_plus_u_kind .EQ. 0 .OR. lda_plus_u_kind .EQ. 1) THEN
         DO ia = 1, nat
