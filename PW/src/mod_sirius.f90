@@ -335,7 +335,7 @@ MODULE mod_sirius
                 DO is = 1, nspin
                   CALL sirius_access_local_occupation_matrix(gs_handler, "get", ia, Hubbard_n(iat), Hubbard_l(iat),&
                       &is, occm, mmax)
-                  occm(1:mmax, 1:mmax) = nsg(1:mmax, 1:mmax, ineigh, ia, is)
+                  nsg(1:mmax, 1:mmax, ineigh, ia, is) = occm(1:mmax, 1:mmax)
                 ENDDO
                 DEALLOCATE(occm)
               ELSE
