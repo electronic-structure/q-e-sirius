@@ -327,21 +327,33 @@ MODULE mod_sirius
               l_pair(2) = Hubbard_l(iat2)
               T = at_sc(ia2)%n(1:3)
               mmax = 2 * Hubbard_l(iat) + 1
-              mmax2 = 2 * Hubbard_l(iat2) + 1
-              j = (-1)**(Hubbard_l(iat) + Hubbard_l(iat2))
-
-              ALLOCATE(occm(mmax, mmax2))
-              DO is = 1, nspin
-                CALL sirius_access_nonlocal_occupation_matrix(gs_handler, "get", atom_pair, n_pair, l_pair, &
-                                                             &is, T, occm, mmax, mmax2)
-                DO i = 1, mmax
-                  nsg(1:mmax2, i, ineigh, ia, is) = occm(i, 1:mmax2) / j ! QE <-- SIRIUS
+              ! check for on-site U
+              IF ((ia .EQ. ia2) .AND. (n_pair(1) .EQ. n_pair(2)) .AND. (l_pair(1) .EQ. l_pair(2)) .AND. &
+                    & SUM(ABS(T)) .EQ. 0) THEN
+                ! this is the local part of the occupation matrix
+                ALLOCATE(occm(mmax, mmax))
+                DO is = 1, nspin
+                  CALL sirius_access_local_occupation_matrix(gs_handler, "get", ia, Hubbard_n(iat), Hubbard_l(iat),&
+                      &is, occm, mmax)
+                  occm(1:mmax, 1:mmax) = nsg(1:mmax, 1:mmax, ineigh, ia, is)
                 ENDDO
-              ENDDO ! is
-              DEALLOCATE(occm)
-            ENDDO ! ineigh
+                DEALLOCATE(occm)
+              ELSE
+                mmax2 = 2 * Hubbard_l(iat2) + 1
+                j = (-1)**(Hubbard_l(iat) + Hubbard_l(iat2))
+                ALLOCATE(occm(mmax, mmax2))
+                DO is = 1, nspin
+                  CALL sirius_access_nonlocal_occupation_matrix(gs_handler, "get", atom_pair, n_pair, l_pair, &
+                                                               &is, T, occm, mmax, mmax2)
+                  DO i = 1, mmax
+                    nsg(1:mmax2, i, ineigh, ia, is) = occm(i, 1:mmax2) / j ! QE <-- SIRIUS
+                  ENDDO
+                ENDDO ! is
+                DEALLOCATE(occm)
+              ENDIF ! local or nonlocal
+            ENDDO ! neighbours ineigh
           ENDIF ! ldim_u
-        ENDDO ! ia
+        ENDDO ! atoms ia
       ENDIF ! lda_plus_u_kind
 
     ENDIF ! lda_plus_u
