@@ -208,7 +208,7 @@ MODULE mod_sirius
       CALL sirius_get_pw_coeffs( gs_handler, "magz", rho%of_g(:, 4), ngm, mill, intra_bgrp_comm )
     ENDIF
     CALL rho_g2r (dfftp, rho%of_g, rho%of_r)
-    !! get density matrix
+    ! get density matrix
     CALL get_density_matrix_from_sirius()
   END SUBROUTINE get_density_from_sirius
   !
@@ -346,7 +346,7 @@ MODULE mod_sirius
                   CALL sirius_access_nonlocal_occupation_matrix(gs_handler, "get", atom_pair, n_pair, l_pair, &
                                                                &is, T, occm, mmax, mmax2)
                   DO i = 1, mmax
-                    nsg(1:mmax2, i, ineigh, ia, is) = occm(i, 1:mmax2) / j ! QE <-- SIRIUS
+                    nsg(1:mmax2, i, ineigh, ia, is) = occm(i, 1:mmax2) * j ! QE <-- SIRIUS
                   ENDDO
                 ENDDO ! is
                 DEALLOCATE(occm)
