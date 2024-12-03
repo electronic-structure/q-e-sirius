@@ -10,5 +10,5 @@ fi
 
 cd $PWD/CrI3
 /apps/bin/pw.x -i CrI3.scf1.in -use_qe_scf -npool 2
-/apps/bin/pw.x -i CrI3.scf2.in -use_qe_scf -npool 2
+/apps/bin/pw.x -i CrI3.scf2.in -npool 2
 /apps/bin/hp.x -i CrI3.hp.in -npool 2
