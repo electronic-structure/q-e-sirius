@@ -18,9 +18,11 @@
     occupations = 'smearing'
     smearing = 'gauss',
     degauss = 0.0001,
+    starting_magnetization(1) =  0.5,
  /
  &electrons
     conv_thr =  1.d-15
+    diago_thr_init=1.d-8
     mixing_beta = 0.7
     startingpot = 'file'
  /
