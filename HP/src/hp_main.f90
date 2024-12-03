@@ -136,7 +136,7 @@ PROGRAM hp_main
 #if defined(__SIRIUS)
         IF ( .not. setup_pw ) THEN
           CALL clear_sirius() 
-          CALL setup_sirius(read_state=.true.)
+          CALL setup_sirius()
         END IF
 #endif 
         IF (setup_pw) CALL hp_run_nscf(.true.) 
