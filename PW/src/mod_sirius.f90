@@ -211,11 +211,11 @@ MODULE mod_sirius
     ENDIF
     CALL rho_g2r (dfftp, rho%of_g, rho%of_r)
     ! get density matrix
-    CALL get_density_matrix_from_sirius()
+    CALL get_density_matrix_from_sirius(gs_handler)
   END SUBROUTINE get_density_from_sirius
   !
   !--------------------------------------------------------------------
-  SUBROUTINE get_density_matrix_from_sirius()
+  SUBROUTINE get_density_matrix_from_sirius(gs_h)
     !------------------------------------------------------------------
     !! Get density matrix from SIRIUS
     !
@@ -223,7 +223,10 @@ MODULE mod_sirius
     USE ions_base,  ONLY : nat, nsp, ityp
     USE lsda_mod,   ONLY : nspin
     USE uspp_param, ONLY : nhm, nh
+    !
     IMPLICIT NONE
+    !
+    TYPE(sirius_ground_state_handler) :: gs_h
     !
     INTEGER iat, na, ijh, ih, jh, ispn
     COMPLEX(8), ALLOCATABLE :: dens_mtrx(:,:,:)
@@ -242,7 +245,7 @@ MODULE mod_sirius
       DO na = 1, nat ! loop over atoms
         IF (ityp(na).EQ.iat) THEN
           ! retrieve ("get") density matrix from SIRIUS
-          CALL sirius_access_density_matrix(gs_handler, "get", na, dens_mtrx, nhm)
+          CALL sirius_access_density_matrix(gs_h, "get", na, dens_mtrx, nhm)
           ! decompose in QE format
           ijh = 0
           DO ih = 1, nh(iat)
@@ -277,12 +280,99 @@ MODULE mod_sirius
         ENDIF
       ENDDO ! na
     ENDDO ! iat
-
     ! Store the retrieved density matrix back to rho%bec
     rho%bec = dens_mtrx_tmp
     DEALLOCATE(dens_mtrx)
     DEALLOCATE(dens_mtrx_tmp)
   END SUBROUTINE get_density_matrix_from_sirius
+  !
+  !-----------------------------------------------------------------------
+  SUBROUTINE put_occupation_matrices_to_sirius(gs_h)
+    USE scf,                  ONLY : rho
+    USE ions_base,            ONLY : ityp, nat
+    USE lsda_mod,             ONLY : nspin
+    USE ldaU,                 ONLY : lda_plus_u, lda_plus_u_kind, Hubbard_U, Hubbard_l, Hubbard_n, &
+                                   & ldim_u, neighood, at_sc, Hubbard_V, nsg
+    !
+    IMPLICIT NONE
+    !
+    TYPE(sirius_ground_state_handler) :: gs_h
+    !
+    INTEGER :: i, j, ineigh, viz, ia, ia2, iat, iat2, is, mmax, mmax2, n_pair(2), l_pair(2), &
+               & atom_pair(2), T(3)
+    COMPLEX(8), ALLOCATABLE :: occm(:, :)
+
+    WRITE(*,*)"QE->SIRIUS: Hubbard occupation matrix"
+    ! pass local occupancy matrix
+    IF (lda_plus_u_kind .EQ. 0 .OR. lda_plus_u_kind .EQ. 1) THEN
+      DO ia = 1, nat
+        !
+        iat = ityp (ia)
+        !
+        IF (Hubbard_U(iat) /= 0.d0) THEN
+          mmax = 2 * Hubbard_l(iat) + 1
+          ALLOCATE(occm(mmax, mmax))
+          DO is = 1, nspin
+            occm(1:mmax, 1:mmax) = rho%ns(1:mmax, 1:mmax, is, ia)
+            CALL sirius_access_local_occupation_matrix(gs_h, "set", ia, Hubbard_n(iat), Hubbard_l(iat),&
+                &is, occm, mmax)
+          ENDDO !is
+          DEALLOCATE(occm)
+        ENDIF
+      ENDDO !ia
+    ENDIF
+    ! pass non-local occupancy matrix
+    IF (lda_plus_u_kind .EQ. 2) THEN
+      DO ia = 1, nat
+        !
+        iat = ityp(ia)
+        !
+        IF (ldim_u(iat).GT.0) THEN
+          !
+          DO viz = 1, neighood(ia)%num_neigh
+            atom_pair(1) = ia
+            ia2 = neighood(ia)%neigh(viz)
+            atom_pair(2) = at_sc(ia2)%at
+            iat2 = ityp(atom_pair(2))
+            n_pair(1) = Hubbard_n(iat)
+            n_pair(2) = Hubbard_n(iat2)
+            l_pair(1) = Hubbard_l(iat)
+            l_pair(2) = Hubbard_l(iat2)
+            T = at_sc(ia2)%n(1:3)
+            ! check for on-site U
+            IF ((ia .EQ. ia2) .AND. (n_pair(1) .EQ. n_pair(2)) .AND. (l_pair(1) .EQ. l_pair(2)) .AND. &
+                  & SUM(ABS(T)) .EQ. 0) THEN
+              ! NOTE: copy and set local part of occupation matrix
+              mmax = 2 * Hubbard_l(iat) + 1
+              ALLOCATE(occm(mmax, mmax))
+              DO is = 1, nspin
+                occm(1:mmax, 1:mmax) = nsg(1:mmax, 1:mmax, viz, ia, is)
+                CALL sirius_access_local_occupation_matrix(gs_h, "set", ia, Hubbard_n(iat), Hubbard_l(iat),&
+                    &is, occm, mmax)
+              ENDDO !is
+              DEALLOCATE(occm)
+            ELSE
+              mmax = 2 * Hubbard_l(iat) + 1
+              mmax2 = 2 * Hubbard_l(iat2) + 1
+              j = (-1)**(Hubbard_l(iat) + Hubbard_l(iat2))
+              ALLOCATE(occm(mmax, mmax2))
+              DO is = 1, nspin
+                DO i = 1, mmax
+                  occm(i, 1:mmax2) = nsg(1:mmax2, i, viz, ia, is) * j
+                ENDDO
+                CALL sirius_access_nonlocal_occupation_matrix(gs_h, "set", atom_pair, n_pair, l_pair, &
+                                  &is, T, occm, mmax, mmax2)
+              ENDDO
+              DEALLOCATE(occm)
+            ENDIF ! on-site / off-site
+            !
+          END DO ! viz
+          !
+        END IF
+      END DO ! ia
+    END IF ! lda_plus_u_kind .eq. 2
+    RETURN
+  END SUBROUTINE put_occupation_matrices_to_sirius
   !
   !-----------------------------------------------------------------------
   SUBROUTINE get_occupation_matrices_from_sirius()
@@ -1495,76 +1585,8 @@ MODULE mod_sirius
     ENDIF
     !
     IF (lda_plus_U) THEN
-      WRITE(*,*)"QE->SIRIUS: Hubbard occupation matrix"
-      ! pass local occupancy matrix
-      IF (lda_plus_u_kind .EQ. 0 .OR. lda_plus_u_kind .EQ. 1) THEN
-        DO ia = 1, nat
-          !
-          iat = ityp (ia)
-          !
-          IF (Hubbard_U(iat) /= 0.d0) THEN
-            mmax = 2 * Hubbard_l(iat) + 1
-            ALLOCATE(occm(mmax, mmax))
-            DO is = 1, nspin
-              occm(1:mmax, 1:mmax) = rho%ns(1:mmax, 1:mmax, is, ia)
-              CALL sirius_access_local_occupation_matrix(gs_handler, "set", ia, Hubbard_n(iat), Hubbard_l(iat),&
-                  &is, occm, mmax)
-            ENDDO !is
-            DEALLOCATE(occm)
-          ENDIF
-        ENDDO !ia
-      ENDIF
-      ! pass non-local occupancy matrix
-      IF (lda_plus_u_kind .EQ. 2) THEN
-        DO ia = 1, nat
-          !
-          iat = ityp(ia)
-          !
-          IF (ldim_u(iat).GT.0) THEN
-            !
-            DO viz = 1, neighood(ia)%num_neigh
-              atom_pair(1) = ia
-              ia2 = neighood(ia)%neigh(viz)
-              atom_pair(2) = at_sc(ia2)%at
-              iat2 = ityp(atom_pair(2))
-              n_pair(1) = Hubbard_n(iat)
-              n_pair(2) = Hubbard_n(iat2)
-              l_pair(1) = Hubbard_l(iat)
-              l_pair(2) = Hubbard_l(iat2)
-              T = at_sc(ia2)%n(1:3)
-              ! check for on-site U
-              IF ((ia .EQ. ia2) .AND. (n_pair(1) .EQ. n_pair(2)) .AND. (l_pair(1) .EQ. l_pair(2)) .AND. &
-                    & SUM(ABS(T)) .EQ. 0) THEN
-                ! NOTE: copy and set local part of occupation matrix
-                mmax = 2 * Hubbard_l(iat) + 1
-                ALLOCATE(occm(mmax, mmax))
-                DO is = 1, nspin
-                  occm(1:mmax, 1:mmax) = nsg(1:mmax, 1:mmax, viz, ia, is)
-                  CALL sirius_access_local_occupation_matrix(gs_handler, "set", ia, Hubbard_n(iat), Hubbard_l(iat),&
-                      &is, occm, mmax)
-                ENDDO !is
-                DEALLOCATE(occm)
-              ELSE
-                mmax = 2 * Hubbard_l(iat) + 1
-                mmax2 = 2 * Hubbard_l(iat2) + 1
-                j = (-1)**(Hubbard_l(iat) + Hubbard_l(iat2))
-                ALLOCATE(occm(mmax, mmax2))
-                DO is = 1, nspin
-                  DO i = 1, mmax
-                    occm(i, 1:mmax2) = nsg(1:mmax2, i, viz, ia, is) * j
-                  ENDDO
-                  CALL sirius_access_nonlocal_occupation_matrix(gs_handler, "set", atom_pair, n_pair, l_pair, &
-                                    &is, T, occm, mmax, mmax2)
-                ENDDO
-                DEALLOCATE(occm)
-              ENDIF ! on-site / off-site
-              !
-            END DO ! viz
-            !
-          END IF
-        END DO ! ia
-      END IF ! lda_plus_u_kind .eq. 2
-    END IF ! lda_plus_U
+      CALL put_occupation_matrices_to_sirius(gs_handler)
+    END IF
     !
     IF (PRESENT(read_state)) THEN
       IF (read_state) THEN
