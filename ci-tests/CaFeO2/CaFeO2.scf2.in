@@ -20,6 +20,7 @@
   nosym = .false.
   nspin = 2
   ntyp = 3
+  occupations = 'smearing'
   smearing = 'gauss',
   degauss = 0.0001,
 /

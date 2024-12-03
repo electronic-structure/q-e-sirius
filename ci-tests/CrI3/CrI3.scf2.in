@@ -15,6 +15,7 @@
     ecutrho = 360.0,
     nbnd = 42
     nspin = 2,
+    occupations = 'smearing'
     smearing = 'gauss',
     degauss = 0.0001,
  /
