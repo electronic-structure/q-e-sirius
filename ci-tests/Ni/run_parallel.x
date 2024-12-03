@@ -10,7 +10,7 @@ else
 fi
 
 cd $PWD/Ni
-/apps/bin/pw.x -i Ni.scf.in -use_qe_scf -npool 3
+/apps/bin/pw.x -i Ni.scf.in -npool 3
 /apps/bin/hp.x -i Ni.hp.in -npool 3
 
 if [[ $SLURM_PROCID == 0 ]]; then
