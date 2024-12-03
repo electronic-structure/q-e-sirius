@@ -184,7 +184,7 @@ SUBROUTINE hp_solve_linear_system (na, iq)
   !
   ! If q=0 for a metal: allocate and compute local DOS and DOS at Ef
   !
-  lmetq0 = lmet !(lgauss .OR. ltetra) .AND. lgamma
+  lmetq0 = lmet .AND. lgamma !(lgauss .OR. ltetra) .AND. lgamma
   !
   IF (lmetq0) THEN
      ALLOCATE (ldos (dfftp%nnr, nspin_mag))
