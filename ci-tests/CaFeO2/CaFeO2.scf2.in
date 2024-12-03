@@ -23,6 +23,9 @@
   occupations = 'smearing'
   smearing = 'gauss',
   degauss = 0.0001,
+  starting_magnetization(1) =   1.0000000000d-01
+  starting_magnetization(2) =   3.1250000000d-01
+  starting_magnetization(3) =   1.0000000000d-01
 /
 &ELECTRONS
   conv_thr =   8.0000000000d-15
