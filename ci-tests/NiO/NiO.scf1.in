@@ -18,7 +18,7 @@
     ecutrho = 780.0,
     occupations = 'smearing',
     smearing = 'mv',
-    degauss = 0.01,
+    degauss = 0.0001,
     input_dft = 'XC-000I-000I-116L-133L-000I-000I' ! pbesol
  /
  &electrons

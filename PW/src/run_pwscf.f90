@@ -171,7 +171,6 @@ SUBROUTINE run_pwscf( exit_status )
     CALL clear_sirius
     CALL setup_sirius
     CALL sirius_initialize_kset(ks_handler)
-    !CALL sirius_initialize_subspace(gs_handler, ks_handler)
   ENDIF
 #endif
   !
@@ -460,10 +459,9 @@ SUBROUTINE reset_gvectors( )
   CALL init_run()
 #if defined(__SIRIUS)
   IF (use_sirius_scf.OR.use_sirius_nlcg.OR.always_setup_sirius) THEN
-    CALL clear_sirius
-    CALL setup_sirius
+    CALL clear_sirius()
+    CALL setup_sirius()
     CALL sirius_initialize_kset(ks_handler)
-    !CALL sirius_initialize_subspace(gs_handler, ks_handler)
   ENDIF
 #endif
   !

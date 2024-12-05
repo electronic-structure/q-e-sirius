@@ -6,7 +6,7 @@
   outdir = './out/'
   prefix = 'CaFeO2'
   pseudo_dir = '.'
-  restart_mode = 'from_scratch'
+  restart_mode = 'restart'
   tprnfor = .true.
   tstress = .true.
   verbosity = 'high'
@@ -20,8 +20,12 @@
   nosym = .false.
   nspin = 2
   ntyp = 3
-  occupations = 'fixed'
-  tot_magnetization =   8.0000000000d+00
+  occupations = 'smearing'
+  smearing = 'gauss',
+  degauss = 0.0001,
+  starting_magnetization(1) =   1.0000000000d-01
+  starting_magnetization(2) =   3.1250000000d-01
+  starting_magnetization(3) =   1.0000000000d-01
 /
 &ELECTRONS
   conv_thr =   8.0000000000d-15
@@ -29,7 +33,6 @@
   electron_maxstep = 300
   mixing_beta =   4.0000000000d-01
   startingpot = 'file'
-  startingwfc = 'file'
 /
 ATOMIC_SPECIES
 Ca     40.078 ca_pbesol_v1.uspp.F.UPF

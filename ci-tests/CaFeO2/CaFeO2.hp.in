@@ -11,4 +11,5 @@
   outdir = 'out'
   prefix = 'CaFeO2'
   rmax =   3.9266583933d+00
+  lmet = .false.
 /
