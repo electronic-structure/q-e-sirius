@@ -1256,14 +1256,15 @@ MODULE mod_sirius
     END SELECT
     !
     num_ranks_k = nproc_image / npool
-    i = SQRT(DBLE(num_ranks_k) + 1d-10)
-    IF (i * i .NE. num_ranks_k) THEN
+    ! A square MPI grid for the FFTs, eg 2x2, 3x3, etc. is slower than a 1xN MPI grid
+!   i = SQRT(DBLE(num_ranks_k) + 1d-10)
+!   IF (i * i .NE. num_ranks_k) THEN
       dims(1) = 1
       dims(2) = num_ranks_k
-    ELSE
-      dims(1) = i
-      dims(2) = i
-    ENDIF
+!   ELSE
+!     dims(1) = i
+!     dims(2) = i
+!   ENDIF
     CALL sirius_set_mpi_grid_dims(sctx, 2, dims(1))
     !
     !IF (diago_full_acc) THEN
