@@ -134,27 +134,13 @@ SUBROUTINE hp_dnsq (lmetq0, iter, conv_root, dnsq)
         nrec = ik + (isolv - 1) * nksq 
         CALL get_buffer (dpsi, lrdwf, iudwf, nrec)
         ! 
-        ! Loop on Hubbard atoms
-        proj1 = (0.d0, 0.d0) 
-        proj2 = (0.d0, 0.d0) 
-        DO na = 1, nat
-           nt = ityp(na)
-           IF (is_hubbard(nt)) THEN
-              ldim = (2*Hubbard_l(nt) + 1) * npol
-              ihubst = offsetU(na) + 1   ! I m index
-              !  proj1(ibnd, ihubst) = < psi(k) | S(k)*phi(k) >
-              !  proj2(ibnd, ihubst) = < dpsi(k+q) | S(k+q)*phi(k+q) >
-              CALL ZGEMM('C', 'N', nbnd_occ(ikk), ldim, npwx*npol, (1.0d0, 0.0d0), &
-                   evc,  npwx*npol, swfcatomk(1, ihubst), npwx*npol,&
-                   (0.0d0, 0.0d0), proj1(1, ihubst), nbnd)
-   
-              CALL ZGEMM('C', 'N', nbnd_occ(ikk), ldim, npwx*npol, (1.d0, 0.d0), &
-                    dpsi,  npwx*npol, swfcatomkpq(1, ihubst), npwx*npol,&
-                    (0.0d0, 0.0d0), proj2(1, ihubst), nbnd)
-           ENDIF
-           !
-        ENDDO
-
+        CALL start_clock( 'proj1_proj2' )
+        ! pure ZGEMM implementation
+        CALL ZGEMM('C', 'N', nbnd_occ(ikk), nwfcU, npwx*npol, dcmplx(1.d0, 0.d0), evc, npwx*npol, &
+                   swfcatomk, npwx*npol, dcmplx(0.d0, 0.d0), proj1, nbnd)
+        CALL ZGEMM('C', 'N', nbnd_occ(ikk), nwfcU, npwx*npol, dcmplx(1.d0, 0.d0), dpsi, npwx*npol, &
+                   swfcatomkpq, npwx*npol, dcmplx(0.d0, 0.d0), proj2, nbnd)
+        CALL stop_clock( 'proj1_proj2' )
         !
         CALL mp_sum(proj1, intra_pool_comm)  
         CALL mp_sum(proj2, intra_pool_comm)

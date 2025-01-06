@@ -18,7 +18,7 @@ subroutine dv_of_drho (dvscf, drhoc)
   !
   !  This routine computes the change of the self consistent potential
   !  (Hartree and XC) due to the perturbation.
-  !  Note: gamma_only is disregarded for PHonon calculations, 
+  !  Note: gamma_only is disregarded for PHonon calculations,
   !  TDDFPT purposes only.
   !
   USE kinds,             ONLY : DP
@@ -32,8 +32,8 @@ subroutine dv_of_drho (dvscf, drhoc)
   USE xc_lib,            ONLY : xclib_dft_is
   USE control_flags,     ONLY : gamma_only
   USE martyna_tuckerman, ONLY : wg_corr_h, do_comp_mt
-  USE Coul_cut_2D,       ONLY : do_cutoff_2D  
-  USE Coul_cut_2D_ph,    ONLY : cutoff_dv_of_drho 
+  USE Coul_cut_2D,       ONLY : do_cutoff_2D
+  USE Coul_cut_2D_ph,    ONLY : cutoff_dv_of_drho
   USE qpoint,            ONLY : xq
   USE control_lr,        ONLY : lrpa
 
@@ -42,9 +42,9 @@ subroutine dv_of_drho (dvscf, drhoc)
   ! input:  response charge density
   ! output: response Hartree-and-XC potential
   COMPLEX(DP), INTENT(IN), OPTIONAL :: drhoc(dfftp%nnr)
-  ! input: response core charge density 
+  ! input: response core charge density
   ! (needed only for PHonon when add_nlcc=.true.)
-  
+
   LOGICAL :: add_nlcc
   ! if true add core charge density
   INTEGER :: is, ig
@@ -53,14 +53,14 @@ subroutine dv_of_drho (dvscf, drhoc)
   ! counter on g vectors
   REAL(DP) :: qg2, eh_corr
   ! qg2: the modulus of (q+G)^2
-  ! eh_corr: the correction to response Hartree energy due 
+  ! eh_corr: the correction to response Hartree energy due
   ! to Martyna-Tuckerman correction (calculated, but not used).
-  COMPLEX(DP), ALLOCATABLE :: dvaux(:,:), dvhart(:,:), & 
+  COMPLEX(DP), ALLOCATABLE :: dvaux(:,:), dvhart(:,:), &
                               dvaux_mt(:), rgtot(:)
-  ! dvaux: response XC potential 
+  ! dvaux: response XC potential
   ! dvhart: response Hartree potential
   ! dvaux_mt: auxiliary array for Martyna-Tuckerman correction
-  ! rgtot: total response density  
+  ! rgtot: total response density
 
   CALL start_clock ('dv_of_drho')
   !
@@ -101,7 +101,7 @@ subroutine dv_of_drho (dvscf, drhoc)
           qg2 = (g(1,ig)+xq(1))**2 + (g(2,ig)+xq(2))**2 + (g(3,ig)+xq(3))**2
           dvhart(dfftp%nl(ig),is) = e2 * fpi * dvscf(dfftp%nl(ig),1) / (tpiba2 * qg2)
         enddo
-      enddo 
+      enddo
       !
       ! Add Martyna-Tuckerman correction to response Hartree potential
       !
@@ -133,10 +133,10 @@ subroutine dv_of_drho (dvscf, drhoc)
       enddo
       !
       ! At the end the two contributions (XC+Hartree) are added
-      ! 
+      !
       dvscf = dvaux + dvhart
       !
-      deallocate( dvaux_mt, rgtot ) 
+      deallocate( dvaux_mt, rgtot )
       deallocate(dvhart)
       !
   ELSE
@@ -177,7 +177,7 @@ subroutine dv_of_drho (dvscf, drhoc)
       !
       do is = 1, nspin_lsda
          CALL fwfft ('Rho', dvaux (:, is), dfftp)
-         IF (do_cutoff_2D) THEN 
+         IF (do_cutoff_2D) THEN
             call cutoff_dv_of_drho(dvaux, is, dvscf)
          ELSE
             do ig = 1, ngm
@@ -293,3 +293,4 @@ subroutine dv_of_drho_xc (dv, drho, drhoc)
 end subroutine dv_of_drho_xc
 
 END MODULE dv_of_drho_lr
+

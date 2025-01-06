@@ -94,7 +94,7 @@ SUBROUTINE wfcinit()
      IF ( ierr <= 0 .and.  (.not. ionode .or. &
              output_obj%convergence_info%wf_collected_ispresent) ) THEN
         ! xml file is valid
-        IF (ionode) twfcollect_file = output_obj%convergence_info%wf_collected 
+        IF (ionode) twfcollect_file = output_obj%convergence_info%wf_collected
         CALL mp_bcast(twfcollect_file, ionode_id, intra_image_comm)
         CALL qes_reset  ( output_obj )
      ELSE
@@ -211,7 +211,7 @@ SUBROUTINE wfcinit()
      IF (lda_plus_u .AND. lda_plus_u_kind.EQ.2) CALL phase_factor(ik)
      !
      ! ... calculate starting wavefunctions (calls Hpsi)
-     ! 
+     !
      CALL init_wfc ( ik )
      !
      ! ... write  starting wavefunctions to file
@@ -372,8 +372,8 @@ SUBROUTINE init_wfc ( ik )
      DO ipol = 1, npol
         DO ig = ngk_ik, npwx
           wfcatom(ig,ipol,ibnd) = (0.0_dp, 0.0_dp)
-        END DO 
-    END DO 
+        END DO
+    END DO
   END DO
   !
   !$acc parallel loop collapse(3) private(rnd_idx, rr1, rr2, arg)
@@ -392,9 +392,9 @@ SUBROUTINE init_wfc ( ik )
            rr1 = rr1 / ( ( xk_1 + g(1,igk_k(ig,ik)) )**2 + &
                        ( xk_2 + g(2,igk_k(ig,ik)) )**2 + &
                        ( xk_3 + g(3,igk_k(ig,ik)) )**2 + 1.0_DP )
-           arg = tpi * rr2 
+           arg = tpi * rr2
            !
-           wfcatom(ig,ipol,ibnd) = CMPLX( rr1*COS( arg ), rr1*SIN( arg ) ,kind=DP) 
+           wfcatom(ig,ipol,ibnd) = CMPLX( rr1*COS( arg ), rr1*SIN( arg ) ,kind=DP)
            !
         END DO
      END DO
@@ -449,7 +449,7 @@ SUBROUTINE init_wfc ( ik )
   ! ... copy the first nbnd eigenvalues
   ! ... eigenvectors are already copied inside routine rotate_wfc
   !
-  !$acc kernels  
+  !$acc kernels
   et(1:nbnd,ik) = etatom(1:nbnd)
   !$acc end kernels
   !
@@ -519,11 +519,11 @@ SUBROUTINE aceinit0()
     !
     WRITE( stdout, '(5X,"Starting ACE correctly read from file")' )
     !
-  END IF 
+  END IF
   !
   domat = .FALSE.
   !
-  CALL stop_clock( 'aceinit0' )  
+  CALL stop_clock( 'aceinit0' )
   !
   RETURN
   !
