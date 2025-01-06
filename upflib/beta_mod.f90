@@ -25,7 +25,7 @@ MODULE beta_mod
   PUBLIC :: interp_beta
   PUBLIC :: interp_dbeta
 #if defined(__SIRIUS)
-  PUBLIC :: beta_ri_tab
+  PUBLIC :: beta_ri_tab, dq
 #endif
   !
   SAVE

@@ -25,7 +25,7 @@ MODULE atwfc_mod
   PUBLIC :: interp_atwfc
   PUBLIC :: interp_atdwfc
 #if defined(__SIRIUS)
-  PUBLIC :: wfc_ri_tab
+  PUBLIC :: wfc_ri_tab, dq
 #endif
   !
   SAVE
