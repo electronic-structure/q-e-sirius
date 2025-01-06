@@ -34,6 +34,7 @@ SUBROUTINE scale_h
   USE rhoc_mod,       ONLY : scale_tab_rhc
   USE rhoat_mod,      ONLY : scale_tab_rhoat
   USE qrad_mod,       ONLY : scale_tab_qrad, init_tab_qrad
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -86,11 +87,21 @@ SUBROUTINE scale_h
   !
   ! scale the non-local pseudopotential tables
   !
+#if defined(__SIRIUS)
+  !IF ((use_sirius_scf.OR.use_sirius_nlcg).AND..NOT.use_veff_callback) THEN
+  !  CONTINUE
+  !ELSE
+#endif
+  !
   call scale_uspp_data( omega_old/omega )
   call scale_tab_beta( omega_old/omega )
   CALL scale_tab_rhc( omega_old/omega )
   CALL scale_tab_rhoat( omega_old/omega )
   CALL scale_tab_qrad( omega_old/omega )
+  !
+#if defined(__SIRIUS)
+  !END IF
+#endif
   !
   ! for hybrid functionals
   !

@@ -43,6 +43,7 @@ SUBROUTINE init_run()
   USE xc_lib,             ONLY : xclib_dft_is_libxc, xclib_init_libxc, &
                                  xclib_dft_is, xclib_set_finite_size_volume, &
                                  dft_has_finite_size_correction
+  USE mod_sirius
   !
   USE control_flags,      ONLY : use_gpu
   USE dfunct_gpum,        ONLY : newd_gpu
@@ -185,9 +186,13 @@ SUBROUTINE init_run()
   !
   IF(use_wannier) CALL wannier_init()
   !
+! Cleanup PAW arrays that are only used for init
 #if defined(__MPI)
-  ! Cleanup PAW arrays that are only used for init
-  IF (okpaw) CALL paw_post_init() ! only parallel!
+#if defined(__SIRIUS)
+  IF (.NOT.(use_sirius_scf.OR.use_sirius_nlcg)) THEN
+    IF (okpaw) CALL paw_post_init()
+  ENDIF
+#endif
 #endif
   !
   IF ( lmd ) CALL allocate_dyn_vars()

@@ -21,6 +21,9 @@ MODULE uspp_data
   PUBLIC :: allocate_uspp_data
   PUBLIC :: deallocate_uspp_data
   PUBLIC :: scale_uspp_data
+#if defined(__SIRIUS)
+  PUBLIC :: wfc_ri_tab
+#endif
   !
   INTEGER :: nqxq
   !! size of interpolation table
@@ -30,6 +33,21 @@ MODULE uspp_data
   !! space between interpolation points 
   REAL(DP), ALLOCATABLE :: tab_at(:,:,:)
   !! interpolation table for atomic wfc
+  !
+#if defined(__SIRIUS)
+  REAL(DP), ALLOCATABLE :: wfc_ri_tab(:,:,:)
+  ! radial integrals of atomic wave-functions
+  !
+#endif
+  ! GPUs vars
+  !
+  REAL(DP), ALLOCATABLE :: qrad_d(:,:,:,:)
+  REAL(DP), ALLOCATABLE :: tab_d(:,:,:)
+  REAL(DP), ALLOCATABLE :: tab_at_d(:,:,:)
+  !
+#if defined(__CUDA)
+  attributes (DEVICE) :: qrad_d, tab_d, tab_at_d
+#endif
   !
 contains
   !
