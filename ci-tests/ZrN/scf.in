@@ -1,0 +1,47 @@
+&CONTROL
+  calculation = 'scf'
+  etot_conv_thr =   1.0000000000d-05
+  forc_conv_thr =   5.0000000000d-05
+  max_seconds =   3.4200000000d+03
+  outdir = './out/'
+  prefix = 'NZr'
+  pseudo_dir = '.'
+  tprnfor = .true.
+  tstress = .true.
+  verbosity = 'high'
+/
+&SYSTEM
+  degauss =   1.0000000000d-02
+  ecutrho =   400.0
+  ecutwfc =   100.0
+  ibrav = 0
+  nat = 2
+  nosym = .false.
+  ntyp = 2
+  occupations = 'smearing'
+  smearing = 'cold'
+/
+&ELECTRONS
+  conv_thr =   2.0000000000d-15
+  diagonalization = 'davidson'
+  electron_maxstep = 300
+  mixing_beta =   4.0000000000d-01
+/
+ATOMIC_SPECIES
+Zr     91.224  Zr.upf
+N      14.0067 N.upf
+ATOMIC_POSITIONS angstrom
+Zr           3.7324500000       3.7324500000       3.7324500000
+N            0.0000000000       0.0000000000       0.0000000000
+K_POINTS automatic
+6 6 6 0 0 0
+CELL_PARAMETERS angstrom
+      0.0000000000       2.4883000000       2.4883000000
+      2.4883000000       0.0000000000       2.4883000000
+      2.4883000000       2.4883000000       0.0000000000
+HUBBARD ortho-atomic
+ V      Zr-4d   Zr-4d   1       1       3.0
+ V      Zr-4d   N-2p    1       52      3.0
+ V      Zr-4d   N-2p    1       48      3.0
+ V      Zr-4d   N-2p    1       36      3.0
+ V      Zr-4d   N-2p    1       54      3.0

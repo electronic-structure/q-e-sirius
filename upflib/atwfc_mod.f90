@@ -24,6 +24,9 @@ MODULE atwfc_mod
   PUBLIC :: scale_tab_atwfc
   PUBLIC :: interp_atwfc
   PUBLIC :: interp_atdwfc
+#if defined(__SIRIUS)
+  PUBLIC :: wfc_ri_tab, dq
+#endif
   !
   SAVE
   !
@@ -35,6 +38,10 @@ MODULE atwfc_mod
   !! max q covered by the interpolation table
   REAL(DP), ALLOCATABLE :: tab_atwfc(:,:,:)
   !! interpolation table for numerical beta functions in reciprocal space
+#if defined(__SIRIUS)
+  REAL(DP), ALLOCATABLE :: wfc_ri_tab(:,:,:)
+  !! radial integrals of atomic wave-functions
+#endif
   !
 CONTAINS
   !
@@ -90,6 +97,11 @@ CONTAINS
   !
   ndm = MAXVAL(msh(1:nsp))
   ALLOCATE( aux(ndm), vchi(ndm) )
+#if defined(__SIRIUS)
+  IF (ALLOCATED(wfc_ri_tab)) DEALLOCATE(wfc_ri_tab)
+  ALLOCATE(wfc_ri_tab(nqx, nwfcm, nsp))
+  wfc_ri_tab = 0.d0
+#endif
   !
   ! chiq = radial fourier transform of atomic orbitals chi
   !
@@ -114,6 +126,9 @@ CONTAINS
               ENDDO
               CALL simpson( msh(nt), vchi, rgrid(nt)%rab, vqint )
               tab_atwfc( iq, nb, nt ) = vqint * pref
+#if defined(__SIRIUS)
+              wfc_ri_tab( iq, nb, nt ) = vqint
+#endif
            ENDDO
            !
         ENDIF
@@ -122,6 +137,9 @@ CONTAINS
   ENDDO
   !
   CALL mp_sum( tab_atwfc, comm )
+#if defined(__SIRIUS)
+  CALL mp_sum( wfc_ri_tab, comm )
+#endif
   !
   !$acc update device(tab_atwfc)
   !
