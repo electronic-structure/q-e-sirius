@@ -1,0 +1,27 @@
+KI Silicon
+&control
+  prefix='aiida'
+  outdir='./out'
+  kcw_iverbosity = 2
+  kcw_at_ks=.false.
+  read_unitary_matrix = .true.
+  calculation = 'screen'
+  spin_component = 1 
+  lrpa =.false.
+  mp1 = 2 
+  mp2 = 2
+  mp3 = 2
+/
+&wannier
+  seedname = 'wann'
+  check_ks = .true. 
+  num_wann_occ = 5
+  num_wann_emp = 5
+  have_empty = .true.
+  has_disentangle = .true.
+/
+&screen
+   tr2    =1.0d-18
+  nmix   = 4
+  niter  = 33
+/

@@ -22,6 +22,11 @@ set(src_util
 qe_enable_cuda_fortran("${src_util}")
 qe_add_library(qe_utilx ${src_util})
 
+if(QE_ENABLE_SIRIUS)
+  get_property(_sirius_include_dirs TARGET sirius::sirius PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
+  target_include_directories(qe_utilx PRIVATE ${_sirius_include_dirs})
+endif(QE_ENABLE_SIRIUS)
+
 set(src_util_c
     cptimer.c
     copy.c
@@ -34,6 +39,7 @@ set(src_util_c
     memusage.c
     ptrace.c)
 qe_add_library(qe_utilx_c ${src_util_c})
+
 target_link_libraries(qe_utilx
     PUBLIC
         qe_utilx_c # cclock is exposed by the mytime module in clocks_handler
@@ -41,6 +47,12 @@ target_link_libraries(qe_utilx
     PRIVATE
         qe_openmp_fortran
         qe_mpi_fortran)
+
+if(QE_ENABLE_SIRIUS)
+    target_link_libraries(qe_utilx
+        PRIVATE
+            sirius::sirius)
+endif(QE_ENABLE_SIRIUS)
 
 qe_install_targets(qe_utilx qe_utilx_c)
 
