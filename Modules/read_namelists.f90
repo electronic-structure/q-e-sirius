@@ -19,6 +19,7 @@ MODULE read_namelists_module
   !
   USE kinds,     ONLY : DP
   USE input_parameters
+  USE constants, ONLY: K_BOLTZMANN_RY
   !
   IMPLICIT NONE
   !
