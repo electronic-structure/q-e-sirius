@@ -13,6 +13,7 @@ MODULE command_line_options
   USE mp,        ONLY : mp_bcast
   USE mp_world,  ONLY : root, world_comm
   USE io_global, ONLY : meta_ionode
+  USE input_parameters, ONLY : use_sirius_nlcg, use_sirius_scf, sirius_cfg
   !
   IMPLICIT NONE
   !
@@ -139,6 +140,20 @@ CONTAINS
               ENDIF
               READ ( arg, *, ERR = 15, END = 15) ndiag_
               narg = narg + 1
+#if defined(__SIRIUS)
+           CASE ( '-sirius_nlcg' )
+              use_sirius_nlcg = .true.
+            CASE ( '-use_qe_scf' )
+              use_sirius_scf = .false.
+           CASE ( '-sirius_cfg')
+              IF (read_string) THEN
+                 CALL my_getarg ( input_command_line, narg, sirius_cfg)
+              ELSE
+                 CALL get_command_argument ( narg, sirius_cfg)
+              ENDIF
+              IF ( TRIM (sirius_cfg) == ' ' ) GO TO 15
+              narg = narg + 1
+#endif
            CASE ( '-nh', '-nhw', '-n_howmany', '-howmany')
               IF (read_string) THEN
                  CALL my_getarg ( input_command_line, narg, arg )
@@ -168,6 +183,9 @@ CONTAINS
      CALL mp_bcast( nyfft_ , root, world_comm ) 
      CALL mp_bcast( nband_ , root, world_comm ) 
      CALL mp_bcast( ndiag_ , root, world_comm ) 
+     CALL mp_bcast( use_sirius_scf, root, world_comm )
+     CALL mp_bcast( use_sirius_nlcg, root, world_comm )
+     CALL mp_bcast( sirius_cfg, root, world_comm )
      CALL mp_bcast( pencil_decomposition_ , root, world_comm )
      
   END SUBROUTINE get_command_line

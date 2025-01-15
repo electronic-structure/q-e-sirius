@@ -45,6 +45,7 @@ MODULE ldaU_hp
                                             !   at least one atom of the same type which was perturbed (this can
                                             !   happen only when find_atpert=3), otherwise the post-processing
                                             !   calculation of U will fail.
+  LOGICAL :: lmet
   !
   LOGICAL, ALLOCATABLE :: todo_atom(:),              & ! Which atoms must be perturbed
                           perturbed_atom(:),         & ! Controls which atom is perturbed in the HP

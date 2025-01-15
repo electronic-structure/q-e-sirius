@@ -456,6 +456,12 @@ SUBROUTINE electrons_scf ( printout, exxen )
   !
   USE plugin_variables,     ONLY : plugin_etot
   USE libmbd_interface,     ONLY : EmbdvdW
+  USE input_parameters,     ONLY : diago_thr_init
+#if defined(__SIRIUS)
+  USE mod_sirius
+  USE input_parameters,     ONLY : nlcg_T, nlcg_bt_step_length, nlcg_conv_thr, nlcg_pseudo_precond, nlcg_maxiter,&
+                                 & nlcg_restart, nlcg_smearing, nlcg_processing_unit
+#endif
   USE add_dmft_occ,         ONLY : dmft, dmft_update, v_dmft, dmft_updated
   !
   USE device_fbuff_m,       ONLY : dev_buf, pin_buf
@@ -529,6 +535,8 @@ SUBROUTINE electrons_scf ( printout, exxen )
   INTEGER:: atnum(1:nat), na
   !! auxiliary variables for grimme-d3
   LOGICAL :: lhb
+  REAL(DP) :: tmp
+  INTEGER :: ir
   !! if .TRUE. then background states are present (DFT+U)
   !
   lhb = .FALSE.
@@ -549,6 +557,172 @@ SUBROUTINE electrons_scf ( printout, exxen )
   !
   CALL memstat( kilobytes )
   IF ( kilobytes > 0 ) WRITE( stdout, 9001 ) kilobytes/1000.0
+  !
+#if defined(__SIRIUS)
+  IF (use_sirius_scf) THEN
+    WRITE(*,*)''
+    WRITE(*,*)'============================'
+    WRITE(*,*)'* running SCF ground state *'
+    WRITE(*,*)'============================'
+    IF (sirius_pwpp) THEN
+      IF ( do_comp_esm ) THEN
+        ewld = esm_ewald()
+      ELSE
+        ewld = ewald( alat, nat, nsp, ityp, zv, at, bg, tau, &
+                     omega, g, gg, ngm, gcutm, gstart, gamma_only, strf )
+      END IF
+      !
+      ! Grimme-D3 correction to the energy
+      !
+      IF (ldftd3) THEN
+        CALL start_clock('energy_dftd3')
+        ! taupbc are atomic positions in alat units, centered around r=0
+        ALLOCATE ( taupbc(3,nat) )
+        taupbc(:,:) = tau(:,:)
+        CALL cryst_to_cart( nat, taupbc, bg, -1 )
+        taupbc(:,:) = taupbc(:,:) - NINT(taupbc(:,:))
+        CALL cryst_to_cart( nat, taupbc, at,  1 )
+        DO na = 1, nat
+           atnum(na) = get_atomic_number(TRIM(atm(ityp(na))))
+        ENDDO
+        call dftd3_pbc_dispersion(dftd3, alat*taupbc, atnum, alat*at, edftd3)
+        edftd3=edftd3*2.d0
+        DEALLOCATE( taupbc)
+        CALL stop_clock('energy_dftd3')
+      ELSE
+        edftd3= 0.0
+      ENDIF
+      !
+    END IF
+    CALL start_clock( 'electrons' )
+    ! look only for the convergence of the density; converge total energy only to 10^-4
+    CALL sirius_initialize_subspace(gs_handler, ks_handler)
+    CALL sirius_find_ground_state(gs_handler, density_tol=tr2, energy_tol=1d-4, initial_guess=.false.,&
+        &max_niter=niter, iter_solver_tol=ethr, save_state=.false., converged=conv_elec, niter=iter)
+    IF (conv_elec) THEN
+      n_scf_steps = iter
+    ENDIF
+
+    CALL sirius_get_energy(gs_handler, "descf", descf)
+    descf = descf * 2.d0 ! convert to Ry
+
+    IF (use_sirius_nlcg) THEN
+      WRITE(*,*)''
+      WRITE(*,*)'============================='
+      WRITE(*,*)'* running NLCG ground state *'
+      WRITE(*,*)'============================='
+
+      !CALL insert_xc_functional_to_sirius
+      CALL sirius_nlcg_params(gs_handler, ks_handler, temp=nlcg_T,&
+        &smearing=TRIM(ADJUSTL(nlcg_smearing)), kappa=nlcg_pseudo_precond,&
+        &tau=nlcg_bt_step_length, tol=nlcg_conv_thr, maxiter=nlcg_maxiter,&
+        &restart=nlcg_restart, processing_unit=TRIM(ADJUSTL(nlcg_processing_unit)),&
+        &converged=conv_elec)
+    END IF
+
+    CALL stop_clock( 'electrons' )
+
+    ! scf correction is meaningless when nlcg was run
+    IF (use_sirius_nlcg) THEN
+      descf = 0
+    ENDIF
+
+    CALL sirius_get_energy(gs_handler, "fermi", ef)
+    ef = ef * 2.d0 ! convert to Ry
+    ef_up = ef
+    ef_dw = ef
+
+    IF (sirius_pwpp) THEN
+      CALL sirius_get_energy(gs_handler, "evalsum", eband)
+      eband = eband * 2.d0 ! convert to Ry
+
+      CALL sirius_get_energy(gs_handler, "demet", demet)
+      demet = demet * 2.d0 ! convert to Ry
+
+      etot_cmp_paw = 0.d0
+      CALL sirius_get_energy(gs_handler, "paw", epaw)
+      epaw = epaw * 2.d0 ! convert to Ry
+
+      eth = 0.d0
+      IF ( lda_plus_u ) THEN
+        CALL sirius_get_energy(gs_handler, "hubbard", eth)
+        eth = eth * 2.d0
+      END IF
+
+      IF (.NOT.use_veff_callback) THEN
+        ! Vha should be multiplied by 2 to convert to Ry and divided by 2 to get Eha = 1/2 <Vha|rho>
+        CALL sirius_get_energy(gs_handler, "vha", ehart)
+
+        CALL sirius_get_energy(gs_handler, "exc", etxc)
+        etxc = etxc * 2.d0 ! convert to Ry
+
+        CALL sirius_get_energy(gs_handler, "one-el", deband)
+        deband = -deband * 2.d0 ! convert to Ry
+      ELSE
+        deband = 0._DP
+        IF ( nspin==2 ) THEN
+           !
+           DO ir = 1,dfftp%nnr
+             deband = deband - ( rho%of_r(ir,1) + rho%of_r(ir,2) ) * v%of_r(ir,1) &  ! up
+                               - ( rho%of_r(ir,1) - rho%of_r(ir,2) ) * v%of_r(ir,2)    ! dw
+           ENDDO
+           deband = 0.5_DP*deband
+           !
+        ELSE
+           deband = - SUM( rho%of_r(:,:)*v%of_r(:,:) )
+        END IF
+        !
+        !IF ( xclib_dft_is('meta') ) &
+        !   deband = deband - SUM( rho%kin_r(:,:)*v%kin_r(:,:) )
+        !
+        deband = omega * deband / ( dfftp%nr1*dfftp%nr2*dfftp%nr3 )
+        !
+        CALL mp_sum( deband, intra_bgrp_comm )
+
+        CALL sirius_get_energy(gs_handler, "paw-one-el", tmp)
+        deband = deband - 2.d0 * tmp
+      END IF
+
+      etot = eband + ( etxc - etxcc ) + ewld + ehart + deband + demet + descf + epaw + eth
+    ELSE
+      eband = 0.
+      demet = 0.
+      etot_cmp_paw = 0.
+      etxc = 0.
+      etxcc = 0.
+      ewld = 0.
+      ehart = 0.
+      deband = 0.
+      epaw = 0.
+      CALL sirius_get_energy(gs_handler, "total", etot)
+      etot = etot * 2.d0 ! convert to Ry
+      etot = etot + descf
+    ENDIF
+
+    CALL get_density_from_sirius()
+    CALL get_occupation_matrices_from_sirius()
+    IF ( lsda .OR. noncolin ) CALL compute_magnetization()
+    CALL print_energies ( printout )
+
+    IF (conv_elec) THEN
+      WRITE( stdout, 9110 ) iter
+    ELSE
+      WRITE( stdout, 9120 ) iter
+    END IF
+  END IF
+  !
+  IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
+    CALL get_band_occupancies_from_sirius()
+    CALL get_band_energies_from_sirius(ks_handler)
+    IF (sirius_pwpp) THEN
+      CALL get_wave_functions_from_sirius(ks_handler)
+    END IF
+    IF (conv_elec)  THEN
+      CALL print_ks_energies()
+    END IF
+    RETURN
+  END IF
+#endif
   !
   CALL start_clock( 'electrons' )
   !
@@ -856,6 +1030,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
         CALL bcast_scf_type( rhoin, root_pool, inter_pool_comm )
         CALL mp_bcast( dr2, root_pool, inter_pool_comm )
         CALL mp_bcast( conv_elec, root_pool, inter_pool_comm )
+        !
         !
         IF (.NOT. scf_must_converge .AND. idum == niter) conv_elec = .TRUE.
         !
@@ -1734,6 +1909,8 @@ SUBROUTINE electrons_scf ( printout, exxen )
                                              ABS( ef - gcscf_mu ) * RYTOEV
           !
        ENDIF
+       WRITE(stdout,*)''
+       WRITE(stdout, 9990)eband
        !
 #if defined(__LEGACY_PLUGINS)
        CALL plugin_print_energies()
@@ -1772,6 +1949,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
 9064 FORMAT( '     electric field correction =',F17.8,' Ry' )
 9065 FORMAT( '     gate field correction     =',F17.8,' Ry' ) ! TB
 9066 FORMAT( '     Hubbard energy            =',F17.8,' Ry' )
+9990 FORMAT( '     Band energy sum           =',F17.8,' Ry' )
 9067 FORMAT( '     one-center paw contrib.   =',F17.8,' Ry' )
 9068 FORMAT( '      -> PAW hartree energy AE =',F17.8,' Ry' &
             /'      -> PAW hartree energy PS =',F17.8,' Ry' &

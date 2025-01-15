@@ -25,6 +25,7 @@ PROGRAM hp_main
                                 compute_hp, sum_pertq, perturb_only_atom,   &
                                 determine_num_pert_only, tmp_dir_save,      &
                                 determine_q_mesh_only
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -37,6 +38,9 @@ PROGRAM hp_main
   ! Initialize MPI, clocks, print initial messages
   !
   CALL mp_startup()
+#if defined(__SIRIUS)
+  CALL sirius_initialize(call_mpi_init=.false.)
+#endif
   !
   CALL environment_start(code)
   !
@@ -129,7 +133,17 @@ PROGRAM hp_main
         !
         ! If necessary the bands are recalculated
         !
+#if defined(__SIRIUS)
+        IF ( .not. setup_pw ) THEN
+          CALL clear_sirius()
+          CALL setup_sirius()
+        END IF
+#endif
         IF (setup_pw) CALL hp_run_nscf(.true.) 
+        !
+#if defined(__SIRIUS)
+        CALL sirius_create_H0(gs_handler)
+#endif
         !
         ! Initialize the quantities which do not depend on
         ! the linear response of the system
@@ -236,6 +250,12 @@ PROGRAM hp_main
   CALL environment_end(code)
   !
   IF ( use_para_diag ) CALL laxlib_end() 
+  !
+  !  finalize sirius at the very end
+#if defined(__SIRIUS)
+  CALL sirius_finalize(call_mpi_fin=.false.)
+#endif
+
   CALL mp_global_end()
   !
 3336 FORMAT('     ',69('='))

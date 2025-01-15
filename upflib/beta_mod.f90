@@ -24,6 +24,8 @@ MODULE beta_mod
   PUBLIC :: scale_tab_beta
   PUBLIC :: interp_beta
   PUBLIC :: interp_dbeta
+  PUBLIC :: beta_ri_tab
+  PUBLIC :: dq
   !
   SAVE
   !
@@ -35,6 +37,7 @@ MODULE beta_mod
   !! max q covered by the interpolation table
   REAL(DP), ALLOCATABLE :: tab_beta(:,:,:)
   !! interpolation table for numerical beta functions in reciprocal space
+  REAL(DP), ALLOCATABLE :: beta_ri_tab(:,:,:)
   !
 CONTAINS
 !
@@ -92,6 +95,9 @@ SUBROUTINE init_tab_beta ( qmax_, omega, comm, ierr )
      RETURN
   END IF
   nqx = INT( qmax/dq + 4)
+  IF (ALLOCATED(beta_ri_tab)) DEALLOCATE(beta_ri_tab)
+  ALLOCATE(beta_ri_tab(nqx, nbetam, nsp))
+  beta_ri_tab = 0.d0
   allocate(tab_beta(nqx,nbetam,nsp))
   !$acc enter data create(tab_beta)
   ndm = MAXVAL ( upf(:)%kkbeta )
@@ -107,6 +113,7 @@ SUBROUTINE init_tab_beta ( qmax_, omega, comm, ierr )
            qi = (iq - 1) * dq
            if ( upf(nt)%is_gth ) then
               CALL mk_ffnl_gth( nt, nb, 1, omega, [ qi ] , tab_beta(iq,nb,nt) )
+              beta_ri_tab(iq, nb, nt) = tab_beta(iq,nb,nt) / pref
            else
               call sph_bes (upf(nt)%kkbeta, rgrid(nt)%r, qi, l, besr)
               do ir = 1, upf(nt)%kkbeta
@@ -114,6 +121,7 @@ SUBROUTINE init_tab_beta ( qmax_, omega, comm, ierr )
               enddo
               call simpson (upf(nt)%kkbeta, aux, rgrid(nt)%rab, vqint)
               tab_beta (iq, nb, nt) = vqint * pref
+              beta_ri_tab(iq, nb, nt) = vqint
            end if
         enddo
      enddo
@@ -122,6 +130,7 @@ SUBROUTINE init_tab_beta ( qmax_, omega, comm, ierr )
   deallocate (aux)
   !
   call mp_sum(  tab_beta, comm )
+  CALL mp_sum( beta_ri_tab, comm )
 !$acc update device (tab_beta)
   !
 END SUBROUTINE init_tab_beta

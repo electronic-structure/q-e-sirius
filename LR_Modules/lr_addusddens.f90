@@ -28,6 +28,7 @@ SUBROUTINE lr_addusddens (drhoscf, dbecsum)
   USE uspp_param,           ONLY : upf, lmaxq, nh, nhm
   USE qpoint,               ONLY : xq, eigqts
   USE noncollin_module,     ONLY : nspin_mag
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -61,6 +62,78 @@ SUBROUTINE lr_addusddens (drhoscf, dbecsum)
   IF (.NOT.okvan) RETURN
   !
   CALL start_clock ('lr_addusddens')
+  IF (.true.) THEN
+  ALLOCATE (aux(ngm,nspin_mag))
+  !
+  aux(:,:) = (0.d0, 0.d0)
+#if defined(__SIRIUS)
+  DO nt = 1, ntyp
+     IF (upf(nt)%tvanp) THEN
+        CALL sirius_generate_rhoaug_q(gs_handler, nt, nat, ngm, nspin_mag, atom_type(nt)%qpw_t, &
+            & nh(nt) * (nh(nt) + 1) / 2, eigqts, mill, dbecsum, nhm * (nhm + 1) / 2, aux)
+     ENDIF
+  ENDDO
+#else
+  !
+  DO nt = 1, ntyp
+     IF (upf(nt)%tvanp) THEN
+        ijh = 0
+        DO ih = 1, nh (nt)
+           DO jh = ih, nh (nt)
+              !
+              ijh = ijh + 1
+              DO na = 1, nat
+                 IF (ityp (na) .eq.nt) THEN
+                    !
+                    ! Calculate the second term in Eq.(36) of the ultrasoft paper.
+                    !
+!$omp parallel default(shared) private(is, z1)
+                    DO is = 1, nspin_mag
+!$omp do
+                       DO ig = 1, ngm
+                          !
+                          ! Calculate the structure factor
+                          !
+                          z1 = eigts1(mill(1,ig),na) * &
+                               eigts2(mill(2,ig),na) * &
+                               eigts3(mill(3,ig),na) * &
+                               eigqts(na)
+                          !
+                          aux(ig,is) = aux(ig,is) + 2.0d0 * atom_type(nt)%qpw(ig, ijh) * z1 * dbecsum(ijh,na,is)
+                          !
+                       ENDDO
+!$omp end do nowait
+                    ENDDO
+!$omp end parallel
+                    !
+                 ENDIF
+              ENDDO
+           ENDDO
+        ENDDO
+     ENDIF
+  ENDDO
+#endif
+  !
+  ! Convert aux to real space, and add to the charge density.
+  !
+  DO is = 1, nspin_mag
+      !
+      psic(:) = (0.d0, 0.d0)
+      !
+      DO ig = 1, ngm
+         psic(dfftp%nl(ig)) = aux(ig,is)
+      ENDDO
+      !
+      CALL invfft ('Rho', psic, dfftp)
+      !
+      DO ir = 1, dfftp%nnr
+         drhoscf(ir,is) = drhoscf(ir,is) + psic(ir)
+      ENDDO
+      !
+  ENDDO
+  !
+  DEALLOCATE (aux)
+  ELSE
   !
   ALLOCATE (aux(ngm,nspin_mag))
   ALLOCATE (sk(ngm))
@@ -144,6 +217,7 @@ SUBROUTINE lr_addusddens (drhoscf, dbecsum)
   DEALLOCATE (ylmk0)
   DEALLOCATE (sk)
   DEALLOCATE (aux)
+  ENDIF
   !
   CALL stop_clock ('lr_addusddens')
   !

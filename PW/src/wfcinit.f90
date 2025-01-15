@@ -41,15 +41,19 @@ SUBROUTINE wfcinit()
   USE qes_libs_module,      ONLY : qes_reset
   USE uspp_init,            ONLY : init_us_2
   USE control_flags,        ONLY : use_gpu
+  USE input_parameters,     ONLY : use_sirius_scf, use_sirius_nlcg
   !
   IMPLICIT NONE
   !
   INTEGER :: ik, ierr, exst_sum
   LOGICAL :: exst, exst_mem, exst_file, opnd_file, twfcollect_file
+  LOGICAL :: do_init
   CHARACTER (LEN=256)  :: dirname
   TYPE ( output_type ) :: output_obj
   !
   CALL start_clock( 'wfcinit' )
+  do_init = .TRUE.
+  IF (use_sirius_scf.OR.use_sirius_nlcg) do_init = .FALSE.
   !
   ! ... set number of atomic wavefunctions
   !
@@ -199,20 +203,28 @@ SUBROUTINE wfcinit()
      !
      ! ... More Hpsi initialization: nonlocal pseudopotential projectors |beta>
      !
+     IF (do_init) THEN
      IF ( nkb > 0 ) CALL init_us_2( ngk(ik), igk_k(1,ik), xk(1,ik), vkb , use_gpu)
+     ENDIF
      !
      ! ... Needed for DFT+U
      !
+     IF (do_init) THEN
      IF ( nks > 1 .AND. lda_plus_u .AND. (Hubbard_projectors .NE. 'pseudo') ) &
         CALL get_buffer( wfcU, nwordwfcU, iunhub, ik )
+     ENDIF
      !
      ! DFT+U+V: calculate the phase factor at a given k point
      !
+     IF (do_init) THEN
      IF (lda_plus_u .AND. lda_plus_u_kind.EQ.2) CALL phase_factor(ik)
+     ENDIF
      !
      ! ... calculate starting wavefunctions (calls Hpsi)
      ! 
+     IF (do_init) THEN
      CALL init_wfc ( ik )
+     ENDIF
      !
      ! ... write  starting wavefunctions to file
      !

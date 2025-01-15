@@ -59,6 +59,13 @@ SUBROUTINE run_pwscf( exit_status )
   USE qexsd_module,         ONLY : qexsd_set_status
   USE xc_lib,               ONLY : xclib_dft_is, stop_exx, exx_is_active
   USE beef,                 ONLY : beef_energies
+  USE cell_base,            ONLY : bg
+  USE gvect,                ONLY : ngm, g, eigts1, eigts2, eigts3
+  USE ions_base,            ONLY : nat, nsp, ityp, tau
+  USE vlocal,               ONLY : strf
+  USE mp_world,             ONLY : mpime
+  USE dfunct,               ONLY : newd
+  USE mod_sirius
   USE ldaU,                 ONLY : lda_plus_u
   USE add_dmft_occ,         ONLY : dmft
   USE extffield,            ONLY : init_extffield, close_extffield
@@ -159,6 +166,14 @@ SUBROUTINE run_pwscf( exit_status )
   !
   CALL init_run()
   !
+#if defined(__SIRIUS)
+  IF (use_sirius_scf.OR.use_sirius_nlcg.OR.always_setup_sirius) THEN
+    CALL clear_sirius
+    CALL setup_sirius
+    CALL sirius_initialize_kset(ks_handler)
+  ENDIF
+#endif
+  !
   !  read external force fields parameters
   ! 
   IF ( nextffield > 0 .AND. ionode) THEN
@@ -250,6 +265,11 @@ SUBROUTINE run_pwscf( exit_status )
         ! ... ionic step (for molecular dynamics or optimization)
         !
         CALL move_ions ( idone, ions_status, optimizer_failed )
+#if defined(__SIRIUS)
+        IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
+          CALL update_sirius
+        ENDIF
+#endif
         conv_ions = ( ions_status == 0 ) .OR. &
                     ( ions_status == 1 .AND. treinit_gvecs )
         !
@@ -313,6 +333,25 @@ SUBROUTINE run_pwscf( exit_status )
               CALL reset_gvectors ( )
               !
            ELSE
+#if defined(__SIRIUS)
+              IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
+                 CALL sirius_start_timer("qe|update")
+                 IF ( lmovecell ) THEN
+                   CALL scale_h()
+                 ENDIF
+                 ! structure factors are needed to compute Ewald energy contribution
+                 CALL struc_fact( nat, tau, nsp, ityp, ngm, g, bg, &
+                                  dfftp%nr1, dfftp%nr2, dfftp%nr3, strf, eigts1, eigts2, eigts3 )
+                 IF (use_veff_callback) THEN
+                   CALL setlocal()
+                   CALL set_rhoc()
+                   CALL potinit
+                   CALL newd
+                 END IF
+                 CALL sirius_initialize_subspace(gs_handler, ks_handler)
+                 CALL sirius_stop_timer("qe|update")
+              ELSE
+#endif
               !
               ! ... update the wavefunctions, charge density, potential
               ! ... update_pot initializes structure factor array as well
@@ -322,6 +361,9 @@ SUBROUTINE run_pwscf( exit_status )
               ! ... re-initialize atomic position-dependent quantities
               !
               CALL hinit1()
+#if defined(__SIRIUS)
+              END IF
+#endif
               !
            END IF
            !
@@ -332,6 +374,11 @@ SUBROUTINE run_pwscf( exit_status )
      ! ... the first scf iteration of each ionic step (after the first)
      !
      ethr = 1.0D-6
+#if defined(__SIRIUS)
+     IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
+        ethr = 1.0D-2
+     ENDIF
+#endif
      !
      CALL dev_buf%reinit( ierr )
      IF ( ierr .ne. 0 ) CALL infomsg( 'run_pwscf', 'Cannot reset GPU buffers! Some buffers still locked.' )
@@ -346,6 +393,11 @@ SUBROUTINE run_pwscf( exit_status )
       ! All good
       exit_status = 0
    END IF
+#if defined(__SIRIUS)
+  IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
+    CALL sirius_save_state(gs_handler, "state.h5")
+  ENDIF
+#endif
   !
   ! ... save final data file
   !
@@ -384,6 +436,7 @@ SUBROUTINE reset_gvectors( )
   USE fft_base,   ONLY : dfftp
   USE fft_base,   ONLY : dffts
   USE xc_lib,     ONLY : xclib_dft_is
+  USE mod_sirius
   ! 
   IMPLICIT NONE
   !
@@ -405,6 +458,13 @@ SUBROUTINE reset_gvectors( )
   dffts%nr1=0; dffts%nr2=0; dffts%nr3=0
   !
   CALL init_run()
+#if defined(__SIRIUS)
+  IF (use_sirius_scf.OR.use_sirius_nlcg.OR.always_setup_sirius) THEN
+    CALL clear_sirius()
+    CALL setup_sirius()
+    CALL sirius_initialize_kset(ks_handler)
+  ENDIF
+#endif
   !
   ! ... re-set and re-initialize EXX-related stuff
   !

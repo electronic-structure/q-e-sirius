@@ -103,6 +103,9 @@ SUBROUTINE setup()
   USE plugin_flags,          ONLY : use_oscdft
 #endif
 
+#if defined(__SIRIUS)
+  USE mod_sirius,         ONLY : setup_kpoints
+#endif
   !
   IMPLICIT NONE
   !
@@ -645,6 +648,12 @@ SUBROUTINE setup()
      END IF
      !
   END IF
+  !
+#if defined(__SIRIUS)
+  !
+  CALL setup_kpoints()
+  !
+#endif
   !
   IF ( lsda ) THEN
      !

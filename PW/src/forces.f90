@@ -60,6 +60,7 @@ SUBROUTINE forces()
 #if defined(__CUDA)
   USE device_fbuff_m,          ONLY : dev_buf
 #endif
+  USE mod_sirius
   !
 #if defined (__ENVIRON)
   USE plugin_flags,        ONLY : use_environ
@@ -125,6 +126,71 @@ SUBROUTINE forces()
   !    
   forcescc(:,:) = 0.D0
   forceh(:,:)   = 0.D0
+  !
+#if defined(__SIRIUS)
+  IF (use_sirius_scf .OR. use_sirius_nlcg) THEN
+    forcenl = 0.d0
+    forcelc = 0.d0
+    forcecc = 0.d0
+    forceh = 0.d0
+    forceion = 0.d0
+    forcescc = 0.d0
+    CALL sirius_get_forces(gs_handler, "usnl", forcenl)
+    forcenl = forcenl * 2 ! convert to Ry
+
+    IF(.NOT.use_sirius_nlcg) THEN
+      ! scf correction term isn't present when using nlcg
+      CALL sirius_get_forces(gs_handler, "scf_corr", forcescc)
+    ENDIF
+
+    forcescc = forcescc * 2 ! convert to Ry
+    IF ( use_veff_callback ) THEN
+      CALL force_lc( nat, tau, ityp, alat, omega, ngm, ngl, igtongl, &
+                 g, rho%of_r(:,1), gstart, gamma_only, vloc, forcelc )
+      IF( do_comp_esm ) THEN
+        CALL esm_force_ew( forceion )
+      ELSE
+        CALL force_ew( alat, nat, ntyp, ityp, zv, at, bg, tau, omega, g, &
+                       gg, ngm, gstart, gamma_only, gcutm, strf, forceion )
+      ENDIF
+      CALL force_cc( forcecc )
+    ELSE
+      CALL sirius_get_forces(gs_handler,"vloc", forcelc)
+      forcelc = forcelc * 2 ! convert to Ry
+      CALL sirius_get_forces(gs_handler, "ewald", forceion)
+      forceion = forceion * 2 ! convert to Ry
+      CALL sirius_get_forces(gs_handler, "core", forcecc)
+      forcecc = forcecc * 2 ! convert to Ry
+    ENDIF
+    IF ( lda_plus_u ) THEN
+      CALL sirius_get_forces(gs_handler,"hubbard", forceh)
+      forceh = forceh * 2 ! convert to Ry
+    ENDIF
+    !
+    ! ... The Grimme-D3 dispersion correction
+    !
+    IF ( ldftd3 ) THEN
+      !
+      CALL start_clock('force_dftd3')
+      ALLOCATE( force_d3(3, nat) )
+      force_d3(:,:) = 0.0_DP
+      ! taupbc are atomic positions in alat units, centered around r=0
+      ALLOCATE ( taupbc(3,nat) )
+      taupbc(:,:) = tau(:,:)
+      CALL cryst_to_cart( nat, taupbc, bg, -1 )
+      taupbc(:,:) = taupbc(:,:) - NINT(taupbc(:,:))
+      CALL cryst_to_cart( nat, taupbc, at,  1 )
+      atnum(:) = get_atomic_number(atm(ityp(:)))
+      CALL dftd3_pbc_gdisp( dftd3, alat*taupbc, atnum, alat*at, &
+                            force_d3, stress_dftd3 )
+      force_d3 = -2.d0*force_d3
+      DEALLOCATE( taupbc)
+      CALL stop_clock('force_dftd3')
+    ENDIF
+    !
+  ELSE
+#endif ! __SIRIUS
+  ! IF NOT use_sirius_scf .AND. NOT use_sirius_nlcg
   !
   ! ... The nonlocal contribution is computed here
   !
@@ -255,6 +321,10 @@ SUBROUTINE forces()
         ENDDO
      ENDIF
   ENDIF
+  !
+#if defined(__SIRIUS)
+  ENDIF ! if (use_sirius_scf)
+#endif
   !
   ! ... here we sum all the contributions and compute the total force acting
   ! ... on the crystal

@@ -21,6 +21,9 @@ MODULE qrad_mod
   PUBLIC :: init_tab_qrad
   PUBLIC :: scale_tab_qrad
   PUBLIC :: deallocate_tab_qrad
+#if defined(__SIRIUS)
+  PUBLIC :: aug_ri_tab
+#endif
   !
   SAVE
   !
@@ -32,6 +35,9 @@ MODULE qrad_mod
   !! max q covered by the interpolation table
   REAL(DP), ALLOCATABLE :: tab_qrad(:,:,:,:)
   !! interpolation table for numerical pseudopotentials
+#if defined(__SIRIUS)
+  REAL(DP), ALLOCATABLE :: aug_ri_tab(:,:,:,:)
+#endif
   !
 CONTAINS
 !----------------------------------------------------------------------
@@ -84,6 +90,11 @@ CONTAINS
      RETURN
   END IF
   nqx = INT( qmax/dq + 4)
+#if defined(__SIRIUS)
+  IF (ALLOCATED(aug_ri_tab)) DEALLOCATE(aug_ri_tab)
+  ALLOCATE(aug_ri_tab(nqx, nbetam*(nbetam+1)/2, lmaxq, nsp))
+  aug_ri_tab = 0.d0
+#endif
   ALLOCATE (tab_qrad(nqx,nbetam*(nbetam+1)/2, lmaxq, nsp))
   !$acc enter data create(tab_qrad)
   !
@@ -128,6 +139,9 @@ CONTAINS
                        !
                        CALL simpson ( upf(nt)%kkbeta, aux, rgrid(nt)%rab, &
                                      tab_qrad(iq,ijv,l+1, nt) )
+#if defined(__SIRIUS)
+                       aug_ri_tab(iq, ijv, l + 1, nt) = tab_qrad(iq,ijv,l+1, nt)
+#endif
                     ENDIF
                  ENDDO
               ENDDO
@@ -138,6 +152,9 @@ CONTAINS
         tab_qrad (:, :, :, nt) = tab_qrad (:, :, :, nt) * fpi / omega
 
         CALL mp_sum ( tab_qrad (:, :, :, nt), comm )
+#if defined(__SIRIUS)
+        CALL mp_sum ( aug_ri_tab(:, :, :, nt), comm )
+#endif
      ENDIF
      ! nsp
   ENDDO

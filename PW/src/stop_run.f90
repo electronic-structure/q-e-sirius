@@ -16,6 +16,7 @@ SUBROUTINE stop_run( exit_status )
   USE mp_global,          ONLY : mp_global_end
   USE environment,        ONLY : environment_end
   USE io_files,           ONLY : iuntmp, seqopn
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -46,6 +47,10 @@ SUBROUTINE stop_run( exit_status )
   CALL clean_pw( .TRUE. )
   !
   CALL environment_end( 'PWSCF' )
+  ! finalize sirius at the very end
+#if defined(__SIRIUS)
+  CALL sirius_finalize(call_mpi_fin=.false.)
+#endif
   !
   CALL mp_global_end()
   !

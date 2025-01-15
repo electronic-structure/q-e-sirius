@@ -28,6 +28,7 @@ SUBROUTINE hp_bcast_input ( )
                                determine_num_pert_only, skip_equivalence_q, niter_max, &
                                disable_type_analysis, docc_thr, num_neigh, lmin, rmax, &
                                nmix, nq1, nq2, nq3, dist_thr, determine_q_mesh_only
+  USE ldaU_hp,          ONLY : lmet
   !
   IMPLICIT NONE
   !
@@ -45,6 +46,7 @@ SUBROUTINE hp_bcast_input ( )
   CALL mp_bcast (determine_num_pert_only, meta_ionode_id, world_comm)
   CALL mp_bcast (determine_q_mesh_only, meta_ionode_id, world_comm)
   CALL mp_bcast (disable_type_analysis, meta_ionode_id, world_comm)
+  CALL mp_bcast (lmet, meta_ionode_id, world_comm)
   !
   ! Integers
   !

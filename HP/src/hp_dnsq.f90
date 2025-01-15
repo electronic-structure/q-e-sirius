@@ -133,6 +133,15 @@ SUBROUTINE hp_dnsq (lmetq0, iter, conv_root, dnsq)
         ! At each SCF iteration for each ik read dpsi from file
         nrec = ik + (isolv - 1) * nksq 
         CALL get_buffer (dpsi, lrdwf, iudwf, nrec)
+        IF (.true.) THEN
+        CALL start_clock( 'proj1_proj2' )
+        ! pure ZGEMM implementation
+        CALL ZGEMM('C', 'N', nwfcU, nbnd_occ(ikk), npwx*npol, dcmplx(1.d0, 0.d0), evc, npwx*npol, &
+                   swfcatomk, npwx*npol, dcmplx(0.d0, 0.d0), proj1, nbnd)
+        CALL ZGEMM('C', 'N', nwfcU, nbnd_occ(ikk), npwx*npol, dcmplx(1.d0, 0.d0), dpsi, npwx*npol, &
+                   swfcatomkpq, npwx*npol, dcmplx(0.d0, 0.d0), proj2, nbnd)
+        CALL stop_clock( 'proj1_proj2' )
+        ELSE
         ! 
         ! Loop on Hubbard atoms
         proj1 = (0.d0, 0.d0) 
@@ -154,6 +163,7 @@ SUBROUTINE hp_dnsq (lmetq0, iter, conv_root, dnsq)
            ENDIF
            !
         ENDDO
+        ENDIF
 
         !
         CALL mp_sum(proj1, intra_pool_comm)  
