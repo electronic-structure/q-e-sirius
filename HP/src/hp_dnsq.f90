@@ -136,9 +136,9 @@ SUBROUTINE hp_dnsq (lmetq0, iter, conv_root, dnsq)
         IF (.true.) THEN
         CALL start_clock( 'proj1_proj2' )
         ! pure ZGEMM implementation
-        CALL ZGEMM('C', 'N', nwfcU, nbnd_occ(ikk), npwx*npol, dcmplx(1.d0, 0.d0), evc, npwx*npol, &
+        CALL ZGEMM('C', 'N', nbnd_occ(ikk), nwfcU, npwx*npol, dcmplx(1.d0, 0.d0), evc, npwx*npol, &
                    swfcatomk, npwx*npol, dcmplx(0.d0, 0.d0), proj1, nbnd)
-        CALL ZGEMM('C', 'N', nwfcU, nbnd_occ(ikk), npwx*npol, dcmplx(1.d0, 0.d0), dpsi, npwx*npol, &
+        CALL ZGEMM('C', 'N', nbnd_occ(ikk), nwfcU, npwx*npol, dcmplx(1.d0, 0.d0), dpsi, npwx*npol, &
                    swfcatomkpq, npwx*npol, dcmplx(0.d0, 0.d0), proj2, nbnd)
         CALL stop_clock( 'proj1_proj2' )
         ELSE
