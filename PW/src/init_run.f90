@@ -52,6 +52,7 @@ SUBROUTINE init_run()
   USE sci_mod,            ONLY : allocate_scissor
   USE uspp_param,         ONLY : nhm
   USE uspp,               ONLY : allocate_uspp
+  USE mod_sirius
   !
 #if defined (__ENVIRON)
   USE plugin_flags,        ONLY : use_environ
@@ -188,8 +189,11 @@ SUBROUTINE init_run()
   IF(use_wannier) CALL wannier_init()
   !
 #if defined(__MPI)
+  ! radial functions are needed for sirius setup, don't clean up here
+  IF (.NOT.(use_sirius_scf.OR.use_sirius_nlcg)) THEN
   ! Cleanup PAW arrays that are only used for init
   IF (okpaw) CALL paw_post_init() ! only parallel!
+  ENDIF
 #endif
   !
   IF ( lmd ) CALL allocate_dyn_vars()
