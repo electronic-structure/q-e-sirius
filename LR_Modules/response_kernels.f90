@@ -77,6 +77,10 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
    USE qpoint_aux,            ONLY : ikmks, ikmkmqs, becpt
    USE eqv,                   ONLY : dpsi, dvpsi, evq
    USE apply_dpot_mod,        ONLY : apply_dpot_bands
+   USE cell_base,             ONLY : at
+   USE gvect,                 ONLY : mill
+   USE control_lr,            ONLY : alpha_pv
+   USE mod_sirius
    !
    IMPLICIT NONE
    !
@@ -125,6 +129,9 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
    !! diagonal part of the Hamiltonian, used for preconditioning
    COMPLEX(DP) , ALLOCATABLE :: aux2(:, :)
    !! temporary storage used in apply_dpot_bands
+   INTEGER, ALLOCATABLE :: vg_kq(:,:)
+   !
+   INTEGER :: ig
    !
    EXTERNAL ch_psi_all, cg_psi
    !! functions passed to cgsolve_all
@@ -246,8 +253,25 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
          conv_root = .TRUE.
          !
          ! TODO: should nbnd_occ(ikk) be nbnd_occ(ikmk)?
+#if defined(__SIRIUS)
+         ALLOCATE(vg_kq(3,ngk(ikq)))
+         DO ig = 1, npwq
+           vg_kq(:, ig) = mill(:, igk_k(ig, ikq))
+         ENDDO
+         !
+         ! dvpsi == d0psi  <-- right-hand side (in, destroyed on exit)
+         ! dpsi   <-- left-hand side (in/out)
+         CALL sirius_linear_solver( gs_handler, vkq=MATMUL(TRANSPOSE(at), xk(:,ikq)),&
+            &num_gvec_kq_loc=npwq, gvec_kq_loc=vg_kq, dpsi=dpsi,&
+            &psi=evq, eigvals=et(:, ikmk), dvpsi=dvpsi, ld=npwx, num_spin_comp=npol,&
+            &alpha_pv=alpha_pv, spin=current_spin, nbnd_occ_k=nbnd_occ(ikk),& 
+            &nbnd_occ_kq=nbnd_occ(ikq), tol=thresh, niter=num_iter)
+         !
+         DEALLOCATE(vg_kq)
+#else
          CALL cgsolve_all(ch_psi_all, cg_psi, et(1, ikmk), dvpsi, dpsi, h_diag, &
             npwx, npwq, thresh, ik, num_iter, conv_root, anorm, nbnd_occ(ikk), npol)
+#endif
          !
          tot_num_iter = tot_num_iter + num_iter
          tot_cg_calls = tot_cg_calls + 1

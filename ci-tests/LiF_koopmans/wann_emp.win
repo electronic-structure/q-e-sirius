@@ -1,0 +1,55 @@
+!restart = wannierise
+num_bands         =   20
+num_wann          =   5
+exclude_bands     =   1-5
+spin = 'up'
+
+dis_froz_max      = 24.05
+dis_win_max       = 30.7
+dis_num_iter      = 2000
+
+num_cg_steps      = 5
+
+num_iter          = 30000
+num_print_cycles  = 100
+conv_window = 5
+conv_tol = 1e-12
+conv_noise_amp = 10000.0
+conv_noise_num = 5
+
+write_u_matrices = .true.
+
+Begin Atoms_cart
+ang
+F        0.0000000000     0.0000000000     2.0135000000
+Li       0.0000000000     0.0000000000     0.0000000000
+End Atoms_cart
+
+Begin Projections     
+Li: l=0 
+Li: l=0: r=2
+F: l=1
+End Projections       
+
+
+begin unit_cell_cart
+ang
+    0.0000000000     2.0135000000     2.0135000000
+    2.0135000000     0.0000000000     2.0135000000
+    2.0135000000     2.0135000000     0.0000000000
+end unit_cell_cart
+
+mp_grid      = 2 2 2 
+
+begin kpoints
+  0.00000000  0.00000000  0.00000000
+  0.00000000  0.00000000  0.50000000
+  0.00000000  0.50000000  0.00000000
+  0.00000000  0.50000000  0.50000000
+  0.50000000  0.00000000  0.00000000
+  0.50000000  0.00000000  0.50000000
+  0.50000000  0.50000000  0.00000000
+  0.50000000  0.50000000  0.50000000
+end kpoints
+
+

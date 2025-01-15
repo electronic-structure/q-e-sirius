@@ -16,8 +16,11 @@ SUBROUTINE init_tab_atwfc( omega, intra_bgrp_comm)
   USE atom,         ONLY : rgrid, msh
   USE upf_const,    ONLY : fpi
   USE uspp_data,    ONLY : tab_at, nqx, dq
-  USE uspp_param,   ONLY : nsp, upf
+  USE uspp_param,   ONLY : nsp, upf, nwfcm
   USE mp,           ONLY : mp_sum
+#if defined(__SIRIUS)
+  USE uspp_data,    ONLY : wfc_ri_tab
+#endif
   !
   IMPLICIT NONE
   !
@@ -31,6 +34,11 @@ SUBROUTINE init_tab_atwfc( omega, intra_bgrp_comm)
   !
   ndm = MAXVAL(msh(1:nsp))
   ALLOCATE( aux(ndm), vchi(ndm) )
+#if defined(__SIRIUS)
+  IF (ALLOCATED(wfc_ri_tab)) DEALLOCATE(wfc_ri_tab)
+  ALLOCATE(wfc_ri_tab(nqx, nwfcm, nsp))
+  wfc_ri_tab = 0.d0
+#endif
   !
   ! chiq = radial fourier transform of atomic orbitals chi
   !
@@ -55,6 +63,9 @@ SUBROUTINE init_tab_atwfc( omega, intra_bgrp_comm)
               ENDDO
               CALL simpson( msh(nt), vchi, rgrid(nt)%rab, vqint )
               tab_at( iq, nb, nt ) = vqint * pref
+#if defined(__SIRIUS)
+              wfc_ri_tab( iq, nb, nt ) = vqint
+#endif
            ENDDO
            !
         ENDIF
@@ -63,6 +74,9 @@ SUBROUTINE init_tab_atwfc( omega, intra_bgrp_comm)
   ENDDO
   !
   CALL mp_sum( tab_at, intra_bgrp_comm )
+#if defined(__SIRIUS)
+  CALL mp_sum( wfc_ri_tab, intra_bgrp_comm )
+#endif
   !
   !$acc update device(tab_at)
   !

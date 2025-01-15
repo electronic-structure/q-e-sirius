@@ -66,6 +66,7 @@ SUBROUTINE clean_pw( lflag )
   USE tsvdw_module,         ONLY : tsvdw_finalize
   USE libmbd_interface,     ONLY : clean_mbd
   USE dftd3_qe,             ONLY : dftd3_clean
+  USE mod_sirius
   !
   USE wavefunctions_gpum,   ONLY : deallocate_wavefunctions_gpu
   USE wvfct_gpum,           ONLY : deallocate_wvfct_gpu
@@ -90,6 +91,12 @@ SUBROUTINE clean_pw( lflag )
   !
   INTEGER :: nt, nr1, nr2, nr3
   !
+#if defined(__SIRIUS)
+  IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
+    CALL clear_sirius
+  ENDIF
+#endif
+
   IF ( lflag ) THEN
      !
      ! ... arrays allocated at the very beginning of the calculation
