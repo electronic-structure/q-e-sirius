@@ -169,7 +169,7 @@ test (HP) Ni:
   script:
     - spack arch
     - cd /qe-src/ci-tests/Ni
-    - /apps/bin/pw.x -i Ni.scf.in -use_qe_scf
+    - /apps/bin/pw.x -i Ni.scf.in
     - /apps/bin/hp.x -i Ni.hp.in
     - cat Ni.Hubbard_parameters.dat
     - python3 ../hp_diff.py hp.ref.yml hp.yml
