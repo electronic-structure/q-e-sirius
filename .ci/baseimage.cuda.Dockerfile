@@ -1,9 +1,12 @@
-FROM ubuntu:22.04 as builder
+FROM ubuntu:24.04 as builder
 
-ARG CUDA_ARCH=60
+ARG CUDA_ARCH=90
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PATH="$PATH:/spack/bin"
+
+ENV CMAKE_VERSION=3.31.2
+ENV MPICH_VERSION=3.4.3
 
 #
 #ENV FORCE_UNSAFE_CONFIGURE 1
@@ -19,7 +22,7 @@ RUN apt-get install -y gcc g++ gfortran clang libomp-dev libomp-14-dev git make 
 RUN apt-get -y upgrade
 
 # install CMake
-RUN wget https://github.com/Kitware/CMake/releases/download/v3.29.4/cmake-3.29.4-linux-x86_64.tar.gz -O cmake.tar.gz && \
+RUN wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-aarch64.tar.gz -O cmake.tar.gz && \
     tar zxvf cmake.tar.gz --strip-components=1 -C /usr
 
 # get latest version of spack
@@ -29,7 +32,6 @@ RUN git clone https://github.com/spack/spack.git
 RUN spack config --scope system add config:install_tree:root:/opt/local
 # set cuda_arch for all packages
 RUN spack config --scope system add packages:all:variants:cuda_arch=${CUDA_ARCH}
-RUN spack config --scope system add packages:all:target:[x86_64]
 
 # find gcc and clang compilers
 RUN spack compiler find --scope system
@@ -38,7 +40,7 @@ RUN spack external find --all --scope system --not-buildable bash perl sed gcc l
     cmake gmake make ninja meson autoconf automake \
     binutils findutils diffutils coreutils git curl openssh openssl ncurses
 
-RUN spack install mpich@3.4.3
+RUN spack install mpich@${MPICH_VERSION}
 
 # for the MPI hook
 RUN echo $(spack find --format='{prefix.lib}' mpich) > /etc/ld.so.conf.d/mpich.conf
@@ -48,7 +50,7 @@ RUN ldconfig
 RUN spack install openblas threads=openmp %gcc +fortran
 
 # install libvdwxc
-RUN spack install libvdwxc %gcc +mpi ^mpich@3.4.3
+RUN spack install libvdwxc %gcc +mpi ^mpich@${MPICH_VERSION}
 
 RUN spack install nlcglib@develop %gcc +cuda
 
