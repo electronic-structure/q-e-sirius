@@ -15,7 +15,7 @@ ENV MPICH_VERSION=3.4.3
 RUN apt-get -y update && apt-get install -y apt-utils
 
 # install basic tools
-RUN apt-get install -y gcc g++ gfortran clang libomp-dev libomp-14-dev git make unzip \
+RUN apt-get install -y gcc g++ gfortran git make unzip \
   vim wget pkg-config curl tcl m4 cpio automake autoconf apt-transport-https \
   ca-certificates gnupg software-properties-common patchelf meson
 
@@ -35,7 +35,7 @@ RUN spack config --scope system add packages:all:variants:cuda_arch=${CUDA_ARCH}
 
 # find gcc and clang compilers
 RUN spack compiler find --scope system
-RUN spack external find --all --scope system --not-buildable bash perl sed gcc llvm llvm-doe m4 \
+RUN spack external find --all --scope system --not-buildable bash perl sed gcc  m4 \
     tar xz bzip2 cpio \
     cmake gmake make ninja meson autoconf automake \
     binutils findutils diffutils coreutils git curl openssh openssl ncurses
