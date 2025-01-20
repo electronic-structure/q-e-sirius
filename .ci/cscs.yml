@@ -7,17 +7,17 @@ stages:
   - test
 
 build base cuda image:
-  extends: .container-builder-dynamic-name
+  extends: [.dynamic-image-name, .container-builder-cscs-gh200]
   stage: baseimage
-  timeout: 2h
+  timeout: 4h
   variables:
     DOCKERFILE: .ci/baseimage.cuda.Dockerfile
     WATCH_FILECHANGES: .ci/baseimage.cuda.Dockerfile
     PERSIST_IMAGE_NAME: $CSCS_REGISTRY_PATH/base/q-e-sirius-ci
-    DOCKER_BUILD_ARGS: '["CUDA_ARCH=60"]'
+    DOCKER_BUILD_ARGS: '["CUDA_ARCH=90"]'
 
 build cuda image:
-  extends: .container-builder
+  extends: .container-builder-cscs-gh200
   needs: ["build base cuda image"]
   stage: build
   timeout: 4h
@@ -27,7 +27,7 @@ build cuda image:
     DOCKER_BUILD_ARGS: '["BASE_IMAGE=${BASE_IMAGE}"]'
 
 .run_tests:
-  extends: .container-runner-daint-gpu
+  extends: .container-runner-daint-gh200
   needs: ["build cuda image"]
   stage: test
   image: $CSCS_REGISTRY_PATH/q-e-sirius/q-e-sirius-ci:$CI_COMMIT_SHA
