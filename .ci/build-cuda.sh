@@ -14,7 +14,10 @@ spack -e ./spack-env repo add $REPO
 spack -e ./spack-env config add "packages:all:variants:[cuda_arch=${CUDA_ARCH},+cuda]"
 # debug
 cat ./spack-env/spack.yaml
-spack -e ./spack-env config add config:install_tree:$SPACK_INSTALL_TREE
+
+# workaround, first command fails asking to update config format, doesn't make any sense, cannot reproduce on cli
+#spack -e ./spack-env config add config:install_tree:$SPACK_INSTALL_TREE
+yq w -i ./spack-env/spack.yaml 'spack.config.install_tree' $SPACK_INSTALL_TREE
 
 spack -e ./spack-env add $SPEC
 
