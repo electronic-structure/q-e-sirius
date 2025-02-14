@@ -19,7 +19,7 @@ build q-e-sirius cuda:
   extends: .uenv-runner-daint-gh200
   stage: build
   needs: ["build base uenv gh200"]
-  image: sirius-gh200/v1:$CI_PIPELINE_ID
+  image: q-e-sirius-gh200/v1:$CI_PIPELINE_ID
   artifacts:
     paths:
       - builddir.tar
