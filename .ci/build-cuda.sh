@@ -27,4 +27,4 @@ spack -e ./spack-env concretize
 spack -e ./spack-env install
 
 # create a symlink to spack build directory (keep in artifacts)
-tar -cf builddir.tar $SPACK_INSTALL_TREE
+tar -cf installdir.tar $SPACK_INSTALL_TREE

@@ -22,9 +22,9 @@ build q-e-sirius cuda:
   image: q-e-sirius-gh200/v1:$CI_PIPELINE_ID
   artifacts:
     paths:
-      - builddir.tar
+      - installdir.tar
   variables:
-    SPEC: q-e-sirius@develop-ristretto 
+    SPEC: q-e-sirius@develop-ristretto
     CUDA_ARCH: 90
     REPO: ./.ci/uenv-recipe/repo
   script:
