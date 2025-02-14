@@ -18,7 +18,7 @@ spack -e ./spack-env config add "packages:all:variants:[cuda_arch=${CUDA_ARCH},+
 spack -e ./spack-env add $SPEC
 
 # build sirius from source
-spack -e ./spack-env develop -p $PWD q-e-sirius@develop ^sirius+cuda
+spack -e ./spack-env develop -p $PWD q-e-sirius@=develop-ristretto ^sirius@develop+cuda
 
 # display spack.yaml
 cat ./spack-env/spack.yaml
