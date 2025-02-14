@@ -15,7 +15,7 @@ build base uenv gh200:
     UENV_RECIPE: .ci/uenv-recipe/
     UENV_VERSION: v1
 
-build sirius cuda:
+build q-e-sirius cuda:
   extends: .uenv-runner-daint-gh200
   stage: build
   needs: ["build base uenv gh200"]
