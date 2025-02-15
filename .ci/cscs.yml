@@ -40,6 +40,7 @@ build q-e-sirius cuda:
   stage: test
   extends: [.uenv-runner-daint-gh200]
   image: q-e-sirius-gh200/v1:$CI_PIPELINE_ID
+  view: modules
   needs: ["build q-e-sirius cuda"]
   script:
     - |
@@ -71,8 +72,9 @@ test (PW) CdO:
     SLURM_NTASKS: 1
     SLURM_JOB_NUM_NODES: 1
   script:
-    - cd /qe-src/ci-tests/CdO
-    - /apps/bin/pw.x -i CdO.in > out.txt
+    - module load python
+    - cd ./ci-tests/CdO
+    - pw.x -i CdO.in > out.txt
     - python3 ../qe_diff.py ref.txt out.txt
 
 # test (HP) ZrN:
