@@ -8,6 +8,7 @@ gcc-env:
   unify: when_possible
   specs:
   - q-e-sirius@develop-ristretto
+  - python@3.12.5
   variants:
   - +mpi
   - +cuda
