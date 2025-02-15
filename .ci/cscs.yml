@@ -41,18 +41,6 @@ build q-e-sirius cuda:
   extends: [.uenv-runner-daint-gh200]
   image: q-e-sirius-gh200/v1:$CI_PIPELINE_ID
   needs: ["build q-e-sirius cuda"]
-  script:
-    - |
-      if [ $SLURM_LOCALID -eq 0 ]; then
-        tar xf ./installdir.tar -C /
-        touch /dev/shm/unpack_done_$CI_JOB_ID
-      fi
-    - |
-      # wait for tar unpack
-      while [ ! -f /dev/shm/unpack_done_$CI_JOB_ID ]; do
-        sleep 0.2
-      done
-      export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
 
   variables:
     SLURM_GPUS_PER_TASK: 1
@@ -72,6 +60,17 @@ test (PW) CdO:
     SLURM_NTASKS: 1
     SLURM_JOB_NUM_NODES: 1
   script:
+    - |
+      if [ $SLURM_LOCALID -eq 0 ]; then
+        tar xf ./installdir.tar -C /
+        touch /dev/shm/unpack_done_$CI_JOB_ID
+      fi
+    - |
+      # wait for tar unpack
+      while [ ! -f /dev/shm/unpack_done_$CI_JOB_ID ]; do
+        sleep 0.2
+      done
+    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
     - module load python
     - cd ./ci-tests/CdO
     - pw.x -i CdO.in > out.txt
