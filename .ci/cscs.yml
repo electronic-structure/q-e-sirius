@@ -40,7 +40,6 @@ build q-e-sirius cuda:
   stage: test
   extends: [.uenv-runner-daint-gh200]
   image: q-e-sirius-gh200/v1:$CI_PIPELINE_ID
-  view: modules
   needs: ["build q-e-sirius cuda"]
   script:
     - |
@@ -62,6 +61,7 @@ build q-e-sirius cuda:
     SLURM_WAIT: 0
     SLURM_TIMELIMIT: "30:00"
     USE_MPI: 'YES'
+    WITH_UENV_VIEW: 'modules'
 
 test (PW) CdO:
   extends: .run_tests
