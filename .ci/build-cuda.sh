@@ -18,6 +18,7 @@ cat ./spack-env/spack.yaml
 # workaround, first command fails asking to update config format, doesn't make any sense, cannot reproduce on cli
 #spack -e ./spack-env config add config:install_tree:$SPACK_INSTALL_TREE
 yq w -i ./spack-env/spack.yaml 'spack.config.install_tree' $SPACK_INSTALL_TREE
+spack -e ./spack-env config add 'config:install_tree:projections:all:"{name}-{version}"'
 
 spack -e ./spack-env add $SPEC
 

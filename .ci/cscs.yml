@@ -36,38 +36,18 @@ build q-e-sirius cuda:
       ./.ci/build-cuda.sh
 
 
-# build base cuda image:
-#   extends: [.dynamic-image-name, .container-builder-cscs-gh200]
-#   stage: baseimage
-#   timeout: 4h
-#   variables:
-#     DOCKERFILE: .ci/baseimage.cuda.Dockerfile
-#     WATCH_FILECHANGES: .ci/baseimage.cuda.Dockerfile
-#     PERSIST_IMAGE_NAME: $CSCS_REGISTRY_PATH/base/q-e-sirius-ci
-#     DOCKER_BUILD_ARGS: '["CUDA_ARCH=90"]'
-
-# build cuda image:
-#   extends: .container-builder-cscs-gh200
-#   needs: ["build base cuda image"]
-#   stage: build
-#   timeout: 4h
-#   variables:
-#     DOCKERFILE: .ci/build.Dockerfile
-#     PERSIST_IMAGE_NAME: $CSCS_REGISTRY_PATH/q-e-sirius/q-e-sirius-ci:$CI_COMMIT_SHA
-#     DOCKER_BUILD_ARGS: '["BASE_IMAGE=${BASE_IMAGE}"]'
-
-# .run_tests:
-#   extends: .container-runner-daint-gh200
-#   needs: ["build cuda image"]
-#   stage: test
-#   image: $CSCS_REGISTRY_PATH/q-e-sirius/q-e-sirius-ci:$CI_COMMIT_SHA
-#   variables:
-#     CRAY_CUDA_MPS: 1
-#     MPICH_MAX_THREAD_SAFETY: multiple
-#     SLURM_HINT: nomultithread
-#     SLURM_WAIT: 0
-#     SLURM_TIMELIMIT: "30:00"
-#     USE_MPI: 'YES'
+.run_tests:
+  extends: .container-runner-daint-gh200
+  needs: ["build q-e-sirius cuda"]
+  stage: test
+  image: q-e-sirius-gh200/v1:$CI_PIPELINE_ID
+  variables:
+    CRAY_CUDA_MPS: 1
+    MPICH_MAX_THREAD_SAFETY: multiple
+    SLURM_HINT: nomultithread
+    SLURM_WAIT: 0
+    SLURM_TIMELIMIT: "30:00"
+    USE_MPI: 'YES'
 
 # test (PW) CdO:
 #   extends: .run_tests
