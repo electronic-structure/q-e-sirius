@@ -2,14 +2,6 @@
 
 set -ex
 
-if [[ $SLURM_PROCID == 0 ]]; then
-    cp -r ./ci-tests/LiF_koopmans $PWD/LiF_koopmans_parallel
-else
-    sleep 10
-fi
-
-cd $PWD/LiF_koopmans_parallel
-
 #scf
 pw.x -npool 2 -i scf.in -use_qe_scf
 
@@ -45,8 +37,8 @@ fi
 
 #kcw
 kcw.x -i kcw-wann2kcw.in
-kcw.x -npool 2 -i kcw-screen.in 
+kcw.x -npool 2 -i kcw-screen.in
 
 if [[ $SLURM_PROCID == 0 ]]; then
-    python3 ./ci-tests/kcw_diff.py ./ci-tests/LiF_koopmans/kcw.ref.yml $PWD/kcw.yml
+    python3 ../kcw_diff.py kcw.ref.yml kcw.yml
 fi
