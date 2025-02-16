@@ -96,7 +96,8 @@ test (HP) NW parallel:
   script:
    - ./.ci/prepare-run.sh
    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
-   - ./ci-tests/NW/run_parallel.x
+   - cd ./ci-tests/NW
+   - ./run_parallel.x
 
 test (HP) FeO parallel:
   extends: .run_tests
@@ -109,7 +110,8 @@ test (HP) FeO parallel:
   script:
    - ./.ci/prepare-run.sh
    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
-   - ./ci-tests/FeO/run_parallel.x
+   - cd ./ci-tests/FeO
+   - ./run_parallel.x
 
 test (HP) Mn2N2 parallel:
   extends: .run_tests
@@ -122,7 +124,8 @@ test (HP) Mn2N2 parallel:
   script:
    - ./.ci/prepare-run.sh
    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
-   - ./ci-tests/Mn2N2/run_parallel.x
+   - cd ci-tests/Mn2N2
+   - ./run_parallel.x
 
 test (HP) CaFeO2 parallel:
   extends: .run_tests
@@ -136,7 +139,8 @@ test (HP) CaFeO2 parallel:
   script:
    - ./.ci/prepare-run.sh
    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
-   - ./ci-tests/CaFeO2/run_parallel.x
+   - cd ./ci-tests/CaFeO2
+   - ./run_parallel.x
 
 test (HP) NiO parallel:
   extends: .run_tests
@@ -150,7 +154,8 @@ test (HP) NiO parallel:
   script:
    - ./.ci/prepare-run.sh
    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
-   - ./ci-tests/NiO/run_parallel.x
+   - cd ./ci-tests/NiO
+   - ./run_parallel.x
 
 test (HP) LiCoO2:
   extends: .run_tests
@@ -180,6 +185,7 @@ test (HP) LiCoO2 parallel:
   script:
    - ./.ci/prepare-run.sh
    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
+   - cd ./ci-tests/LiCoO2
    - pw.x -i LiCoO2.scf.in -use_qe_scf
    - ci-tests/LiCoO2/run_parallel.x
 
