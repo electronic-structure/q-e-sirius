@@ -124,6 +124,7 @@ test (HP) Mn2N2 parallel:
   script:
    - ./.ci/prepare-run.sh
    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
+   - module load python
    - cd ci-tests/Mn2N2
    - ./run_parallel.x
 
@@ -132,13 +133,13 @@ test (HP) CaFeO2 parallel:
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
-    SLURM_CONSTRAINT: gpu
-    SLURM_CPUS_PER_TASK: 12
+    SLURM_CPUS_PER_TASK: 20
     SLURM_NTASKS: 4
     SLURM_JOB_NUM_NODES: 4
   script:
    - ./.ci/prepare-run.sh
    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
+   - module load python
    - cd ./ci-tests/CaFeO2
    - ./run_parallel.x
 
@@ -147,13 +148,13 @@ test (HP) NiO parallel:
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
-    SLURM_CONSTRAINT: gpu
-    SLURM_CPUS_PER_TASK: 12
+    SLURM_CPUS_PER_TASK: 20
     SLURM_NTASKS: 4
     SLURM_JOB_NUM_NODES: 4
   script:
    - ./.ci/prepare-run.sh
    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
+   - module load python
    - cd ./ci-tests/NiO
    - ./run_parallel.x
 
@@ -168,6 +169,7 @@ test (HP) LiCoO2:
   script:
    - ./.ci/prepare-run.sh
    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
+   - module load python
    - cd ./ci-tests/LiCoO2
    - pw.x -i LiCoO2.scf.in -use_qe_scf
    - hp.x -i LiCoO2.hp.in
@@ -185,9 +187,9 @@ test (HP) LiCoO2 parallel:
   script:
    - ./.ci/prepare-run.sh
    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
+   - module load python
    - cd ./ci-tests/LiCoO2
-   - pw.x -i LiCoO2.scf.in -use_qe_scf
-   - ci-tests/LiCoO2/run_parallel.x
+   - ./run_parallel.x
 
 test (HP) Ni:
   extends: .run_tests
@@ -200,103 +202,110 @@ test (HP) Ni:
   script:
     - ./.ci/prepare-run.sh
     - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
+    - module load python
     - cd ./ci-tests/Ni
     - pw.x -i Ni.scf.in -use_qe_scf
     - hp.x -i Ni.hp.in
     - cat Ni.Hubbard_parameters.dat
     - python3 ../hp_diff.py hp.ref.yml hp.yml
 
-# test (HP) Ni parallel:
-#   extends: .run_tests
-#   variables:
-#     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
-#     SIRIUS_PRINT_TIMING: 1
-#     SLURM_CONSTRAINT: gpu
-#     SLURM_CPUS_PER_TASK: 12
-#     SLURM_NTASKS: 3
-#     SLURM_JOB_NUM_NODES: 3
-#   script:
-#     - /qe-src/ci-tests/Ni/run_parallel.x
+test (HP) Ni parallel:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CPUS_PER_TASK: 20
+    SLURM_NTASKS: 4
+  script:
+    - ./.ci/prepare-run.sh
+    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
+    - module load python
+    - cd ./ci-tests/Ni/
+    - ./run_parallel.x
 
-# test (HP) CrI3 parallel:
-#   extends: .run_tests
-#   variables:
-#     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
-#     SIRIUS_PRINT_TIMING: 1
-#     SLURM_CONSTRAINT: gpu
-#     SLURM_CPUS_PER_TASK: 12
-#     SLURM_NTASKS: 4
-#     SLURM_JOB_NUM_NODES: 4
-#     SLURM_TIMELIMIT: "1:30:00"
-#   script:
-#     - /qe-src/ci-tests/CrI3/run_parallel.x
-#     #- cd /qe-src/ci-tests/LiCoO2
-#     #- /apps/bin/pw.x -i LiCoO2.scf.in -use_qe_scf -npool 2
-#     #- /apps/bin/hp.x -i LiCoO2.hp.in -npool 2
-#     - cat $PWD/CrI3/CrI3.Hubbard_parameters.dat
-#     - python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/CrI3/hp.ref.yml $PWD/CrI3/hp.yml
+test (HP) CrI3 parallel:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CPUS_PER_TASK: 20
+    SLURM_NTASKS: 4
+    SLURM_TIMELIMIT: "1:30:00"
+  script:
+    - ./.ci/prepare-run.sh
+    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
+    - module load python
+    - cd ci-tests/CrI3/
+    - ./run_parallel.x
+    - cat $PWD/CrI3/CrI3.Hubbard_parameters.dat
+    - python3 ./ci-tests/hp_diff.py ci-tests/CrI3/hp.ref.yml $PWD/CrI3/hp.yml
 
-# test (KCW) Si:
-#   extends: .run_tests
-#   variables:
-#     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
-#     SIRIUS_PRINT_TIMING: 1
-#     SLURM_CONSTRAINT: gpu
-#     SLURM_CPUS_PER_TASK: 12
-#     SLURM_NTASKS: 1
-#     SLURM_JOB_NUM_NODES: 1
-#   script:
-#     - cp -r /qe-src/ci-tests/Si_koopmans $PWD/Si_koopmans
-#     - cd $PWD/Si_koopmans
-#     - /apps/bin/pw.x -i Si.scf.in -use_qe_scf
-#     - /apps/bin/wannier90.x -pp Si
-#     - /apps/bin/pw2wannier90.x -i Si.pw2wann.in
-#     - /apps/bin/wannier90.x Si
-#     - cat Si.wout
-#     - /apps/bin/wannier90.x -pp Si_emp
-#     - /apps/bin/pw2wannier90.x -i Si_emp.pw2wann.in
-#     - /apps/bin/wannier90.x Si_emp
-#     - cat Si_emp.wout
-#     - /apps/bin/kcw.x -i Si.kcw-wann2kcw.in
-#     - /apps/bin/kcw.x -i Si.kcw-screen.in
-#     - python3 /qe-src/ci-tests/kcw_diff.py /qe-src/ci-tests/Si_koopmans/kcw.ref.yml kcw.yml
-
-
-# test (KCW) Si parallel:
-#   extends: .run_tests
-#   variables:
-#     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
-#     SIRIUS_PRINT_TIMING: 1
-#     SLURM_CONSTRAINT: gpu
-#     SLURM_CPUS_PER_TASK: 12
-#     SLURM_NTASKS: 4
-#     SLURM_JOB_NUM_NODES: 4
-#     SLURM_TIMELIMIT: "1:30:00"
-#   script:
-#     - /qe-src/ci-tests/Si_koopmans/run_parallel.x
+test (KCW) Si:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CPUS_PER_TASK: 20
+    SLURM_NTASKS: 1
+    SLURM_JOB_NUM_NODES: 1
+  script:
+    - ./.ci/prepare-run.sh
+    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
+    - module load python
+    - cd ./ci-tests/Si_koopmans
+    - pw.x -i Si.scf.in -use_qe_scf
+    - wannier90.x -pp Si
+    - pw2wannier90.x -i Si.pw2wann.in
+    - wannier90.x Si
+    - cat Si.wout
+    - wannier90.x -pp Si_emp
+    - pw2wannier90.x -i Si_emp.pw2wann.in
+    - wannier90.x Si_emp
+    - cat Si_emp.wout
+    - kcw.x -i Si.kcw-wann2kcw.in
+    - kcw.x -i Si.kcw-screen.in
+    - python3 ../kcw_diff.py kcw.ref.yml kcw.yml
 
 
-# test (KCW) H2O parallel:
-#   extends: .run_tests
-#   variables:
-#     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
-#     SIRIUS_PRINT_TIMING: 1
-#     SLURM_CONSTRAINT: gpu
-#     SLURM_CPUS_PER_TASK: 12
-#     SLURM_NTASKS: 3
-#     SLURM_JOB_NUM_NODES: 3
-#   script:
-#     - /qe-src/ci-tests/h2o_koopmans/run_parallel.x
+test (KCW) Si parallel:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CPUS_PER_TASK: 20
+    SLURM_NTASKS: 4
+    SLURM_TIMELIMIT: "1:30:00"
+  script:
+    - ./.ci/prepare-run.sh
+    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
+    - module load python
+    - cd ./ci-tests/Si
+    - ./run_parallel.x
 
-# test (KCW) LiF parallel:
-#   extends: .run_tests
-#   variables:
-#     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
-#     SIRIUS_PRINT_TIMING: 1
-#     SLURM_CONSTRAINT: gpu
-#     SLURM_CPUS_PER_TASK: 12
-#     SLURM_NTASKS: 4
-#     SLURM_JOB_NUM_NODES: 4
-#     SLURM_TIMELIMIT: "1:30:00"
-#   script:
-#     - /qe-src/ci-tests/LiF_koopmans/run_parallel.x
+test (KCW) H2O parallel:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CPUS_PER_TASK: 20
+    SLURM_NTASKS: 3
+    SLURM_JOB_NUM_NODES: 3
+  script:
+    - ./.ci/prepare-run.sh
+    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
+    - module load python
+    - cd ./ci-tests/h2o_koopmans
+    - ./run_parallel.x
+
+test (KCW) LiF parallel:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CONSTRAINT: gpu
+    SLURM_CPUS_PER_TASK: 12
+    SLURM_NTASKS: 4
+    SLURM_JOB_NUM_NODES: 4
+    SLURM_TIMELIMIT: "1:30:00"
+  script:
+    - /qe-src/ci-tests/LiF_koopmans/run_parallel.x
