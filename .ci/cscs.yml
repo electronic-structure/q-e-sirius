@@ -24,7 +24,7 @@ build q-e-sirius cuda:
     paths:
       - installdir.tar
   variables:
-    SPEC: q-e-sirius@develop-ristretto
+    SPEC: q-e-sirius@develop-ristretto +libxc +openmp
     CUDA_ARCH: 90
     REPO: ./.ci/uenv-recipe/repo
   script:
