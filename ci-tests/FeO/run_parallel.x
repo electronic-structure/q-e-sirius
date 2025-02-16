@@ -9,8 +9,8 @@ else
 fi
 
 cd $PWD/FeO
-/apps/bin/pw.x -i scf.in -use_qe_scf -npool 2
-/apps/bin/hp.x -i hp.in -npool 2
+pw.x -i scf.in -use_qe_scf -npool 2
+hp.x -i hp.in -npool 2
 
 if [[ $SLURM_PROCID == 0 ]]; then
     cat $PWD/FeO.Hubbard_parameters.dat

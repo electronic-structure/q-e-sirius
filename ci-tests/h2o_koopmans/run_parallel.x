@@ -8,9 +8,9 @@ else
     sleep 10
 fi
 cd $PWD/h2o_koopmans_parallel
-/apps/bin/pw.x -i h2o.scf.in -use_qe_scf
-/apps/bin/kcw.x -i h2o.kcw-wann2kcw.in
-/apps/bin/kcw.x -i h2o.kcw-screen.in 
+pw.x -i h2o.scf.in -use_qe_scf
+kcw.x -i h2o.kcw-wann2kcw.in
+kcw.x -i h2o.kcw-screen.in 
 
 if [[ $SLURM_PROCID == 0 ]]; then
     python3 ./ci-tests/kcw_diff.py ./ci-tests/h2o_koopmans/kcw.ref.yml $PWD/kcw.yml
