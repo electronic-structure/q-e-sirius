@@ -60,16 +60,7 @@ test (PW) CdO:
     SLURM_NTASKS: 1
     SLURM_JOB_NUM_NODES: 1
   script:
-    - |
-      if [ $SLURM_LOCALID -eq 0 ]; then
-        tar xf ./installdir.tar -C /
-        touch /dev/shm/unpack_done_$CI_JOB_ID
-      fi
-    - |
-      # wait for tar unpack
-      while [ ! -f /dev/shm/unpack_done_$CI_JOB_ID ]; do
-        sleep 0.2
-      done
+    - ./ci/prepare-run.sh
     - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
     - module load python
     - cd ./ci-tests/CdO
@@ -85,16 +76,7 @@ test (HP) ZrN:
     SLURM_NTASKS: 1
     SLURM_JOB_NUM_NODES: 1
   script:
-    - |
-      if [ $SLURM_LOCALID -eq 0 ]; then
-        tar xf ./installdir.tar -C /
-        touch /dev/shm/unpack_done_$CI_JOB_ID
-      fi
-    - |
-      # wait for tar unpack
-      while [ ! -f /dev/shm/unpack_done_$CI_JOB_ID ]; do
-        sleep 0.2
-      done
+    - ./.ci/prepare-run.sh
     - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
     - cd ./ci-tests/ZrN
     - module load python
@@ -112,17 +94,8 @@ test (HP) NW parallel:
     SLURM_NTASKS: 4
     SLURM_JOB_NUM_NODES: 2
   script:
-    - |
-      if [ $SLURM_LOCALID -eq 0 ]; then
-        tar xf ./installdir.tar -C /
-        touch /dev/shm/unpack_done_$CI_JOB_ID
-      fi
-    - |
-      # wait for tar unpack
-      while [ ! -f /dev/shm/unpack_done_$CI_JOB_ID ]; do
-        sleep 0.2
-      done
-    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
+   - ./.ci/prepare-run.sh
+   - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
     - ./ci-tests/NW/run_parallel.x
 
 # test (HP) FeO parallel:
