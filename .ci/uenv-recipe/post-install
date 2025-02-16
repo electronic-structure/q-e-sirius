@@ -1,6 +1,6 @@
 #!/bin/bash
 
-spack load python
+eval $(spack -C /user-environment/config load --sh python)
 
 python -m venv /user-environment/venv
 source /user-environment/venv/bin/activate
