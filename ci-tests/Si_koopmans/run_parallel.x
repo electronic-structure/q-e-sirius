@@ -3,7 +3,7 @@
 set -ex
 
 if [[ $SLURM_PROCID == 0 ]]; then
-    cp -r /qe-src/ci-tests/Si_koopmans $PWD/Si_koopmans_parallel
+    cp -r ./ci-tests/Si_koopmans $PWD/Si_koopmans_parallel
 else
     sleep 10
 fi
@@ -45,5 +45,5 @@ fi
 /apps/bin/kcw.x -npool 2 -i Si.kcw-screen.in 
 
 if [[ $SLURM_PROCID == 0 ]]; then
-    python3 /qe-src/ci-tests/kcw_diff.py /qe-src/ci-tests/Si_koopmans/kcw.ref.yml $PWD/kcw.yml
+    python3 ./ci-tests/kcw_diff.py ./ci-tests/Si_koopmans/kcw.ref.yml $PWD/kcw.yml
 fi

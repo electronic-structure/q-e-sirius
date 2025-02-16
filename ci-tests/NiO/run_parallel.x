@@ -3,7 +3,7 @@
 set -ex
 
 if [[ $SLURM_PROCID == 0 ]]; then
-    cp -r /qe-src/ci-tests/NiO $PWD/NiO
+    cp -r ./ci-tests/NiO $PWD/NiO
 else
     sleep 10
 fi
@@ -15,6 +15,6 @@ cd $PWD/NiO
 
 if [[ $SLURM_PROCID == 0 ]]; then
     cat $PWD/NiO.Hubbard_parameters.dat
-    python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/NiO/hp.ref.yml $PWD/hp.yml
+    python3 ./ci-tests/hp_diff.py ./ci-tests/NiO/hp.ref.yml $PWD/hp.yml
 fi
 

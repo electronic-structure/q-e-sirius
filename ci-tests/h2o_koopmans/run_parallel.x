@@ -3,7 +3,7 @@
 set -ex
 
 if [[ $SLURM_PROCID == 0 ]]; then
-    cp -r /qe-src/ci-tests/h2o_koopmans $PWD/h2o_koopmans_parallel
+    cp -r ./ci-tests/h2o_koopmans $PWD/h2o_koopmans_parallel
 else
     sleep 10
 fi
@@ -13,5 +13,5 @@ cd $PWD/h2o_koopmans_parallel
 /apps/bin/kcw.x -i h2o.kcw-screen.in 
 
 if [[ $SLURM_PROCID == 0 ]]; then
-    python3 /qe-src/ci-tests/kcw_diff.py /qe-src/ci-tests/h2o_koopmans/kcw.ref.yml $PWD/kcw.yml
+    python3 ./ci-tests/kcw_diff.py ./ci-tests/h2o_koopmans/kcw.ref.yml $PWD/kcw.yml
 fi

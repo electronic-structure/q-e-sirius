@@ -3,7 +3,7 @@
 set -ex
 
 if [[ $SLURM_PROCID == 0 ]]; then
-    cp -r /qe-src/ci-tests/NW $PWD/NW
+    cp -r ./ci-tests/NW $PWD/NW
 else
     sleep 10
 fi
@@ -14,6 +14,6 @@ hp.x -i hp.in -npool 2
 
 if [[ $SLURM_PROCID == 0 ]]; then
     cat $PWD/NW.Hubbard_parameters.dat
-    python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/NW/hp.ref.yml $PWD/hp.yml
+    python3 ./ci-tests/hp_diff.py ./ci-tests/NW/hp.ref.yml $PWD/hp.yml
 fi
 

@@ -3,7 +3,7 @@
 set -ex
 
 if [[ $SLURM_PROCID == 0 ]]; then
-    cp -r /qe-src/ci-tests/Mn2N2 $PWD/Mn2N2
+    cp -r ./ci-tests/Mn2N2 $PWD/Mn2N2
 else
     sleep 10
 fi
@@ -14,6 +14,6 @@ cd $PWD/Mn2N2
 
 if [[ $SLURM_PROCID == 0 ]]; then
     cat $PWD/Mn2N2.Hubbard_parameters.dat
-    python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/Mn2N2/hp.ref.yml $PWD/hp.yml
+    python3 ./ci-tests/hp_diff.py ./ci-tests/Mn2N2/hp.ref.yml $PWD/hp.yml
 fi
 

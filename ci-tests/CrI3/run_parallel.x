@@ -3,7 +3,7 @@
 set -ex
 
 if [[ $SLURM_PROCID == 0 ]]; then
-    cp -r /qe-src/ci-tests/CrI3 $PWD/CrI3
+    cp -r ./ci-tests/CrI3 $PWD/CrI3
 else
     sleep 10
 fi
