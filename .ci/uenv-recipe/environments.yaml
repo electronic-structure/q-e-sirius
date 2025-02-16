@@ -7,7 +7,7 @@ gcc-env:
       gpu: cuda
   unify: when_possible
   specs:
-  - q-e-sirius@develop-ristretto
+  - q-e-sirius@develop-ristretto +libxc +openmp
   - python@3.12.5
   variants:
   - +mpi

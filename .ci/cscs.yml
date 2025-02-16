@@ -60,7 +60,7 @@ test (PW) CdO:
     SLURM_NTASKS: 1
     SLURM_JOB_NUM_NODES: 1
   script:
-    - ./ci/prepare-run.sh
+    - ./.ci/prepare-run.sh
     - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
     - module load python
     - cd ./ci-tests/CdO
@@ -180,9 +180,8 @@ test (HP) LiCoO2 parallel:
   script:
    - ./.ci/prepare-run.sh
    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
-   - cd ./ci-tests/LiCoO2
    - pw.x -i LiCoO2.scf.in -use_qe_scf
-   - ./run_parallel.x
+   - ci-tests/LiCoO2/run_parallel.x
 
 # test (HP) Ni:
 #   extends: .run_tests

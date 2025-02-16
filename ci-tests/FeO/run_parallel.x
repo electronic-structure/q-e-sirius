@@ -14,6 +14,6 @@ hp.x -i hp.in -npool 2
 
 if [[ $SLURM_PROCID == 0 ]]; then
     cat $PWD/FeO.Hubbard_parameters.dat
-    python3 ./ci-tests/hp_diff.py ./ci-tests/FeO/hp.ref.yml $PWD/hp.yml
+    python3 ../hp_diff.py hp.ref.yml hp.yml
 fi
 
