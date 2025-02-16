@@ -12,3 +12,11 @@ fi
 while [ ! -f /dev/shm/unpack_done_$CI_JOB_ID ]; do
     sleep 0.2
 done
+
+module load python uv
+
+uv venv env
+source ./env/bin/activate
+uv pip install pyyaml
+
+export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH

@@ -60,9 +60,7 @@ test (PW) CdO:
     SLURM_NTASKS: 1
     SLURM_JOB_NUM_NODES: 1
   script:
-    - ./.ci/prepare-run.sh
-    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
-    - module load python
+    - source ./.ci/prepare-run.sh
     - cd ./ci-tests/CdO
     - pw.x -i CdO.in > out.txt
     - python3 ../qe_diff.py ref.txt out.txt
@@ -76,10 +74,8 @@ test (HP) ZrN:
     SLURM_NTASKS: 1
     SLURM_JOB_NUM_NODES: 1
   script:
-    - ./.ci/prepare-run.sh
-    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
+    - source ./.ci/prepare-run.sh
     - cd ./ci-tests/ZrN
-    - module load python
     - pw.x -i scf.in -use_qe_scf
     - hp.x -i hp.in
     - cat NZr.Hubbard_parameters.dat
@@ -94,8 +90,7 @@ test (HP) NW parallel:
     SLURM_NTASKS: 4
     SLURM_JOB_NUM_NODES: 2
   script:
-   - ./.ci/prepare-run.sh
-   - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
+   - source ./.ci/prepare-run.sh
    - cd ./ci-tests/NW
    - ./run_parallel.x
 
@@ -108,8 +103,7 @@ test (HP) FeO parallel:
     SLURM_NTASKS: 4
     SLURM_JOB_NUM_NODES: 4
   script:
-   - ./.ci/prepare-run.sh
-   - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
+   - source ./.ci/prepare-run.sh
    - cd ./ci-tests/FeO
    - ./run_parallel.x
 
@@ -122,9 +116,7 @@ test (HP) Mn2N2 parallel:
     SLURM_NTASKS: 4
     SLURM_JOB_NUM_NODES: 1
   script:
-   - ./.ci/prepare-run.sh
-   - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
-   - module load python
+   - source ./.ci/prepare-run.sh
    - cd ci-tests/Mn2N2
    - ./run_parallel.x
 
@@ -137,9 +129,7 @@ test (HP) CaFeO2 parallel:
     SLURM_NTASKS: 4
     SLURM_JOB_NUM_NODES: 4
   script:
-   - ./.ci/prepare-run.sh
-   - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
-   - module load python
+   - source ./.ci/prepare-run.sh
    - cd ./ci-tests/CaFeO2
    - ./run_parallel.x
 
@@ -152,9 +142,7 @@ test (HP) NiO parallel:
     SLURM_NTASKS: 4
     SLURM_JOB_NUM_NODES: 4
   script:
-   - ./.ci/prepare-run.sh
-   - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
-   - module load python
+   - source ./.ci/prepare-run.sh
    - cd ./ci-tests/NiO
    - ./run_parallel.x
 
@@ -167,9 +155,7 @@ test (HP) LiCoO2:
     SLURM_NTASKS: 1
     SLURM_JOB_NUM_NODES: 1
   script:
-   - ./.ci/prepare-run.sh
-   - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
-   - module load python
+   - source ./.ci/prepare-run.sh
    - cd ./ci-tests/LiCoO2
    - pw.x -i LiCoO2.scf.in -use_qe_scf
    - hp.x -i LiCoO2.hp.in
@@ -185,9 +171,7 @@ test (HP) LiCoO2 parallel:
     SLURM_NTASKS: 4
     SLURM_JOB_NUM_NODES: 4
   script:
-   - ./.ci/prepare-run.sh
-   - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
-   - module load python
+   - source ./.ci/prepare-run.sh
    - cd ./ci-tests/LiCoO2
    - ./run_parallel.x
 
@@ -200,9 +184,7 @@ test (HP) Ni:
     SLURM_NTASKS: 1
     SLURM_JOB_NUM_NODES: 1
   script:
-    - ./.ci/prepare-run.sh
-    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
-    - module load python
+    - source ./.ci/prepare-run.sh
     - cd ./ci-tests/Ni
     - pw.x -i Ni.scf.in -use_qe_scf
     - hp.x -i Ni.hp.in
@@ -217,9 +199,7 @@ test (HP) Ni parallel:
     SLURM_CPUS_PER_TASK: 20
     SLURM_NTASKS: 4
   script:
-    - ./.ci/prepare-run.sh
-    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
-    - module load python
+    - source ./.ci/prepare-run.sh
     - cd ./ci-tests/Ni/
     - ./run_parallel.x
 
@@ -232,9 +212,7 @@ test (HP) CrI3 parallel:
     SLURM_NTASKS: 4
     SLURM_TIMELIMIT: "1:30:00"
   script:
-    - ./.ci/prepare-run.sh
-    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
-    - module load python
+    - source ./.ci/prepare-run.sh
     - cd ci-tests/CrI3/
     - ./run_parallel.x
     - cat $PWD/CrI3/CrI3.Hubbard_parameters.dat
@@ -249,9 +227,7 @@ test (KCW) Si:
     SLURM_NTASKS: 1
     SLURM_JOB_NUM_NODES: 1
   script:
-    - ./.ci/prepare-run.sh
-    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
-    - module load python
+    - source ./.ci/prepare-run.sh
     - cd ./ci-tests/Si_koopmans
     - pw.x -i Si.scf.in -use_qe_scf
     - wannier90.x -pp Si
@@ -276,9 +252,7 @@ test (KCW) Si parallel:
     SLURM_NTASKS: 4
     SLURM_TIMELIMIT: "1:30:00"
   script:
-    - ./.ci/prepare-run.sh
-    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
-    - module load python
+    - source ./.ci/prepare-run.sh
     - cd ./ci-tests/Si
     - ./run_parallel.x
 
@@ -291,9 +265,7 @@ test (KCW) H2O parallel:
     SLURM_NTASKS: 3
     SLURM_JOB_NUM_NODES: 3
   script:
-    - ./.ci/prepare-run.sh
-    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
-    - module load python
+    - source ./.ci/prepare-run.sh
     - cd ./ci-tests/h2o_koopmans
     - ./run_parallel.x
 
