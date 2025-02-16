@@ -1,7 +1,6 @@
 #!/bin/bash
 
 set -ex
-cd $PWD/CaFeO2
 pw.x -i CaFeO2.scf1.in -use_qe_scf -npool 2
 pw.x -i CaFeO2.scf2.in -npool 2
 hp.x -i CaFeO2.hp.in -npool 2
