@@ -2,6 +2,6 @@
 
 spack load python
 
-python -m venv /user-environment/uv-env
-source /user-environment/uv-env/bin/activate
+python -m venv /user-environment/venv
+source /user-environment/venv/bin/activate
 pip install pyyaml
