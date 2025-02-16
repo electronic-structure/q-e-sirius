@@ -189,22 +189,22 @@ test (HP) LiCoO2 parallel:
    - pw.x -i LiCoO2.scf.in -use_qe_scf
    - ci-tests/LiCoO2/run_parallel.x
 
-# test (HP) Ni:
-#   extends: .run_tests
-#   variables:
-#     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
-#     SIRIUS_PRINT_TIMING: 1
-#     SLURM_CONSTRAINT: gpu
-#     SLURM_CPUS_PER_TASK: 12
-#     SLURM_NTASKS: 1
-#     SLURM_JOB_NUM_NODES: 1
-#   script:
-#     - spack arch
-#     - cd /qe-src/ci-tests/Ni
-#     - /apps/bin/pw.x -i Ni.scf.in -use_qe_scf
-#     - /apps/bin/hp.x -i Ni.hp.in
-#     - cat Ni.Hubbard_parameters.dat
-#     - python3 ../hp_diff.py hp.ref.yml hp.yml
+test (HP) Ni:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CPUS_PER_TASK: 20
+    SLURM_NTASKS: 1
+    SLURM_JOB_NUM_NODES: 1
+  script:
+    - ./.ci/prepare-run.sh
+    - export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH
+    - cd ./ci-tests/Ni
+    - pw.x -i Ni.scf.in -use_qe_scf
+    - hp.x -i Ni.hp.in
+    - cat Ni.Hubbard_parameters.dat
+    - python3 ../hp_diff.py hp.ref.yml hp.yml
 
 # test (HP) Ni parallel:
 #   extends: .run_tests
