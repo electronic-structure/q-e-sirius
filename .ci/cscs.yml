@@ -98,7 +98,7 @@ test (HP) ZrN:
       python3 ../hp_diff.py hp.ref.yml hp.yml
 
 test (HP) NW parallel:
-  extends: .run_tests
+  extends: .run_tests_baremetal
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
@@ -111,7 +111,7 @@ test (HP) NW parallel:
    - uenv run --view=sirius q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
 test (HP) FeO parallel:
-  extends: .run_tests
+  extends: .run_tests_baremetal
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
@@ -124,7 +124,7 @@ test (HP) FeO parallel:
    - uenv run --view=sirius q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
 test (HP) Mn2N2 parallel:
-  extends: .run_tests
+  extends: .run_tests_baremetal
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
@@ -137,7 +137,7 @@ test (HP) Mn2N2 parallel:
    - uenv run --view=sirius q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
 test (HP) CaFeO2 parallel:
-  extends: .run_tests
+  extends: .run_tests_baremetal
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
