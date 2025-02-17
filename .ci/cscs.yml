@@ -58,7 +58,6 @@ test (PW) CdO:
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
     SLURM_NTASKS: 1
-    SLURM_JOB_NUM_NODES: 1
   script:
     - source ./.ci/prepare-run.sh
     - cd ./ci-tests/CdO
@@ -72,7 +71,6 @@ test (HP) ZrN:
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
     SLURM_NTASKS: 1
-    SLURM_JOB_NUM_NODES: 1
   script:
     - source ./.ci/prepare-run.sh
     - cd ./ci-tests/ZrN
@@ -89,7 +87,6 @@ test (HP) NW parallel:
     SLURM_GPUS: 4
     SLURM_CPUS_PER_TASK: 20
     SLURM_NTASKS: 4
-    SLURM_JOB_NUM_NODES: 2
   script:
    - source ./.ci/prepare-run.sh
    - cd ./ci-tests/NW
@@ -103,7 +100,6 @@ test (HP) FeO parallel:
     SLURM_CPUS_PER_TASK: 20
     SLURM_GPUS: 4
     SLURM_NTASKS: 4
-    SLURM_JOB_NUM_NODES: 4
   script:
    - source ./.ci/prepare-run.sh
    - cd ./ci-tests/FeO
@@ -117,7 +113,6 @@ test (HP) Mn2N2 parallel:
     SLURM_CPUS_PER_TASK: 20
     SLURM_GPUS: 4
     SLURM_NTASKS: 4
-    SLURM_JOB_NUM_NODES: 1
   script:
    - source ./.ci/prepare-run.sh
    - cd ci-tests/Mn2N2
@@ -131,7 +126,6 @@ test (HP) CaFeO2 parallel:
     SLURM_CPUS_PER_TASK: 20
     SLURM_GPUS: 4
     SLURM_NTASKS: 4
-    SLURM_JOB_NUM_NODES: 4
   script:
    - source ./.ci/prepare-run.sh
    - cd ./ci-tests/CaFeO2
@@ -145,7 +139,6 @@ test (HP) NiO parallel:
     SLURM_CPUS_PER_TASK: 20
     SLURM_GPUS: 4
     SLURM_NTASKS: 4
-    SLURM_JOB_NUM_NODES: 4
   script:
    - source ./.ci/prepare-run.sh
    - cd ./ci-tests/NiO
@@ -158,7 +151,6 @@ test (HP) LiCoO2:
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
     SLURM_NTASKS: 1
-    SLURM_JOB_NUM_NODES: 1
   script:
    - source ./.ci/prepare-run.sh
    - cd ./ci-tests/LiCoO2
@@ -175,7 +167,6 @@ test (HP) LiCoO2 parallel:
     SLURM_CPUS_PER_TASK: 20
     SLURM_GPUS: 4
     SLURM_NTASKS: 4
-    SLURM_JOB_NUM_NODES: 4
   script:
    - source ./.ci/prepare-run.sh
    - cd ./ci-tests/LiCoO2
@@ -188,7 +179,6 @@ test (HP) Ni:
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
     SLURM_NTASKS: 1
-    SLURM_JOB_NUM_NODES: 1
   script:
     - source ./.ci/prepare-run.sh
     - cd ./ci-tests/Ni
@@ -233,7 +223,6 @@ test (KCW) Si:
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
     SLURM_NTASKS: 1
-    SLURM_JOB_NUM_NODES: 1
   script:
     - source ./.ci/prepare-run.sh
     - cd ./ci-tests/Si_koopmans
