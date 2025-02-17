@@ -273,7 +273,6 @@ test (KCW) H2O parallel:
     SLURM_CPUS_PER_TASK: 20
     SLURM_GPUS: 4
     SLURM_NTASKS: 4
-    SLURM_JOB_NUM_NODES: 3
   script:
     - source ./.ci/prepare-run.sh
     - cd ./ci-tests/h2o_koopmans
@@ -287,7 +286,6 @@ test (KCW) LiF parallel:
     SLURM_CPUS_PER_TASK: 20
     SLURM_GPUS: 4
     SLURM_NTASKS: 4
-    SLURM_JOB_NUM_NODES: 4
     SLURM_TIMELIMIT: "1:30:00"
   script:
     - source ./.ci/prepare-run.sh
