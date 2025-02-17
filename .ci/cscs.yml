@@ -234,7 +234,7 @@ test (HP) CrI3 parallel:
   script:
     - source ./.ci/prepare-run.sh
     - cd ci-tests/CrI3/
-    - ./run_parallel.x
+    - uenv run --view=sirius q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
     - cat CrI3.Hubbard_parameters.dat
     - |
       source /user-environment/venv/bin/activate

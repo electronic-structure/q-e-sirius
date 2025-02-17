@@ -20,7 +20,7 @@ srun -n1 wannier90.x wann
 srun -n1 cat wann.wout
 
 srun -n1 wannier90.x wann_emp
-srun -n1 wann_emp.wout
+srun -n1 cat wann_emp.wout
 
 #kcw
 srun kcw.x -i kcw-wann2kcw.in
