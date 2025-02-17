@@ -13,5 +13,4 @@ while [ ! -f /dev/shm/unpack_done_$CI_JOB_ID ]; do
 done
 
 # load pip env with pyyaml
-source /user-environment/venv/bin/activate
 export PATH=/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/:$PATH

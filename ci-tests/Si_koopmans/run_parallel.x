@@ -3,39 +3,25 @@
 set -ex
 
 #scf
-pw.x -npool 2 -i Si.scf.in -use_qe_scf
+srun pw.x -npool 2 -i Si.scf.in -use_qe_scf
 
 #wannier pp
-if [[ $SLURM_PROCID == 0 ]]; then
-    wannier90.x -pp Si
-    wannier90.x -pp Si_emp
-else
-    sleep 20
-fi
+srun -n1    wannier90.x -pp Si
+srun -n1    wannier90.x -pp Si_emp
 
 #pw2wannier
-pw2wannier90.x -i Si.pw2wann.in
-pw2wannier90.x -i Si_emp.pw2wann.in
+srun -n1 pw2wannier90.x -i Si.pw2wann.in
+srun -n1 pw2wannier90.x -i Si_emp.pw2wann.in
 
 #wannier
-if [[ $SLURM_PROCID == 0 ]]; then
-    wannier90.x Si
-    cat Si.wout
-else
-    sleep 100
-fi
+srun -n1 wannier90.x Si
+srun -n1 cat Si.wout
 
-if [[ $SLURM_PROCID == 0 ]]; then
-    wannier90.x Si_emp
-    cat Si_emp.wout
-else
-    sleep 100
-fi
+srun -n1 wannier90.x Si_emp
+srun -n1 cat Si_emp.wout
 
 #kcw
-kcw.x -i Si.kcw-wann2kcw.in
-kcw.x -npool 2 -i Si.kcw-screen.in 
-
-if [[ $SLURM_PROCID == 0 ]]; then
-    python3 ../kcw_diff.py kcw.ref.yml kcw.yml
-fi
+srun kcw.x -i Si.kcw-wann2kcw.in
+srun kcw.x -npool 2 -i Si.kcw-screen.in
+source /user-environment/venv/bin/activate
+srun -n1    python3 ../kcw_diff.py kcw.ref.yml kcw.yml

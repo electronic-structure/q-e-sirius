@@ -35,13 +35,11 @@ build q-e-sirius cuda:
       source /dev/shm/spack-clone/share/spack/setup-env.sh
       ./.ci/build-cuda.sh
 
-
 .run_tests:
   stage: test
   extends: [.uenv-runner-daint-gh200]
   image: q-e-sirius-gh200/v1:$CI_PIPELINE_ID
   needs: ["build q-e-sirius cuda"]
-
   variables:
     SLURM_GPUS_PER_TASK: 1
     SLURM_GPUS: 1
@@ -51,6 +49,20 @@ build q-e-sirius cuda:
     SLURM_TIMELIMIT: "30:00"
     USE_MPI: 'YES'
     WITH_UENV_VIEW: 'modules'
+
+.run_tests_baremetal:
+  stage: test
+  extends: [.baremetal-runner-daint-gh200]
+  needs: ["build q-e-sirius cuda"]
+  variables:
+    UENV_REPO_PATH: /capstor/scratch/cscs/antonk/.uenv-images-ci-daint
+    SLURM_GPUS_PER_TASK: 1
+    SLURM_GPUS: 1
+    SLURM_CPU_BIND: 'socket'
+    SLURM_HINT: nomultithread
+    SLURM_WAIT: 0
+    SLURM_TIMELIMIT: "30:00"
+    USE_MPI: 'YES'
 
 test (PW) CdO:
   extends: .run_tests
@@ -63,7 +75,9 @@ test (PW) CdO:
     - source ./.ci/prepare-run.sh
     - cd ./ci-tests/CdO
     - pw.x -i CdO.in > out.txt
-    - python3 ../qe_diff.py ref.txt out.txt
+    - |
+      source /user-environment/venv/bin/activate
+      python3 ../qe_diff.py ref.txt out.txt
 
 test (HP) ZrN:
   extends: .run_tests
@@ -79,7 +93,9 @@ test (HP) ZrN:
     - pw.x -i scf.in -use_qe_scf
     - hp.x -i hp.in
     - cat NZr.Hubbard_parameters.dat
-    - python3 ../hp_diff.py hp.ref.yml hp.yml
+    - |
+      source /user-environment/venv/bin/activate
+      python3 ../hp_diff.py hp.ref.yml hp.yml
 
 test (HP) NW parallel:
   extends: .run_tests
@@ -92,7 +108,7 @@ test (HP) NW parallel:
   script:
    - source ./.ci/prepare-run.sh
    - cd ./ci-tests/NW
-   - ./run_parallel.x
+   - uenv run --view=default q-e-sirius/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
 test (HP) FeO parallel:
   extends: .run_tests
@@ -105,7 +121,7 @@ test (HP) FeO parallel:
   script:
    - source ./.ci/prepare-run.sh
    - cd ./ci-tests/FeO
-   - ./run_parallel.x
+   - uenv run --view=default q-e-sirius/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
 test (HP) Mn2N2 parallel:
   extends: .run_tests
@@ -118,7 +134,7 @@ test (HP) Mn2N2 parallel:
   script:
    - source ./.ci/prepare-run.sh
    - cd ci-tests/Mn2N2
-   - ./run_parallel.x
+   - uenv run --view=default q-e-sirius/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
 test (HP) CaFeO2 parallel:
   extends: .run_tests
@@ -131,10 +147,10 @@ test (HP) CaFeO2 parallel:
   script:
    - source ./.ci/prepare-run.sh
    - cd ./ci-tests/CaFeO2
-   - ./run_parallel.x
+   - uenv run --view=default q-e-sirius/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
 test (HP) NiO parallel:
-  extends: .run_tests
+  extends: .run_tests_baremetal
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
@@ -144,7 +160,7 @@ test (HP) NiO parallel:
   script:
    - source ./.ci/prepare-run.sh
    - cd ./ci-tests/NiO
-   - ./run_parallel.x
+   - uenv run --view=default q-e-sirius/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
 test (HP) LiCoO2:
   extends: .run_tests
@@ -159,10 +175,12 @@ test (HP) LiCoO2:
    - pw.x -i LiCoO2.scf.in -use_qe_scf
    - hp.x -i LiCoO2.hp.in
    - cat LiCoO2.Hubbard_parameters.dat
-   - python3 ../hp_diff.py hp.ref.yml hp.yml
+   - |
+     source /user-environment/venv/bin/activate
+     python3 ../hp_diff.py hp.ref.yml hp.yml
 
 test (HP) LiCoO2 parallel:
-  extends: .run_tests
+  extends: .run_tests_baremetal
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
@@ -172,7 +190,7 @@ test (HP) LiCoO2 parallel:
   script:
    - source ./.ci/prepare-run.sh
    - cd ./ci-tests/LiCoO2
-   - ./run_parallel.x
+   - uenv run --view=default q-e-sirius/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
 test (HP) Ni:
   extends: .run_tests
@@ -187,10 +205,12 @@ test (HP) Ni:
     - pw.x -i Ni.scf.in -use_qe_scf
     - hp.x -i Ni.hp.in
     - cat Ni.Hubbard_parameters.dat
-    - python3 ../hp_diff.py hp.ref.yml hp.yml
+    - |
+      source /user-environment/venv/bin/activate
+      python3 ../hp_diff.py hp.ref.yml hp.yml
 
 test (HP) Ni parallel:
-  extends: .run_tests
+  extends: .run_tests_baremetal
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
@@ -200,10 +220,10 @@ test (HP) Ni parallel:
   script:
     - source ./.ci/prepare-run.sh
     - cd ./ci-tests/Ni/
-    - ./run_parallel.x
+    - uenv run --view=default q-e-sirius/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
 test (HP) CrI3 parallel:
-  extends: .run_tests
+  extends: .run_tests_baremetal
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
@@ -216,7 +236,9 @@ test (HP) CrI3 parallel:
     - cd ci-tests/CrI3/
     - ./run_parallel.x
     - cat CrI3.Hubbard_parameters.dat
-    - python3 ../hp_diff.py hp.ref.yml hp.yml
+    - |
+      source /user-environment/venv/bin/activate
+      python3 ../hp_diff.py hp.ref.yml hp.yml
 
 test (KCW) Si:
   extends: .run_tests
@@ -239,11 +261,13 @@ test (KCW) Si:
     - cat Si_emp.wout
     - kcw.x -i Si.kcw-wann2kcw.in
     - kcw.x -i Si.kcw-screen.in
-    - python3 ../kcw_diff.py kcw.ref.yml kcw.yml
+    - |
+      source /user-environment/venv/bin/activate
+      python3 ../kcw_diff.py kcw.ref.yml kcw.yml
 
 
 test (KCW) Si parallel:
-  extends: .run_tests
+  extends: .run_tests_baremetal
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
@@ -254,10 +278,10 @@ test (KCW) Si parallel:
   script:
     - source ./.ci/prepare-run.sh
     - cd ./ci-tests/Si_koopmans
-    - ./run_parallel.x
+    - uenv run --view=default q-e-sirius/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
 test (KCW) H2O parallel:
-  extends: .run_tests
+  extends: .run_tests_baremetal
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
@@ -267,10 +291,10 @@ test (KCW) H2O parallel:
   script:
     - source ./.ci/prepare-run.sh
     - cd ./ci-tests/h2o_koopmans
-    - ./run_parallel.x
+    - uenv run --view=default q-e-sirius/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
 test (KCW) LiF parallel:
-  extends: .run_tests
+  extends: .run_tests_baremetal
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
@@ -281,4 +305,4 @@ test (KCW) LiF parallel:
   script:
     - source ./.ci/prepare-run.sh
     - cd ./ci-tests/LiF_koopmans
-    - ./run_parallel.x
+    - uenv run --view=default q-e-sirius/v1:$CI_PIPELINE_ID -- ./run_parallel.x

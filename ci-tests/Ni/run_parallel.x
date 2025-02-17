@@ -2,11 +2,9 @@
 
 set -ex
 
-pw.x -i Ni.scf.in -npool 4
-hp.x -i Ni.hp.in -npool 4
+srun pw.x -i Ni.scf.in -npool 4
+srun hp.x -i Ni.hp.in -npool 4
 
-if [[ $SLURM_PROCID == 0 ]]; then
-    cat Ni.Hubbard_parameters.dat
-    python3 ../hp_diff.py hp.ref.yml hp.yml
-fi
-
+source /user-environment/venv/bin/activate
+srun -n1 cat Ni.Hubbard_parameters.dat
+srun -n1 python3 ../hp_diff.py hp.ref.yml hp.yml
