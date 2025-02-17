@@ -108,7 +108,7 @@ test (HP) NW parallel:
   script:
    - source ./.ci/prepare-run.sh
    - cd ./ci-tests/NW
-   - uenv run --view=default q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+   - uenv run --view=sirius q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
 test (HP) FeO parallel:
   extends: .run_tests
@@ -121,7 +121,7 @@ test (HP) FeO parallel:
   script:
    - source ./.ci/prepare-run.sh
    - cd ./ci-tests/FeO
-   - uenv run --view=default q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+   - uenv run --view=sirius q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
 test (HP) Mn2N2 parallel:
   extends: .run_tests
@@ -134,7 +134,7 @@ test (HP) Mn2N2 parallel:
   script:
    - source ./.ci/prepare-run.sh
    - cd ci-tests/Mn2N2
-   - uenv run --view=default q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+   - uenv run --view=sirius q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
 test (HP) CaFeO2 parallel:
   extends: .run_tests
@@ -147,7 +147,7 @@ test (HP) CaFeO2 parallel:
   script:
    - source ./.ci/prepare-run.sh
    - cd ./ci-tests/CaFeO2
-   - uenv run --view=default q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+   - uenv run --view=sirius q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
 test (HP) NiO parallel:
   extends: .run_tests_baremetal
@@ -160,7 +160,7 @@ test (HP) NiO parallel:
   script:
    - source ./.ci/prepare-run.sh
    - cd ./ci-tests/NiO
-   - uenv run --view=default q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+   - uenv run --view=sirius q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
 test (HP) LiCoO2:
   extends: .run_tests
@@ -190,7 +190,7 @@ test (HP) LiCoO2 parallel:
   script:
    - source ./.ci/prepare-run.sh
    - cd ./ci-tests/LiCoO2
-   - uenv run --view=default q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+   - uenv run --view=sirius q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
 test (HP) Ni:
   extends: .run_tests
@@ -220,7 +220,7 @@ test (HP) Ni parallel:
   script:
     - source ./.ci/prepare-run.sh
     - cd ./ci-tests/Ni/
-    - uenv run --view=default q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+    - uenv run --view=sirius q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
 test (HP) CrI3 parallel:
   extends: .run_tests_baremetal
@@ -278,7 +278,7 @@ test (KCW) Si parallel:
   script:
     - source ./.ci/prepare-run.sh
     - cd ./ci-tests/Si_koopmans
-    - uenv run --view=default q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+    - uenv run --view=sirius q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
 test (KCW) H2O parallel:
   extends: .run_tests_baremetal
@@ -291,7 +291,7 @@ test (KCW) H2O parallel:
   script:
     - source ./.ci/prepare-run.sh
     - cd ./ci-tests/h2o_koopmans
-    - uenv run --view=default q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+    - uenv run --view=sirius q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
 test (KCW) LiF parallel:
   extends: .run_tests_baremetal
@@ -305,4 +305,4 @@ test (KCW) LiF parallel:
   script:
     - source ./.ci/prepare-run.sh
     - cd ./ci-tests/LiF_koopmans
-    - uenv run --view=default q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+    - uenv run --view=sirius q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
