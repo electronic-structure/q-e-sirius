@@ -290,4 +290,6 @@ test (KCW) LiF parallel:
     SLURM_JOB_NUM_NODES: 4
     SLURM_TIMELIMIT: "1:30:00"
   script:
-    - /qe-src/ci-tests/LiF_koopmans/run_parallel.x
+    - source ./.ci/prepare-run.sh
+    - cd ./ci-tests/LiF_koopmans
+    - ./run_parallel.x
