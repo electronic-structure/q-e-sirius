@@ -45,7 +45,6 @@ build q-e-sirius cuda:
   variables:
     SLURM_GPUS_PER_TASK: 1
     SLURM_GPUS: 1
-    SLURM_NNODES: 1
     SLURM_CPU_BIND: 'socket'
     SLURM_HINT: nomultithread
     SLURM_WAIT: 0
