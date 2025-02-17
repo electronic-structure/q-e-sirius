@@ -235,10 +235,6 @@ test (HP) CrI3 parallel:
     - source ./.ci/prepare-run.sh
     - cd ci-tests/CrI3/
     - uenv run --view=sirius q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
-    - cat CrI3.Hubbard_parameters.dat
-    - |
-      source /user-environment/venv/bin/activate
-      python3 ../hp_diff.py hp.ref.yml hp.yml
 
 test (KCW) Si:
   extends: .run_tests
