@@ -2,18 +2,9 @@
 
 set -ex
 
-if [[ $SLURM_PROCID == 0 ]]; then
-    cp -r /qe-src/ci-tests/NW $PWD/NW
-else
-    sleep 10
-fi
+srun pw.x -i scf.in -use_qe_scf -npool 2
+srun hp.x -i hp.in -npool 2
 
-cd $PWD/NW
-/apps/bin/pw.x -i scf.in -use_qe_scf -npool 2
-/apps/bin/hp.x -i hp.in -npool 2
-
-if [[ $SLURM_PROCID == 0 ]]; then
-    cat $PWD/NW.Hubbard_parameters.dat
-    python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/NW/hp.ref.yml $PWD/hp.yml
-fi
-
+srun -n1 cat NW.Hubbard_parameters.dat
+source /user-environment/venv/bin/activate
+srun -n1 python3 ../hp_diff.py hp.ref.yml hp.yml

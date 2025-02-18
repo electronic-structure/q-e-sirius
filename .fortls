@@ -7,10 +7,18 @@
         "atomic",
         "Modules",
         "PW/src",
+        "HP/src",
+        "FFTXlib/src",
+        "PHonon/PH",
         "upflib",
         "XClib",
         "LAXlib",
-        "KS_Solvers",
+        "KS_Solvers/CG",
+        "KS_Solvers/Davidson",
+        "KS_Solvers/Davidson_RCI",
+        "KS_Solvers/DENSE",
+        "KS_Solvers/ParO",
+        "KS_Solvers/PPCG",
         "UtilXlib"
     ],
     "excl_suffixes": [
@@ -25,7 +33,8 @@
         "HAVE_PACKAGE": "",
         "__MPI": "",
         "__TRACE": "",
-        "__SIRIUS": ""
+        "__SIRIUS": "",
+        "__CUDA": ""
     },
     "lowercase_intrinsics": true,
     "debug_log": false

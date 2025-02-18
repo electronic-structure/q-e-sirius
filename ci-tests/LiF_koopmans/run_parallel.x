@@ -2,51 +2,31 @@
 
 set -ex
 
-if [[ $SLURM_PROCID == 0 ]]; then
-    cp -r /qe-src/ci-tests/LiF_koopmans $PWD/LiF_koopmans_parallel
-else
-    sleep 10
-fi
-
-cd $PWD/LiF_koopmans_parallel
-
 #scf
-/apps/bin/pw.x -npool 2 -i scf.in -use_qe_scf
+srun pw.x -npool 2 -i scf.in -use_qe_scf
 
 #nscf
-/apps/bin/pw.x -npool 2 -i nscf.in
+srun pw.x -npool 2 -i nscf.in
 
 #wannier pp
-if [[ $SLURM_PROCID == 0 ]]; then
-    /apps/bin/wannier90.x -pp wann 
-    /apps/bin/wannier90.x -pp wann_emp
-else
-    sleep 20
-fi
-
+srun -n1 wannier90.x -pp wann
+srun -n1 wannier90.x -pp wann_emp
 #pw2wannier
-/apps/bin/pw2wannier90.x -i occ.pw2wann.in
-/apps/bin/pw2wannier90.x -i emp.pw2wann.in
+srun pw2wannier90.x -i occ.pw2wann.in
+srun pw2wannier90.x -i emp.pw2wann.in
 
 #wannier
-if [[ $SLURM_PROCID == 0 ]]; then
-    /apps/bin/wannier90.x wann
-    cat wann.wout
-else
-    sleep 100
-fi
+srun -n1 wannier90.x wann
+srun -n1 cat wann.wout
 
-if [[ $SLURM_PROCID == 0 ]]; then
-    /apps/bin/wannier90.x wann_emp
-    cat wann_emp.wout
-else
-    sleep 100
-fi
+srun -n1 wannier90.x wann_emp
+srun -n1 cat wann_emp.wout
 
 #kcw
-/apps/bin/kcw.x -i kcw-wann2kcw.in
-/apps/bin/kcw.x -npool 2 -i kcw-screen.in 
+srun kcw.x -i kcw-wann2kcw.in
+srun kcw.x -npool 2 -i kcw-screen.in
 
-if [[ $SLURM_PROCID == 0 ]]; then
-    python3 /qe-src/ci-tests/kcw_diff.py /qe-src/ci-tests/LiF_koopmans/kcw.ref.yml $PWD/kcw.yml
-fi
+# load python pyyaml
+source /user-environment/venv/bin/activate
+
+srun -n1 python3 ../kcw_diff.py kcw.ref.yml kcw.yml
