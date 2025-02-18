@@ -206,7 +206,7 @@ test (HP) Ni parallel:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_NTASKS: 4
+    SLURM_NTASKS: 3
   script:
     - source ./.ci/prepare-run.sh
     - cd ./ci-tests/Ni/
