@@ -1115,7 +1115,7 @@ MODULE mod_sirius
     INTEGER :: dims(3), i, ia, iat, rank, ierr, ijv, j, l, ir, num_gvec, num_ranks_k, &
              & iwf, nmagd, viz, ia2, iat2, atom_pair(2), n_pair(2), l_pair(2), mmax, &
              & mmax2, is, T(3), lmax_beta, nsymop
-    REAL(8) :: a1(3), a2(3), a3(3), vlat(3, 3), vlat_inv(3, 3), v1(3), v2(3), atom_type_U(nsp), J_TMP(3)
+    REAL(8) :: a1(3), a2(3), a3(3), vlat(3, 3), vlat_inv(3, 3), v1(3), v2(3), atom_type_U(nsp), J_tmp(3)
     REAL(8), ALLOCATABLE :: dion(:, :), vloc(:), initial_magn(:, :)
     CHARACTER(LEN=1024) :: conf_str
     REAL(8), PARAMETER :: spglib_tol=1e-4
@@ -1356,10 +1356,10 @@ MODULE mod_sirius
            ! they use the second notation for onsite. I take care of this case later on
            IF (Hubbard_U(iat) .NE. 0.0) THEN
               atom_type_U(iat) = Hubbard_U(iat)
-              J_TMP(1:3) = Hubbard_J(1:3,iat) / 2.0
+              J_tmp(1:3) = Hubbard_J(1:3,iat) / 2.0
               CALL sirius_set_atom_type_hubbard(sctx, TRIM(atom_type(iat)%label), &
                    & l=Hubbard_l(iat), n=Hubbard_n(iat), occ=Hubbard_occ(iat, 1), &
-                   & U=Hubbard_U(iat) / 2.0, J=J_TMP, &
+                   & U=Hubbard_U(iat) / 2.0, J=J_tmp, &
                    & alpha=Hubbard_alpha(iat) / 2.0, beta=Hubbard_beta(iat) / 2.0, &
                    & J0=Hubbard_J0(iat) / 2.0)
            ENDIF
@@ -1474,10 +1474,11 @@ MODULE mod_sirius
                     ENDIF
                   ELSE
                     atom_type_U(iat) = Hubbard_V(ia, ia2, 1)
+                    J_tmp=0.d0
                     CALL sirius_set_atom_type_hubbard(sctx, &
                             & TRIM(atom_type(iat)%label), &
                             & l=l_pair(1), n=n_pair(1), occ=hubbard_occ(iat, 1), &
-                            & U=atom_type_U(iat) / 2.0, J=0.D0, &
+                            & U=atom_type_U(iat) / 2.0, J=J_tmp, &
                             & alpha=0.D0, beta=0.D0, J0=0.D0)
                   ENDIF
                 ELSE
