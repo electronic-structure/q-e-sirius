@@ -42,7 +42,6 @@ build q-e-sirius cuda:
   needs: ["build q-e-sirius cuda"]
   variables:
     SLURM_GPUS_PER_TASK: 1
-    SLURM_GPUS: 1
     SLURM_CPU_BIND: 'socket'
     SLURM_HINT: nomultithread
     SLURM_WAIT: 0
@@ -57,7 +56,6 @@ build q-e-sirius cuda:
   variables:
     UENV_REPO_PATH: /capstor/scratch/cscs/antonk/.uenv-images-ci-daint
     SLURM_GPUS_PER_TASK: 1
-    SLURM_GPUS: 1
     SLURM_CPU_BIND: 'socket'
     SLURM_HINT: nomultithread
     SLURM_WAIT: 0
@@ -85,7 +83,6 @@ test (HP) ZrN:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_GPUS: 1
     SLURM_NTASKS_PER_NODE: 1
   script:
     - source ./.ci/prepare-run.sh
@@ -102,7 +99,6 @@ test (HP) NW parallel:
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
-    SLURM_GPUS: 4
     SLURM_CPUS_PER_TASK: 20
     SLURM_NTASKS_PER_NODE: 4
   script:
@@ -116,7 +112,6 @@ test (HP) FeO parallel:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_GPUS: 4
     SLURM_NTASKS_PER_NODE: 4
   script:
    - source ./.ci/prepare-run.sh
@@ -129,7 +124,6 @@ test (HP) Mn2N2 parallel:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_GPUS: 4
     SLURM_NTASKS_PER_NODE: 4
   script:
    - source ./.ci/prepare-run.sh
@@ -142,7 +136,6 @@ test (HP) CaFeO2 parallel:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_GPUS: 4
     SLURM_NTASKS_PER_NODE: 4
   script:
    - source ./.ci/prepare-run.sh
@@ -155,7 +148,6 @@ test (HP) NiO parallel:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_GPUS: 4
     SLURM_NTASKS_PER_NODE: 4
   script:
    - source ./.ci/prepare-run.sh
@@ -185,7 +177,6 @@ test (HP) LiCoO2 parallel:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_GPUS: 4
     SLURM_NTASKS_PER_NODE: 4
   script:
    - source ./.ci/prepare-run.sh
@@ -215,7 +206,6 @@ test (HP) Ni parallel:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_GPUS: 4
     SLURM_NTASKS_PER_NODE: 4
   script:
     - source ./.ci/prepare-run.sh
@@ -228,7 +218,6 @@ test (HP) CrI3 parallel:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_GPUS: 4
     SLURM_NTASKS_PER_NODE: 4
     SLURM_TIMELIMIT: "1:30:00"
   script:
@@ -268,7 +257,6 @@ test (KCW) Si parallel:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_GPUS: 4
     SLURM_NTASKS_PER_NODE: 4
     SLURM_TIMELIMIT: "1:30:00"
   script:
@@ -282,7 +270,6 @@ test (KCW) H2O parallel:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_GPUS: 4
     SLURM_NTASKS_PER_NODE: 4
   script:
     - source ./.ci/prepare-run.sh
@@ -295,7 +282,6 @@ test (KCW) LiF parallel:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_GPUS: 4
     SLURM_NTASKS_PER_NODE: 4
     SLURM_TIMELIMIT: "1:30:00"
   script:
