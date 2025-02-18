@@ -2,7 +2,7 @@
 
 set -ex
 
-srun pw.x -i Ni.scf.in -npool 4
+srun pw.x -i Ni.scf.in -npool 4 -use_qe_scf
 srun hp.x -i Ni.hp.in -npool 4
 
 source /user-environment/venv/bin/activate
