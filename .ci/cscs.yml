@@ -68,7 +68,7 @@ test (PW) CdO:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_NTASKS_PER_NODE: 1
+    SLURM_NTASKS: 1
   script:
     - source ./.ci/prepare-run.sh
     - cd ./ci-tests/CdO
@@ -83,7 +83,7 @@ test (HP) ZrN:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_NTASKS_PER_NODE: 1
+    SLURM_NTASKS: 1
   script:
     - source ./.ci/prepare-run.sh
     - cd ./ci-tests/ZrN
@@ -100,7 +100,7 @@ test (HP) NW parallel:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_NTASKS_PER_NODE: 4
+    SLURM_NTASKS: 4
   script:
    - source ./.ci/prepare-run.sh
    - cd ./ci-tests/NW
@@ -112,7 +112,7 @@ test (HP) FeO parallel:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_NTASKS_PER_NODE: 4
+    SLURM_NTASKS: 4
   script:
    - source ./.ci/prepare-run.sh
    - cd ./ci-tests/FeO
@@ -124,7 +124,7 @@ test (HP) Mn2N2 parallel:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_NTASKS_PER_NODE: 4
+    SLURM_NTASKS: 4
   script:
    - source ./.ci/prepare-run.sh
    - cd ci-tests/Mn2N2
@@ -136,7 +136,7 @@ test (HP) CaFeO2 parallel:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_NTASKS_PER_NODE: 4
+    SLURM_NTASKS: 4
   script:
    - source ./.ci/prepare-run.sh
    - cd ./ci-tests/CaFeO2
@@ -148,7 +148,7 @@ test (HP) NiO parallel:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_NTASKS_PER_NODE: 4
+    SLURM_NTASKS: 4
   script:
    - source ./.ci/prepare-run.sh
    - cd ./ci-tests/NiO
@@ -160,7 +160,7 @@ test (HP) LiCoO2:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_NTASKS_PER_NODE: 1
+    SLURM_NTASKS: 1
   script:
    - source ./.ci/prepare-run.sh
    - cd ./ci-tests/LiCoO2
@@ -177,7 +177,7 @@ test (HP) LiCoO2 parallel:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_NTASKS_PER_NODE: 4
+    SLURM_NTASKS: 4
   script:
    - source ./.ci/prepare-run.sh
    - cd ./ci-tests/LiCoO2
@@ -189,7 +189,7 @@ test (HP) Ni:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_NTASKS_PER_NODE: 1
+    SLURM_NTASKS: 1
   script:
     - source ./.ci/prepare-run.sh
     - cd ./ci-tests/Ni
@@ -206,7 +206,7 @@ test (HP) Ni parallel:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_NTASKS_PER_NODE: 4
+    SLURM_NTASKS: 4
   script:
     - source ./.ci/prepare-run.sh
     - cd ./ci-tests/Ni/
@@ -218,7 +218,7 @@ test (HP) CrI3 parallel:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_NTASKS_PER_NODE: 4
+    SLURM_NTASKS: 4
     SLURM_TIMELIMIT: "1:30:00"
   script:
     - source ./.ci/prepare-run.sh
@@ -231,7 +231,7 @@ test (KCW) Si:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_NTASKS_PER_NODE: 1
+    SLURM_NTASKS: 1
   script:
     - source ./.ci/prepare-run.sh
     - cd ./ci-tests/Si_koopmans
@@ -257,7 +257,7 @@ test (KCW) Si parallel:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_NTASKS_PER_NODE: 4
+    SLURM_NTASKS: 4
     SLURM_TIMELIMIT: "1:30:00"
   script:
     - source ./.ci/prepare-run.sh
@@ -270,7 +270,7 @@ test (KCW) H2O parallel:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_NTASKS_PER_NODE: 4
+    SLURM_NTASKS: 4
   script:
     - source ./.ci/prepare-run.sh
     - cd ./ci-tests/h2o_koopmans
@@ -282,7 +282,7 @@ test (KCW) LiF parallel:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_NTASKS_PER_NODE: 4
+    SLURM_NTASKS: 4
     SLURM_TIMELIMIT: "1:30:00"
   script:
     - source ./.ci/prepare-run.sh
