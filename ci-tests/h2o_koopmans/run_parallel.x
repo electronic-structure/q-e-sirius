@@ -2,16 +2,9 @@
 
 set -ex
 
-if [[ $SLURM_PROCID == 0 ]]; then
-    cp -r /qe-src/ci-tests/h2o_koopmans $PWD/h2o_koopmans_parallel
-else
-    sleep 10
-fi
-cd $PWD/h2o_koopmans_parallel
-/apps/bin/pw.x -i h2o.scf.in -use_qe_scf
-/apps/bin/kcw.x -i h2o.kcw-wann2kcw.in
-/apps/bin/kcw.x -i h2o.kcw-screen.in 
+srun pw.x -i h2o.scf.in -use_qe_scf
+srun kcw.x -i h2o.kcw-wann2kcw.in
+srun kcw.x -i h2o.kcw-screen.in
 
-if [[ $SLURM_PROCID == 0 ]]; then
-    python3 /qe-src/ci-tests/kcw_diff.py /qe-src/ci-tests/h2o_koopmans/kcw.ref.yml $PWD/kcw.yml
-fi
+source /user-environment/venv/bin/activate
+srun -n1 python3 ../kcw_diff.py kcw.ref.yml kcw.yml

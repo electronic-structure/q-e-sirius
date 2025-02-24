@@ -2,18 +2,10 @@
 
 set -ex
 
-if [[ $SLURM_PROCID == 0 ]]; then
-    cp -r /qe-src/ci-tests/LiCoO2 $PWD/LiCoO2
-else
-    sleep 10
-fi
+srun pw.x -i LiCoO2.scf.in -use_qe_scf -npool 2
+srun hp.x -i LiCoO2.hp.in -npool 2
 
-cd $PWD/LiCoO2
-/apps/bin/pw.x -i LiCoO2.scf.in -use_qe_scf -npool 2
-/apps/bin/hp.x -i LiCoO2.hp.in -npool 2
+srun -n1 cat LiCoO2.Hubbard_parameters.dat
 
-if [[ $SLURM_PROCID == 0 ]]; then
-    cat $PWD/LiCoO2.Hubbard_parameters.dat
-    python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/LiCoO2/hp.ref.yml $PWD/hp.yml
-fi
-
+source /user-environment/venv/bin/activate
+srun -n1 python3 ../hp_diff.py hp.ref.yml hp.yml
