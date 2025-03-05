@@ -16,7 +16,7 @@ spack -e ./spack-env config add "packages:all:variants:[cuda_arch=${CUDA_ARCH},+
 cat ./spack-env/spack.yaml
 
 # workaround, first command fails asking to update config format, doesn't make any sense, cannot reproduce on cli
-spack -e ./spack-env config add config:install_tree:$SPACK_INSTALL_TREE
+spack -e ./spack-env config add config:install_tree:root:$SPACK_INSTALL_TREE
 spack -e ./spack-env config add 'config:install_tree:projections:all:"{name}-{version}"'
 # debug
 cat ./spack-env/spack.yaml
