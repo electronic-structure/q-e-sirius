@@ -2,8 +2,8 @@
 
 set -ex
 
-srun pw.x -i Ni.scf.in -npool 4 -use_qe_scf
-srun hp.x -i Ni.hp.in -npool 4
+srun pw.x -i Ni.scf.in -npool 3
+srun hp.x -i Ni.hp.in -npool 3
 
 source /user-environment/venv/bin/activate
 srun -n1 cat Ni.Hubbard_parameters.dat
