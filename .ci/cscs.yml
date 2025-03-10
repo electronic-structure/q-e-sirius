@@ -33,7 +33,7 @@ build q-e-sirius cuda:
       git clone --filter=tree:0 $(jq -r .spack.repo /user-environment/meta/configure.json) /dev/shm/spack-clone
       git -C /dev/shm/spack-clone checkout $(jq -r .spack.commit /user-environment/meta/configure.json)
       source /dev/shm/spack-clone/share/spack/setup-env.sh
-      ./.ci/build-cuda.sh
+      bwrap --dev-bind / / --tmpfs ~ -- ./.ci/build-cuda.sh
 
 .run_tests:
   stage: test
