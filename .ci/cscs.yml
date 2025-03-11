@@ -48,7 +48,6 @@ build q-e-sirius cuda:
     SLURM_TIMELIMIT: "30:00"
     USE_MPI: 'YES'
     WITH_UENV_VIEW: 'modules'
-
 .run_tests_baremetal:
   stage: test
   extends: [.baremetal-runner-daint-gh200]
