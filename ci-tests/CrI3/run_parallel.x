@@ -2,13 +2,10 @@
 
 set -ex
 
-if [[ $SLURM_PROCID == 0 ]]; then
-    cp -r /qe-src/ci-tests/CrI3 $PWD/CrI3
-else
-    sleep 10
-fi
+srun pw.x -i CrI3.scf1.in -use_qe_scf -npool 2
+srun pw.x -i CrI3.scf2.in -npool 2
+srun hp.x -i CrI3.hp.in -npool 2
 
-cd $PWD/CrI3
-/apps/bin/pw.x -i CrI3.scf1.in -use_qe_scf -npool 2
-/apps/bin/pw.x -i CrI3.scf2.in -npool 2
-/apps/bin/hp.x -i CrI3.hp.in -npool 2
+srun -n1 cat CrI3.Hubbard_parameters.dat
+source /user-environment/venv/bin/activate
+srun -n1 python3 ../hp_diff.py hp.ref.yml hp.yml

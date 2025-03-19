@@ -2,19 +2,10 @@
 
 set -ex
 
-if [[ $SLURM_PROCID == 0 ]]; then
-    cp -r /qe-src/ci-tests/NiO $PWD/NiO
-else
-    sleep 10
-fi
+srun pw.x -i NiO.scf1.in -npool 2
+# pw.x -i NiO.scf2.in -use_qe_scf -npool 2
+srun hp.x -i NiO.hp.in -npool 2
 
-cd $PWD/NiO
-/apps/bin/pw.x -i NiO.scf1.in -npool 2
-#/apps/bin/pw.x -i NiO.scf2.in -use_qe_scf -npool 2
-/apps/bin/hp.x -i NiO.hp.in -npool 2
-
-if [[ $SLURM_PROCID == 0 ]]; then
-    cat $PWD/NiO.Hubbard_parameters.dat
-    python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/NiO/hp.ref.yml $PWD/hp.yml
-fi
-
+srun -n1 cat NiO.Hubbard_parameters.dat
+source /user-environment/venv/bin/activate
+srun -n1 python3 ../hp_diff.py hp.ref.yml hp.yml
