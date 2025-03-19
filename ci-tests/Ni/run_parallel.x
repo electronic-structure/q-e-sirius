@@ -2,19 +2,9 @@
 
 set -ex
 
-if [[ $SLURM_PROCID == 0 ]]; then
-    spack arch
-    cp -r /qe-src/ci-tests/Ni $PWD/Ni
-else
-    sleep 10
-fi
+srun pw.x -i Ni.scf.in -npool 3
+srun hp.x -i Ni.hp.in -npool 3
 
-cd $PWD/Ni
-/apps/bin/pw.x -i Ni.scf.in -npool 3
-/apps/bin/hp.x -i Ni.hp.in -npool 3
-
-if [[ $SLURM_PROCID == 0 ]]; then
-    cat $PWD/Ni.Hubbard_parameters.dat
-    python3 /qe-src/ci-tests/hp_diff.py /qe-src/ci-tests/Ni/hp.ref.yml $PWD/hp.yml
-fi
-
+source /user-environment/venv/bin/activate
+srun -n1 cat Ni.Hubbard_parameters.dat
+srun -n1 python3 ../hp_diff.py hp.ref.yml hp.yml
