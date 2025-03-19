@@ -24,7 +24,7 @@ MODULE atwfc_mod
   PUBLIC :: scale_tab_atwfc
   PUBLIC :: interp_atwfc
   PUBLIC :: interp_atdwfc
-  #if defined(__SIRIUS)
+#if defined(__SIRIUS)
   PUBLIC :: wfc_ri_tab, dq
 #endif
   !

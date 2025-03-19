@@ -34,10 +34,6 @@ subroutine init_us_1( nat, ityp, omega, qmax, intra_bgrp_comm )
   USE qrad_mod,     ONLY : init_tab_qrad
   USE paw_variables,ONLY : okpaw
   USE mp,           ONLY : mp_sum
-!#if defined(__SIRIUS)
-!  USE uspp_data,    ONLY : beta_ri_tab, aug_ri_tab, wfc_ri_tab, nqx, nqxq
-!  USE uspp_param,   ONLY : upf, lmaxq, nbetam, nsp, nwfcm
-!#endif
   implicit none
   !
   integer,  intent(in) :: nat
@@ -61,17 +57,6 @@ subroutine init_us_1( nat, ityp, omega, qmax, intra_bgrp_comm )
   !
   call start_clock ('init_us_1')
   !
-#if defined(__SIRIUS)
-  !IF (ALLOCATED(beta_ri_tab)) DEALLOCATE(beta_ri_tab)
-  !ALLOCATE(beta_ri_tab(nqx, nbetam, nsp))
-  !beta_ri_tab = 0.d0
-  !IF (ALLOCATED(aug_ri_tab)) DEALLOCATE(aug_ri_tab)
-  !ALLOCATE(aug_ri_tab(nqxq, nbetam*(nbetam+1)/2, lmaxq, nsp))
-  !aug_ri_tab = 0.d0
-  !IF (ALLOCATED(wfc_ri_tab)) DEALLOCATE(wfc_ri_tab)
-  !ALLOCATE(wfc_ri_tab(nqx, nwfcm, nsp))
-  !wfc_ri_tab = 0.d0
-#endif
   !    NB: duplicated modules' variables are syncronized at the end. This
   !        may lead to problems if these variables are using during function
   !        calls in this subroutines. However this should never happen.

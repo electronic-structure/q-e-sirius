@@ -802,8 +802,7 @@ MODULE mod_sirius
     !-----------------------------------------------------------------------
     !! Callback to compute radial integrals of beta-projectors
     !
-    USE uspp_data,    ONLY : dq
-    USE beta_mod,     ONLY : beta_ri_tab
+    USE beta_mod,     ONLY : beta_ri_tab, dq
     USE uspp_param,   ONLY : upf
     !
     IMPLICIT NONE
@@ -844,8 +843,7 @@ MODULE mod_sirius
     !! Callback function to compute radial integrals of beta-projectors with
     !! the derrivatives of spherical Bessel functions.
     !
-    USE uspp_data,    ONLY : dq
-    USE beta_mod,     ONLY : beta_ri_tab
+    USE beta_mod,     ONLY : beta_ri_tab, dq
     USE uspp_param,   ONLY : upf
     !
     IMPLICIT NONE
@@ -886,8 +884,7 @@ MODULE mod_sirius
     !-----------------------------------------------------------------------
     !! Callback function to compute radial integrals of augmentation charge.
     !
-    USE uspp_data,    ONLY : dq
-    USE qrad_mod,     ONLY : aug_ri_tab
+    USE qrad_mod,     ONLY : aug_ri_tab, dq
     USE uspp_param,   ONLY : upf
     !
     IMPLICIT NONE
@@ -931,8 +928,7 @@ MODULE mod_sirius
     !! Callback function to compute radial integrals of augmentation charge with
     !! derivattives of spherical Bessel functions.
     !
-    USE uspp_data,    ONLY : dq
-    USE qrad_mod,     ONLY : aug_ri_tab
+    USE qrad_mod,     ONLY : aug_ri_tab, dq
     USE uspp_param,   ONLY : upf
     !
     IMPLICIT NONE
@@ -977,7 +973,7 @@ MODULE mod_sirius
     !! Callback function to compute radial integrals of the atomic wave functions
     !
     USE iso_c_binding
-    USE uspp_data,    ONLY : dq, wfc_ri_tab
+    USE atwfc_mod,    ONLY : dq, wfc_ri_tab
     USE uspp_param,   ONLY : upf
     !
     IMPLICIT NONE
@@ -1027,7 +1023,7 @@ MODULE mod_sirius
     !! Callback function to compute radial integrals of the atomic wave functions
     !
     USE iso_c_binding
-    USE uspp_data,    ONLY : dq, wfc_ri_tab
+    USE atwfc_mod,    ONLY : dq, wfc_ri_tab
     USE uspp_param,   ONLY : upf
     !
     IMPLICIT NONE
