@@ -77,15 +77,6 @@
   !
   ENDIF
 #endif  
-  IF ( lelfield) THEN
-     !
-     CALL c_bands_efield ( iter )
-     !
-  ELSE
-     !
-     CALL c_bands_nscf_ph ( )
-     !
-  END IF
   !
   ! ... check if calculation was stopped in c_bands
   !
