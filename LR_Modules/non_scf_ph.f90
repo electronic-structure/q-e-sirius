@@ -101,6 +101,11 @@
   ! ... this is done here for et, in weights () for wg
   !
   CALL poolrecover( et, nbnd, nkstot, nks )
+#if defined(__SIRIUS)
+  IF ( use_sirius_scf ) THEN
+    CALL get_band_energies_from_sirius(ks_handler)
+  END IF
+#endif
   !
   ! ... calculate weights of Kohn-Sham orbitals (only weights, not Ef,
   ! ... for a "bands" calculation where Ef is read from data file)
