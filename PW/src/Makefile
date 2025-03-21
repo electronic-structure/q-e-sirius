@@ -256,6 +256,7 @@ wannier_init.o \
 wannier_check.o \
 wannier_clean.o \
 wannier_occ.o \
+mod_sirius.o \
 oscdft_input.o \
 oscdft_context.o \
 oscdft_base.o \
@@ -269,7 +270,6 @@ oscdft_wfcO.o \
 oscdft_forces.o \
 oscdft_forces_subs.o \
 d3hess_mod.o
-
 
 # GPU versions of routines
 PWLIBS += \

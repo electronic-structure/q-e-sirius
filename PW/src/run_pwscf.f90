@@ -6,10 +6,10 @@
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
 !----------------------------------------------------------------------------
-SUBROUTINE run_pwscf( exit_status ) 
+SUBROUTINE run_pwscf( exit_status )
   !----------------------------------------------------------------------------
-  !! Author: Paolo Giannozzi  
-  !! License: GNU  
+  !! Author: Paolo Giannozzi
+  !! License: GNU
   !! Summary: Run an instance of the Plane Wave Self-Consistent Field code
   !
   !! Run an instance of the Plane Wave Self-Consistent Field code 
@@ -59,12 +59,19 @@ SUBROUTINE run_pwscf( exit_status )
   USE qexsd_module,         ONLY : qexsd_set_status
   USE xc_lib,               ONLY : xclib_dft_is, stop_exx, exx_is_active
   USE beef,                 ONLY : beef_energies
+  USE cell_base,            ONLY : bg
+  USE gvect,                ONLY : ngm, g, eigts1, eigts2, eigts3
+  USE ions_base,            ONLY : nat, nsp, ityp, tau
+  USE vlocal,               ONLY : strf
+  USE mp_world,             ONLY : mpime
+  USE dfunct,               ONLY : newd
+  USE mod_sirius
   USE ldaU,                 ONLY : lda_plus_u
   USE add_dmft_occ,         ONLY : dmft
   USE extffield,            ONLY : init_extffield, close_extffield
   USE input_parameters,     ONLY : nextffield
   !
-  USE device_fbuff_m,             ONLY : dev_buf
+  USE device_fbuff_m,       ONLY : dev_buf
   !
 #if defined (__ENVIRON)
   USE plugin_flags,      ONLY : use_environ
@@ -86,7 +93,7 @@ SUBROUTINE run_pwscf( exit_status )
   !
   ! ... local variables
   !
-  INTEGER :: idone 
+  INTEGER :: idone
   ! counter of electronic + ionic steps done in this run
   INTEGER :: ions_status
   ! ions_status =  3  not yet converged
@@ -108,7 +115,7 @@ SUBROUTINE run_pwscf( exit_status )
   !
   ! ... needs to come before iosys() so some input flags can be
   !     overridden without needing to write PWscf specific code.
-  ! 
+  !
   CALL qmmm_initialization()
   !
   ! ... convert to internal variables
@@ -158,6 +165,14 @@ SUBROUTINE run_pwscf( exit_status )
   ENDIF
   !
   CALL init_run()
+  !
+#if defined(__SIRIUS)
+  IF (use_sirius_scf.OR.use_sirius_nlcg.OR.always_setup_sirius) THEN
+    CALL clear_sirius
+    CALL setup_sirius
+    CALL sirius_initialize_kset(ks_handler)
+  ENDIF
+#endif
   !
   !  read external force fields parameters
   ! 
@@ -250,6 +265,11 @@ SUBROUTINE run_pwscf( exit_status )
         ! ... ionic step (for molecular dynamics or optimization)
         !
         CALL move_ions ( idone, ions_status, optimizer_failed )
+#if defined(__SIRIUS)
+        IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
+          CALL update_sirius
+        ENDIF
+#endif
         conv_ions = ( ions_status == 0 ) .OR. &
                     ( ions_status == 1 .AND. treinit_gvecs )
         !
@@ -289,8 +309,7 @@ SUBROUTINE run_pwscf( exit_status )
            ! ... final scf calculation with G-vectors for final cell
            !
            lbfgs=.FALSE.; lmd=.FALSE.
-           WRITE( UNIT = stdout, FMT=9020 ) 
-           !
+           WRITE( UNIT = stdout, FMT=9020 )
            CALL reset_gvectors( )
            !
            ! ... read atomic occupations for DFT+U(+V)
@@ -313,6 +332,25 @@ SUBROUTINE run_pwscf( exit_status )
               CALL reset_gvectors ( )
               !
            ELSE
+#if defined(__SIRIUS)
+              IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
+                 CALL sirius_start_timer("qe|update")
+                 IF ( lmovecell ) THEN
+                   CALL scale_h()
+                 ENDIF
+                 ! structure factors are needed to compute Ewald energy contribution
+                 CALL struc_fact( nat, tau, nsp, ityp, ngm, g, bg, &
+                                  dfftp%nr1, dfftp%nr2, dfftp%nr3, strf, eigts1, eigts2, eigts3 )
+                 IF (use_veff_callback) THEN
+                   CALL setlocal()
+                   CALL set_rhoc()
+                   CALL potinit
+                   CALL newd
+                 END IF
+                 CALL sirius_initialize_subspace(gs_handler, ks_handler)
+                 CALL sirius_stop_timer("qe|update")
+              ELSE
+#endif
               !
               ! ... update the wavefunctions, charge density, potential
               ! ... update_pot initializes structure factor array as well
@@ -322,6 +360,9 @@ SUBROUTINE run_pwscf( exit_status )
               ! ... re-initialize atomic position-dependent quantities
               !
               CALL hinit1()
+#if defined(__SIRIUS)
+              END IF
+#endif
               !
            END IF
            !
@@ -332,6 +373,11 @@ SUBROUTINE run_pwscf( exit_status )
      ! ... the first scf iteration of each ionic step (after the first)
      !
      ethr = 1.0D-6
+#if defined(__SIRIUS)
+     IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
+        ethr = 1.0D-2
+     ENDIF
+#endif
      !
      CALL dev_buf%reinit( ierr )
      IF ( ierr .ne. 0 ) CALL infomsg( 'run_pwscf', 'Cannot reset GPU buffers! Some buffers still locked.' )
@@ -346,6 +392,11 @@ SUBROUTINE run_pwscf( exit_status )
       ! All good
       exit_status = 0
    END IF
+#if defined(__SIRIUS)
+  IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
+    CALL sirius_save_state(gs_handler, "state.h5")
+  ENDIF
+#endif
   !
   ! ... save final data file
   !
@@ -375,7 +426,7 @@ SUBROUTINE reset_gvectors( )
   !! Prepare a new scf calculation with newly recomputed grids,
   !! restarting from scratch, not from available data of previous
   !! steps (dimensions and file lengths will be different in general)
-  !! Useful as a check of variable-cell optimization: 
+  !! Useful as a check of variable-cell optimization:
   !! once convergence is achieved, compare the final energy with the
   !! energy computed with G-vectors and plane waves for the final cell
   !
@@ -384,6 +435,7 @@ SUBROUTINE reset_gvectors( )
   USE fft_base,   ONLY : dfftp
   USE fft_base,   ONLY : dffts
   USE xc_lib,     ONLY : xclib_dft_is
+  USE mod_sirius
   ! 
   IMPLICIT NONE
   !
@@ -405,6 +457,13 @@ SUBROUTINE reset_gvectors( )
   dffts%nr1=0; dffts%nr2=0; dffts%nr3=0
   !
   CALL init_run()
+#if defined(__SIRIUS)
+  IF (use_sirius_scf.OR.use_sirius_nlcg.OR.always_setup_sirius) THEN
+    CALL clear_sirius()
+    CALL setup_sirius()
+    CALL sirius_initialize_kset(ks_handler)
+  ENDIF
+#endif
   !
   ! ... re-set and re-initialize EXX-related stuff
   !
@@ -416,20 +475,20 @@ END SUBROUTINE reset_gvectors
 !-------------------------------------------------------------
 SUBROUTINE reset_exx( )
 !-------------------------------------------------------------
-  USE fft_types,  ONLY : fft_type_deallocate 
-  USE exx_base,   ONLY : exx_grid_init, exx_mp_init, exx_div_check, & 
-                         coulomb_fac, coulomb_done 
-  USE exx,        ONLY : dfftt, exx_fft_create, deallocate_exx 
-  USE exx_band,   ONLY : igk_exx 
-  ! 
+  USE fft_types,  ONLY : fft_type_deallocate
+  USE exx_base,   ONLY : exx_grid_init, exx_mp_init, exx_div_check, &
+                         coulomb_fac, coulomb_done
+  USE exx,        ONLY : dfftt, exx_fft_create, deallocate_exx
+  USE exx_band,   ONLY : igk_exx
+  !
   IMPLICIT NONE
   !
   ! ... re-set EXX-related stuff...
   !
   IF (ALLOCATED(coulomb_fac) ) DEALLOCATE( coulomb_fac, coulomb_done )
   CALL deallocate_exx( )
-  IF (ALLOCATED(igk_exx)) DEALLOCATE(igk_exx) 
-  dfftt%nr1=0; dfftt%nr2=0; dfftt%nr3=0 
+  IF (ALLOCATED(igk_exx)) DEALLOCATE(igk_exx)
+  dfftt%nr1=0; dfftt%nr2=0; dfftt%nr3=0
   CALL fft_type_deallocate( dfftt ) ! FIXME: is this needed?
   !
   ! ... re-compute needed EXX-related stuff
@@ -438,16 +497,16 @@ SUBROUTINE reset_exx( )
   CALL exx_mp_init()
   CALL exx_fft_create()
   CALL exx_div_check()
-  ! 
+  !
 END SUBROUTINE reset_exx
 !
 !
 !----------------------------------------------------------------
 SUBROUTINE reset_magn()
   !----------------------------------------------------------------
-  !! LSDA optimization: a final configuration with zero 
-  !! absolute magnetization has been found and we check 
-  !! if it is really the minimum energy structure by 
+  !! LSDA optimization: a final configuration with zero
+  !! absolute magnetization has been found and we check
+  !! if it is really the minimum energy structure by
   !! performing a new scf iteration without any "electronic" history.
   !
   USE io_global,    ONLY : stdout
@@ -467,16 +526,16 @@ SUBROUTINE reset_magn()
            & /5X,'                   absolute magnetization has been found' )
 9020 FORMAT( /5X,'the program is checking if it is really ', &
            &     'the minimum energy structure',             &
-           & /5X,'by performing a new scf iteration ',       & 
-           &     'without any "electronic" history' )               
+           & /5X,'by performing a new scf iteration ',       &
+           &     'without any "electronic" history' )
   !
 END SUBROUTINE reset_magn
 !
 !
 !-------------------------------------------------------------------
-SUBROUTINE reset_starting_magnetization() 
+SUBROUTINE reset_starting_magnetization()
   !-------------------------------------------------------------------
-  !! On input, the scf charge density is needed.  
+  !! On input, the scf charge density is needed.
   !! On output, new values for starting_magnetization, angle1, angle2
   !! estimated from atomic magnetic moments - to be used in last step.
   !
