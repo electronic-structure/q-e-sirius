@@ -15,7 +15,7 @@ set(CMAKE_POLICY_DEFAULT_CMP0048 NEW)
 project(qe
     VERSION 7.5
     DESCRIPTION "ESPRESSO: opEn-Source Package for Research in Electronic Structure, Simulation, and Optimization"
-    LANGUAGES Fortran C)
+    LANGUAGES Fortran C CXX)
 
 if(${qe_BINARY_DIR} STREQUAL ${qe_SOURCE_DIR})
     message(FATAL_ERROR "QE source folder cannot be safely used as a build folder!")
@@ -30,6 +30,8 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${qe_BINARY_DIR}/lib
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${qe_BINARY_DIR}/bin 
     CACHE
     PATH "Single output directory for building all executables.")
+
+find_package(sirius CONFIG REQUIRED)
 
 ###########################################################
 # Build helpers
@@ -69,6 +71,8 @@ else()
     option(QE_ENABLE_OPENMP
         "enable distributed execution support via OpenMP" OFF)
 endif()
+option(QE_ENABLE_SIRIUS
+    "enable SIRIUS interface" OFF)
 cmake_dependent_option(QE_ENABLE_OFFLOAD
     "enable OpenMP offload"
     OFF "QE_ENABLE_OPENMP" OFF)
@@ -376,7 +380,7 @@ add_library(qe_mpi_fortran INTERFACE)
 qe_install_targets(qe_mpi_fortran)
 ###########################################################
 if(QE_ENABLE_MPI)
-    find_package(MPI REQUIRED Fortran)
+    find_package(MPI REQUIRED Fortran C)
 
     # choose using mpi module or header file.
     if(MPI_Fortran_HAVE_F90_MODULE)
@@ -642,6 +646,10 @@ if(QE_ENABLE_HDF5)
         INTERFACE
             ${HDF5_C_DEFINITIONS})
 endif(QE_ENABLE_HDF5)
+
+if(QE_ENABLE_SIRIUS)
+    qe_add_global_compile_definitions(__SIRIUS)
+endif(QE_ENABLE_SIRIUS)
 
 ###########################################################
 # Tests

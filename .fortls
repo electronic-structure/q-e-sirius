@@ -1,0 +1,41 @@
+{
+    "source_dirs": [
+        "PP",
+        "dft-d3",
+        "HP",
+        "PW",
+        "atomic",
+        "Modules",
+        "PW/src",
+        "HP/src",
+        "FFTXlib/src",
+        "PHonon/PH",
+        "upflib",
+        "XClib",
+        "LAXlib",
+        "KS_Solvers/CG",
+        "KS_Solvers/Davidson",
+        "KS_Solvers/Davidson_RCI",
+        "KS_Solvers/DENSE",
+        "KS_Solvers/ParO",
+        "KS_Solvers/PPCG",
+        "UtilXlib"
+    ],
+    "excl_suffixes": [
+        "_skip.f90"
+    ],
+    "pp_suffixes": [
+        ".f03",
+        ".F90",
+        ".f90"
+    ],
+    "pp_defs": {
+        "HAVE_PACKAGE": "",
+        "__MPI": "",
+        "__TRACE": "",
+        "__SIRIUS": "",
+        "__CUDA": ""
+    },
+    "lowercase_intrinsics": true,
+    "debug_log": false
+}

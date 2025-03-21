@@ -261,6 +261,7 @@ wannier_init.o \
 wannier_check.o \
 wannier_clean.o \
 wannier_occ.o \
+mod_sirius.o \
 oscdft_input.o \
 oscdft_context.o \
 oscdft_base.o \
