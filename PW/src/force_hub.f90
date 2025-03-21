@@ -1879,9 +1879,9 @@ SUBROUTINE calc_doverlap_inv( alpha, ipol, ik, ijkb0 )
    COMPLEX(DP), ALLOCATABLE :: doverlap(:,:), doverlap_us(:,:)
    ! derivative of the overlap matrix  
    !
-   CALL start_clock( 'calc_doverlap_inv' )
-   !
    IF (Hubbard_projectors.NE."ortho-atomic") RETURN
+   !
+   CALL start_clock( 'calc_doverlap_inv' )
    !
    xki = xk(ipol,ik)
    !
@@ -1966,6 +1966,8 @@ SUBROUTINE calc_doverlap_inv( alpha, ipol, ik, ijkb0 )
    !$acc end data
    !$acc end data
    DEALLOCATE( doverlap )
+   !
+   CALL stop_clock( 'calc_doverlap_inv' )
    !
 END SUBROUTINE calc_doverlap_inv
 !

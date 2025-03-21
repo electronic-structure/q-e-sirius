@@ -41,6 +41,8 @@ SUBROUTINE screen_coeff ()
   !
   USE cell_base,            ONLY : omega
   !
+  USE mod_sirius
+  !
   IMPLICIT NONE
   ! 
   INTEGER :: iq, nqs, spin_ref, is, ip
@@ -79,7 +81,11 @@ SUBROUTINE screen_coeff ()
   !
   nqs = nqstot
   !
-  IF (nqs == 1) do_real_space = .TRUE. 
+#if defined(__SIRIUS)
+  CALL sirius_initialize(call_mpi_init=.false.)
+#endif
+
+IF (nqs == 1) do_real_space = .TRUE. 
   IF (do_real_space) THEN 
      ALLOCATE ( drhor_scf(dffts%nnr,nspin_mag) ) 
      drhor_scf = ZERO
@@ -132,7 +138,17 @@ SUBROUTINE screen_coeff ()
     !
     IF (kcw_iverbosity .gt. -1 ) WRITE(stdout,'(8X, "INFO: rhowan_q(r) RETRIEVED"/)') 
     !
+#if defined(__SIRIUS)
+    IF ( .not. setup_pw ) THEN
+      CALL clear_sirius() 
+      CALL setup_sirius()
+    END IF
+#endif  
     IF (setup_pw) CALL kcw_run_nscf(do_band)
+    !
+#if defined(__SIRIUS)
+    CALL sirius_create_H0(gs_handler)
+#endif
     !
     IF (kcw_iverbosity .gt. -1 .AND. setup_pw) WRITE(stdout,'(/,8X, "INFO: NSCF calculation DONE",/)')
     ! ... IF needed run a nscf calculation for k+q
@@ -286,6 +302,8 @@ SUBROUTINE screen_coeff ()
     WRITE(876,'(i5)') num_wann
   ENDIF
   !
+  !opening a file for the alpha values in yml format
+  OPEN (954, file = 'kcw.yml')
   DO jwann = iorb_start, iorb_end
     !
     iwann = group_alpha(jwann)
@@ -305,10 +323,19 @@ SUBROUTINE screen_coeff ()
     alpha_final(iwann) = alpha
     IF (i_orb == -1) WRITE(876,'(i5, 2(3x, F16.12))') iwann, alpha, REAL(sh(iwann))
     !
+    !filling yml file
+    !
+    WRITE(954,'("iwann",I4.4,":")') iwann
+    WRITE(954,'(2X,"alpha:",F12.6)') alpha
+    !
   ENDDO
   !
   WRITE(stdout, '(3/)')
   IF ( i_orb == -1 ) CLOSE (876)
+  !
+#if defined(__SIRIUS)
+  CALL sirius_finalize(call_mpi_fin=.false.)
+#endif
   !
 9010 FORMAT(/, 8x, "iq =", i4, 3x, "iwann =", i4, 3x, "rPi_q =", 2f15.8, 3x, & 
                "rPi_q_RS =", 2f15.8, 3x, "uPi_q =", 2f15.8, 3x, "Self Hartree =", 2f15.8)

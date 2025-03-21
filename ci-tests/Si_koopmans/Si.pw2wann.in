@@ -1,0 +1,7 @@
+&inputpp
+  prefix='Si'
+  outdir='./out/'
+  seedname = 'Si'
+  wan_mode   =  'standalone'
+  spin_component = 'up'
+/
