@@ -1209,7 +1209,7 @@ SUBROUTINE elphsum_simple
   USE modes, ONLY : u, nirr
   USE control_ph, only : current_iq, qplot
   USE lsda_mod, only : isk
-  USE el_phon,   ONLY : done_elph, gamma_disp
+  USE el_phon,   ONLY : done_elph, gamma_for_all_q
   USE io_global, ONLY : stdout, ionode, ionode_id
   USE mp,        ONLY: mp_sum, mp_bcast
 
@@ -1371,7 +1371,7 @@ SUBROUTINE elphsum_simple
         ENDIF
         WRITE (stdout, 9010) nu, lambda, gamma * ry_to_gHz
         IF (ionode) WRITE (iuelph, 9010) nu, lambda, gamma * ry_to_gHz
-        IF (qplot) gamma_disp(nu,isig,current_iq) = gamma * ry_to_gHz
+        IF (qplot) gamma_for_all_q(nu,isig,current_iq) = gamma * ry_to_gHz
      ENDDO
   ENDDO
 

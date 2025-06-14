@@ -37,6 +37,9 @@ MODULE modes
   INTEGER, ALLOCATABLE :: num_rap_mode(:)
   !! number of the representation for each mode
   !
+  REAL(DP), ALLOCATABLE :: omega_for_all_q(:, :)
+  !! Collection of phonon frequencies for all q points. Used for printing if qplot is true.
+  !
 END MODULE modes
 !
 MODULE cryst_ph
@@ -430,25 +433,9 @@ END MODULE output
 !
 MODULE disp
   !
-  USE kinds, ONLY: DP
+  ! TODO: Remove and use lrcom/qpoint
   !
-  SAVE
-  !
-  INTEGER :: nq1, nq2, nq3
-  !! number of q-points in each direction
-  INTEGER :: nqs
-  !! number of q points to be calculated
-  REAL(DP), ALLOCATABLE :: x_q(:,:)
-  !! coordinates of the q points
-  REAL(DP), ALLOCATABLE :: wq(:)
-  !! for plot
-  REAL(DP), ALLOCATABLE :: omega_disp(:,:)
-  LOGICAL, ALLOCATABLE :: lgamma_iq(:)
-  !! if TRUE this q is gamma.
-  LOGICAL, ALLOCATABLE :: done_iq(:)
-  !! if TRUE this q point has been already calculated
-  LOGICAL, ALLOCATABLE :: comp_iq(:)
-  !! if TRUE this q point has to be calculated
+  USE qpoint, ONLY : nq1, nq2, nq3, nqs, x_q, wq, lgamma_iq, done_iq, comp_iq
   !
 END MODULE disp
 
