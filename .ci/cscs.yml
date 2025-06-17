@@ -27,6 +27,7 @@ build q-e-sirius cuda:
     SPEC: q-e-sirius@develop-ristretto +libxc +openmp
     CUDA_ARCH: 90
     REPO: ./.ci/uenv-recipe/repo
+    GIT_SUBMODULE_STRATEGY: recursive
   script:
     - |
       #
