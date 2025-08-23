@@ -188,7 +188,16 @@ SUBROUTINE dfpt_kernel(code, npert, iter0, lrdvpsi, iudvpsi, dr2, dfpt_data, &
    !
    CALL start_clock('dfpt_kernel')
    !
-   finite_freq = PRESENT(w_freq)
+   finite_freq = .FALSE.
+   IF (PRESENT(w_freq)) THEN
+      IF (ABS(w_freq) > 1.0d-10) THEN
+         finite_freq = .TRUE.
+      ENDIF
+   ENDIF
+   !
+   IF (finite_freq) THEN
+      WRITE(stdout, '(5x, A, 2F12.5, A)') "TD-DFPT with complex-valued frequency ", w_freq, " Ry"
+   ENDIF
    !
    nsolv = 1
    IF ((noncolin .AND. domag) .OR. finite_freq) nsolv = 2

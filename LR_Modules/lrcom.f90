@@ -57,6 +57,10 @@ MODULE control_lr
   !! mixing type
   REAL(DP) :: tr2_ph
   !! threshold for DFPT calculation
+  REAL(DP) :: conv_thr_nscf
+  !! Threshold for the NSCF bands calculation
+  REAL(DP) :: thresh_init
+  !! Initial threshold for the solution of the linear system
   REAL(DP) :: alpha_mix(maxter)
   !! the mixing parameter
   !
@@ -204,6 +208,10 @@ MODULE units_lr
              iuatswfc,& ! unit for atomic wavefunctions * S
              iudwf,   & ! unit with D psi
              lrdwf      ! length of D psi record
+  INTEGER :: iudvwfc
+  !! Unit for the perturbing potential * wavefunctions
+  INTEGER :: lrdvwfc
+  !! Length of the record for the perturbing potential * wavefunctions
   !
 END MODULE units_lr
 

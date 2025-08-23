@@ -150,6 +150,10 @@ pioud : pw pwlibs
 	if test -d PIOUD ; then \
 	( cd PIOUD ; $(MAKE) all || exit 1 ) ; fi
 
+crpa : crpalibs
+	if test -d CRPA; then \
+	( cd CRPA; $(MAKE) TLDEPS= all || exit 1) ; fi
+
 gui : bindir
 	@if test ! $(TOPDIR) -ef $(BUILDDIR) ; then \
 	   echo "make $@ not supported in out-of-source builds" ; \
@@ -201,6 +205,10 @@ gwwlib : phlibs
 pw4gwwlib : phlibs
 	if test -d GWW ; then \
 	( cd GWW ; $(MAKE) pw4gwwa || exit 1 ) ; fi
+
+crpalibs: crpalibs lrmods
+	if test -d CRPA; then \
+	( cd CRPA; $(MAKE) crpa-lib || exit 1) ; fi
 
 mods : $(FOX) libutil libla libfft libupf libmbd librxc
 	( cd Modules ; $(MAKE) TLDEPS= all || exit 1 )

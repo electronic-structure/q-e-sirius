@@ -26,6 +26,7 @@ ccg_psi.o \
 c_bands_ph.o \
 ch_psi_all.o \
 ch_psi_all_complex.o \
+constrained_dfpt.o \
 Coul_cut_2D_ph.o \
 check_q_points_sym.o \
 dnsq_scf.o \
