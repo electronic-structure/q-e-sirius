@@ -10,7 +10,6 @@ SPACK_INSTALL_TREE=/dev/shm/spack-install
 
 spack env create -d ./spack-env
 # add local repository with current sirius recipe
-spack -e ./spack-env repo add $REPO
 spack -e ./spack-env config add "packages:all:variants:[cuda_arch=${CUDA_ARCH},+cuda]"
 
 spack -e ./spack-env config add config:install_tree:root:$SPACK_INSTALL_TREE
