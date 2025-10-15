@@ -4,5 +4,5 @@
    nq1 = 2, nq2 = 2, nq3 = 2,
    conv_thr_chi = 1.0d-8,
    iverbosity = 2
-   lmet=.true.
+   no_metq0=.false.
  /
