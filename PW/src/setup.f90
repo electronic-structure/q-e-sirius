@@ -103,13 +103,16 @@ SUBROUTINE setup()
   USE plugin_flags,       ONLY : use_oscdft
   USE oscdft_base,        ONLY : oscdft_ctx
 #endif
-
+#if defined(__SIRIUS)
+  USE mod_sirius,         ONLY : setup_kpoints
+#endif
   !
   IMPLICIT NONE
   !
   INTEGER  :: na, is, ierr, ibnd, ik, nrot_, nbnd_, nr3, nk_, natomwfc 
   LOGICAL  :: magnetic_sym, skip_equivalence=.FALSE.
   REAL(DP) :: iocc, ionic_charge, one
+  REAL(DP) :: bg_inv(3, 3)
   !
   TYPE(output_type)  :: output_obj 
   !  
@@ -648,6 +651,12 @@ SUBROUTINE setup()
      END IF
      !
   END IF
+  !
+#if defined(__SIRIUS)
+  !
+  CALL setup_kpoints()
+  !
+#endif
   !
   IF ( lsda ) THEN
      !

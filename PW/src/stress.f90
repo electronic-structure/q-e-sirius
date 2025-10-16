@@ -39,6 +39,8 @@ SUBROUTINE stress( sigma )
   USE rism_module,      ONLY : lrism, stres_rism
   USE esm,              ONLY : do_comp_esm, esm_bc ! for ESM stress
   USE esm,              ONLY : esm_stres_har, esm_stres_ewa, esm_stres_loclong 
+  USE mod_sirius
+  !USE gvect,            ONLY : g_d, gg_d
   !
   IMPLICIT NONE
   !
@@ -62,6 +64,10 @@ SUBROUTINE stress( sigma )
   REAL(DP), ALLOCATABLE :: taupbc(:,:)
   REAL(DP), ALLOCATABLE :: force_d3(:,:)
   !
+  REAL(DP) :: tmp(3, 3)
+  INTEGER :: idx(2, 3)
+  REAL(DP) :: d1
+  !
   WRITE( stdout, '(//5x,"Computing stress (Cartesian axis) and pressure"/)' )
   !
   IF ( lelfield .AND. okvan ) THEN
@@ -71,6 +77,90 @@ SUBROUTINE stress( sigma )
   !
   CALL start_clock( 'stress' )
   !
+#if defined(__SIRIUS)
+  IF (use_sirius_scf) THEN
+    sigmakin = 0.d0
+    sigmaloc = 0.d0
+    sigmahar = 0.d0
+    sigmaxc = 0.d0
+    sigmaxcc = 0.d0
+    sigmaewa = 0.d0
+    sigmanlc = 0.d0
+    sigmabare = 0.d0
+    sigmah = 0.d0
+    sigmael = 0.d0
+    sigmaion = 0.d0
+    sigmad23 = 0.d0
+    sigmaxdm = 0.d0
+    sigma_ts = 0.d0
+    sigma_nonloc_dft = 0.d0
+    sigmaexx = 0.d0
+    sigmaloclong = 0.d0
+    sigma_mbd = 0.d0
+    sigmasol = 0.d0
+
+    IF (use_veff_callback) THEN
+      CALL stres_loc( sigmaloc )
+      IF ( do_comp_esm .AND. ( esm_bc /= 'pbc' ) ) THEN
+         ! In ESM, sigmaloc has only short-range term: add long-range term
+         CALL esm_stres_loclong( sigmaloclong, rho%of_g(:,1) )
+         sigmaloc(:,:) = sigmaloc(:,:) + sigmaloclong(:,:)
+      END IF
+      !
+      IF ( do_comp_esm .AND. ( esm_bc /= 'pbc' ) )  THEN ! for ESM stress
+         CALL esm_stres_har( sigmahar, rho%of_g(:,1) )
+      ELSE
+         CALL stres_har( sigmahar )
+      END IF
+      !
+      sigmaxc(:,:) = 0.d0
+      DO l = 1, 3
+         sigmaxc (l, l) = - (etxc - vtxc) / omega
+      ENDDO
+      !
+      !  xc contribution: add gradient corrections (non diagonal)
+      !
+      CALL stres_gradcorr( rho%of_r, rho%of_g, rho_core, rhog_core, rho%kin_r, &
+           nspin, dfftp, g, alat, omega, sigmaxc )
+      !
+      IF ( do_comp_esm .AND. ( esm_bc /= 'pbc' ) ) THEN ! for ESM stress
+         CALL esm_stres_ewa( sigmaewa )
+      ELSE
+         CALL stres_ewa( alat, nat, ntyp, ityp, zv, at,      &
+                         bg, tau, omega, g, gg, ngm, gstart, &
+                         gamma_only, gcutm, sigmaewa )
+      ENDIF
+
+      CALL stres_cc( sigmaxcc )
+    ELSE
+      CALL sirius_get_stress_tensor(gs_handler, "vloc", sigmaloc)
+      sigmaloc = -sigmaloc * 2 ! convert to Ry
+      CALL sirius_get_stress_tensor(gs_handler, "har", sigmahar)
+      sigmahar = -sigmahar * 2 ! convert to Ry
+      CALL sirius_get_stress_tensor(gs_handler, "xc", sigmaxc)
+      sigmaxc = -sigmaxc * 2 ! convert to Ry
+      CALL sirius_get_stress_tensor(gs_handler, "ewald", sigmaewa)
+      sigmaewa = -sigmaewa * 2 ! convert to Ry
+      CALL sirius_get_stress_tensor(gs_handler, "core", sigmaxcc)
+      sigmaxcc = -sigmaxcc * 2 ! convert to Ry
+    ENDIF
+
+    CALL sirius_get_stress_tensor(gs_handler, "kin", sigmakin)
+    sigmakin = -sigmakin * 2 ! convert to Ha
+    CALL sirius_get_stress_tensor(gs_handler, "nonloc", sigmanlc)
+    sigmanlc = -sigmanlc * 2 ! convert to Ha
+    ! add ultrasoft term
+    CALL sirius_get_stress_tensor(gs_handler, "us", tmp)
+    sigmanlc = sigmanlc - 2 * tmp
+    IF ( lda_plus_u .AND. Hubbard_projectors /= 'pseudo' ) THEN
+      CALL sirius_get_stress_tensor(gs_handler, "hubbard", sigmah)
+      sigmah = -sigmah * 2 ! convert to Ry
+    ENDIF
+
+  ELSE
+#endif
+  !
+  !   contribution from local potential
   !$acc update device( g, gg )
   !FIXME: I don't think the above line is needed
   !
@@ -197,6 +287,9 @@ SUBROUTINE stress( sigma )
   sigmasol(:,:) = 0.d0
   IF (lrism) CALL stres_rism(sigmasol)
   !
+#if defined(__SIRIUS)
+  END IF ! use_sirius_scf
+#endif
   ! ... Sum all terms
   !
   sigma(:,:) = sigmakin(:,:) + sigmaloc(:,:) + sigmahar(:,:) +  &

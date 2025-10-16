@@ -32,7 +32,7 @@ MODULE ldaU_hp
              no_metq0,                &     ! If .true. the metallic response term at q=0 is ignored
              disable_type_analysis,   &     ! If .true. disable the algorithm which detects whether
                                             ! there are atoms of the same type but with different occupations
-             skip_atom(500)                 ! If .true. no LR calculation will be performed 
+             skip_atom(500),          &     ! If .true. no LR calculation will be performed 
                                             ! for a selected atomic site.
                                             ! skip_atom(i), where i runs over atoms. If skip_atom(i)=.true.
                                             ! then no linear-response calculation will be performed for the
@@ -46,6 +46,7 @@ MODULE ldaU_hp
                                             !   at least one atom of the same type which was perturbed (this can
                                             !   happen only when find_atpert=3), otherwise the post-processing
                                             !   calculation of U will fail.
+             lmet
   !
   LOGICAL, ALLOCATABLE :: todo_atom(:),              & ! Which atoms must be perturbed
                           perturbed_atom(:),         & ! Controls which atom is perturbed in the HP
