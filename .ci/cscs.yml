@@ -1,0 +1,289 @@
+include:
+  - remote: 'https://gitlab.com/cscs-ci/recipes/-/raw/master/templates/v2/.ci-ext.yml'
+
+stages:
+  - baseimage
+  - build
+  - test
+
+build base uenv gh200:
+  extends: .uenv-builder-daint-gh200
+  stage: baseimage
+  timeout: 2h
+  variables:
+    UENV_NAME: q-e-sirius-gh200
+    UENV_RECIPE: .ci/uenv-recipe/
+    UENV_VERSION: v1
+
+build q-e-sirius cuda:
+  extends: .uenv-runner-daint-gh200
+  stage: build
+  needs: ["build base uenv gh200"]
+  image: q-e-sirius-gh200/v1:$CI_PIPELINE_ID
+  artifacts:
+    paths:
+      - installdir.tar
+  variables:
+    SPEC: q-e-sirius@develop-ristretto +libxc +openmp
+    CUDA_ARCH: 90
+    GIT_SUBMODULE_STRATEGY: recursive
+  script:
+    - |
+      #
+      git clone --filter=tree:0 $(jq -r .spack.repo /user-environment/meta/configure.json) /dev/shm/spack-clone
+      git -C /dev/shm/spack-clone checkout $(jq -r .spack.commit /user-environment/meta/configure.json)
+      source /dev/shm/spack-clone/share/spack/setup-env.sh
+      bwrap --dev-bind / / --tmpfs ~ -- ./.ci/build-cuda.sh
+
+.run_tests:
+  stage: test
+  extends: [.uenv-runner-daint-gh200]
+  image: q-e-sirius-gh200/v1:$CI_PIPELINE_ID
+  needs: ["build q-e-sirius cuda"]
+  variables:
+    SLURM_GPUS_PER_TASK: 1
+    SLURM_CPU_BIND: 'socket'
+    SLURM_HINT: nomultithread
+    SLURM_WAIT: 0
+    SLURM_TIMELIMIT: "30:00"
+    USE_MPI: 'YES'
+    WITH_UENV_VIEW: 'modules'
+.run_tests_baremetal:
+  stage: test
+  extends: [.baremetal-runner-daint-gh200]
+  needs: ["build q-e-sirius cuda"]
+  variables:
+    UENV_REPO_PATH: /capstor/scratch/cscs/antonk/.uenv-images-ci-daint
+    SLURM_GPUS_PER_TASK: 1
+    SLURM_CPU_BIND: 'socket'
+    SLURM_HINT: nomultithread
+    SLURM_WAIT: 0
+    SLURM_TIMELIMIT: "30:00"
+    USE_MPI: 'YES'
+
+test (PW) CdO:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CPUS_PER_TASK: 20
+    SLURM_NTASKS: 1
+  script:
+    - source ./.ci/prepare-run.sh
+    - cd ./ci-tests/CdO
+    - pw.x -i CdO.in > out.txt
+    - |
+      source /user-environment/venv/bin/activate
+      python3 ../qe_diff.py ref.txt out.txt
+
+test (HP) ZrN:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CPUS_PER_TASK: 20
+    SLURM_NTASKS: 1
+  script:
+    - source ./.ci/prepare-run.sh
+    - cd ./ci-tests/ZrN
+    - pw.x -i scf.in -use_qe_scf
+    - hp.x -i hp.in
+    - cat NZr.Hubbard_parameters.dat
+    - |
+      source /user-environment/venv/bin/activate
+      python3 ../hp_diff.py hp.ref.yml hp.yml
+
+test (HP) NW parallel:
+  extends: .run_tests_baremetal
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CPUS_PER_TASK: 20
+    SLURM_NTASKS: 4
+  script:
+   - source ./.ci/prepare-run.sh
+   - cd ./ci-tests/NW
+   - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+
+test (HP) FeO parallel:
+  extends: .run_tests_baremetal
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CPUS_PER_TASK: 20
+    SLURM_NTASKS: 4
+  script:
+   - source ./.ci/prepare-run.sh
+   - cd ./ci-tests/FeO
+   - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+
+test (HP) Mn2N2 parallel:
+  extends: .run_tests_baremetal
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CPUS_PER_TASK: 20
+    SLURM_NTASKS: 8
+  script:
+   - source ./.ci/prepare-run.sh
+   - cd ci-tests/Mn2N2
+   - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+
+test (HP) CaFeO2 parallel:
+  extends: .run_tests_baremetal
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CPUS_PER_TASK: 20
+    SLURM_NTASKS: 4
+  script:
+   - source ./.ci/prepare-run.sh
+   - cd ./ci-tests/CaFeO2
+   - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+
+test (HP) NiO parallel:
+  extends: .run_tests_baremetal
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CPUS_PER_TASK: 20
+    SLURM_NTASKS: 4
+  script:
+   - source ./.ci/prepare-run.sh
+   - cd ./ci-tests/NiO
+   - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+
+test (HP) LiCoO2:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CPUS_PER_TASK: 20
+    SLURM_NTASKS: 1
+  script:
+   - source ./.ci/prepare-run.sh
+   - cd ./ci-tests/LiCoO2
+   - pw.x -i LiCoO2.scf.in -use_qe_scf
+   - hp.x -i LiCoO2.hp.in
+   - cat LiCoO2.Hubbard_parameters.dat
+   - |
+     source /user-environment/venv/bin/activate
+     python3 ../hp_diff.py hp.ref.yml hp.yml
+
+test (HP) LiCoO2 parallel:
+  extends: .run_tests_baremetal
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CPUS_PER_TASK: 20
+    SLURM_NTASKS: 4
+  script:
+   - source ./.ci/prepare-run.sh
+   - cd ./ci-tests/LiCoO2
+   - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+
+test (HP) Ni:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CPUS_PER_TASK: 20
+    SLURM_NTASKS: 1
+  script:
+    - source ./.ci/prepare-run.sh
+    - cd ./ci-tests/Ni
+    - pw.x -i Ni.scf.in -use_qe_scf
+    - hp.x -i Ni.hp.in
+    - cat Ni.Hubbard_parameters.dat
+    - |
+      source /user-environment/venv/bin/activate
+      python3 ../hp_diff.py hp.ref.yml hp.yml
+
+test (HP) Ni parallel:
+  extends: .run_tests_baremetal
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CPUS_PER_TASK: 20
+    SLURM_NTASKS: 3
+  script:
+    - source ./.ci/prepare-run.sh
+    - cd ./ci-tests/Ni/
+    - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+
+test (HP) CrI3 parallel:
+  extends: .run_tests_baremetal
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CPUS_PER_TASK: 20
+    SLURM_NTASKS: 4
+    SLURM_TIMELIMIT: "1:30:00"
+  script:
+    - source ./.ci/prepare-run.sh
+    - cd ci-tests/CrI3/
+    - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+
+test (KCW) Si:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CPUS_PER_TASK: 20
+    SLURM_NTASKS: 1
+  script:
+    - source ./.ci/prepare-run.sh
+    - cd ./ci-tests/Si_koopmans
+    - pw.x -i Si.scf.in -use_qe_scf
+    - wannier90.x -pp Si
+    - pw2wannier90.x -i Si.pw2wann.in
+    - wannier90.x Si
+    - cat Si.wout
+    - wannier90.x -pp Si_emp
+    - pw2wannier90.x -i Si_emp.pw2wann.in
+    - wannier90.x Si_emp
+    - cat Si_emp.wout
+    - kcw.x -i Si.kcw-wann2kcw.in
+    - kcw.x -i Si.kcw-screen.in
+    - |
+      source /user-environment/venv/bin/activate
+      python3 ../kcw_diff.py kcw.ref.yml kcw.yml
+
+
+test (KCW) Si parallel:
+  extends: .run_tests_baremetal
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CPUS_PER_TASK: 20
+    SLURM_NTASKS: 4
+    SLURM_TIMELIMIT: "1:30:00"
+  script:
+    - source ./.ci/prepare-run.sh
+    - cd ./ci-tests/Si_koopmans
+    - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+
+test (KCW) H2O parallel:
+  extends: .run_tests_baremetal
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CPUS_PER_TASK: 20
+    SLURM_NTASKS: 4
+  script:
+    - source ./.ci/prepare-run.sh
+    - cd ./ci-tests/h2o_koopmans
+    - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+
+test (KCW) LiF parallel:
+  extends: .run_tests_baremetal
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CPUS_PER_TASK: 20
+    SLURM_NTASKS: 4
+    SLURM_TIMELIMIT: "1:30:00"
+  script:
+    - source ./.ci/prepare-run.sh
+    - cd ./ci-tests/LiF_koopmans
+    - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
