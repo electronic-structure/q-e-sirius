@@ -2,6 +2,8 @@
 
 set -ex
 
+echo $PATH
+
 srun pw.x -i scf.in -use_qe_scf -npool 4
 srun hp.x -i hp.in -npool 4
 
