@@ -35,7 +35,7 @@ build q-e-sirius cuda:
       source /dev/shm/spack-clone/share/spack/setup-env.sh
       bwrap --dev-bind / / --tmpfs ~ -- ./.ci/build-cuda.sh
 
-.tests_env_vars:
+.test_env_vars:
   variables:
     QE_PATH: "/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/"
 
