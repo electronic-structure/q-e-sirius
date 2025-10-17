@@ -6,5 +6,5 @@
    nq3 = 2,
    conv_thr_chi = 1.0d-8,
    iverbosity = 2
-   lmet = .false.
+   no_metq0=.true.
  /
