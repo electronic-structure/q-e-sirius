@@ -2,9 +2,9 @@
 
 set -ex
 
-srun pw.x -i NiO.scf1.in -npool 2
+srun ${QE_PATH}/pw.x -i NiO.scf1.in -npool 2
 # pw.x -i NiO.scf2.in -use_qe_scf -npool 2
-srun hp.x -i NiO.hp.in -npool 2
+srun ${QE_PATH}/hp.x -i NiO.hp.in -npool 2
 
 srun -n1 cat NiO.Hubbard_parameters.dat
 source /user-environment/venv/bin/activate
