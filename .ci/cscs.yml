@@ -108,7 +108,7 @@ test (HP) NW parallel:
   script:
    - srun ./.ci/unpack-spack-install-tree.sh
    - cd ./ci-tests/NW
-   - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+   - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.sh
 
 test (HP) FeO parallel:
   extends: .run_tests_baremetal
@@ -120,7 +120,7 @@ test (HP) FeO parallel:
   script:
    - srun ./.ci/unpack-spack-install-tree.sh
    - cd ./ci-tests/FeO
-   - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+   - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.sh
 
 test (HP) Mn2N2 parallel:
   extends: .run_tests_baremetal
@@ -133,7 +133,7 @@ test (HP) Mn2N2 parallel:
    - srun ./.ci/unpack-spack-install-tree.sh
    - cd ci-tests/Mn2N2
    - ls /dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/
-   - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+   - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.sh
 
 test (HP) CaFeO2 parallel:
   extends: .run_tests_baremetal
@@ -145,7 +145,7 @@ test (HP) CaFeO2 parallel:
   script:
    - srun ./.ci/unpack-spack-install-tree.sh
    - cd ./ci-tests/CaFeO2
-   - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+   - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.sh
 
 test (HP) NiO parallel:
   extends: .run_tests_baremetal
@@ -157,7 +157,7 @@ test (HP) NiO parallel:
   script:
    - srun ./.ci/unpack-spack-install-tree.sh
    - cd ./ci-tests/NiO
-   - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+   - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.sh
 
 test (HP) LiCoO2:
   extends: .run_tests
@@ -186,7 +186,7 @@ test (HP) LiCoO2 parallel:
   script:
    - srun ./.ci/unpack-spack-install-tree.sh
    - cd ./ci-tests/LiCoO2
-   - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+   - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.sh
 
 test (HP) Ni:
   extends: .run_tests
@@ -215,7 +215,7 @@ test (HP) Ni parallel:
   script:
     - srun ./.ci/unpack-spack-install-tree.sh
     - cd ./ci-tests/Ni/
-    - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+    - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.sh
 
 test (HP) CrI3 parallel:
   extends: .run_tests_baremetal
@@ -228,7 +228,7 @@ test (HP) CrI3 parallel:
   script:
     - srun ./.ci/unpack-spack-install-tree.sh
     - cd ci-tests/CrI3/
-    - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+    - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.sh
 
 test (KCW) Si:
   extends: .run_tests
@@ -267,7 +267,7 @@ test (KCW) Si parallel:
   script:
     - srun ./.ci/unpack-spack-install-tree.sh
     - cd ./ci-tests/Si_koopmans
-    - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+    - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.sh
 
 test (KCW) H2O parallel:
   extends: .run_tests_baremetal
@@ -279,7 +279,7 @@ test (KCW) H2O parallel:
   script:
     - srun ./.ci/unpack-spack-install-tree.sh
     - cd ./ci-tests/h2o_koopmans
-    - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+    - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.sh
 
 test (KCW) LiF parallel:
   extends: .run_tests_baremetal
@@ -292,4 +292,4 @@ test (KCW) LiF parallel:
   script:
     - srun ./.ci/unpack-spack-install-tree.sh
     - cd ./ci-tests/LiF_koopmans
-    - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
+    - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.sh
