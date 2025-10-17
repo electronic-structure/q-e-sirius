@@ -132,7 +132,6 @@ test (HP) Mn2N2 parallel:
   script:
    - srun ./.ci/unpack-spack-install-tree.sh
    - cd ci-tests/Mn2N2
-   - ls /dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/
    - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.sh
 
 test (HP) CaFeO2 parallel:

@@ -19,7 +19,7 @@ srun ${QE_PATH}/pw2wannier90.x -i emp.pw2wann.in
 srun -n1 ${QE_PATH}/wannier90.x wann
 srun -n1 cat wann.wout
 
-srun -n1 wannier90.x wann_emp
+srun -n1 ${QE_PATH}/wannier90.x wann_emp
 srun -n1 cat wann_emp.wout
 
 #kcw
