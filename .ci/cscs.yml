@@ -35,9 +35,13 @@ build q-e-sirius cuda:
       source /dev/shm/spack-clone/share/spack/setup-env.sh
       bwrap --dev-bind / / --tmpfs ~ -- ./.ci/build-cuda.sh
 
+.tests_env_vars:
+  variables:
+    QE_PATH: "/dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/"
+
 .run_tests:
   stage: test
-  extends: [.uenv-runner-daint-gh200]
+  extends: [.uenv-runner-daint-gh200, .test_env_vars]
   image: q-e-sirius-gh200/v1:$CI_PIPELINE_ID
   needs: ["build q-e-sirius cuda"]
   variables:
@@ -48,9 +52,10 @@ build q-e-sirius cuda:
     SLURM_TIMELIMIT: "30:00"
     USE_MPI: 'YES'
     WITH_UENV_VIEW: 'modules'
+# .run_tests_baremetal+uenv run is a workaround to run successive `srun`s
 .run_tests_baremetal:
   stage: test
-  extends: [.baremetal-runner-daint-gh200]
+  extends: [.baremetal-runner-daint-gh200, .test_env_vars]
   needs: ["build q-e-sirius cuda"]
   variables:
     UENV_REPO_PATH: /capstor/scratch/cscs/antonk/.uenv-images-ci-daint
@@ -69,9 +74,9 @@ test (PW) CdO:
     SLURM_CPUS_PER_TASK: 20
     SLURM_NTASKS: 1
   script:
-    - source ./.ci/prepare-run.sh
+    - ./.ci/unpack-spack-install-tree.sh
     - cd ./ci-tests/CdO
-    - pw.x -i CdO.in > out.txt
+    - ${QE_PATH}/pw.x -i CdO.in > out.txt
     - |
       source /user-environment/venv/bin/activate
       python3 ../qe_diff.py ref.txt out.txt
@@ -84,10 +89,10 @@ test (HP) ZrN:
     SLURM_CPUS_PER_TASK: 20
     SLURM_NTASKS: 1
   script:
-    - source ./.ci/prepare-run.sh
+    - ./.ci/unpack-spack-install-tree.sh
     - cd ./ci-tests/ZrN
-    - pw.x -i scf.in -use_qe_scf
-    - hp.x -i hp.in
+    - ${QE_PATH}/pw.x -i scf.in -use_qe_scf
+    - ${QE_PATH}/hp.x -i hp.in
     - cat NZr.Hubbard_parameters.dat
     - |
       source /user-environment/venv/bin/activate
@@ -101,7 +106,7 @@ test (HP) NW parallel:
     SLURM_CPUS_PER_TASK: 20
     SLURM_NTASKS: 4
   script:
-   - source ./.ci/prepare-run.sh
+   - srun ./.ci/unpack-spack-install-tree.sh
    - cd ./ci-tests/NW
    - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
@@ -113,7 +118,7 @@ test (HP) FeO parallel:
     SLURM_CPUS_PER_TASK: 20
     SLURM_NTASKS: 4
   script:
-   - source ./.ci/prepare-run.sh
+   - srun ./.ci/unpack-spack-install-tree.sh
    - cd ./ci-tests/FeO
    - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
@@ -123,14 +128,11 @@ test (HP) Mn2N2 parallel:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
     SLURM_CPUS_PER_TASK: 20
-    SLURM_NTASKS: 4
+    SLURM_NTASKS: 8
   script:
-   - source ./.ci/prepare-run.sh
+   - srun ./.ci/unpack-spack-install-tree.sh
    - cd ci-tests/Mn2N2
-   - echo "$PATH"
    - ls /dev/shm/spack-install/q-e-sirius-develop-ristretto/bin/
-   - which pw.x
-   - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- sh -c 'echo $PATH'
    - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
 test (HP) CaFeO2 parallel:
@@ -141,7 +143,7 @@ test (HP) CaFeO2 parallel:
     SLURM_CPUS_PER_TASK: 20
     SLURM_NTASKS: 4
   script:
-   - source ./.ci/prepare-run.sh
+   - srun ./.ci/unpack-spack-install-tree.sh
    - cd ./ci-tests/CaFeO2
    - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
@@ -153,7 +155,7 @@ test (HP) NiO parallel:
     SLURM_CPUS_PER_TASK: 20
     SLURM_NTASKS: 4
   script:
-   - source ./.ci/prepare-run.sh
+   - srun ./.ci/unpack-spack-install-tree.sh
    - cd ./ci-tests/NiO
    - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
@@ -165,10 +167,10 @@ test (HP) LiCoO2:
     SLURM_CPUS_PER_TASK: 20
     SLURM_NTASKS: 1
   script:
-   - source ./.ci/prepare-run.sh
+   - ./.ci/unpack-spack-install-tree.sh
    - cd ./ci-tests/LiCoO2
-   - pw.x -i LiCoO2.scf.in -use_qe_scf
-   - hp.x -i LiCoO2.hp.in
+   - ${QE_PATH}/pw.x -i LiCoO2.scf.in -use_qe_scf
+   - ${QE_PATH}/hp.x -i LiCoO2.hp.in
    - cat LiCoO2.Hubbard_parameters.dat
    - |
      source /user-environment/venv/bin/activate
@@ -182,7 +184,7 @@ test (HP) LiCoO2 parallel:
     SLURM_CPUS_PER_TASK: 20
     SLURM_NTASKS: 4
   script:
-   - source ./.ci/prepare-run.sh
+   - srun ./.ci/unpack-spack-install-tree.sh
    - cd ./ci-tests/LiCoO2
    - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
@@ -194,10 +196,10 @@ test (HP) Ni:
     SLURM_CPUS_PER_TASK: 20
     SLURM_NTASKS: 1
   script:
-    - source ./.ci/prepare-run.sh
+    - ./.ci/unpack-spack-install-tree.sh
     - cd ./ci-tests/Ni
-    - pw.x -i Ni.scf.in -use_qe_scf
-    - hp.x -i Ni.hp.in
+    - ${QE_PATH}/pw.x -i Ni.scf.in -use_qe_scf
+    - ${QE_PATH}/hp.x -i Ni.hp.in
     - cat Ni.Hubbard_parameters.dat
     - |
       source /user-environment/venv/bin/activate
@@ -211,7 +213,7 @@ test (HP) Ni parallel:
     SLURM_CPUS_PER_TASK: 20
     SLURM_NTASKS: 3
   script:
-    - source ./.ci/prepare-run.sh
+    - srun ./.ci/unpack-spack-install-tree.sh
     - cd ./ci-tests/Ni/
     - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
@@ -224,7 +226,7 @@ test (HP) CrI3 parallel:
     SLURM_NTASKS: 4
     SLURM_TIMELIMIT: "1:30:00"
   script:
-    - source ./.ci/prepare-run.sh
+    - srun ./.ci/unpack-spack-install-tree.sh
     - cd ci-tests/CrI3/
     - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
@@ -236,19 +238,19 @@ test (KCW) Si:
     SLURM_CPUS_PER_TASK: 20
     SLURM_NTASKS: 1
   script:
-    - source ./.ci/prepare-run.sh
+    - srun ./.ci/unpack-spack-install-tree.sh
     - cd ./ci-tests/Si_koopmans
-    - pw.x -i Si.scf.in -use_qe_scf
-    - wannier90.x -pp Si
-    - pw2wannier90.x -i Si.pw2wann.in
-    - wannier90.x Si
+    - ${QE_PATH}/pw.x -i Si.scf.in -use_qe_scf
+    - ${QE_PATH}/wannier90.x -pp Si
+    - ${QE_PATH}/pw2wannier90.x -i Si.pw2wann.in
+    - ${QE_PATH}/wannier90.x Si
     - cat Si.wout
-    - wannier90.x -pp Si_emp
-    - pw2wannier90.x -i Si_emp.pw2wann.in
-    - wannier90.x Si_emp
+    - ${QE_PATH}/wannier90.x -pp Si_emp
+    - ${QE_PATH}/pw2wannier90.x -i Si_emp.pw2wann.in
+    - ${QE_PATH}/wannier90.x Si_emp
     - cat Si_emp.wout
-    - kcw.x -i Si.kcw-wann2kcw.in
-    - kcw.x -i Si.kcw-screen.in
+    - ${QE_PATH}/kcw.x -i Si.kcw-wann2kcw.in
+    - ${QE_PATH}/kcw.x -i Si.kcw-screen.in
     - |
       source /user-environment/venv/bin/activate
       python3 ../kcw_diff.py kcw.ref.yml kcw.yml
@@ -263,7 +265,7 @@ test (KCW) Si parallel:
     SLURM_NTASKS: 4
     SLURM_TIMELIMIT: "1:30:00"
   script:
-    - source ./.ci/prepare-run.sh
+    - srun ./.ci/unpack-spack-install-tree.sh
     - cd ./ci-tests/Si_koopmans
     - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
@@ -275,7 +277,7 @@ test (KCW) H2O parallel:
     SLURM_CPUS_PER_TASK: 20
     SLURM_NTASKS: 4
   script:
-    - source ./.ci/prepare-run.sh
+    - srun ./.ci/unpack-spack-install-tree.sh
     - cd ./ci-tests/h2o_koopmans
     - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
 
@@ -288,6 +290,6 @@ test (KCW) LiF parallel:
     SLURM_NTASKS: 4
     SLURM_TIMELIMIT: "1:30:00"
   script:
-    - source ./.ci/prepare-run.sh
+    - srun ./.ci/unpack-spack-install-tree.sh
     - cd ./ci-tests/LiF_koopmans
     - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.x
