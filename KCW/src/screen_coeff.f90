@@ -88,7 +88,7 @@ SUBROUTINE screen_coeff ()
   CALL sirius_initialize(call_mpi_init=.false.)
 #endif
 
-IF (nqs == 1) do_real_space = .TRUE. 
+  IF (nqs == 1) do_real_space = .TRUE.
   IF (do_real_space) THEN 
      ALLOCATE ( drhor_scf(dffts%nnr,nspin_mag) ) 
      drhor_scf = ZERO
@@ -147,7 +147,7 @@ IF (nqs == 1) do_real_space = .TRUE.
     ! TODO: there were some logic change in KCW related to the new irr_bz flag
     !       need to test if nscf with sirius works
     IF ( .not. setup_pw ) THEN
-      CALL clear_sirius() 
+      CALL clear_sirius()
       CALL setup_sirius()
     END IF
     CALL sirius_create_H0(gs_handler)
