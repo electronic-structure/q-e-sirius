@@ -150,7 +150,6 @@ SUBROUTINE screen_coeff ()
       CALL clear_sirius()
       CALL setup_sirius()
     END IF
-    CALL sirius_create_H0(gs_handler)
 #endif
     !
     ! The NSCF can be run only once for each qpoint if we are not using symmeties
@@ -160,6 +159,9 @@ SUBROUTINE screen_coeff ()
        CALL kcw_run_nscf(do_band)
        IF (kcw_iverbosity .gt. -1) WRITE(stdout,'(/,8X, "INFO: NSCF calculation DONE",/)')
     ENDIF
+#if defined(__SIRIUS)
+    CALL sirius_create_H0(gs_handler)
+#endif
     ! 
     IF (.NOT. irr_bz) THEN
        CALL kcw_initialize_ph ( ) 
