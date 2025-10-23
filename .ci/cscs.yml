@@ -183,7 +183,7 @@ test (HP) LiCoO2 parallel:
     SLURM_CPUS_PER_TASK: 20
     SLURM_NTASKS: 4
   script:
-   - ./.ci/unpack-spack-install-tree.sh
+   - srun ./.ci/unpack-spack-install-tree.sh
    - cd ./ci-tests/LiCoO2
    - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.sh
 
@@ -225,7 +225,7 @@ test (HP) CrI3 parallel:
     SLURM_NTASKS: 4
     SLURM_TIMELIMIT: "1:30:00"
   script:
-    - ./.ci/unpack-spack-install-tree.sh
+    - srun ./.ci/unpack-spack-install-tree.sh
     - cd ci-tests/CrI3/
     - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.sh
 

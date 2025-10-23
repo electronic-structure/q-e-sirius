@@ -2,9 +2,9 @@
 
 set -ex
 
-srun pw.x -i CrI3.scf1.in -use_qe_scf -npool 2
-srun pw.x -i CrI3.scf2.in -npool 2
-srun hp.x -i CrI3.hp.in -npool 2
+srun ${QE_PATH}/pw.x -i CrI3.scf1.in -use_qe_scf -npool 2
+srun ${QE_PATH}/pw.x -i CrI3.scf2.in -npool 2
+srun ${QE_PATH}/hp.x -i CrI3.hp.in -npool 2
 
 srun -n1 cat CrI3.Hubbard_parameters.dat
 source /user-environment/venv/bin/activate
