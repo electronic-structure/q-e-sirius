@@ -237,7 +237,7 @@ test (KCW) Si:
     SLURM_CPUS_PER_TASK: 20
     SLURM_NTASKS: 1
   script:
-    - srun ./.ci/unpack-spack-install-tree.sh
+    - ./.ci/unpack-spack-install-tree.sh
     - cd ./ci-tests/Si_koopmans
     - ${QE_PATH}/pw.x -i Si.scf.in -use_qe_scf
     - ${QE_PATH}/wannier90.x -pp Si
