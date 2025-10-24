@@ -37,8 +37,6 @@ PROGRAM kcw
   USE coulomb,           ONLY : setup_coulomb
   USE control_flags,     ONLY : use_gpu
   !
-  USE mod_sirius
-  !
   IMPLICIT NONE
   !
   CHARACTER(LEN=9) :: code='KCW'

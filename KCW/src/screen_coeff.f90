@@ -383,7 +383,7 @@ SUBROUTINE screen_coeff ()
   !
   CALL kcw_deallocate_symmetry_arrays()
 #if defined(__SIRIUS)
-  ! TODO: check if finalize is needed here; usually it is called once at the end
+  CALL clear_sirius()
   CALL sirius_finalize(call_mpi_fin=.false.)
 #endif
   !
