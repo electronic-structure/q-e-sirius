@@ -1,0 +1,63 @@
+&CONTROL
+  calculation = 'scf'
+  etot_conv_thr =   4.0000000000d-05
+  forc_conv_thr =   5.0000000000d-05
+  max_seconds =   1.0260000000d+04
+  outdir = './out/'
+  prefix = 'CaFeO2'
+  pseudo_dir = '.'
+  tprnfor = .true.
+  tstress = .true.
+  verbosity = 'high'
+/
+&SYSTEM
+  degauss =   1.0000000000d-02
+  ecutrho =   1.0800000000d+03
+  ecutwfc =   9.0000000000d+01
+  ibrav = 0
+  nat = 8
+  nosym = .false.
+  nspin = 2
+  ntyp = 3
+  occupations = 'smearing'
+  smearing = 'cold'
+  starting_magnetization(1) =   1.0000000000d-01
+  starting_magnetization(2) =   3.1250000000d-01
+  starting_magnetization(3) =   1.0000000000d-01
+/
+&ELECTRONS
+  conv_thr =   8.0000000000d-11
+  diagonalization = 'davidson'
+  electron_maxstep = 300
+  mixing_beta =   4.0000000000d-01
+/
+ATOMIC_SPECIES
+Ca     40.078 ca_pbesol_v1.uspp.F.UPF
+Fe     55.845 Fe.pbesol-spn-kjpaw_psl.0.2.1.UPF
+O      15.9994 O.pbesol-n-kjpaw_psl.0.1.UPF
+ATOMIC_POSITIONS angstrom
+O            1.4802009600       4.2335509600       3.0398914800
+O            1.2731490400       1.4802009600       0.3165085200
+O            4.0264990400       1.2731490400       3.0398914800
+O            4.2335509600       4.0264990400       0.3165085200
+Fe           2.7533500000       2.7533500000       0.0000000000
+Fe           0.0000000000       0.0000000000       0.0000000000
+Ca           0.0000000000       2.7533500000       1.8873037200
+Ca           2.7533500000       0.0000000000       1.4690962800
+K_POINTS automatic
+2 2 3 0 0 0 ! 3 3 5 0 0 0
+CELL_PARAMETERS angstrom
+      5.5067000000       0.0000000000       0.0000000000
+      0.0000000000       5.5067000000       0.0000000000
+      0.0000000000       0.0000000000       3.3564000000
+HUBBARD	ortho-atomic
+ V	Fe-3d	Fe-3d	5	5	5.0
+ V	Fe-3d	O-2p	5	2	1.0
+ V	Fe-3d	O-2p	5	105	1.0
+ V	Fe-3d	O-2p	5	107	1.0
+ V	Fe-3d	O-2p	5	4	1.0
+ V	Fe-3d	Fe-3d	6	6	5.0
+ V	Fe-3d	O-2p	6	20	1.0
+ V	Fe-3d	O-2p	6	35	1.0
+ V	Fe-3d	O-2p	6	81	1.0
+ V	Fe-3d	O-2p	6	2	1.0

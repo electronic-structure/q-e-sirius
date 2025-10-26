@@ -23,6 +23,7 @@
   USE lsda_mod,             ONLY : lsda, nspin
   USE wvfct,                ONLY : nbnd, et, npwx
   USE wavefunctions, ONLY : evc
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -38,15 +39,44 @@
   WRITE( stdout, 9002 )
   FLUSH( stdout )
   !
-  IF ( lelfield) THEN
-     !
-     CALL c_bands_efield ( iter )
-     !
+#if defined(__SIRIUS)
+  IF ( use_sirius_scf ) THEN
+    WRITE(*,*)''
+    WRITE(*,*)'============================'
+    WRITE(*,*)'*       running NSCF       *'
+    WRITE(*,*)'============================'
+    ! create k-point set
+    ! WARNING: k-points must be provided in fractional coordinates of the reciprocal lattice and
+    !          without x2 multiplication for the lsda case
+    CALL clear_sirius()
+    CALL setup_sirius()
+    CALL sirius_initialize_kset(ks_handler)
+    CALL sirius_initialize_subspace(gs_handler, ks_handler)
+    CALL sirius_find_eigen_states(gs_handler, ks_handler, iter_solver_tol=1.d-13, iter_solver_steps=100)
+    !save wfs
+    CALL get_wave_functions_from_sirius(ks_handler)
   ELSE
-     !
-     CALL c_bands_nscf_ph ( )
-     !
+    IF ( lelfield ) THEN
+    !
+    CALL c_bands_efield( iter )
+    !
+    ELSE
+    !
+    CALL c_bands_nscf_ph()
+    !
+    ENDIF
   END IF
+#else   
+  IF ( lelfield ) THEN
+  !
+  CALL c_bands_efield( iter )
+  !
+  ELSE
+  !
+  CALL c_bands_nscf_ph()
+  !
+  ENDIF
+#endif  
   !
   ! ... check if calculation was stopped in c_bands
   !
@@ -62,6 +92,11 @@
   ! ... this is done here for et, in weights () for wg
   !
   CALL poolrecover( et, nbnd, nkstot, nks )
+#if defined(__SIRIUS)
+  IF ( use_sirius_scf ) THEN
+    CALL get_band_energies_from_sirius(ks_handler)
+  END IF
+#endif
   !
   ! ... calculate weights of Kohn-Sham orbitals (only weights, not Ef,
   ! ... for a "bands" calculation where Ef is read from data file)

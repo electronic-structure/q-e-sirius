@@ -35,6 +35,7 @@ SUBROUTINE lr_addusddens (npert, dbecsum, drhop)
   USE uspp,                 ONLY : okvan
   USE uspp_param,           ONLY : upf, lmaxq, nh, nhm
   USE qpoint,               ONLY : xq, eigqts
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -82,6 +83,18 @@ SUBROUTINE lr_addusddens (npert, dbecsum, drhop)
   !
   ALLOCATE (aux(ngm, nspin_mag, npert))
   ALLOCATE (aux_r(dfftp%nnr))
+#if defined(__SIRIUS)
+  aux(:, :, :) = (0.d0, 0.d0)
+  DO ipert = 1, npert
+     DO nt = 1, ntyp
+        IF (upf(nt)%tvanp) THEN
+           CALL sirius_generate_rhoaug_q(gs_handler, nt, nat, ngm, nspin_mag, atom_type(nt)%qpw_t, &
+               & nh(nt) * (nh(nt) + 1) / 2, eigqts, mill, dbecsum(:, :, :, ipert), &
+               & nhm * (nhm + 1) / 2, aux(:, :, ipert))
+        ENDIF
+     ENDDO
+  ENDDO
+#else
   ALLOCATE (ylmk0(ngm,lmaxq * lmaxq))
   ALLOCATE (qgm(ngm))
   ALLOCATE (qmod(ngm))
@@ -178,6 +191,7 @@ SUBROUTINE lr_addusddens (npert, dbecsum, drhop)
   ENDDO
   !$acc end data
   ! aux is copied back to host due to copyout(aux)
+#endif
   !
   ! Convert aux to real space, and add to the charge density.
   !
@@ -199,9 +213,11 @@ SUBROUTINE lr_addusddens (npert, dbecsum, drhop)
      ENDDO
   ENDDO ! ipert
   !
+#if !defined(__SIRIUS)
   DEALLOCATE (qmod)
   DEALLOCATE (qgm)
   DEALLOCATE (ylmk0)
+#endif
   DEALLOCATE (aux)
   DEALLOCATE (aux_r)
   !

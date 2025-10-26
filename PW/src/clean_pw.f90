@@ -62,6 +62,7 @@ SUBROUTINE clean_pw( lflag )
   USE tsvdw_module,         ONLY : tsvdw_finalize
   USE libmbd_interface,     ONLY : clean_mbd
   USE dftd3_qe,             ONLY : dftd3_clean
+  USE mod_sirius
   !
   USE control_flags,        ONLY : sic, scissor
   USE sic_mod,              ONLY : deallocate_sic
@@ -86,6 +87,12 @@ SUBROUTINE clean_pw( lflag )
   !
   INTEGER :: nt, nr1, nr2, nr3, istat
   !
+#if defined(__SIRIUS)
+  IF (use_sirius_scf.OR.use_sirius_nlcg) THEN
+    CALL clear_sirius
+  ENDIF
+#endif
+
   IF ( lflag ) THEN
      !
      ! ... arrays allocated at the very beginning of the calculation

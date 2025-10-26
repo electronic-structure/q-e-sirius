@@ -42,6 +42,9 @@ SUBROUTINE setup_nscf ( newgrid, xq, dont_use_ibz )
   USE ktetra,             ONLY : tetra, tetra_type, opt_tetra_init
   USE lr_symm_base,       ONLY : nsymq, invsymq, minus_q
   USE control_lr,         ONLY : lgamma, ethr_nscf
+#if defined(__SIRIUS)
+  USE mod_sirius,         ONLY : setup_kpoints
+#endif
   !
   IMPLICIT NONE
   !
@@ -58,6 +61,7 @@ SUBROUTINE setup_nscf ( newgrid, xq, dont_use_ibz )
   !! - If newgrid is .TRUE., create a full BZ using nk1, ... in start_k.
   !
   LOGICAL  :: skip_equivalence
+  REAL(DP) :: bg_inv(3, 3)
   !
   IF ( .NOT. ALLOCATED( force ) ) ALLOCATE( force( 3, nat ) )
   !
@@ -147,6 +151,12 @@ SUBROUTINE setup_nscf ( newgrid, xq, dont_use_ibz )
      CALL opt_tetra_init(nsymq, s, time_reversal .AND. minus_q, t_rev, at, bg,&
           npk, k1, k2, k3, nk1, nk2, nk3, nkstot, xk, kunit)
   END IF
+  !
+#if defined(__SIRIUS)
+  !
+  CALL setup_kpoints()
+  !
+#endif
   !
   IF ( lsda ) THEN
      !
