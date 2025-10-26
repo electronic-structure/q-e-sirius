@@ -124,6 +124,7 @@ set(src_pw
    src/lchk_tauxk.f90 
    src/ldaU.f90 
    src/make_pointlists.f90 
+   src/mod_sirius.f90
    src/manypw.f90 
    src/martyna_tuckerman.f90 
    src/memory_report.f90 
@@ -281,6 +282,12 @@ endif()
 qe_enable_cuda_fortran("${src_pw}")
     
 qe_add_library(qe_pw ${src_pw})
+
+if(QE_ENABLE_SIRIUS)
+  get_property(_sirius_include_dirs TARGET sirius::sirius PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
+  target_include_directories(qe_pw PRIVATE ${_sirius_include_dirs})
+endif(QE_ENABLE_SIRIUS)
+
 target_link_libraries(qe_pw
     PRIVATE
         qe_device_lapack  
@@ -310,6 +317,11 @@ if(QE_ENABLE_CUDA)
         PRIVATE
             CUDA::cublas)
 endif()
+
+if(QE_ENABLE_SIRIUS)
+    target_link_libraries(qe_pw PRIVATE sirius::sirius)
+endif(QE_ENABLE_SIRIUS)
+
 if ("legacy" IN_LIST QE_ENABLE_PLUGINS) 
   target_compile_definitions(qe_pw PUBLIC __LEGACY_PLUGINS)
 endif()

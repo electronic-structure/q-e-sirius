@@ -49,3 +49,9 @@ EPW/src/tmp
 LAXlib/*.fh
 **/CRASH
 **/pwscf.xml
+KS_Solvers/*.fh
+spack-build-*
+spack-build-env.txt
+spack-build-out.txt
+spack-configure-args.txt
+/build-*

@@ -16,15 +16,17 @@ SUBROUTINE stop_run( exit_status )
   USE mp_global,          ONLY : mp_global_end
   USE environment,        ONLY : environment_end
   USE io_files,           ONLY : iuntmp, seqopn
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
   INTEGER, INTENT(IN) :: exit_status
   LOGICAL             :: exst, opnd, lflag
+  CHARACTER*100 tname
   !
-  lflag = ( exit_status == 0 ) 
+  lflag = ( exit_status == 0 )
   IF ( lflag ) THEN
-     ! 
+     !
      ! ... remove files needed only to restart
      !
      CALL seqopn( iuntmp, 'restart', 'UNFORMATTED', exst )
@@ -46,9 +48,12 @@ SUBROUTINE stop_run( exit_status )
   CALL clean_pw( .TRUE. )
   !
   CALL environment_end( 'PWSCF' )
-  !
+  ! finalize sirius at the very end
+#if defined(__SIRIUS)
+  CALL sirius_finalize(call_mpi_fin=.true., call_device_reset=.true.)
+#else
   CALL mp_global_end()
-  !
+#endif
 END SUBROUTINE stop_run
 !
 !-----------------------------------------
@@ -97,7 +102,7 @@ END SUBROUTINE do_stop
 !----------------------------------------------------------------------------
 SUBROUTINE closefile()
   !----------------------------------------------------------------------------
-  !! Close all files and synchronize processes before stopping.  
+  !! Close all files and synchronize processes before stopping.
   !! Called by "sigcatch" when it receives a signal.
   !
   USE io_global,  ONLY :  stdout
