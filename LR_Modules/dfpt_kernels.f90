@@ -106,7 +106,7 @@ SUBROUTINE dfpt_kernel(code, npert, iter0, lrdvpsi, iudvpsi, dr2, dfpt_data, &
    USE efermi_shift,         ONLY : ef_shift_new, ef_shift_wfc_new
    USE lrus,                 ONLY : int3_paw, int3_nc
    USE control_lr,           ONLY : lgamma, niter_ph, nmix_ph, tr2_ph, alpha_mix, convt, &
-                                    lgamma_gamma, flmixdpot, where_rec, lnoloc
+                                    lgamma_gamma, flmixdpot, where_rec, lnoloc, thresh_init
    USE dv_of_drho_lr,        ONLY : dv_of_drho
    USE lr_nc_mag,            ONLY : int3_nc_save
    USE apply_dpot_mod,       ONLY : apply_dpot_allocate, apply_dpot_deallocate
@@ -268,7 +268,7 @@ SUBROUTINE dfpt_kernel(code, npert, iter0, lrdvpsi, iudvpsi, dr2, dfpt_data, &
       !
       IF (first_iter .OR. kter == 1) THEN
          ! If first iteration or first iteration after restart
-         thresh = 1.0d-2
+         thresh = thresh_init
       ELSE
          thresh = min(1.d-1 * sqrt(dr2), thresh)
       ENDIF

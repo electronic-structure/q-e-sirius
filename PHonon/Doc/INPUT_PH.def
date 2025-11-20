@@ -85,11 +85,20 @@ input_description -distribution {Quantum ESPRESSO} -package PHonon -program ph.x
             }
         }
 
-        var nmix_ph   -type INTEGER { 
+        var nmix_ph   -type INTEGER {
             default { 4 }
             info {
                 Number of iterations used in potential mixing. Using a larger value (8~20)
                 can significantly speed up convergence, at the cost of using more memory.
+            }
+        }
+
+        var thresh_init  -type REAL {
+            default { 1.D-14 }
+            info {
+                Initial and maximum threshold for the solution of the Sternheimer equation.
+                Set to a low value (e.g., 1.d-10) for DFPT calculation of metals near
+                (but not exactly) q=0 for stable DFPT convergence.
             }
         }
 

@@ -63,7 +63,8 @@ SUBROUTINE phq_readin()
 
   USE qpoint,        ONLY : nksq, xq
   USE control_lr,    ONLY : lgamma, lrpa, alpha_mix, lgamma_gamma, tr2_ph, niter_ph, &
-                            nmix_ph, maxter, reduce_io, rec_code_read, lnolr, lnoloc
+                            nmix_ph, maxter, reduce_io, rec_code_read, lnolr, lnoloc, &
+                            thresh_init
   ! YAMBO >
   USE YAMBO,         ONLY : elph_yambo,dvscf_yambo
   ! YAMBO <
@@ -127,7 +128,8 @@ SUBROUTINE phq_readin()
                        lshift_q, read_dns_bare, d2ns_type, diagonalization, &
                        ldvscf_interpolate, do_long_range, do_charge_neutral, &
                        wpot_dir, ahc_dir, ahc_nbnd, ahc_nbndskip, &
-                       skip_upper, dftd3_hess, kx, ky, kz, lmultipole
+                       skip_upper, dftd3_hess, kx, ky, kz, lmultipole, &
+                       thresh_init
 
   ! tr2_ph       : convergence threshold
   ! amass        : atomic masses
@@ -256,6 +258,7 @@ SUBROUTINE phq_readin()
   alpha_mix(1) = 0.7D0
   niter_ph     = maxter
   nmix_ph      = 4
+  thresh_init  = 1.D-2
   nat_todo     = 0
   modenum      = 0
   iverbosity   = 1234567

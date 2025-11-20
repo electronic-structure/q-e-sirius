@@ -17,7 +17,7 @@ subroutine bcast_ph_input ( )
   use mp, only: mp_bcast
   use mp_world, only: world_comm
   USE control_lr, ONLY : lgamma, lrpa, nmix_ph, niter_ph, alpha_mix, tr2_ph, &
-                         reduce_io, lnoloc
+                         reduce_io, lnoloc, thresh_init
   USE control_ph, ONLY : start_irr, last_irr, start_q, last_q, &
                          recover, ldisp, zue, zeu, epsil, trans, &
                          ldiag, lqdir, search_sym,  electron_phonon, &
@@ -123,6 +123,7 @@ subroutine bcast_ph_input ( )
   call mp_bcast (max_seconds, meta_ionode_id, world_comm )
   call mp_bcast (dek, meta_ionode_id, world_comm )
   CALL mp_bcast( el_ph_sigma, meta_ionode_id, world_comm )
+  CALL mp_bcast( thresh_init, meta_ionode_id, world_comm )
   !
   ! characters
   !
