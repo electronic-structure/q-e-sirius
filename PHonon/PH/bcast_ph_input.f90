@@ -46,6 +46,7 @@ subroutine bcast_ph_input ( )
       do_charge_neutral, wpot_dir
   USE ahc,           ONLY : elph_ahc, ahc_dir, ahc_nbnd, ahc_nbndskip, &
       skip_upper
+  USE constrained_dfpt, ONLY : cdfpt, cdfpt_active_space, cdfpt_bands_min, cdfpt_bands_max
 
   implicit none
   !
@@ -83,6 +84,7 @@ subroutine bcast_ph_input ( )
   call mp_bcast (do_long_range, meta_ionode_id, world_comm)
   call mp_bcast (elph_ahc, meta_ionode_id, world_comm)
   call mp_bcast (skip_upper, meta_ionode_id, world_comm)
+  call mp_bcast (cdfpt, meta_ionode_id, world_comm)
   !
   ! integers
   !
@@ -112,6 +114,8 @@ subroutine bcast_ph_input ( )
   CALL mp_bcast( el_ph_nsigma, meta_ionode_id, world_comm )
   CALL mp_bcast( ahc_nbnd, meta_ionode_id, world_comm )
   CALL mp_bcast( ahc_nbndskip, meta_ionode_id, world_comm )
+  CALL mp_bcast( cdfpt_bands_min, meta_ionode_id, world_comm )
+  CALL mp_bcast( cdfpt_bands_max, meta_ionode_id, world_comm )
   !
   ! real*8
   !
@@ -137,6 +141,7 @@ subroutine bcast_ph_input ( )
   call mp_bcast (d2ns_type, meta_ionode_id, world_comm )
   call mp_bcast (wpot_dir, meta_ionode_id, world_comm )
   call mp_bcast (ahc_dir, meta_ionode_id, world_comm )
+  call mp_bcast (cdfpt_active_space, meta_ionode_id, world_comm )
   !
   ! derived type (one bit at a time)
   !

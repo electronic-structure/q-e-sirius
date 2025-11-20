@@ -20,7 +20,7 @@ PROGRAM crpa_main
   USE environment,       ONLY : environment_start, environment_end
   USE ions_base,         ONLY : nat, ityp, atm, tau, amass
   USE io_files,          ONLY : tmp_dir
-  USE control_flags,     ONLY : dfpt_hub, use_para_diag, use_gpu
+  USE control_flags,     ONLY : use_para_diag, use_gpu
   USE qpoint,            ONLY : nqs
   USE w90_wan_Rr_buffer, ONLY : w90_wan_Rr_close_buffer
   USE crpacom,           ONLY : code
@@ -43,10 +43,6 @@ PROGRAM crpa_main
   CALL mp_startup(start_images = .TRUE.)
   !
   CALL environment_start(code)
-  !
-  ! Inform the PW routines that we are performing the HP calculation
-  !
-  dfpt_hub = .TRUE.
   !
   ! Print the preamble
   !

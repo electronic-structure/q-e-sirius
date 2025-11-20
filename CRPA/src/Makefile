@@ -28,7 +28,6 @@ crpa_summary_q.o \
 crpa_allocate_q.o \
 crpa_dvpsi_pert.o \
 crpa_stop_smoothly.o \
-crpa_setup_cdfpt.o \
 crpa_dealloc_1.o \
 crpa_dealloc_2.o \
 crpa_psym_dmag.o \

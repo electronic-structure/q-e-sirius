@@ -22,8 +22,9 @@ SUBROUTINE crpa_summary
   USE funct,            ONLY : write_dft_name
   USE control_lr,       ONLY : ethr_nscf
   USE ldaU,             ONLY : is_hubbard, Hubbard_U, lda_plus_u_kind, Hubbard_V, num_uc
-  USE crpacom,          ONLY : conv_thr_chi, active_space, active_bands_min, active_bands_max
-  USE constrained_dfpt, ONLY : lcdfpt
+  USE crpacom,          ONLY : conv_thr_chi, active_bands_min, active_bands_max
+  USE crpa_pert,        ONLY : pert_basis
+  USE constrained_dfpt, ONLY : cdfpt, cdfpt_active_space, cdfpt_bands_min, cdfpt_bands_max
 
   IMPLICIT NONE
   !
@@ -94,16 +95,22 @@ SUBROUTINE crpa_summary
   WRITE( stdout, '(6x,i3,3x,a6,3x,f8.4,"   tau(",i3, ") = (",3f9.5,"  )")')  &
          & (na, atm(ityp(na)), amass(ityp(na)), na, (tau(ipol,na), ipol=1,3), na=1,nat)
   !
-  ! Print info about the active space
+  ! Print info about the perturbation basis
   !
-  IF (lcdfpt) THEN
+  WRITE(stdout, '()')
+  WRITE(stdout, '(5x,"Perturbation basis: ",a)') TRIM(pert_basis)
+  IF (TRIM(pert_basis) == 'bands') THEN
+     WRITE(stdout, '(5x,5x,"Perturbation bands: ",i5," - ",i5)') active_bands_min, active_bands_max
+  ENDIF
+  WRITE(stdout, '()')
+  !
+  ! Print info about constrained DFPT
+  !
+  IF (cdfpt) THEN
      WRITE(stdout, '()')
-     WRITE(stdout, '(5x,"Active space for constrained DFPT")')
-     IF (TRIM(active_space) == 'none') THEN
-        WRITE(stdout, '(5x,5x,"Active space is not used. Perform ordinary DFPT.")')
-     ELSEIF (TRIM(active_space) == 'bands') THEN
-        WRITE(stdout, '(5x,5x,"Active space defined by the band index.")')
-        WRITE(stdout, '(5x,5x,a,i5,a,i5)') 'Active bands: ', active_bands_min, ' - ', active_bands_max
+     WRITE(stdout, '(5x,"Constrained DFPT active space: ",a)') TRIM(cdfpt_active_space)
+     IF (TRIM(cdfpt_active_space) == 'bands') THEN
+        WRITE(stdout, '(5x,5x,"cDFPT active bands: ",i5," - ",i5)') cdfpt_bands_min, cdfpt_bands_max
      ENDIF
      WRITE(stdout, '()')
   ENDIF

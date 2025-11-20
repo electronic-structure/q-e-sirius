@@ -183,11 +183,58 @@ input_description -distribution {Quantum ESPRESSO} -package PHonon -program ph.x
             }
         }
 
-        var lnoloc  -type LOGICAL { 
+        var lnoloc  -type LOGICAL {
             default { .false. }
             info {
                 If .true. the dielectric constant is calculated without
-                local fields, i.e. by setting DV_H=0 and DV_xc=0. 
+                local fields, i.e. by setting DV_H=0 and DV_xc=0.
+            }
+        }
+
+        var cdfpt  -type LOGICAL {
+            default { .false. }
+            info {
+                If .true. perform constrained DFPT calculation, where the
+                active-space susceptibility is subtracted from the full susceptibility.
+                This is used to compute screened Coulomb interactions excluding
+                specific bands from the screening (e.g., for CRPA calculations).
+                Requires @ref cdfpt_active_space to be specified.
+
+                Note: When @ref cdfpt=.true., the code allows calculations at q=0
+                for metals (overriding the usual restriction).
+            }
+        }
+
+        var cdfpt_active_space  -type CHARACTER {
+            default { '' }
+            info {
+                Specifies the type of active space for constrained DFPT:
+
+                'bands' : Active space defined by a range of band indices
+                          (requires @ref cdfpt_bands_min and @ref cdfpt_bands_max)
+
+                'wannier' : Active space defined by Wannier functions
+                           (not yet implemented for PHonon, available in CRPA)
+
+                This parameter is required when @ref cdfpt=.true.
+            }
+        }
+
+        var cdfpt_bands_min  -type INTEGER {
+            default { 0 }
+            info {
+                Minimum band index for the constrained DFPT active space.
+                Only used when @ref cdfpt=.true. and @ref cdfpt_active_space='bands'.
+                Must be >= 1 and <= @ref cdfpt_bands_max.
+            }
+        }
+
+        var cdfpt_bands_max  -type INTEGER {
+            default { 0 }
+            info {
+                Maximum band index for the constrained DFPT active space.
+                Only used when @ref cdfpt=.true. and @ref cdfpt_active_space='bands'.
+                Must be >= @ref cdfpt_bands_min.
             }
         }
 

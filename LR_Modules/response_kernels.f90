@@ -77,7 +77,7 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
    USE eqv,                   ONLY : dpsi, dvpsi, evq
    USE apply_dpot_mod,        ONLY : apply_dpot_bands
    USE lr_nc_mag,             ONLY : lr_apply_time_reversal
-   USE constrained_dfpt,      ONLY : lcdfpt, cdfpt_subtract_active_wfc
+   USE constrained_dfpt,      ONLY : cdfpt, cdfpt_subtract_active_wfc
    !
    IMPLICIT NONE
    !
@@ -145,7 +145,7 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
    !
    ALLOCATE(h_diag(npwx*npol, nbnd))
    ALLOCATE(aux2(npwx*npol, nbnd))
-   IF (lcdfpt) ALLOCATE(dvpsi_copy(npwx*npol, nbnd))
+   IF (cdfpt) ALLOCATE(dvpsi_copy(npwx*npol, nbnd))
    h_diag = 0.d0
    aux2 = (0.d0, 0.d0)
    !
@@ -238,7 +238,7 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
          !
          ! cDFPT: Store a copy of dvpsi before orthogonalization
          !
-         IF (lcdfpt) dvpsi_copy = dvpsi
+         IF (cdfpt) dvpsi_copy = dvpsi
          !
          ! Orthogonalize dvpsi to valence states
          !
@@ -278,7 +278,7 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
          !
          ! constrained DFPT: subtract the active space contribution
          !
-         IF (lcdfpt) CALL cdfpt_subtract_active_wfc(ik, dvpsi_copy, dpsi)
+         IF (cdfpt) CALL cdfpt_subtract_active_wfc(ik, dvpsi_copy, dpsi)
          !
          ! writes delta_psi on iunit iudwf, k=kpoint,
          !
@@ -308,7 +308,7 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
    !
    DEALLOCATE(aux2)
    DEALLOCATE(h_diag)
-   IF (lcdfpt) DEALLOCATE(dvpsi_copy)
+   IF (cdfpt) DEALLOCATE(dvpsi_copy)
    !
    CALL stop_clock("sth_kernel")
    !

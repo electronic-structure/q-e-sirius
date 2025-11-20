@@ -39,7 +39,7 @@ SUBROUTINE crpa_solve_linear_system (iq)
    USE crpa_pert,            ONLY : npert_tot
    USE dfpt_type,            ONLY : dfpt_data_type, allocate_dfpt_data, deallocate_dfpt_data
    USE dfpt_kernels,         ONLY : dfpt_kernel
-   USE constrained_dfpt,     ONLY : lcdfpt
+   USE constrained_dfpt,     ONLY : cdfpt, cdfpt_setup_q
    !
    IMPLICIT NONE
    !
@@ -84,7 +84,7 @@ SUBROUTINE crpa_solve_linear_system (iq)
    !
    CALL crpa_set_upert()
    !
-   IF (lcdfpt) CALL crpa_setup_cdfpt()
+   IF (cdfpt) CALL cdfpt_setup_q()
    !
    DO ipert = 1, npert_tot
       !

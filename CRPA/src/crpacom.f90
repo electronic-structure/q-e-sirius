@@ -102,15 +102,13 @@ MODULE crpacom
   !! Frequency value for finite-frequency DFPT. (Default: 0 (static DFPT))
   !
   !
-  ! Definition of active space
+  ! Definition of perturbation basis (for CRPA)
+  ! NOTE: For constrained DFPT active space, see LR_Modules/constrained_dfpt.f90
   !
-  CHARACTER(LEN=256) :: active_space
-  !! Method of defining the active space
-  !! = 'bands' : use band indices from active_bands_min to active_bands_max
   INTEGER :: active_bands_max
-  !! For active_space == 'bands': Maximum band index in the active space
+  !! For pert_basis == 'bands': Maximum band index for perturbations
   INTEGER :: active_bands_min
-  !! For active_space == 'bands': Minimum band index in the active space
+  !! For pert_basis == 'bands': Minimum band index for perturbations
   !
   REAL(DP), ALLOCATABLE :: ns(:)
   !! Trace of unperturbed occupations (spin up + spin down)

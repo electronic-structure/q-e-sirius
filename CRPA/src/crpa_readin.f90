@@ -27,12 +27,13 @@ SUBROUTINE crpa_readin()
                                nmix_ph, tr2_ph, thresh_init, conv_thr_nscf
   USE qpoint,           ONLY : nq1, nq2, nq3, start_q, last_q
   USE crpacom,          ONLY : tmp_dir_crpa, tmp_dir_save, wannier_seedname, filU, &
-                               active_space, active_bands_min, active_bands_max, dist_thr, &
+                               active_bands_min, active_bands_max, dist_thr, &
                                dist_thr_large, folder_wan_Rr, write_wan_Rr, w_freq
   USE crpa_pert,        ONLY : pert_basis
   USE crpa_qpoints,     ONLY : qplot
   USE qpoint,           ONLY : x_q, nqs
-  USE constrained_dfpt, ONLY : lcdfpt
+  USE constrained_dfpt, ONLY : cdfpt, cdfpt_active_space, cdfpt_bands_min, cdfpt_bands_max, &
+                               cdfpt_validate_input
   ! conv_thr_chi, , find_atpert, skip_atom, skip_type, &
 !                                equiv_type, background, compute_crpa,         &
 !                                perturb_only_atom, sum_pertq, determine_num_pert_only,  &
@@ -84,10 +85,11 @@ SUBROUTINE crpa_readin()
   ! w_freq : Complex frequency value for finite-frequency DFPT. (Default: 0 (static DFPT))
   !
   NAMELIST / INPUTCRPA / prefix, outdir, lrpa, niter_max, alpha_mix, nq1, nq2, nq3, &
-                         nmix, start_q, last_q, thresh_init, tr2, active_space, &
+                         nmix, start_q, last_q, thresh_init, tr2, &
                          active_bands_min, active_bands_max, diagonalization, iverbosity, &
                          conv_thr_nscf, reduce_io, wannier_seedname, pert_basis, filU, &
-                         qplot, dist_thr, dist_thr_large, lcdfpt, folder_wan_Rr, &
+                         qplot, dist_thr, dist_thr_large, cdfpt, cdfpt_active_space, &
+                         cdfpt_bands_min, cdfpt_bands_max, folder_wan_Rr, &
                          write_wan_Rr, w_freq
 ! , skip_equivalence_q,   &
 !                          conv_thr_chi, skip_atom, skip_type, equiv_type, iverbosity,  &
@@ -140,8 +142,10 @@ SUBROUTINE crpa_readin()
   alpha_mix(:)       = 0.D0
   alpha_mix(1)       = 0.7D0
   nmix               = 12
-  lcdfpt             = .FALSE.
-  active_space       = ''
+  cdfpt              = .FALSE.
+  cdfpt_active_space = ''
+  cdfpt_bands_min    = 0
+  cdfpt_bands_max    = 0
   pert_basis         = 'bands'
   active_bands_min   = 0
   active_bands_max   = 0
@@ -399,23 +403,9 @@ SUBROUTINE input_sanity()
 !   IF ( xclib_dft_is('hybrid') ) CALL errore('crpa_readin',&
 !      'The CRPA code with hybrid functionals is not yet available',1)
   !
-  ! Check sanity of active space definition
+  ! Check sanity of perturbation basis definition
   !
   IF (pert_basis == '') CALL errore('crpa_readin', 'pert_basis not defined', 1)
-  !
-  IF (lcdfpt) THEN
-    IF (active_space == '') CALL errore('crpa_readin', 'active_space not defined', 1)
-    IF (active_space == 'bands') THEN
-      IF (active_bands_min < 1) CALL errore('crpa_readin', 'active_bands_min is not set', 1)
-      IF (active_bands_max < 1) CALL errore('crpa_readin', 'active_bands_max is not set', 1)
-      IF (active_bands_min > active_bands_max) CALL errore('crpa_readin', &
-          'active_bands_min cannot be greater than active_bands_max', 1)
-    ELSEIF (active_space == 'wannier') THEN
-      IF (wannier_seedname == '') CALL errore('crpa_readin', 'wannier_seedname not set', 1)
-    ELSE
-      CALL errore('crpa_readin', 'Invalid active_space. Must be none or bands or wannier.', 1)
-    ENDIF
-  ENDIF
   !
   IF (pert_basis == 'bands') THEN
     IF (active_bands_min < 1) CALL errore('crpa_readin', 'active_bands_min is not set', 1)
@@ -427,6 +417,10 @@ SUBROUTINE input_sanity()
   ELSE
     CALL errore('crpa_readin', 'Invalid pert_basis. Must be bands or wannier.', 1)
   ENDIF
+  !
+  ! Validate constrained DFPT parameters
+  !
+  IF (cdfpt) CALL cdfpt_validate_input()
   !
   RETURN
   !

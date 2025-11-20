@@ -26,7 +26,7 @@ SUBROUTINE crpa_dealloc_q()
   USE lr_nc_mag,           ONLY : deeq_nc_save
   USE crpacom,             ONLY : v_coul_bare, v_coul_scrd, ik_to_ik_orig
   USE crpa_pert,           ONLY : pert_basis, pert_Rlist
-  USE constrained_dfpt,    ONLY : lcdfpt, cdfpt_deallocate
+  USE constrained_dfpt,    ONLY : cdfpt, cdfpt_deallocate
   !
   IMPLICIT NONE
   INTEGER :: ik
@@ -83,7 +83,7 @@ SUBROUTINE crpa_dealloc_q()
      if (associated(swfcatomkpq)) deallocate (swfcatomkpq)
   endif
   !
-  IF (lcdfpt) CALL cdfpt_deallocate()
+  IF (cdfpt) CALL cdfpt_deallocate()
   !
   DEALLOCATE(v_coul_bare)
   DEALLOCATE(v_coul_scrd)

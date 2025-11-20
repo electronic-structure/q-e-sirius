@@ -27,8 +27,15 @@ MODULE constrained_dfpt
    !
    SAVE
    !
-   LOGICAL :: lcdfpt = .FALSE.
+   LOGICAL :: cdfpt = .FALSE.
    !! Logical flag to enable constrained DFPT
+   !
+   CHARACTER(LEN=256) :: cdfpt_active_space = ''
+   !! Active space specification: 'bands' or 'wannier'
+   INTEGER :: cdfpt_bands_min = 0
+   !! Minimum band index in the active space (for active_space = 'bands')
+   INTEGER :: cdfpt_bands_max = 0
+   !! Maximum band index in the active space (for active_space = 'bands')
    !
    COMPLEX(DP), ALLOCATABLE :: chi_active(:, :, :)
    !! Bare active-space susceptibility, to be subtracted from the full susceptibility.
@@ -130,21 +137,16 @@ MODULE constrained_dfpt
    !----------------------------------------------------------------------------------------
    !
    !----------------------------------------------------------------------------------------
-   SUBROUTINE cdfpt_chi_active_by_bands(active_bands_min, active_bands_max)
+   SUBROUTINE cdfpt_chi_active_by_bands()
    !----------------------------------------------------------------------------------------
    !! Compute the active-space susceptibility for active space defined by band indices
-   !! from active_bands_min to active_bands_max.
+   !! from cdfpt_bands_min to cdfpt_bands_max.
    !----------------------------------------------------------------------------------------
       USE kinds,                ONLY : DP
       USE wvfct,                ONLY : nbnd
       USE qpoint,               ONLY : ikks, ikqs, nksq
       !
       IMPLICIT NONE
-      !
-      INTEGER, INTENT(IN) :: active_bands_min
-      !! Minimum band index in the active space
-      INTEGER, INTENT(IN) :: active_bands_max
-      !! Maximum band index in the active space
       !
       INTEGER :: ik, ikk, ikq
       !! k and k+q point indices
@@ -167,8 +169,8 @@ MODULE constrained_dfpt
          ikk = ikks(ik)
          ikq = ikqs(ik)
          !
-         DO ibnd = active_bands_min, active_bands_max
-            DO jbnd = active_bands_min, active_bands_max
+         DO ibnd = cdfpt_bands_min, cdfpt_bands_max
+            DO jbnd = cdfpt_bands_min, cdfpt_bands_max
                factor = susceptibility_factor(ibnd, jbnd, ikk, ikq)
                chi_active(jbnd, ibnd, ik) = CMPLX(factor, 0.d0, KIND = DP)
             ENDDO
@@ -178,6 +180,53 @@ MODULE constrained_dfpt
       !
    !----------------------------------------------------------------------------------------
    END SUBROUTINE cdfpt_chi_active_by_bands
+   !----------------------------------------------------------------------------------------
+   !
+   !----------------------------------------------------------------------------------------
+   SUBROUTINE cdfpt_validate_input()
+   !----------------------------------------------------------------------------------------
+   !! Validate constrained DFPT input parameters
+   !----------------------------------------------------------------------------------------
+      IMPLICIT NONE
+      !
+      IF (.NOT. cdfpt) RETURN
+      !
+      IF (cdfpt_active_space == '') CALL errore('cdfpt_validate_input', 'cdfpt_active_space is not defined', 1)
+      !
+      IF (cdfpt_active_space == 'bands') THEN
+         IF (cdfpt_bands_min < 1) CALL errore('cdfpt_validate_input', 'cdfpt_bands_min must be >= 1', 1)
+         IF (cdfpt_bands_max < 1) CALL errore('cdfpt_validate_input', 'cdfpt_bands_max must be >= 1', 1)
+         IF (cdfpt_bands_min > cdfpt_bands_max) CALL errore('cdfpt_validate_input', &
+            'cdfpt_bands_min must be <= cdfpt_bands_max', 1)
+      ELSEIF (cdfpt_active_space == 'wannier') THEN
+         CALL errore('cdfpt_validate_input', 'Wannier active space not yet implemented', 1)
+      ELSE
+         CALL errore('cdfpt_validate_input', 'Invalid cdfpt_active_space. Must be bands or wannier.', 1)
+      ENDIF
+      !
+   !----------------------------------------------------------------------------------------
+   END SUBROUTINE cdfpt_validate_input
+   !----------------------------------------------------------------------------------------
+   !
+   !----------------------------------------------------------------------------------------
+   SUBROUTINE cdfpt_setup_q()
+   !----------------------------------------------------------------------------------------
+   !! Setup constrained DFPT for current q-point
+   !----------------------------------------------------------------------------------------
+      IMPLICIT NONE
+      !
+      IF (.NOT. cdfpt) CALL errore('cdfpt_setup_q', 'cdfpt is .FALSE., should not call cdfpt_setup_q', 1)
+      !
+      CALL cdfpt_allocate()
+      !
+      IF (cdfpt_active_space == 'bands') THEN
+         CALL cdfpt_chi_active_by_bands()
+      ELSEIF (cdfpt_active_space == 'wannier') THEN
+         CALL errore('cdfpt_setup_q', 'Wannier active space not yet implemented', 1)
+      ENDIF
+      !
+   !----------------------------------------------------------------------------------------
+   END SUBROUTINE cdfpt_setup_q
    !----------------------------------------------------------------------------------------
    !
    !----------------------------------------------------------------------------------------

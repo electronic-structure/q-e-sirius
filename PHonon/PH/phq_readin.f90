@@ -65,6 +65,8 @@ SUBROUTINE phq_readin()
   USE control_lr,    ONLY : lgamma, lrpa, alpha_mix, lgamma_gamma, tr2_ph, niter_ph, &
                             nmix_ph, maxter, reduce_io, rec_code_read, lnolr, lnoloc, &
                             thresh_init
+  USE constrained_dfpt, ONLY : cdfpt, cdfpt_active_space, cdfpt_bands_min, cdfpt_bands_max, &
+                               cdfpt_validate_input
   ! YAMBO >
   USE YAMBO,         ONLY : elph_yambo,dvscf_yambo
   ! YAMBO <
@@ -129,7 +131,8 @@ SUBROUTINE phq_readin()
                        ldvscf_interpolate, do_long_range, do_charge_neutral, &
                        wpot_dir, ahc_dir, ahc_nbnd, ahc_nbndskip, &
                        skip_upper, dftd3_hess, kx, ky, kz, lmultipole, &
-                       thresh_init
+                       thresh_init, cdfpt, cdfpt_active_space, cdfpt_bands_min, &
+                       cdfpt_bands_max
 
   ! tr2_ph       : convergence threshold
   ! amass        : atomic masses
@@ -266,6 +269,10 @@ SUBROUTINE phq_readin()
   trans        = .TRUE.
   lrpa         = .FALSE.
   lnoloc       = .FALSE.
+  cdfpt        = .FALSE.
+  cdfpt_active_space = ''
+  cdfpt_bands_min    = 0
+  cdfpt_bands_max    = 0
   epsil        = .FALSE.
   zeu          = .TRUE.
   zue          = .FALSE.
@@ -432,6 +439,7 @@ SUBROUTINE phq_readin()
   IF (modenum < 0) CALL errore ('phq_readin', ' Wrong modenum ', 1)
   IF (dek <= 0.d0) CALL errore ( 'phq_readin', ' Wrong dek ', 1)
   !
+  IF (cdfpt) CALL cdfpt_validate_input()
   !
   elph_simple= .FALSE.
   elph_mat   = .FALSE.
@@ -957,7 +965,7 @@ SUBROUTINE phq_readin()
   !   IF (meta_ionode) ios = close_input_file ()
   !
   IF (twochem.AND.elph) CALL errore ('phq_readin', 'electron-phonon with twochem approach not yet implemented',1)
-  IF (epsil.AND.(lgauss .OR. ltetra)) &
+  IF (epsil.AND.(lgauss .OR. ltetra) .AND. (.NOT. cdfpt)) &
         CALL errore ('phq_readin', 'no elec. field with metals', 1)
   IF (modenum > 0) THEN
      IF ( ldisp ) &
