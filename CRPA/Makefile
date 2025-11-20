@@ -3,7 +3,7 @@ sinclude ../make.inc
 
 default: all
 
-all: crpa w90mod
+all: w90mod elph crpa
 
 w90mod:	
 	( cd wannier ; $(MAKE) all || exit 1 )

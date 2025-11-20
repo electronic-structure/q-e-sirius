@@ -150,7 +150,7 @@ pioud : pw pwlibs
 	if test -d PIOUD ; then \
 	( cd PIOUD ; $(MAKE) all || exit 1 ) ; fi
 
-crpa : crpalibs
+crpa : crpalibs phlibs lrmods
 	if test -d CRPA; then \
 	( cd CRPA; $(MAKE) TLDEPS= all || exit 1) ; fi
 
@@ -206,7 +206,7 @@ pw4gwwlib : phlibs
 	if test -d GWW ; then \
 	( cd GWW ; $(MAKE) pw4gwwa || exit 1 ) ; fi
 
-crpalibs: crpalibs lrmods
+crpalibs: phlibs lrmods
 	if test -d CRPA; then \
 	( cd CRPA; $(MAKE) crpa-lib || exit 1) ; fi
 
