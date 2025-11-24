@@ -58,7 +58,7 @@ SUBROUTINE crpa_compute_perturbation_q(ipert, drho, dfpt_data)
    drho_sum = drho_sum * omega / DBLE(dfftp%nr1) / DBLE(dfftp%nr2) / DBLE(dfftp%nr3)
    WRITE(stdout, '(5x,A,2ES20.10)') 'Sum of drho (normalized to 1) = ', drho_sum
    !
-   ! Set delta_n_ext (monopole charge of external perturbation).
+   ! Set dfpt_data%dn0 (monopole charge of external perturbation).
    ! Needed for the calculation of the Fermi energy shift for q=0 with metals.
    !
    IF (ALLOCATED(dfpt_data%dn0)) THEN
