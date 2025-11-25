@@ -117,7 +117,6 @@ set(src_pw
    src/iweights.f90 
    src/intersite_V.f90 
    src/init_nsg.f90 
-   src/nsg_adj.f90 
    src/start_k.f90 
    src/kpoint_grid.f90 
    src/lchk_tauxk.f90 

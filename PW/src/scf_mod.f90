@@ -111,7 +111,6 @@ MODULE scf
                        rlen_dip=0, rlen_ldaUb=0, rlen_pol=0, &
                        start_rho=0, start_kin=0, start_ldaU=0, start_bec=0, &
                        start_dipole=0, start_ldaUb=0, start_pol=0
-  INTEGER :: nt
   ! DFT+U, colinear and noncolinear cases
   LOGICAL, PRIVATE :: lda_plus_u_co  ! collinear case
   LOGICAL, PRIVATE :: lda_plus_u_cob ! collinear case (background states)
@@ -149,12 +148,7 @@ CONTAINS
    !
    lda_plus_u_co  = lda_plus_u .AND. .NOT. ( nspin == 4 ) .AND. .NOT. ( lda_plus_u_kind == 2)
    lda_plus_u_nc  = lda_plus_u .AND.       ( nspin == 4 ) .AND. .NOT. ( lda_plus_u_kind == 2)
-   lda_plus_u_cob = .FALSE.
-   IF (lda_plus_u_co) THEN
-      DO nt = 1, ntyp
-         IF (is_hubbard_back(nt)) lda_plus_u_cob = .TRUE.
-      ENDDO
-   ENDIF
+   lda_plus_u_cob = lda_plus_u_co .AND. ANY( is_hubbard_back(1:ntyp) )
    !
    IF (lda_plus_u_co)  ALLOCATE( rho%ns(2*Hubbard_lmax+1,2*Hubbard_lmax+1,nspin,nat) )
    IF (lda_plus_u_cob) ALLOCATE( rho%nsb(ldmx_b,ldmx_b,nspin,nat) )
@@ -230,12 +224,7 @@ CONTAINS
    !
    lda_plus_u_co = lda_plus_u .AND. .NOT. (nspin == 4 ) .AND. .NOT. ( lda_plus_u_kind == 2)
    lda_plus_u_nc = lda_plus_u .AND.       (nspin == 4 ) .AND. .NOT. ( lda_plus_u_kind == 2)
-   lda_plus_u_cob = .FALSE.
-   IF (lda_plus_u_co) THEN
-      DO nt = 1, ntyp
-         IF (is_hubbard_back(nt)) lda_plus_u_cob = .TRUE.
-      ENDDO
-   ENDIF
+   lda_plus_u_cob = lda_plus_u_co .AND. ANY( is_hubbard_back(1:ntyp) )
    !
    IF (lda_plus_u_nc) THEN
       ALLOCATE( rho%ns_nc(2*Hubbard_lmax+1,2*Hubbard_lmax+1,nspin,nat) )
@@ -1082,7 +1071,7 @@ FUNCTION ns_ddot_um( rho1, rho2 )
   COMPLEX(DP)  :: vet1(2*Hubbard_lmax+1,2*Hubbard_lmax+1,nspin)
   COMPLEX(DP)  :: vet2(2*Hubbard_lmax+1,2*Hubbard_lmax+1,nspin)
   INTEGER      :: order1(2*Hubbard_lmax+1), order2(2*Hubbard_lmax+1)
-  INTEGER      :: na, ldim, is, m, index1, index2
+  INTEGER      :: na, nt, ldim, is, m, index1, index2
   REAL(DP)     :: lambda1(2*Hubbard_lmax+1,nspin), lambda2(2*Hubbard_lmax+1,nspin)
   !
   ns_ddot_um = 0.D0
@@ -1184,7 +1173,7 @@ FUNCTION ns_ddot_um_nc( rho1, rho2 )
    COMPLEX(DP)  :: vet2(4*Hubbard_lmax+2,4*Hubbard_lmax+2)
    REAL(DP)     :: lambda1(4*Hubbard_lmax+2), lambda2(4*Hubbard_lmax+2)
    INTEGER      :: order1(4*Hubbard_lmax+2), order2(4*Hubbard_lmax+2)
-   INTEGER      :: na, ldim, is, m, index1, index2
+   INTEGER      :: na, nt, ldim, is, m, index1, index2
 
    !
    ns_ddot_um_nc = 0.D0
@@ -1274,7 +1263,7 @@ FUNCTION local_tf_ddot( rho1, rho2, ngm0, g0 )
   COMPLEX(DP), INTENT(IN) :: rho2(ngm0)
   !! see main comment
   REAL(DP), OPTIONAL, INTENT(IN) :: g0
-  !! factrized G-vector norm of G=0 used in GC-SCF
+  !! factorized G-vector norm of G=0 used in GC-SCF
   REAL(DP) :: local_tf_ddot
   !! see main comment
   !
@@ -1361,8 +1350,6 @@ SUBROUTINE rhoz_or_updw( rho, sp, dir )
   !--------------------------------------------------------------------------
   !! Converts rho(up,dw) into rho(up+dw,up-dw) if dir='->rhoz' and
   !! vice versa if dir='->updw'.
-  !
-  USE gvect,  ONLY : ngm
   !
   IMPLICIT NONE
   !

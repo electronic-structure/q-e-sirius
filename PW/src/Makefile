@@ -130,7 +130,6 @@ irreducible_BZ.o \
 iweights.o \
 intersite_V.o \
 init_nsg.o \
-nsg_adj.o \
 start_k.o \
 kpoint_grid.o \
 lchk_tauxk.o \

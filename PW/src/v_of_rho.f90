@@ -29,6 +29,8 @@ SUBROUTINE v_of_rho( rho, rho_core, rhog_core, &
   USE libmbd_interface, ONLY : mbd_interface
   USE sic_mod,          ONLY : add_vsic
 #if defined (__OSCDFT)
+  USE ldaU,             ONLY : lda_plus_u_kind, Hubbard_lmax, Hubbard_l, &
+                               nsg, v_nsg
   USE plugin_flags,     ONLY : use_oscdft
   USE oscdft_base,      ONLY : oscdft_ctx
   USE oscdft_functions, ONLY : oscdft_v_constraint

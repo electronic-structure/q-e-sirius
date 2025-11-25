@@ -778,8 +778,8 @@ SUBROUTINE electrons_scf ( printout, exxen )
            ENDIF
            !
            IF ( first .AND. starting_pot == 'atomic' ) THEN
+              CALL ns_hubbard_adj()
               IF (lda_plus_u_kind.EQ.0) THEN
-                 CALL ns_adj()     
                  IF (noncolin) THEN
                     rhoin%ns_nc = rho%ns_nc                    
                  ELSE
@@ -787,14 +787,12 @@ SUBROUTINE electrons_scf ( printout, exxen )
                     IF (lhb) rhoin%nsb = rho%nsb
                  ENDIF   
               ELSEIF (lda_plus_u_kind.EQ.1) THEN
-                 CALL ns_adj()
                  IF (noncolin) THEN
                     rhoin%ns_nc = rho%ns_nc
                  ELSE
                     rhoin%ns = rho%ns
                  ENDIF
-              ELSEIF (lda_plus_u_kind.EQ.2) THEN
-                 CALL nsg_adj()
+              !ELSEIF (lda_plus_u_kind.EQ.2) THEN
               ENDIF
            ENDIF
            IF ( iter <= niter_with_fixed_ns ) THEN
