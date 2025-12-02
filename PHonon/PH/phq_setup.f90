@@ -102,8 +102,9 @@ subroutine phq_setup
   USE constants,     ONLY : rytoev
   USE dvscf_interpolate, ONLY : ldvscf_interpolate, dvscf_interpol_setup
   USE ahc,           ONLY : elph_ahc, elph_ahc_setup
-
   USE el_phon,       ONLY : elph_mat
+  USE constrained_dfpt, ONLY : cdfpt, cdfpt_setup_q
+  !
   implicit none
 
   real(DP) :: sr_is(3,3,48)
@@ -455,6 +456,10 @@ subroutine phq_setup
   ! AHC e-ph coupling
   !
   IF (elph_ahc) CALL elph_ahc_setup()
+  !
+  ! Constrained DFPT setup for this q-point
+  !
+  IF (cdfpt) CALL cdfpt_setup_q()
   !
   CALL stop_clock ('phq_setup')
   !

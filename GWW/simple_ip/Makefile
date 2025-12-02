@@ -2,6 +2,8 @@
 
 include ../../make.inc
 
+VPATH = @srcdir@
+
 # location of needed modules
 MODFLAGS= $(BASEMOD_FLAGS) \
           $(MOD_FLAG)../pw4gww $(MOD_FLAG)../../PW/src 
@@ -41,5 +43,3 @@ clean :
 	- /bin/rm -f -v simple_ip.x  *.o *~ *.F90 *.d *.mod *.i work.pc
 
 include make.depend
-
-# DO NOT DELETE

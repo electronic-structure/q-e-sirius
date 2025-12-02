@@ -174,7 +174,7 @@ SUBROUTINE stres_hub ( sigmah )
       CALL allocate_bec_type_acc ( nkb, nbnd, becp)
       !
       CALL calbec( offload_type, npw, vkb, evc, becp )
-      CALL s_psi_acc( npwx, npw, nbnd, evc, spsi )
+      CALL s_psi( npwx, npw, nbnd, evc, spsi )
       !
       CALL deallocate_bec_type_acc (becp)
       !

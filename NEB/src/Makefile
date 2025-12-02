@@ -2,6 +2,8 @@
 
 include ../../make.inc
 
+VPATH = @srcdir@
+
 # location of needed modules and included files (if any)
 MODFLAGS= $(BASEMOD_FLAGS) \
           $(MOD_FLAG)../../PW/src \
@@ -67,4 +69,7 @@ clean :
 	- /bin/rm -f ../../bin/neb.x
 	- /bin/rm -f ../../bin/path_interpolation.x
 
+
 include make.depend
+
+

@@ -9,7 +9,6 @@ set(src_ph
     PH/addnlcc_zstar_eu_us.f90
     PH/addusddens.f90
     PH/addusddens_cond.f90
-    PH/addusddense.f90
     PH/addusdynmat.f90
     PH/allocate_part.f90
     PH/allocate_pert.f90
@@ -41,11 +40,10 @@ set(src_ph
     PH/dnsq_bare.f90
     PH/dnsq_orth.f90
     PH/dnsq_orth_set_irr.f90
-    PH/dnsq_scf.f90
+    PH/dnsq_store.f90
     PH/davcio_drho.f90
     PH/dfile_autoname.f90
     PH/dfile_star.f90
-    PH/dfpt_kernels.f90
     PH/dielec.f90
     PH/do_phonon.f90
     PH/do_q2r.f90
@@ -138,7 +136,6 @@ set(src_ph
     PH/symm.f90
     PH/symmorphic_or_nzb.f90
     PH/swfc.f90
-    PH/sym_dns.f90
     PH/sym_dns_wrapper.f90
     PH/transform_int_so.f90
     PH/transform_int_nc.f90
@@ -146,7 +143,6 @@ set(src_ph
     PH/transform_alphasum_so.f90
     PH/tra_write_matrix.f90
     PH/trntnsc.f90
-    PH/twochem_postproc_dfpt.f90
     PH/write_epsilon_and_zeu.f90
     PH/write_qplot_data.f90
     PH/write_matrix.f90

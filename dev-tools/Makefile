@@ -1,5 +1,6 @@
 TMP_FILES = INPUT_*.xml INPUT_*.xml.tcl *-help.tcl
 
+VPATH = @srcdir@
 
 pw: makedoc
 	./check_gui pw
@@ -33,3 +34,7 @@ makedoc:
 
 clean:
 	- rm $(TMP_FILES)
+
+include make.depend
+
+

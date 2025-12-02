@@ -291,10 +291,9 @@ SUBROUTINE control_iosys()
                             rmm_ndim, rmm_conv, gs_nblock, rmm_with_davidson, &
                             tr2, imix, gamma_only, tnosep, tnoseh, &
                             nmix, iverbosity, smallmem, nexxiter, niter, &
-                            io_level, ethr, lscf, lbfgs, lmd, &
-                            lbands, lconstrain, restart, &
+                            io_level, ethr, lscf, lbfgs, lmd, lforce, &
+                            lbands, lconstrain, restart, lensemb, &
                             llondon, ldftd3, do_makov_payne, lxdm, &
-                            lensemb, lforce   => tprnfor, &
                             tstress_          => tstress, &
                             remove_rigid_rot_ => remove_rigid_rot, &
                             diago_full_acc_   => diago_full_acc, &

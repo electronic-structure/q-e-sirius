@@ -283,6 +283,9 @@ MODULE qe_dft_refs
   DATA dft_GGAx(50)%ref / 'Short-ranged pbesol exchange as set by Henderson et al, &
                            & J. Chem. Phys. 128, 194105 (2008); Compare PBESOL-AH' /
   DATA dft_GGAx(50)%wrn / 'none' /
+  ! W3MC  vdW-DF3-MC exchange
+  DATA dft_GGAx(51)%ref / 'T. Jenkins, K. Berland, and T. Thonhauser, DOI: 10.48550/arXiv.2509.02358 (2025)' /
+  DATA dft_GGAx(51)%wrn / 'none' /
   !
   !
   ! ---- GGA correlation ----

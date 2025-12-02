@@ -92,11 +92,11 @@ then
       try_dflags="$try_dflags -D__GPU_MPI"
    fi
    cuda_extlibs="devxlib"
-   cuda_libs="-cudalib=cufft,cublas,cusolver,curand \$(TOPDIR)/external/devxlib/src/libdevXlib.a"
+   cuda_libs="-cudalib=cufft,cublas,cusolver,curand \$(BUILDDIR)/external/devxlib/src/libdevXlib.a"
    
    cuda_fflags="-cuda -gpu=cc$with_cuda_cc,cuda$with_cuda_runtime"
-   cuda_fflags="$cuda_fflags \$(MOD_FLAG)\$(TOPDIR)/external/devxlib/src"
-   cuda_fflags="$cuda_fflags \$(MOD_FLAG)\$(TOPDIR)/external/devxlib/include"
+   cuda_fflags="$cuda_fflags \$(MOD_FLAG)\$(BUILDDIR)/external/devxlib/src"
+   cuda_fflags="$cuda_fflags \$(MOD_FLAG)\$(BUILDDIR)/external/devxlib/include"
    #
    if test "$enable_nvtx" == "yes"; then
       try_dflags="$try_dflags -D__PROFILE_NVTX"

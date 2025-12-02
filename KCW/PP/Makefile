@@ -2,6 +2,8 @@
 
 include ../../make.inc
 
+VPATH = @srcdir@
+
 IFLAGS         = -I../../include -I../src
 
 # location of needed modules and included files (if any)
@@ -61,4 +63,7 @@ clean :
 clean_partial :
 	- /bin/rm -f *__genmod.f90 *__genmod.mod
 
+
 include make.depend
+
+

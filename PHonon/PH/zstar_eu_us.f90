@@ -131,7 +131,7 @@ subroutine zstar_eu_us
 
   IF (noncolin.and.okvan) CALL set_dbecsum_nc(dbecsum_nc, dbecsum, 3)
 
-  call addusddense (dvscf, dbecsum)
+  call lr_addusddens (3, dbecsum, dvscf)
 
   call mp_sum ( dvscf, inter_pool_comm )
 
@@ -152,7 +152,7 @@ subroutine zstar_eu_us
      !
      call dv_of_drho (dvscf (:, :, ipol))
   enddo
-  call psymdvscf(dvscf)
+  call psymdvscf(dvscf, dfftp)
 
 #ifdef TIMINIG_ZSTAR_US
   call stop_clock('zstar_us_3')

@@ -15,7 +15,6 @@ MODULE ldaU
   ! FIXME: lqmax should not be used (see starting_ns* below)
   USE parameters,    ONLY : ntypx, natx, sc_size
   USE ions_base,     ONLY : nat, ntyp => nsp, ityp
-  USE control_flags, ONLY : dfpt_hub
 #if defined (__OSCDFT)
   USE plugin_flags,      ONLY : use_oscdft
   USE oscdft_base,       ONLY : oscdft_ctx
@@ -74,6 +73,9 @@ MODULE ldaU
   !! 0 --> Simplified rotationally-invariant formulation of DFT+U
   !! 1 --> Full formulation of DFT+U
   !! 2 --> Simplified rotationally-invariant formulation of DFT+U+V
+  LOGICAL :: dfpt_hub  = .FALSE.
+  !! Workaround for HP with U+V: if .true. do not deallocate arrays
+  !! dist_s and ityp_s. Also reduces the amount of printout in some routines
   INTEGER :: Hubbard_n(ntypx)
   !! the principal quantum number of the first Hubbard manifold
   INTEGER :: Hubbard_l(ntypx)

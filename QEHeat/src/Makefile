@@ -10,6 +10,9 @@
 # Makefile for QEHeat (all_currents.x)
 
 include ../../make.inc
+
+VPATH = @srcdir@
+
 # location of needed modules
 MODFLAGS= $(BASEMOD_FLAGS) \
           $(MOD_FLAG)../../PW/src $(MOD_FLAG)../../PHonon/PH \
@@ -65,4 +68,7 @@ lib_all_currents.a : $(ALLCURRENTSOBJS)
 clean :
 	- /bin/rm -f *.x *.o *~ *.F90 *.d *.mod *.i *.L lib_all_currents.a
 
+
 include make.depend
+
+

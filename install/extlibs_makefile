@@ -21,14 +21,27 @@ all: libcuda
 
 liblapack:
 	$(call update_submodule,external,lapack)
-	if test ! -e $(TOPDIR)/external/lapack/liblapack.a && test -e make_lapack.inc; then \
+	if test ! -e $(BUILDDIR)/external/lapack/liblapack.a && test -e make_lapack.inc; then \
 	  (cp make_lapack.inc $(TOPDIR)/external/lapack/make.inc; \
-	  cd $(TOPDIR)/external/lapack; $(MAKE) blaslib lapacklib); else \
-        (echo "no configuration file found for lapack"; \
-         echo "run configure from main QE dir"; exit); fi 
+	   cd $(TOPDIR)/external/lapack; $(MAKE) blaslib lapacklib); \
+	   cd $(BUILDDIR)/install && make -f extlibs_makefile lapack_install ; else \
+      (echo "no configuration file found for lapack"; \
+       echo "run configure from main QE dir"; exit) ; fi 
+
 lapack_clean:
 	if test -d $(TOPDIR)/external/lapack; then cd $(TOPDIR)/external/lapack; \
           (if test -f make.inc; then $(MAKE) clean; fi); fi
+
+lapack_install:
+	if test ! $(TOPDIR) -ef $(BUILDDIR) ; then \
+	   mkdir -p $(BUILDDIR)/external/lapack/BLAS/SRC ; \
+	   mkdir -p $(BUILDDIR)/external/lapack/INSTALL ; \
+	   mkdir -p $(BUILDDIR)/external/lapack/SRC ; \
+	   mv $(TOPDIR)/external/lapack/BLAS/SRC/*.o $(BUILDDIR)/external/lapack/BLAS/SRC/ ; \
+	   mv $(TOPDIR)/external/lapack/INSTALL/*.o  $(BUILDDIR)/external/lapack/INSTALL/ ; \
+	   mv $(TOPDIR)/external/lapack/SRC/*.o      $(BUILDDIR)/external/lapack/SRC/ ; \
+	   mv $(TOPDIR)/external/lapack/*.a          $(BUILDDIR)/external/lapack/ ; \
+	fi
 
 ###################################
 # FoX
@@ -36,9 +49,9 @@ lapack_clean:
 
 libfox:
 	$(call update_submodule,external,fox)
-	if test ! -d ../FoX ; then \
+	if test ! -d $(BUILDDIR)/FoX ; then \
   cd $(TOPDIR)/external/fox; \
-    ./configure --prefix=$(TOPDIR)/FoX FC=$(F90) FCFLAGS="$(FOX_FLAGS)"; \
+    ./configure --prefix=$(BUILDDIR)/FoX FC=$(F90) FCFLAGS="$(FOX_FLAGS)"; \
     touch cp_test; \
     if cp -p cp_test cp_test_1; then \
         rm cp_test_1; \
@@ -51,7 +64,7 @@ libfox:
  cd -; \
 fi
 fox_clean:
-	if test -d ../FoX; then (rm -R -f ../FoX); fi
+	if test -d $(BUILDDIR)/FoX; then (rm -R -f $(BUILDDIR)/FoX); fi
 	if test -d $(TOPDIR)/external/fox; then cd $(TOPDIR)/external/fox; \
           (if test -f FoX-config; then $(MAKE) clean; fi); fi
 
@@ -65,17 +78,21 @@ CUDA_PATH := $(if $(GPU_ARCH),$(CUDA_PATH),no)
 libcuda_devxlib :
 	$(call update_submodule,external,devxlib)
 	cd $(TOPDIR)/external/devxlib/src; \
-	ln -fs $(TOPDIR)/make.inc ../; \
+	ln -fs $(BUILDDIR)/make.inc ../; \
 	$(MAKE) all; \
-	touch $(TOPDIR)/install/libcuda_devxlib # do not download and configure again
+	if test ! -d $(BUILDDIR)/external/devxlib/src; then \
+	    mkdir -p $(BUILDDIR)/external/devxlib/src ; \
+	    mv *.o *.mod *.a $(BUILDDIR)/external/devxlib/src/ ; fi
+	touch $(BUILDDIR)/install/libcuda_devxlib # do not download and configure again
 
 libcuda_devxlib_clean:
-	if test -f libcuda_devxlib; then rm libcuda_devxlib; fi
-	if test -d ../external/devxlib; then \
-	   (cd ../external/devxlib; if test -f make.inc; then $(MAKE) clean; fi); fi
+	if test -f $(BUILDDIR)/install/libcuda_devxlib; then rm $(BUILDDIR)/install/libcuda_devxlib; fi
+	if test -d $(TOPDIR)/external/devxlib; then \
+	   (cd $(TOPDIR)/external/devxlib; if test -f make.inc; then $(MAKE) clean; fi); fi
+
 libcuda_devxlib_veryclean:
-	if test -d ../external/devxlib; then \
-	   (cd ../external/devxlib; if test -f make.inc; then \
+	if test -d $(TOPDIR)/external/devxlib; then \
+	   (cd $(TOPDIR)/external/devxlib; if test -f make.inc; then \
 	      ($(MAKE) distclean && rm -f make.inc); fi); fi
 
 ###################################
@@ -84,19 +101,19 @@ libcuda_devxlib_veryclean:
 
 libmbd:
 	$(call update_submodule,external,mbd)
-	if test ! -d ../MBD; then \
-        mkdir ../MBD; \
+	if test ! -d $(BUILDDIR)/MBD; then \
+        mkdir $(BUILDDIR)/MBD; \
         cd $(TOPDIR)/external/mbd/src; \
-	export FXX=$(F90); export FXXOPT="$(F90FLAGS)"; \
-	$(MAKE) -f ../../mbd.make; cp *.mod *.a $(TOPDIR)/MBD; cd ../../.. ;fi
+        export FXX=$(F90); export FXXOPT="$(F90FLAGS)"; \
+        $(MAKE) -f ../../mbd.make ; mv *.o *.mod *.a $(BUILDDIR)/MBD; cd ../../.. ;fi
 
 libmbd_clean:
-	if test -d ../MBD; then (rm -R -f ../MBD); fi
+	if test -d $(BUILDDIR)/MBD; then (rm -R -f $(BUILDDIR)/MBD); fi
 	if test -d $(TOPDIR)/external/mbd/src; then cd $(TOPDIR)/external/mbd/src; \
           $(MAKE) -f ../../mbd.make clean; fi
 
 libmbd_distclean:
-	if test -d ../MBD; then (rm -R -f ../MBD); fi
+	if test -d $(BUILDDIR)/MBD; then (rm -R -f $(BUILDDIR)/MBD); fi
 	if test -d $(TOPDIR)/external/mbd/src; then cd $(TOPDIR)/external/mbd/src; \
           $(MAKE) -f ../../mbd.make distclean; fi
 

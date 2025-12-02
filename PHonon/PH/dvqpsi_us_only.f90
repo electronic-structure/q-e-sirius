@@ -16,7 +16,8 @@ subroutine dvqpsi_us_only (ik, uact, becp1, alphap)
   !! each k-point and for each pattern u. It computes simultaneously all
   !! the bands.  
   !! This routine implements Eq. (B29) of PRB 64, 235118 (2001).
-  !! Only the contribution of the nonlocal potential is calculated here.
+  !! Only the contribution of the nonlocal potential is calculated here;
+  !! both norm-conserving term and ultrasoft correction are calculated here.
   !
   !
   USE kinds, only : DP

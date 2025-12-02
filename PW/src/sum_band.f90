@@ -23,7 +23,7 @@ SUBROUTINE sum_band()
   USE gvect,                ONLY : ngm, g
   USE gvecs,                ONLY : doublegrid
   USE klist,                ONLY : nks, nkstot, wk, xk, ngk, igk_k
-  USE ldaU,                 ONLY : lda_plus_u, lda_plus_u_kind, is_hubbard_back
+  USE ldaU,                 ONLY : lda_plus_u
   USE lsda_mod,             ONLY : lsda, nspin, current_spin, isk
   USE scf,                  ONLY : rho, rhoz_or_updw
   USE sic_mod,              ONLY : isp, pol_type
@@ -130,37 +130,7 @@ SUBROUTINE sum_band()
   !
   ! ... Needed for DFT+Hubbard: compute occupations of Hubbard states
   !
-  IF (lda_plus_u) THEN
-    IF (lda_plus_u_kind==0) THEN
-       !
-       IF (noncolin) THEN
-          CALL new_ns_nc(rho%ns_nc)
-       ELSE
-          CALL new_ns(rho%ns)
-       ENDIF
-       !
-       DO nt = 1, ntyp
-          IF (is_hubbard_back(nt)) CALL new_nsb( rho%nsb )
-       ENDDO
-       !
-    ELSEIF (lda_plus_u_kind==1) THEN
-       !
-       IF (noncolin) THEN
-          CALL new_ns_nc( rho%ns_nc )
-       ELSE
-          CALL new_ns( rho%ns )
-       ENDIF
-       !
-    ELSEIF (lda_plus_u_kind==2) THEN 
-       !
-       IF (noncolin) THEN
-          CALL new_nsg_nc()
-       ELSE
-          CALL new_nsg()
-       ENDIF
-       !
-    ENDIF
-  ENDIF
+  IF (lda_plus_u) CALL new_ns_hubbard ( noncolin, rho )
 #if defined (__OSCDFT)
   IF (use_oscdft .AND. (oscdft_ctx%inp%oscdft_type==1)) CALL oscdft_sum_band(oscdft_ctx)
 #endif

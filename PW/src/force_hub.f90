@@ -152,7 +152,7 @@ SUBROUTINE force_hub( forceh )
       ! ... Compute spsi = S * psi
       CALL allocate_bec_type_acc( nkb, nbnd, becp )
       Call calbec(offload_type, npw, vkb, evc, becp ) 
-      CALL s_psi_acc( npwx, npw, nbnd, evc, spsi )
+      CALL s_psi( npwx, npw, nbnd, evc, spsi )
       CALL deallocate_bec_type_acc( becp )
       !
       ! ... Set up various quantities, in particular wfcU which 

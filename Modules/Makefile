@@ -2,6 +2,8 @@
 
 include ../make.inc
 
+VPATH = @srcdir@
+
 # location of needed modules
 MODFLAGS=$(BASEMOD_FLAGS)
 
@@ -242,4 +244,7 @@ tldeps :
 clean :
 	- /bin/rm -f *.o *.a *.d *.i *~ *_tmp.f90 *.mod *.L
 
+
 include make.depend
+
+

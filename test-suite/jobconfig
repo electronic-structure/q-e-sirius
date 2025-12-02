@@ -17,6 +17,10 @@ inputs_args = ('berry.in', ''), ('berry-1.in', ''), ('berry-2.in','')
 program = PW
 inputs_args = ('cluster1.in', ''), ('cluster2.in', ''), ('cluster3.in',''), ('cluster4.in',''), ('cluster5.in',''), ('cluster6.in',''),
 
+[pw_irrbz/]
+program = PW
+inputs_args = ('scf.in', '')
+
 [pw_lsda/]
 program = PW
 inputs_args = ('lsda.in', ''), ('lsda-2.in', ''), ('lsda-cg.in', ''), ('lsda-mixing_localTF.in', ''), ('lsda-mixing_ndim.in', ''), ('lsda-mixing_TF.in', ''), ('lsda-nelup+neldw.in', ''), ('lsda-tot_magnetization.in', '')
@@ -85,6 +89,10 @@ inputs_args = ('scf-dos-1.in' ,'1'), ('scf-dos-2.in' ,'2')
 program = PW
 inputs_args = ('ncpp-k-1.in' ,'1'), ('ncpp-k-2.in' ,'2'), ('uspp-gamma-1.in' ,'1'), ('uspp-gamma-2.in' ,'2'), ('uspp-k-smearing-1.in' ,'1'), ('uspp-k-smearing-2.in' ,'2'), ('ncpp-gamma-restart-1.in','1'), ('ncpp-gamma-restart-2.in','2'), ('uspp-k-restart-1.in','1'), ('uspp-k-restart-2.in','2')
 
+[ph_2d_metal/]
+program = PH
+inputs_args = ('scf.in', '1'), ('phG.in', '2')
+
 [ph_base/]
 program = PH
 inputs_args = ('c.scf.in', '1'), ('c.phG.in', '2'), ('ni.scf.in', '1'), ('ni.phX.in', '2'), ('si.scf.in', '1'), ('si.phG.in', '2'), ('si.phX.in', '2'), ('nipaw.scf.in', '1'), ('nipaw.phX.in', '2')
@@ -143,11 +151,11 @@ inputs_args = ('ch4.scf.in','1'), ('ch4.ph.in', '2'), ('ch4.dynmat.in', '9')
 
 [ph_restart/]
 program = PH
-inputs_args = ('SiC.scf.in', '1'), ('SiC.phG.in', '2'), ('SiC.phG.restart1.in', '2'), ('SiC.phG.restart2.in', '2'), ('SiC.phG.restart3.in', '2'), ('SiC.phG.restart4.in', '2')
+inputs_args = ('SiC.scf.in', '1'), ('SiC.phG.restart1.in', '2'), ('SiC.phG.restart2.in', '2'), ('SiC.phG.restart3.in', '2'), ('SiC.phG.restart4.in', '2')
 
 [ph_twochem/]
 program = PH
-inputs_args = ('scf_twochem.in', '1'), ('phG_twochem.in','11') 
+inputs_args = ('scf_twochem.in', '1'), ('phG_twochem.in','11'), ('scf2.in', '1'), ('phG2.in','11')
 
 [ph_multipole/]
 program = PH
@@ -243,6 +251,10 @@ inputs_args = ('CH4.pw.in', '1'), ('CH4.tddfpt.in', '2'), ('CH4.tddfpt_pp.in', '
 [tddfpt_eels-si/]
 program = TDDFPT
 inputs_args = ('Si.pw.in', '1'), ('Si.tddfpt-eels.in', '5'), ('Si.tddfpt_pp_eels.in', '4')
+
+[tddfpt_eels-al/]
+program = TDDFPT
+inputs_args = ('Al.pw.in', '1'), ('Al.tddfpt-eels.in', '5'), ('Al_uspp.pw.in', '1'), ('Al_uspp.tddfpt-eels.in', '5')
 
 [tddfpt_magnons_fe/]
 program = TDDFPT

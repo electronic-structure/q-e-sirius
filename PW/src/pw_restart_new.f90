@@ -72,7 +72,7 @@ MODULE pw_restart_new
                                        lscf, scf_error, n_scf_steps, &
                                        tqr, tq_smoothing, tbeta_smoothing, &
                                        gamma_only, noinv, smallmem, &
-                                       lforce=> tprnfor, tstress, &
+                                       lforce, tstress, &
                                        mbd_vdw, llondon, lxdm, ts_vdw
       USE constants,            ONLY : e2  
       USE realus,               ONLY : real_space

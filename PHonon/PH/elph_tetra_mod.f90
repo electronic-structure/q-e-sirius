@@ -48,7 +48,7 @@ SUBROUTINE elph_tetra_lambda()
   USE wvfct, ONLY: et, nbnd
   USE qpoint, ONLY : xq, nksq, ikks
   USE dynmat, ONLY : dyn, w2
-  USE el_phon, ONLY : el_ph_mat, elph_nbnd_min, elph_nbnd_max, done_elph, gamma_disp, el_ph_nsigma
+  USE el_phon, ONLY : el_ph_mat, elph_nbnd_min, elph_nbnd_max, done_elph, gamma_for_all_q, el_ph_nsigma
   USE control_lr,  ONLY : lgamma
   USE control_ph, ONLY : current_iq, qplot, xmldyn
   USE modes, ONLY : u, nirr
@@ -213,7 +213,7 @@ SUBROUTINE elph_tetra_lambda()
      !
      WRITE (stdout, 9010) nu, lambda(nu), gamma * ry_to_gHz
      IF (ionode) WRITE (iuelph, 9010) nu, lambda(nu), gamma * ry_to_gHz
-     IF (qplot) gamma_disp(nu,1,current_iq) = gamma * ry_to_gHz
+     IF (qplot) gamma_for_all_q(nu,1,current_iq) = gamma * ry_to_gHz
      !
   END DO
   !
@@ -505,7 +505,7 @@ SUBROUTINE elph_tetra_gamma()
   USE wvfct, ONLY: et, nbnd
   USE qpoint, ONLY : xq, nksq, ikks
   USE dynmat, ONLY : dyn, w2
-  USE el_phon, ONLY : el_ph_mat, elph_nbnd_min, elph_nbnd_max, done_elph, gamma_disp, el_ph_nsigma
+  USE el_phon, ONLY : el_ph_mat, elph_nbnd_min, elph_nbnd_max, done_elph, gamma_for_all_q, el_ph_nsigma
   USE control_lr,  ONLY : lgamma
   USE control_ph, ONLY : current_iq, qplot, xmldyn
   USE modes, ONLY : u, nirr
@@ -670,7 +670,7 @@ SUBROUTINE elph_tetra_gamma()
      !
      WRITE (stdout, 9010) nu, lambda(nu), gamma * ry_to_gHz
      IF (ionode) WRITE (iuelph, 9010) nu, lambda(nu), gamma * ry_to_gHz
-     IF (qplot) gamma_disp(nu,1,current_iq) = gamma * ry_to_gHz
+     IF (qplot) gamma_for_all_q(nu,1,current_iq) = gamma * ry_to_gHz
      !
   END DO
   !

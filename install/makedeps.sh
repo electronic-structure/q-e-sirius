@@ -25,7 +25,7 @@ then
            PHonon/Gamma PHonon/PH PHonon/FD HP/src atomic/src \
            EPW/src EPW/ZG/src XSpectra/src NEB/src TDDFPT/src \
            GWW/pw4gww GWW/gww GWW/head GWW/bse GWW/simple \
-	   GWW/simple_bse GWW/simple_ip QEHeat/src KCW/src KCW/PP "
+	   GWW/simple_bse GWW/simple_ip QEHeat/src KCW/src KCW/PP CRPA/wannier CRPA/src CRPA/elph"
           
 elif
     test $1 = "-addson"
@@ -110,6 +110,12 @@ for dir in $dirs; do
 	     DEPENDS="$DEPEND2 $LEVEL2/GWW/gww" ;;
 	GWW/simple_ip)
 	     DEPENDS="$DEPEND2" ;;
+     CRPA/wannier )
+	     DEPENDS="$DEPEND2 $LEVEL2/PW/src $LEVEL2/LR_Modules" ;;
+     CRPA/src )
+	     DEPENDS="$DEPEND2 $LEVEL2/PW/src $LEVEL2/LR_Modules $LEVEL2/PHonon/PH $LEVEL2/CRPA/wannier" ;;
+     CRPA/elph )
+	     DEPENDS="$DEPEND2 $LEVEL2/PW/src $LEVEL2/LR_Modules $LEVEL2/PHonon/PH $LEVEL2/CRPA/wannier" ;;
     *)
 # if addson needs a make.depend file
 	DEPENDS="$DEPENDS $add_deps"
@@ -179,4 +185,3 @@ if test "$notfound" = ""
 then
     $ECHO "\nall dependencies updated successfully"
 fi
-

@@ -2,6 +2,8 @@
 
 include ../make.inc
 
+VPATH = @srcdir@
+
 MODFLAGS= $(MOD_FLAG)$(TOPDIR)/upflib/
 
 XCL = \
@@ -67,5 +69,3 @@ clean :
 	- /bin/rm -f *.o *.a *.d *.i *~ *_tmp.f90 *.mod *.L *.x
 
 include make.depend
-
-# DO NOT DELETE

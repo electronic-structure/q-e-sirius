@@ -489,7 +489,7 @@ SUBROUTINE check_initial_status(auxdyn)
      ENDDO
      total_work = SUM(work_iq)
      total_nq = last_q - start_q + 1
-     IF (nimage > total_nq) CALL errore('image_q_irr','some images have no rapp', 1)
+     IF (nimage > total_nq) CALL errore('image_q_irr','some images have no q points', 1)
 
      work_per_image = total_work / nimage
   !

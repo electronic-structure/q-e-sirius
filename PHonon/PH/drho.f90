@@ -223,7 +223,7 @@ subroutine drho
 
      call dscal (2*dfftp%nnr*nspin_mag*npe, 0.5d0, drhoust, 1)
 
-     call addusddens (drhoust, dbecsum(1,1,1,mode+1), mode, npe, 1)
+     call addusddens (drhoust, dbecsum(1,1,1,mode+1), mode, npe)
      do iper = 1, npe
         nu_i = mode+iper
         call save_buffer (drhoust (1, 1, iper), lrdrhous, iudrhous, nu_i)

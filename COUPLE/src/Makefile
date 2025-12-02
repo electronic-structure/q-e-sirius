@@ -1,6 +1,8 @@
 # Makefile for library coupling interface
 include ../../make.inc
 
+VPATH = @srcdir@
+
 # location of required modules and include files
 MODFLAGS= $(BASEMOD_FLAGS) \
           $(MOD_FLAG)../../CPV/src
@@ -40,4 +42,3 @@ libcpv.o: libcpv.f90 ../../Modules/environment.o ../../Modules/mp_global.o \
 
 libqemod.o: libqemod.f90 ../../Modules/qmmm.o
 
-# DO NOT DELETE

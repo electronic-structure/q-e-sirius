@@ -98,14 +98,10 @@ SUBROUTINE ch_psi_all (n, h, ah, e, ik, m)
   spsi (:,:) = (0.d0, 0.d0)
   ah (:,:) = (0.d0, 0.d0)
   !$acc end kernels
-#if defined(__CUDA)
-  CALL h_psi_gpu (npwx, n, m, h, hpsi)
-  CALL s_psi_acc (npwx, n, m, h, spsi)
-#else
+  !
   CALL h_psi (npwx, n, m, h, hpsi)
   CALL s_psi (npwx, n, m, h, spsi)
-#endif
-
+  !
   CALL start_clock ('last')
   !
   !   then we compute ( H - \epsilon S ) * h
@@ -224,7 +220,7 @@ CONTAINS
        endif
        CALL stop_clock_gpu ('ch_psi_calbec')
     ENDIF ! okvan
-    CALL s_psi_acc (npwx, n, m, hpsi, spsi)
+    CALL s_psi (npwx, n, m, hpsi, spsi)
     !$acc parallel loop collapse(2)
     DO ibnd = 1, m
        DO ig = 1, n
@@ -316,7 +312,7 @@ CONTAINS
           end if
           CALL stop_clock_gpu ('ch_psi_calbec')
        ENDIF ! okvan
-       CALL s_psi_acc (npwx, n, m, hpsi, spsi)
+       CALL s_psi (npwx, n, m, hpsi, spsi)
     ENDIF
     !$acc parallel loop collapse(2)
     DO ibnd = 1, m

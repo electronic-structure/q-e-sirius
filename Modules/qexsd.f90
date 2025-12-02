@@ -451,20 +451,19 @@ CONTAINS
     !----------------------------------------------------------------------------------------
     SUBROUTINE qexsd_step_addstep(i_step, max_steps, ntyp, atm, ityp, nat, tau, alat, a1, a2, a3, &
                                   etot, eband, ehart, vtxc, etxc, ewald, degauss, demet, forces,  &
-                                  stress, scf_has_converged, n_scf_steps, scf_error, efieldcorr, potstat_contr,      &
-                                  fcp_force, fcp_tot_charge, gatefield_en)
+                                  tstress, stress, scf_has_converged, n_scf_steps, scf_error, efieldcorr, &
+                                  potstat_contr, fcp_force, fcp_tot_charge, gatefield_en)
     !-----------------------------------------------------------------------------------------
     !! This routing initializes le steps array containing up to max_steps elements of the step_type
     !! data structure. Each element contains structural and energetic info for m.d. trajectories and 
     !! structural minimization paths. All quantities must be provided directly in Hartree atomic units. 
     !! @Note updated on April 10th 2018 by Pietro Delugas
     USE qexsd_init, ONLY : qexsd_init_atomic_structure, qexsd_init_total_energy
-    USE control_flags, ONLY : tstress
     ! 
     INTEGER ,INTENT(IN)             :: i_step, max_steps, ntyp, nat, n_scf_steps, ityp(:)
     REAL(DP),INTENT(IN)             :: tau(3,nat), alat, a1(3), a2(3), a3(3), etot, eband, ehart, vtxc, &
                                        etxc, ewald, scf_error, forces(3,nat), stress(3,3) 
-    LOGICAL,INTENT(IN)              :: scf_has_converged 
+    LOGICAL,INTENT(IN)              :: tstress, scf_has_converged 
     REAL(DP),OPTIONAL,INTENT(IN)    :: degauss, demet, gatefield_en, efieldcorr
     REAL(DP),OPTIONAL,INTENT (IN)   :: potstat_contr, fcp_force, fcp_tot_charge       
     CHARACTER(LEN=*),INTENT(IN)     :: atm(:)

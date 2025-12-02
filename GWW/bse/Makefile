@@ -2,6 +2,8 @@
 #
 include ../../make.inc
 
+VPATH = @srcdir@
+
 # location of needed modules
 MODFLAGS= $(BASEMOD_FLAGS) \
           $(MOD_FLAG)../../PW/src \
@@ -69,7 +71,8 @@ libbse.a : $(BSEOBJS)
 clean :
 	- /bin/rm -f *.x *.o *~ *_tmp.f90 *.d *.mod *.i *.L libbse.a
 
-include make.depend
 
+
+include make.depend
 
 

@@ -370,7 +370,7 @@ PROGRAM epsilon
   !
   CALL grid_destroy()
   !
-  CALL environment_end ( 'epsilon' )
+  CALL environment_end( )
   !
   CALL stop_pp ()
 

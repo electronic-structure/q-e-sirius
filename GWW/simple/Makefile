@@ -1,6 +1,9 @@
 # Makefile for  simple
 
 include ../../make.inc
+
+VPATH = @srcdir@
+
 LIBMIN = ../minpack/minpacklib.a
 
 # location of needed modules
@@ -46,5 +49,3 @@ clean :
 	- /bin/rm -f *.x *.o *~ *.F90 *.d *.mod *.i *.L libsimple.a
 
 include make.depend
-# DO NOT DELETE
-

@@ -2,6 +2,9 @@
 
 include ../../make.inc
 
+srcdir = @srcdir@
+VPATH = @srcdir@
+
 #
 # use recursive definitions in Makefile to modify the PATH for modules
 #
@@ -92,7 +95,7 @@ QEMODS = $(BASEMODS)
 
 TLDEPS= pw ph pp
 
-all : pw ph pp wannier libepw.a epw.x nscf2supercond.x
+all : iodir utildir bindir pw ph pp wannier libepw.a epw.x nscf2supercond.x
 
 libepw.a : $(EPWOBJS)
 	$(AR) $(ARFLAGS) $@ $?
@@ -101,13 +104,25 @@ libepw.a : $(EPWOBJS)
 epw.x : epw.o libepw.a $(PHOBJS) $(LRMODS) $(PWOBJS) $(W90LIB) $(QEMODS)
 	$(LD) $(LDFLAGS) -o $@ \
 	epw.o  libepw.a	$(PHOBJS) $(LRMODS) $(W90LIB) $(PWOBJS) $(QEMODS) $(QELIBS)
-	- ( cd ../bin ; ln -fs ../src/epw.x . )
+	- ( cd $(BUILDDIR)/EPW/bin ; ln -fs ../src/epw.x . )
 
 nscf2supercond.x : utilities/nscf2supercond.o $(PWOBJS) $(QEMODS)
 	$(LD) $(LDFLAGS) -o $@ \
 	utilities/nscf2supercond.o ../../PP/src/libpp.a $(PWOBJS) $(QEMODS) $(QELIBS)
-	- ( cd ../bin ; ln -fs ../src/$@ . )
-	- ( cd ../../bin ; ln -fs ../EPW/src/$@ . )
+	- ( cd $(BUILDDIR)/EPW/bin ; ln -fs ../src/$@ . )
+	- ( cd $(BUILDDIR)/bin ; ln -fs ../EPW/src/$@ . )
+
+iodir :
+	if test ! $(TOPDIR) -ef $(BUILDDIR) ; then \
+	mkdir -p $(BUILDDIR)/EPW/src/io ; fi
+
+utildir :
+	if test ! $(TOPDIR) -ef $(BUILDDIR) ; then \
+	mkdir -p $(BUILDDIR)/EPW/src/utilities ; fi
+
+bindir :
+	if test ! $(TOPDIR) -ef $(BUILDDIR) ; then \
+	cp -r $(TOPDIR)/EPW/bin $(BUILDDIR)/EPW/bin ; fi
 
 pw :
 	cd ../../ ; make pw
@@ -127,4 +142,7 @@ ld1 :
 clean :
 	- /bin/rm -f  *.o *~ *.d *.mod *.i io/*.mod io/*.o utilities/*.mod utilities/*.o libepw.a liblr.a
 
+
 include make.depend
+
+

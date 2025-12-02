@@ -62,7 +62,7 @@ uncompress-gipaw:
 
 configure-gipaw: 
 	cd ../GIPAW ; \
-	./configure --with-qe-source=${TOPDIR}
+	./configure --with-qe-source=$(BUILDDIR)
 	touch ./configure-gipaw
 
 gipaw_clean:
@@ -85,16 +85,19 @@ gipaw_distclean:
 ###########################################################
 
 w90:
-	cd ../external/wannier90; $(MAKE) || exit 1
-	-(cd ../bin; ln -fs ../external/wannier90/*.x .)
+	cd $(TOPDIR)/external/wannier90; $(MAKE) || exit 1 ; \
+	if test ! -d $(BUILDDIR)/external/wannier90; then \
+	    mkdir -p $(BUILDDIR)/external/wannier90 ; fi ;\
+	cd $(BUILDDIR)/install && make -f plugins_makefile w90_install
 
 w90lib:
 	$(call update_submodule,external,wannier90)
-	if test -e make_wannier90.inc; then \
-	(cp make_wannier90.inc \
-	    ../external/wannier90/make.inc ); else \
+	if test -e $(BUILDDIR)/install/make_wannier90.inc; then \
+	(cp $(BUILDDIR)/install/make_wannier90.inc \
+	    $(TOPDIR)/external/wannier90/make.inc ); else \
 	(echo "no make.inc file found for Wannier90"); fi
-	cd ../external/wannier90; $(MAKE) lib || exit 1
+	cd $(TOPDIR)/external/wannier90; $(MAKE) lib || exit 1 ; \
+	cd $(BUILDDIR)/install && make -f plugins_makefile w90_install
 
 w90_clean:
 	if test -d $(TOPDIR)/external/wannier90; then \
@@ -104,6 +107,25 @@ w90_clean:
 
 w90_veryclean: w90_clean
 	rm $(TOPDIR)/external/wannier90/make.inc
+
+w90_install:
+	if test ! $(TOPDIR) -ef $(BUILDDIR) ; then \
+	    if test ! -d $(BUILDDIR)/external/wannier90; then \
+	        mkdir -p $(BUILDDIR)/external/wannier90 ; fi ;\
+	    cd $(TOPDIR)/external/wannier90; \
+	    if test -e libwannier.a; then \
+	        mv libwannier.a $(BUILDDIR)/external/wannier90/ ; fi ;\
+	    if test -e wannier90.x; then \
+	        mv *.x $(BUILDDIR)/external/wannier90/ ; fi ;\
+	    if ls src/obj | grep -qE \.o$$ ; then \
+	        mkdir -p $(BUILDDIR)/external/wannier90/src/obj ; \
+	        mv src/obj/*.o src/obj/*.mod $(BUILDDIR)/external/wannier90/src/obj/ ; fi ;\
+	    if ls src/objp | grep -qE \.o$$; then \
+	        mkdir -p $(BUILDDIR)/external/wannier90/src/objp ;\
+	        mv src/objp/*.o src/objp/*.mod $(BUILDDIR)/external/wannier90/src/objp/ ; fi ;\
+	fi
+	-(if test -e $(BUILDDIR)/external/wannier90.x; then \
+	    cd $(BUILDDIR)/bin; ln -fs $(BUILDDIR)/external/wannier90/*.x ; fi)
 
 ###########################################################
 # WANT

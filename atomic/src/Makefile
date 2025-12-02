@@ -4,6 +4,8 @@
 
 include ../../make.inc
 
+VPATH = @srcdir@
+
 # location of needed modules and included files (if any)
 MODFLAGS= $(BASEMOD_FLAGS)
 
@@ -126,4 +128,7 @@ clean:
 	- /bin/rm -f *.o *_tmp.f90 *.x *~ *.d *.mod *.tmp.* *.L
 	- /bin/rm -f ../../bin/ld1.x
 
+
 include make.depend
+
+

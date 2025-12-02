@@ -3,6 +3,8 @@
 #
 include ../../make.inc
 
+VPATH = @srcdir@
+
 # location of needed modules
 MODFLAGS= $(BASEMOD_FLAGS) \
           $(MOD_FLAG)../pw4gww
@@ -72,5 +74,3 @@ clean :
 	- /bin/rm -f -v gww.x gww_fit.x *.o *~ *_tmp.f90 *.d *.mod *.i *.a
 
 include make.depend
-
-# DO NOT DELETE

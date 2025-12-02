@@ -21,7 +21,7 @@ SUBROUTINE lr_read_wf()
   USE klist,                ONLY : nks, xk, ngk, igk_k
   USE gvect,                ONLY : ngm, g
   USE io_files,             ONLY : nwordwfc, iunwfc, prefix, diropn,&
-                                 & tmp_dir, wfc_dir 
+                                 & tmp_dir, wfc_dir
   USE lr_variables,         ONLY : evc0, sevc0, evc0_virt,        &
                                  & sevc0_virt, nbnd_total, becp1_virt,   &
                                  & becp1_c_virt, no_hxc, becp_1, becp1_c, &

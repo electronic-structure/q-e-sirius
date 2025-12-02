@@ -16,7 +16,8 @@ subroutine dvqpsi_us (ik, uact, addnlcc, becp1, alphap)
   !! each k-point and for each pattern u. It computes simultaneously all
   !! the bands. It implements Eq. (B29) of PRB 64, 235118 (2001). The
   !! contribution of the local pseudopotential is calculated here, that
-  !! of the nonlocal pseudopotential in \(\texttt{dvqpsi_us_only}\).
+  !! of the nonlocal pseudopotential (both norm-conserving and ultrasoft)
+  !! in \(\texttt{dvqpsi_us_only}\).
   !
   !
   USE kinds,            ONLY : DP
@@ -36,7 +37,7 @@ subroutine dvqpsi_us (ik, uact, addnlcc, becp1, alphap)
   USE qpoint,           ONLY : nksq
   USE becmod,           ONLY : bec_type
   USE gvect,            ONLY : gg
-  USE control_lr,       ONLY : lmultipole
+  USE control_ph,       ONLY : lmultipole
   !
   IMPLICIT NONE
   !

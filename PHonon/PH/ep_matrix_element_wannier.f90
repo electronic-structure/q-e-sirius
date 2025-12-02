@@ -972,7 +972,7 @@ SUBROUTINE readmat_findq (iudyn, ibrav, celldm, nat, ntyp, ityp, omega, &
   COMPLEX(DP) :: dynr_c(3,3,nat,nat)
 
   CHARACTER(len=80) :: line
-  CHARACTER(len=3)  :: atm
+  CHARACTER(len=6)  :: atm
   INTEGER :: nt, na, nb, naa, nbb, nu, mu, i, j
   LOGICAL :: lfound
 

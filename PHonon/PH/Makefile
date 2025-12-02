@@ -2,6 +2,8 @@
 
 include ../../make.inc
 
+VPATH = @srcdir@
+
 # location of needed modules and included files (if any)
 MODFLAGS= $(BASEMOD_FLAGS) \
           $(MOD_FLAG)../../PW/src \
@@ -18,7 +20,6 @@ dynmat_nlcc.o \
 addnlcc_zstar_eu_us.o \
 addusddens.o \
 addusddens_cond.o \
-addusddense.o \
 addusdynmat.o \
 allocate_part.o \
 allocate_pert.o \
@@ -52,7 +53,7 @@ d2nsq_bare.o \
 dnsq_bare.o \
 dnsq_orth.o \
 dnsq_orth_set_irr.o \
-dnsq_scf.o \
+dnsq_store.o \
 davcio_drho.o \
 dfile_autoname.o \
 dfile_star.o \
@@ -147,7 +148,6 @@ symdynph_gq.o \
 symm.o \
 symmorphic_or_nzb.o \
 swfc.o \
-sym_dns.o \
 sym_dns_wrapper.o \
 transform_int_so.o \
 transform_int_nc.o \
@@ -155,7 +155,6 @@ transform_alphasum_nc.o \
 transform_alphasum_so.o \
 tra_write_matrix.o \
 trntnsc.o \
-twochem_postproc_dfpt.o \
 write_epsilon_and_zeu.o \
 write_qplot_data.o \
 write_matrix.o \
@@ -164,7 +163,6 @@ write_rec.o \
 write_hub.o \
 zstar_eu.o \
 zstar_eu_us.o \
-dfpt_kernels.o \
 dump_drho.o
 
 RAMANOBJS =    \
@@ -277,4 +275,3 @@ clean :
 	../../bin/alpha2f.x ../../disp_width.x
 
 include make.depend
-# DO NOT DELETE

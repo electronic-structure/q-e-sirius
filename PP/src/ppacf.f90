@@ -988,7 +988,7 @@ PROGRAM do_ppacf
 !            /'     Exc_lambda                =',0PF17.8,' Ry' )
 !9091 FORMAT(/'     Non-local contribution    =',0PF17.8,' Ry' )
 9093 FORMAT(/' delta coupling constant        =',0PE17.4E3,' ')
-  CALL environment_end('ppacf')
+  CALL environment_end( )
   CALL stop_pp
 !
 END PROGRAM do_ppacf

@@ -473,9 +473,9 @@ subroutine solve_head
         call ph_set_upert_e()
 #if defined(__MPI)
         call mp_sum ( pola_charge(:,:,:,i) , inter_pool_comm )
-        call psymdvscf (pola_charge(:,:,:,i))
+        call psymdvscf (pola_charge(:,:,:,i), dfftp)
 #else
-        call symdvscf (pola_charge(:,:,:,i))
+        call symdvscf (pola_charge(:,:,:,i), dfftp)
 #endif
         call ph_deallocate_upert()
         call create_scf_type ( wing, .true. )

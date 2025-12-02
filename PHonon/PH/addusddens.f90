@@ -7,50 +7,39 @@
 !
 !
 !----------------------------------------------------------------------
-subroutine addusddens (drhop, dbecsum, mode0, npe, iflag)
+subroutine addusddens (drhop, dbecsum, mode0, npe)
   !----------------------------------------------------------------------
   !! This routine adds to the change of the charge and of the
   !! magnetization densities the part due to the US augmentation.
   !! It assumes that the array dbecsum has already accumulated the
   !! change of the becsum term. It calculates Eq. B31 of Ref [1].
-  !! If called from drho (iflag=1), dbecsum and drhop contain the
-  !! orthogonalization contribution to the change of the wavefunctions
-  !! and the terms with alphasum and becsum are added. If called
-  !! from solve_* (iflag=0) drhop and dbecsum contain the contribution
-  !! of the solution of the linear system and the terms due to alphasum
-  !! and becsum are not added. In this case the change of the charge
-  !! calculated by drho (called \(\Delta \rho\) in [1]) is read from file
-  !! and added. The contribution of the change of
-  !! the Fermi energy is not calculated here but added later by ef_shift.
+  !! dbecsum and drhop contain the orthogonalization contribution to the
+  !! change of the wavefunctions and the terms with alphasum and becsum are added.
+  !! The contribution of the change of the Fermi energy is not calculated here
+  !! but added later by ef_shift.
   !! [1] PRB 64, 235118 (2001).
   !
   !
   USE kinds, only : DP
   use fft_base,  only: dfftp
   use fft_interfaces, only: invfft
-  USE gvect,  ONLY : gg, ngm, g, eigts1, eigts2, eigts3, mill
+  USE gvect,  ONLY : ngm, g, eigts1, eigts2, eigts3, mill
   USE uspp,     ONLY : okvan, becsum
   USE cell_base, ONLY : tpiba
   USE ions_base, ONLY : nat, ityp, ntyp => nsp
   USE wavefunctions,  ONLY: psic
-  USE buffers,    ONLY : get_buffer
   USE uspp_param, ONLY: upf, lmaxq, nh, nhm
   USE paw_variables, ONLY : okpaw
   USE modes,     ONLY : u
   USE phus,    ONLY : becsumort, alphasum
-  USE units_ph,  ONLY : iudrhous, lrdrhous
   USE noncollin_module, ONLY : nspin_mag
-
   USE qpoint,     ONLY : xq, eigqts
-  USE control_lr, ONLY : lgamma
 
   implicit none
   !
   !   the dummy variables
   !
 
-  integer :: iflag
-  !! input: if zero does not compute drho
   integer :: npe
   !! input: the number of perturbations
   complex(DP) :: drhop (dfftp%nnr, nspin_mag, npe)
@@ -81,38 +70,33 @@ subroutine addusddens (drhop, dbecsum, mode0, npe, iflag)
   ! the values of q+G
   ! the spherical harmonics
 
-  complex(DP) :: fact, zsum, bb, alpha, alpha_0, u1, u2, u3
+  complex(DP) :: fact, zsum, bb, alpha, u1, u2, u3
   ! auxiliary variables
-  complex(DP), allocatable ::  sk (:), qgm(:), drhous (:,:), aux (:,:,:)
+  complex(DP), allocatable ::  sk (:), qgm(:), aux (:,:,:)
   ! the structure factor
   ! q_lm(G)
-  ! contain the charge of drho
   ! auxiliary variable for drho(G)
-
-  if (.not.okvan) return
-  call start_clock ('addusddens')
+  !
+  IF (.not.okvan) return
+  !
+  CALL start_clock ('addusddens')
+  !
   allocate (aux(  ngm , nspin_mag , npe))
   allocate (sk (  ngm))
   allocate (ylmk0(ngm , lmaxq * lmaxq))
   allocate (qgm(  ngm))
   allocate (qmod( ngm))
-  if (.not.lgamma) allocate (qpg( 3  , ngm))
+  allocate (qpg( 3  , ngm))
   !      WRITE( stdout,*) aux, ylmk0, qmod
   !
   !  And then we compute the additional charge in reciprocal space
   !
-  if (.not.lgamma) then
-     call setqmod (ngm, xq, g, qmod, qpg)
-     call ylmr2 (lmaxq * lmaxq, ngm, qpg, qmod, ylmk0)
-     do ig = 1, ngm
-        qmod (ig) = sqrt (qmod (ig) ) * tpiba
-     enddo
-  else
-     call ylmr2 (lmaxq * lmaxq, ngm, g, gg, ylmk0)
-     do ig = 1, ngm
-        qmod (ig) = sqrt (gg (ig) ) * tpiba
-     enddo
-  endif
+  call setqmod (ngm, xq, g, qmod, qpg)
+  call ylmr2 (lmaxq * lmaxq, ngm, qpg, qmod, ylmk0)
+  do ig = 1, ngm
+     qmod (ig) = sqrt (qmod (ig) ) * tpiba
+  enddo
+  !
   fact = cmplx (0.d0, - tpiba, kind=DP)
   aux(:,:,:) = (0.d0, 0.d0)
   do nt = 1, ntyp
@@ -140,37 +124,25 @@ subroutine addusddens (drhop, dbecsum, mode0, npe, iflag)
                     do ipert = 1, npe
                        do is = 1, nspin_mag
                           mode = mode0 + ipert
-                          if (iflag==1) then
-                             zsum = dbecsum (ijh, na, is, ipert)
-                          else
-                             zsum = 2.0_DP*dbecsum (ijh, na, is, ipert)
-                          endif
+                          zsum = dbecsum (ijh, na, is, ipert)
+                          !
                           u1 = u (mu + 1, mode)
                           u2 = u (mu + 2, mode)
                           u3 = u (mu + 3, mode)
-                          if (abs(u1) + abs(u2) + abs(u3) .gt.1d-12 .and. &
-                              iflag.eq.1) then
+                          if (abs(u1) + abs(u2) + abs(u3) > 1d-12) then
                              bb = becsum (ijh, na, is)
                              zsum = zsum + &
                                   ( alphasum (ijh, 1, na, is) * u1 &
                                   + alphasum (ijh, 2, na, is) * u2 &
                                   + alphasum (ijh, 3, na, is) * u3)
-                             IF (okpaw) becsumort(ijh,na,is,mode) =  zsum
-                             u1 = u1 * fact
-                             u2 = u2 * fact
-                             u3 = u3 * fact
-                             alpha_0 = xq(1)*u1 + xq(2)*u2 + xq(3)*u3
+                             !
                              do ig = 1, ngm
-                                alpha = alpha_0 + &
-                                        g(1,ig)*u1 + g(2,ig)*u2 + g(3,ig)*u3
-                                aux(ig,is,ipert) = aux(ig,is,ipert) + &
-                                                   (zsum + alpha*bb) * sk(ig)
+                                alpha = qpg(1,ig)*u1 + qpg(2,ig)*u2 + qpg(3,ig)*u3
+                                aux(ig,is,ipert) = aux(ig,is,ipert) + fact * alpha * bb * sk(ig)
                              enddo
-                          else
-                             call zaxpy (ngm, zsum, sk, 1, aux(1,is,ipert), 1)
-                             IF (okpaw.and.iflag==1) &
-                                    becsumort(ijh,na,is,mode) = zsum
                           endif
+                          call zaxpy (ngm, zsum, sk, 1, aux(1,is,ipert), 1)
+                          IF (okpaw) becsumort(ijh,na,is,mode) = zsum
                        enddo
                     enddo
                  endif
@@ -183,33 +155,22 @@ subroutine addusddens (drhop, dbecsum, mode0, npe, iflag)
   !     convert aux to real space
   !
   do ipert = 1, npe
-     mu = mode0 + ipert
      do is = 1, nspin_mag
         psic(:) = (0.d0, 0.d0)
         do ig = 1, ngm
            psic (dfftp%nl (ig) ) = aux (ig, is, ipert)
         enddo
-        CALL invfft ('Rho', psic, dfftp)
-        call daxpy (2*dfftp%nnr, 1.0_DP, psic, 1, drhop(1,is,ipert), 1)
+        CALL invfft('Rho', psic, dfftp)
+        call zaxpy(dfftp%nnr, (1.d0, 0.d0), psic, 1, drhop(1,is,ipert), 1)
      enddo
   enddo
-  if (.not.lgamma) deallocate (qpg)
+  deallocate (qpg)
   deallocate (qmod)
   deallocate (qgm)
   deallocate (ylmk0)
   deallocate (sk)
   deallocate (aux)
-
-  if (iflag == 0) then
-     allocate (drhous( dfftp%nnr, nspin_mag))
-     do ipert = 1, npe
-        mu = mode0 + ipert
-        call get_buffer (drhous, lrdrhous, iudrhous, mu)
-        call daxpy (2*dfftp%nnr*nspin_mag, 1.d0, drhous, 1, drhop(1,1,ipert), 1)
-     end do
-     deallocate (drhous)
-  end if
-
+  !
   call stop_clock ('addusddens')
-  return
+  !
 end subroutine addusddens

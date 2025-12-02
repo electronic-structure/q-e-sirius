@@ -349,7 +349,7 @@ SUBROUTINE hp_solve_linear_system (na, iq)
      !
      ! USPP: Compute the total response charge density (standard term + US term)
      !
-     IF (okvan) CALL lr_addusddens (drhoscfh, dbecsum)
+     IF (okvan) CALL lr_addusddens (1, dbecsum, drhoscfh)
      !
      call mp_sum ( drhoscf, inter_pool_comm )
      CALL mp_sum ( drhoscfh, inter_pool_comm ) 

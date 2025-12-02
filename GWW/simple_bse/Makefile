@@ -2,6 +2,8 @@
 #
 include ../../make.inc
 
+VPATH = @srcdir@
+
 # location of needed modules
 MODFLAGS= $(BASEMOD_FLAGS) \
 	$(MOD_FLAG)../../GWW/gww 
@@ -42,5 +44,3 @@ clean :
 	- /bin/rm -f -v simple_bse.x  *.o *~ *.F90 *.d *.mod *.i work.pc
 
 include make.depend
-
-# DO NOT DELETE

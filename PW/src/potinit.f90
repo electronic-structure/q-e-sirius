@@ -38,7 +38,7 @@ SUBROUTINE potinit()
                                    vltot, v, vrs, kedtau
   USE xc_lib,               ONLY : xclib_dft_is
   USE ener,                 ONLY : ehart, etxc, vtxc, epaw, esol, vsol
-  USE ldaU,                 ONLY : lda_plus_u, Hubbard_lmax, eth, &
+  USE ldaU,                 ONLY : lda_plus_u, eth, &
                                    niter_with_fixed_ns, lda_plus_u_kind, &
                                    nsg, nsgnew, apply_U, hub_pot_fix, &
                                    orbital_resolved
@@ -306,27 +306,10 @@ SUBROUTINE potinit()
      !
      ! ... info about starting occupations
      WRITE( stdout, '(/5X,"STARTING HUBBARD OCCUPATIONS:")')
+     ! FIXME: next line why?
+     IF (lda_plus_u_kind == 2) nsgnew = nsg
      !
-     IF (lda_plus_u_kind == 0) THEN
-        IF (noncolin) THEN
-           CALL write_ns_nc() 
-        ELSE   
-           CALL write_ns()
-        ENDIF
-     ELSEIF (lda_plus_u_kind == 1) THEN
-        IF (noncolin) THEN
-           CALL write_ns_nc()
-        ELSE
-           CALL write_ns()
-        ENDIF
-     ELSEIF (lda_plus_u_kind == 2) THEN
-        nsgnew = nsg
-        IF(noncolin) THEN
-           CALL write_nsg_nc()
-        ELSE
-           CALL write_nsg()
-        ENDIF
-     ENDIF
+     CALL write_ns_hubbard( noncolin )
      !
   END IF
   !

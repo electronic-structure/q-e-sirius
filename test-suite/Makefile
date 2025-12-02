@@ -171,7 +171,7 @@ clean:
 		ph_ahc*/*.fc ph_ahc*/ahc_dir*
 # Cleaning HP final files
 	@rm -rf hp_*/HP hp_*/*hub* hp_*/*.xml hp_*/*.wfc* hp_*/*.save hp_*/*Hubbard_parameters* \
-		hp_*/*HubbardV* hp_*/*mix* hp_*/*parameters.out
+		hp_*/*HubbardV* hp_*/*mix* hp_*/*parameters.out hp_*/HUBBARD.dat
 # Cleaning KCW final files
 	@rm -rf	kcw_*/out kcw_*/*.nnkp kcw_*/*.wout kcw_*/*.amn kcw_*/*.mmn kcw_*/*.eig kcw_*/*band* kcw_*/*chk \
                 kcw_*/*.dat kcw_*/*.xyz kcw_*/*.mat 

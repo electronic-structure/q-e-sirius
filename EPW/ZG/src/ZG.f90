@@ -24,7 +24,7 @@ Module ifconstants
   INTEGER, ALLOCATABLE  :: ityp_blk(:)
   !! atomic types for each atom of the original cell
   !
-  CHARACTER(LEN=3), ALLOCATABLE :: atm(:)
+  CHARACTER(LEN=6), ALLOCATABLE :: atm(:)
   !
 end Module ifconstants
 !
@@ -328,7 +328,7 @@ PROGRAM ZG
   CHARACTER(LEN= 10) :: point_label_type
   CHARACTER(len=80) :: k_points = 'tpiba'
   ! 
-  CHARACTER(LEN=3)         :: atm_zg(ntypx)
+  CHARACTER(LEN=6)         :: atm_zg(ntypx)
   LOGICAL                  :: ZG_conf, synch, incl_qA, q_external, multi_ZG
   LOGICAL                  :: ZG_strf, compute_error, single_ph_displ
   INTEGER                  :: dim1, dim2, dim3, niters, qpts_strf, nconfs
@@ -996,7 +996,7 @@ PROGRAM ZG
      DEALLOCATE(frc_lr)
   !
 
-  CALL environment_end('ZG')
+  CALL environment_end( )
   !
   CALL mp_global_end()
   !
@@ -2792,7 +2792,7 @@ SUBROUTINE ZG_configuration(nq, nat, ntyp, amass, ityp, q, w2, z_nq, &
   !
   IMPLICIT NONE
   ! input
-  CHARACTER(LEN=3),   INTENT(in) :: atm(ntypx)
+  CHARACTER(LEN=6),   INTENT(in) :: atm(ntypx)
   CHARACTER(LEN=256), INTENT(in) :: flscf
   LOGICAL, INTENT(in)          :: synch, q_in_cryst_coord, q_external, ZG_strf, multi_ZG
   LOGICAL, INTENT(in)          :: incl_qA, compute_error, single_ph_displ, ASDM, mixing
@@ -4119,7 +4119,7 @@ SUBROUTINE create_supercell(at, tau, alat, dim1, dim2, dim3, nat, equil_p, cryst
   IMPLICIT NONE
  !
  !
-  CHARACTER(LEN=3), INTENT(in) :: atm(ntypx)
+  CHARACTER(LEN=6), INTENT(in) :: atm(ntypx)
   INTEGER,  INTENT(in)         :: nq_tot, nat, ctrB, ctrA, nat3, ntyp, ntypx
   INTEGER,  INTENT(in)         :: Rlist(nq_tot, 3) 
   INTEGER,  INTENT(in)         :: ityp(nat)
@@ -4461,7 +4461,7 @@ END SUBROUTINE
   
   IMPLICIT NONE
   ! 
-  CHARACTER(LEN=3), INTENT(in) :: atm(ntypx)
+  CHARACTER(LEN=6), INTENT(in) :: atm(ntypx)
   CHARACTER(LEN=256), INTENT(in) :: flscf, pt_T
   LOGICAL, INTENT(in)          :: read_fd_forces, incl_epsil, poly, poly_fd_forces
   LOGICAL, INTENT(in)          :: mixing, update_equil

@@ -33,9 +33,8 @@ SUBROUTINE dnsq_orth()
   USE ions_base,     ONLY : nat, ityp, ntyp => nsp
   USE ldaU,          ONLY : Hubbard_lmax, Hubbard_l, is_hubbard, offsetU, nwfcU
   USE ldaU_ph,       ONLY : dvkb, vkbkpq, dvkbkpq, &
-                            proj1, proj2, dnsorth_cart, &
-                            read_dns_bare, dnsorth
-  USE ldaU_lr,       ONLY : swfcatomk, swfcatomkpq
+                            dnsorth_cart, read_dns_bare, dnsorth
+  USE ldaU_lr,       ONLY : swfcatomk, swfcatomkpq, proj1, proj2
   USE klist,         ONLY : xk, wk,  ngk, igk_k
   USE wvfct,         ONLY : npwx, wg, nbnd 
   USE qpoint,        ONLY : nksq, ikks, ikqs

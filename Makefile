@@ -6,7 +6,7 @@
 # of the License. See the file `License' in the root directory
 # of the present distribution.
 
-include make.inc
+-include make.inc
 
 # execute a target irrespective of the presence of a file or directory 
 # with the same name
@@ -136,6 +136,9 @@ all_currents:
 	( cd QEHeat ; $(MAKE) all || exit 1; ) ; fi
 
 travis : pwall epw
+	if test ! $(TOPDIR) -ef $(BUILDDIR) ; then \
+	   cp -r $(TOPDIR)/test-suite $(BUILDDIR) ; \
+	   cp -r $(TOPDIR)/pseudo $(BUILDDIR) ; fi
 	if test -d test-suite ; then \
 	( cd test-suite ; make run-travis || exit 1 ) ; fi
 
@@ -147,23 +150,31 @@ pioud : pw pwlibs
 	if test -d PIOUD ; then \
 	( cd PIOUD ; $(MAKE) all || exit 1 ) ; fi
 
+crpa : crpalibs phlibs lrmods
+	if test -d CRPA; then \
+	( cd CRPA; $(MAKE) TLDEPS= all || exit 1) ; fi
+
 gui : bindir
-	@if test -d GUI/PWgui ; then \
-	    cd GUI/PWgui ; \
-	    $(MAKE) TLDEPS= init; \
-	    echo ; \
-	    echo "  ------------------------------------------------------------"; \
-	    echo "  PWgui was built in ./GUI/PWgui/ and a link was made in bin/."; \
-	    echo "  ------------------------------------------------------------"; \
-	    echo "  Try it either as:  "; \
-	    echo "         ./GUI/PWgui/pwgui" ; \
-	    echo "     or"; \
-	    echo "         ./bin/pwgui";\
-	    echo ; \
+	@if test ! $(TOPDIR) -ef $(BUILDDIR) ; then \
+	   echo "make $@ not supported in out-of-source builds" ; \
 	else \
-	    echo ; \
-	    echo "  Sorry, GUI/PWgui directory does not exist !" ; \
-	    echo ; \
+	   if test -d GUI/PWgui ; then \
+	       cd GUI/PWgui ; \
+	       $(MAKE) TLDEPS= init; \
+	       echo ; \
+	       echo "  ------------------------------------------------------------"; \
+	       echo "  PWgui was built in ./GUI/PWgui/ and a link was made in bin/."; \
+	       echo "  ------------------------------------------------------------"; \
+	       echo "  Try it either as:  "; \
+	       echo "         ./GUI/PWgui/pwgui" ; \
+	       echo "     or"; \
+	       echo "         ./bin/pwgui";\
+	       echo ; \
+	   else \
+	       echo ; \
+	       echo "  Sorry, GUI/PWgui directory does not exist !" ; \
+	       echo ; \
+	   fi ; \
 	fi
 
 pwall : pw neb ph pp pwcond acfdt
@@ -194,6 +205,10 @@ gwwlib : phlibs
 pw4gwwlib : phlibs
 	if test -d GWW ; then \
 	( cd GWW ; $(MAKE) pw4gwwa || exit 1 ) ; fi
+
+crpalibs: phlibs lrmods
+	if test -d CRPA; then \
+	( cd CRPA; $(MAKE) crpa-lib || exit 1) ; fi
 
 mods : $(FOX) libutil libla libfft libupf libmbd librxc
 	( cd Modules ; $(MAKE) TLDEPS= all || exit 1 )
@@ -316,49 +331,65 @@ veryclean : clean
 	- @(cd install ; $(MAKE) -f plugins_makefile veryclean)
 	- @(cd install ; $(MAKE) -f extlibs_makefile veryclean)
 	- (cd install ; rm -rf config.log configure.msg config.status \
-		configure.h make_wannier90.inc autom4te.cache )
-	- rm include/configure.h
+		make_wannier90.inc autom4te.cache )
 	- rm -f espresso.tar.gz
 	- rm -rf make.inc
 	- rm -rf FoX
 	- rm -rf MBD 
 # remove everything not in the original distribution
+# place deinit at the very end such that makefiles clean up as much as possible.
 distclean : veryclean
-	- cd pseudo; ./clean_ps ; cd -
-	- (cd install ; $(MAKE) -f plugins_makefile $@)
-	- git submodule deinit --all --force # place deinit at the very end such that makefiles clean up as much as possible.
+	-@if test ! $(TOPDIR) -ef $(BUILDDIR) ; then \
+	   echo "make $@ not supported in out-of-source builds" ; \
+	else \
+		cd pseudo; ./clean_ps ; cd - ;\
+		(cd install ; $(MAKE) -f plugins_makefile $@) ;\
+		git submodule deinit --all --force  ;\
+	fi
 
+# find line: do not include unneeded stuff  
 tar :
-	@if test -f espresso.tar.gz ; then /bin/rm espresso.tar.gz ; fi
-	# do not include unneeded stuff 
-	find ./ -type f | grep -v -e /.svn/ -e'/\.' -e'\.o$$' -e'\.mod$$'\
-		-e /.git/ -e'\.a$$' -e'\.d$$' -e'\.i$$' -e'_tmp\.f90$$' -e'\.x$$' \
-		-e'~$$' -e'\./GUI' -e '\./tempdir' | xargs tar rvf espresso.tar
-	gzip espresso.tar
+	@if test ! $(TOPDIR) -ef $(BUILDDIR) ; then \
+		echo "make $@ not supported in out-of-source builds" ; \
+	else \
+		if test -f espresso.tar.gz ; then /bin/rm espresso.tar.gz ; fi ;\
+		find ./ -type f | grep -v -e /.svn/ -e'/\.' -e'\.o$$' -e'\.mod$$'\
+			-e /.git/ -e'\.a$$' -e'\.d$$' -e'\.i$$' -e'_tmp\.f90$$' -e'\.x$$' \
+			-e'~$$' -e'\./GUI' -e '\./tempdir' | xargs tar rvf espresso.tar ;\
+		gzip espresso.tar ;\
+	fi
 
 #########################################################
 # Tools for the developers
 #########################################################
 tar-gui :
-	@if test -d GUI/PWgui ; then \
-	    cd GUI/PWgui ; \
-	    $(MAKE) TLDEPS= clean init pwgui-source; \
-	    mv PWgui-*.tgz ../.. ; \
+	@if test ! $(TOPDIR) -ef $(BUILDDIR) ; then \
+	   echo "make $@ not supported in out-of-source builds" ; \
 	else \
-	    echo ; \
-	    echo "  Sorry, tar-gui works only for git sources !!!" ; \
-	    echo ; \
+		if test -d GUI/PWgui ; then \
+		    cd GUI/PWgui ; \
+		    $(MAKE) TLDEPS= clean init pwgui-source; \
+		    mv PWgui-*.tgz ../.. ; \
+		else \
+		    echo ; \
+		    echo "  Sorry, tar-gui works only for git sources !!!" ; \
+		    echo ; \
+		fi ;\
 	fi
 
 tar-qe-modes :
-	@if test -d GUI/QE-modes ; then \
-	    cd GUI/QE-modes ; \
-	    $(MAKE) TLDEPS= veryclean tar; \
-	    mv QE-modes-*.tar.gz ../.. ; \
+	@if test ! $(TOPDIR) -ef $(BUILDDIR) ; then \
+	   echo "make $@ not supported in out-of-source builds" ; \
 	else \
-	    echo ; \
-	    echo "  Sorry, tar-qe-modes works only for git sources !!!" ; \
-	    echo ; \
+		if test -d GUI/QE-modes ; then \
+		    cd GUI/QE-modes ; \
+		    $(MAKE) TLDEPS= veryclean tar; \
+		    mv QE-modes-*.tar.gz ../.. ; \
+		else \
+		    echo ; \
+		    echo "  Sorry, tar-qe-modes works only for git sources !!!" ; \
+		    echo ; \
+		fi ;\
 	fi
 
 # NOTICE about "make doc": in order to build the .html and .txt
@@ -367,11 +398,15 @@ tar-qe-modes :
 # in order to build html files for the user guide,
 # "latex2html" and "convert" (from Image-Magick) are needed.
 doc : 
-	if test -d Doc ; then \
-	( cd Doc ; $(MAKE) TLDEPS= all ) ; fi
-	for dir in */Doc; do \
-	( if test -f $$dir/Makefile ; then \
-	( cd $$dir; $(MAKE) TLDEPS= all ) ; fi ) ;  done
+	if test ! $(TOPDIR) -ef $(BUILDDIR) ; then \
+	   echo "make $@ not supported in out-of-source builds" ; \
+	else \
+	   if test -d Doc ; then \
+	   ( cd Doc ; $(MAKE) TLDEPS= all ) ; fi ;\
+	   for dir in */Doc; do \
+	   ( if test -f $$dir/Makefile ; then \
+	   ( cd $$dir; $(MAKE) TLDEPS= all ) ; fi ) ;  done ; \
+	fi
 
 doc_clean :
 	if test -d Doc ; then \
@@ -381,5 +416,10 @@ doc_clean :
 	( cd $$dir; $(MAKE) TLDEPS= clean ) ; fi ) ;  done
 
 depend:
-	@echo 'Checking dependencies...'
-	- ( if test -x install/makedeps.sh ; then install/makedeps.sh ; fi)
+	-@if test ! $(TOPDIR) -ef $(BUILDDIR) ; then \
+	   echo "make $@ cannot be called from the build directory." ; \
+	   echo "Please run it from $(TOPDIR)" ; \
+	else \
+		 echo 'Checking dependencies...' ;\
+		( if test -x install/makedeps.sh ; then install/makedeps.sh ; fi) ; \
+	fi

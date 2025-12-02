@@ -23,11 +23,10 @@ subroutine dynmatrix_new(iq_)
   USE symm_base,     ONLY : s, sr, irt, nsym, invs, t_rev
   USE dynmat,        ONLY : dyn, w2
   USE noncollin_module, ONLY : nspin_mag
-  USE modes,         ONLY : u, nmodes, npert, nirr, num_rap_mode
+  USE modes,         ONLY : u, nmodes, npert, nirr, num_rap_mode, omega_for_all_q
   USE gamma_gamma,   ONLY : nasr, asr, equiv_atoms, has_equivalent, &
                             n_diff_sites
   USE efield_mod,    ONLY : epsilon, zstareu, zstarue0, zstarue
-  USE disp,          ONLY : omega_disp
   USE control_ph,    ONLY : epsil, zue, search_sym, ldisp, &
                             done_zue, always_run, ldiag, done_epsil, done_zeu, xmldyn, &
                             current_iq, qplot
@@ -221,7 +220,7 @@ subroutine dynmatrix_new(iq_)
               num_rap_mode, ierr)
          CALL print_mode_sym(w2, num_rap_mode, lgamma)
      ENDIF
-     IF (qplot) omega_disp(:,current_iq)=w2(:)
+     IF (qplot) omega_for_all_q(:,current_iq)=w2(:)
   END IF
 !
 ! Here we save the dynamical matrix and the effective charges dP/du on

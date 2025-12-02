@@ -6,6 +6,36 @@
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
 !-----------------------------------------------------------------------
+subroutine localdos_wrapper (ldos_data)
+  !-----------------------------------------------------------------------
+  !
+  !    Wrapper subroutine that accepts dfpt_ldos_type and calls localdos
+  !
+  !    TODO: Use dfpt_ldos_type everywhere and deprecate localdos
+  !
+  USE kinds,      ONLY : DP
+  USE dfpt_type,  ONLY : dfpt_ldos_type
+  USE paw_variables, ONLY : okpaw
+  !
+  implicit none
+  !
+  TYPE(dfpt_ldos_type), INTENT(INOUT) :: ldos_data
+  !
+  ! Call the original localdos subroutine
+  CALL localdos(ldos_data%ldos, ldos_data%ldoss, ldos_data%becsum_dos, ldos_data%dos_ef)
+  !
+  ! For non-PAW calculations, becsum_dos is not needed anymore so deallocate it.
+  ! In the non-PAW but USPP case, becsum_dos still needs to be allocated and computed in
+  ! localdos since it is used to update ldos.
+  ! In the NCPP case, becsum_dos is not needed at all but is being computed. This can be
+  ! optimized in the future.
+  !
+  IF (.NOT. okpaw) DEALLOCATE(ldos_data%becsum_dos)
+  !
+end subroutine localdos_wrapper
+!-----------------------------------------------------------------------
+!
+!-----------------------------------------------------------------------
 subroutine localdos (ldos, ldoss, becsum1, dos_ef)
   !-----------------------------------------------------------------------
   !

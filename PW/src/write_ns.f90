@@ -6,6 +6,37 @@
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
 !-----------------------------------------------------------------------
+SUBROUTINE write_ns_hubbard ( noncolin )
+  !-----------------------------------------------------------------------
+  !! Wrapper routine for all write_ns* routines
+  !
+  USE ldaU,       ONLY : lda_plus_u_kind
+  !
+  IMPLICIT NONE
+  LOGICAL, INTENT(IN) :: noncolin
+  !
+  IF (lda_plus_u_kind.EQ.0) THEN
+     IF (noncolin) THEN
+        CALL write_ns_nc()
+     ELSE
+        CALL write_ns()
+     ENDIF
+  ELSEIF (lda_plus_u_kind.EQ.1) THEN
+     IF (noncolin) THEN
+        CALL write_ns_nc()
+     ELSE
+        CALL write_ns()
+     ENDIF
+  ELSEIF (lda_plus_u_kind.EQ.2) THEN
+     IF (noncolin) THEN
+        CALL write_nsg_nc()
+     ELSE
+        CALL write_nsg()
+     ENDIF
+  ENDIF
+  !
+END SUBROUTINE write_ns_hubbard
+!-----------------------------------------------------------------------
 SUBROUTINE write_ns
   !-----------------------------------------------------------------------
   !! Prints on output ns infos.
@@ -810,87 +841,48 @@ SUBROUTINE read_ns()
   REAL(DP) :: eth, eth1
   !
   dirname = restart_dir()
-  !
+  ! read and broadcast
   IF ( ionode ) THEN
-     !
      OPEN ( NEWUNIT=iunocc, FILE = TRIM(dirname) // 'occup.txt', &
-            FORM='formatted', STATUS='old', IOSTAT=ierr )
-     IF (lda_plus_u_kind.EQ.0) THEN
-        READ( UNIT = iunocc, FMT = *, iostat = ierr ) rho%ns
-        IF (hub_back) THEN
-           READ( UNIT = iunocc, FMT = * , iostat = ierr) rho%nsb
-        ENDIF
-     ELSEIF (lda_plus_u_kind.EQ.1) THEN
-        IF (noncolin) THEN
-           READ( UNIT = iunocc, FMT = *, iostat = ierr ) rho%ns_nc
-        ELSE
-           READ( UNIT = iunocc, FMT = *, iostat = ierr ) rho%ns
-        ENDIF
-     ELSEIF (lda_plus_u_kind.EQ.2) THEN
-        READ( UNIT = iunocc, FMT = * , iostat = ierr) nsg
-     ENDIF
-     CLOSE(UNIT=iunocc,STATUS='keep')
-     !
-  ELSE
-     !
-     IF (lda_plus_u_kind.EQ.0) THEN
-        IF (noncolin) THEN
-           rho%ns_nc(:,:,:,:) = 0.D0
-        ELSE
-           rho%ns(:,:,:,:) = 0.D0
-           IF (hub_back) rho%nsb(:,:,:,:) = 0.D0
-        ENDIF
-     ELSEIF (lda_plus_u_kind.EQ.1) THEN
-        IF (noncolin) THEN
-           rho%ns_nc(:,:,:,:) = 0.D0
-        ELSE
-           rho%ns(:,:,:,:) = 0.D0
-        ENDIF
-     ELSEIF (lda_plus_u_kind.EQ.2) THEN
-        nsg(:,:,:,:,:) = (0.d0, 0.d0)
-     ENDIF
-     !
-  ENDIF
-  !
-  CALL mp_bcast( ierr, ionode_id, intra_image_comm )
+          FORM='formatted', STATUS='old', IOSTAT=ierr )
+  END IF
   !
   IF (lda_plus_u_kind.EQ.0) THEN
-     IF (noncolin) THEN
-        CALL mp_bcast(rho%ns_nc, ionode_id, intra_image_comm)
-        IF (orbital_resolved) THEN
-           CALL v_hubbard_resolved_nc (rho%ns_nc, v%ns_nc, eth) 
-        ELSE
-           CALL v_hubbard_nc (rho%ns_nc, v%ns_nc, eth)
-        ENDIF
-     ELSE
-        CALL mp_bcast(rho%ns, ionode_id, intra_image_comm)
-        IF (orbital_resolved) THEN
-           CALL v_hubbard_resolved (rho%ns, v%ns, eth)
-        ELSE
-           CALL v_hubbard (rho%ns, v%ns, eth)
-        ENDIF
-     ENDIF
+     IF ( ionode ) THEN
+        READ( UNIT = iunocc, FMT = *, iostat = ierr ) rho%ns
+     END IF
+     CALL mp_bcast(rho%ns_nc, ionode_id, intra_image_comm)
      IF (hub_back) THEN
+        IF ( ionode ) THEN
+           READ( UNIT = iunocc, FMT = * , iostat = ierr) rho%nsb
+        END IF
         CALL mp_bcast(rho%nsb, ionode_id, intra_image_comm)
-        CALL v_hubbard_b (rho%nsb, v%nsb, eth1)
-        eth = eth + eth1
      ENDIF
   ELSEIF (lda_plus_u_kind.EQ.1) THEN
      IF (noncolin) THEN
+        IF ( ionode ) THEN
+           READ( UNIT = iunocc, FMT = *, iostat = ierr ) rho%ns_nc
+        END IF
         CALL mp_bcast(rho%ns_nc, ionode_id, intra_image_comm)
-        CALL v_hubbard_full_nc (rho%ns_nc, v%ns_nc, eth)
      ELSE
+        IF ( ionode ) THEN
+           READ( UNIT = iunocc, FMT = *, iostat = ierr ) rho%ns
+        END IF
         CALL mp_bcast(rho%ns, ionode_id, intra_image_comm)
-        CALL v_hubbard_full (rho%ns, v%ns, eth)
      ENDIF
   ELSEIF (lda_plus_u_kind.EQ.2) THEN
+     IF ( ionode ) THEN
+        READ( UNIT = iunocc, FMT = * , iostat = ierr) nsg
+     END IF
      CALL mp_bcast(nsg, ionode_id, intra_image_comm)
-     IF (noncolin) THEN
-        CALL v_hubbard_extended_nc (nsg, v_nsg, eth)
-     ELSE
-        CALL v_hubbard_extended (nsg, v_nsg, eth)
-     ENDIF
   ENDIF
+  IF ( ionode ) THEN
+     CLOSE(UNIT=iunocc,STATUS='keep')
+  END IF
+  !
+  ! compute Hubbard potential
+  !
+  CALL v_hubbard( noncolin, rho, v, eth )
   !
   RETURN
   !

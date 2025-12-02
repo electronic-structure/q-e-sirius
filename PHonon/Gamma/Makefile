@@ -2,6 +2,8 @@
 
 include ../../make.inc
 
+VPATH = @srcdir@
+
 # location of needed modules and included files (if any)
 MODFLAGS= $(BASEMOD_FLAGS) \
           $(MOD_FLAG)../../PW/src \
@@ -57,4 +59,7 @@ libphcg.a : $(CGOBJS)
 	$(AR) $(ARFLAGS) $@ $?
 	$(RANLIB) $@
 
+
 include make.depend
+
+
