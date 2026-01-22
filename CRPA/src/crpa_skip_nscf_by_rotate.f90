@@ -288,7 +288,8 @@ CONTAINS
       USE xc_lib,               ONLY : exx_is_active
       USE exx,                  ONLY : nbndproj
       USE io_global,            ONLY : stdout
-      USE pw_restart_new,       ONLY : gk_l2gmap_kdip
+      !P.S.
+      !USE pw_restart_new,       ONLY : gk_l2gmap_kdip
       !
       IMPLICIT NONE
       !
@@ -418,4 +419,89 @@ CONTAINS
       !
    END SUBROUTINE read_collected_wfc_new
    !
+!P.S.
+   SUBROUTINE gk_l2gmap_kdip( npw_g, ngk_g, ngk, igk_l2g, igk_l2g_kdip, igwk )
+     !-----------------------------------------------------------------------
+     !
+     ! ... This subroutine maps local G+k index to the global G vector index
+     ! ... the mapping is used to collect wavefunctions subsets distributed
+     ! ... across processors.
+     ! ... This map is used to obtained the G+k grids related to each kpt
+     !
+     USE mp_bands,             ONLY : intra_bgrp_comm
+     USE mp,                   ONLY : mp_sum
+     !
+     IMPLICIT NONE
+     !
+     ! ... Here the dummy variables
+     !
+     INTEGER, INTENT(IN)  :: npw_g, ngk_g, ngk
+     INTEGER, INTENT(IN)  :: igk_l2g(ngk)
+     INTEGER, INTENT(OUT) :: igk_l2g_kdip(ngk)
+     INTEGER, OPTIONAL, INTENT(OUT) :: igwk(ngk_g)
+     !
+     INTEGER, ALLOCATABLE :: igwk_(:), itmp(:), igwk_lup(:)
+     INTEGER              :: ig, ig_, ngg
+     !
+     !
+     ALLOCATE( itmp( npw_g ) )
+     ALLOCATE( igwk_( ngk_g ) )
+     !
+     itmp(:)  = 0
+     igwk_(:) = 0
+     !
+     DO ig = 1, ngk
+        itmp(igk_l2g(ig)) = igk_l2g(ig)
+     END DO
+     !
+     CALL mp_sum( itmp, intra_bgrp_comm )
+     !
+     ngg = 0
+     DO ig = 1, npw_g
+        !
+        IF ( itmp(ig) == ig ) THEN
+           !
+           ngg = ngg + 1
+           igwk_(ngg) = ig
+           !
+        END IF
+        !
+     END DO
+     !
+     IF ( ngg /= ngk_g ) &
+        CALL errore( 'gk_l2gmap_kdip', 'unexpected dimension in ngg', 1 )
+     !
+     IF ( PRESENT( igwk ) ) THEN
+        !
+        igwk(1:ngk_g) = igwk_(1:ngk_g)
+        !
+     END IF
+     !
+     ALLOCATE( igwk_lup( npw_g ) )
+     !
+!$omp parallel private(ig_, ig)
+!$omp workshare
+     igwk_lup = 0
+!$omp end workshare
+!$omp do
+     DO ig_ = 1, ngk_g
+        igwk_lup(igwk_(ig_)) = ig_
+     END DO
+!$omp end do
+!$omp do
+     DO ig = 1, ngk
+        igk_l2g_kdip(ig) = igwk_lup(igk_l2g(ig))
+     END DO
+!$omp end do
+!$omp end parallel
+     !
+     DEALLOCATE( igwk_lup )
+     !
+     DEALLOCATE( itmp, igwk_ )
+     !
+     RETURN
+     !
+   END SUBROUTINE gk_l2gmap_kdip
+   !
 END SUBROUTINE crpa_skip_nscf_by_rotate
+

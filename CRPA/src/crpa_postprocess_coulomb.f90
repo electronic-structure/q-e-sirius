@@ -50,6 +50,12 @@ SUBROUTINE crpa_postprocess_coulomb(iq)
       !
       WRITE(stdout, '(5x, a/)') "Done writing Coulomb matrix elements to file"
       !
+      ! Qe-Sirius CI-CD output file
+      filename=  "crpa_iq" // TRIM(int_to_char(iq)) // ".yml"
+      OPEN (NEWUNIT = iun, FILE = TRIM(filename), ERR = 100, IOSTAT = ios)
+      CALL write_yml(iun, v_coul_bare, v_coul_scrd)
+      CLOSE(iun, STATUS = "keep")
+      !
    ENDIF
    !
    CALL stop_clock('crpa_postproc')
@@ -144,5 +150,38 @@ SUBROUTINE write_coulomb_wannier(iun, v)
    ENDDO
    !
 END SUBROUTINE write_coulomb_wannier
-  !
+!
+SUBROUTINE write_yml(iun, v, u)
+   !
+   USE constants,     ONLY : RYTOEV
+   USE crpa_pert,     ONLY : npert_tot, pert_iwlist, pert_jwlist, pert_Rlist, &
+                             nmels_tot, mels_iwlist, mels_jwlist, mels_Rlist
+   !
+   IMPLICIT NONE
+   !
+   INTEGER, INTENT(IN) :: iun
+   COMPLEX(DP), INTENT(IN) :: v(nmels_tot, npert_tot), u(nmels_tot, npert_tot)
+   !
+   INTEGER :: iw1, iw2, jw1, jw2, R1(3), R2(3), ipert1, ipert2
+   !
+   DO ipert2 = 1, npert_tot
+      !
+      iw2 = pert_iwlist(ipert2)
+      jw2 = pert_jwlist(ipert2)
+      R2  = pert_Rlist(:, ipert2)
+      !      
+      DO ipert1 = 1, nmels_tot
+         !                  
+         iw1 = mels_iwlist(ipert1)
+         jw1 = mels_jwlist(ipert1)
+         R1  = mels_Rlist(:, ipert1)
+         !
+         WRITE(iun, '("iw1",1I4,"jw1",1I4,"R1",3I4,"iw2",1I4,"jw2",1I4,"R2",3I4,":")') iw1, jw1, R1, iw2, jw2, R2
+         WRITE(iun,'(2X,"bare:",F12.6,2X,F12.6)') v(ipert1, ipert2)*RYTOEV
+         WRITE(iun,'(2X,"screened:",F12.6,2X,F12.6)') u(ipert1, ipert2)*RYTOEV
+      ENDDO
+   ENDDO
+   !
+END SUBROUTINE write_yml
+   !
 END SUBROUTINE crpa_postprocess_coulomb

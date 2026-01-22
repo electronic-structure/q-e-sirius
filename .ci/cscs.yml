@@ -292,3 +292,36 @@ test (KCW) LiF parallel:
     - srun ./.ci/unpack-spack-install-tree.sh
     - cd ./ci-tests/LiF_koopmans
     - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.sh
+
+test (CRPA) Si:
+  extends: .run_tests
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CPUS_PER_TASK: 20
+    SLURM_NTASKS: 1
+  script:
+    - ./.ci/unpack-spack-install-tree.sh
+    - cd ./ci-tests/Si_crpa
+    - ${QE_PATH}/pw.x -i Si.scf.in -use_qe_scf
+    - ${QE_PATH}/wannier90.x -pp Si
+    - ${QE_PATH}/pw2wannier90.x -i Si.pw2wann.in
+    - ${QE_PATH}/wannier90.x Si
+    - cat Si.wout
+    - ${QE_PATH}/crpa.x -i Si.crpa.in
+    - |
+      source /user-environment/venv/bin/activate
+      python3 ../crpa_diff.py crpa_iq1.ref.yml crpa_iq1.yml
+
+test (CRPA) Si parallel:
+  extends: .run_tests_baremetal
+  variables:
+    OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
+    SIRIUS_PRINT_TIMING: 1
+    SLURM_CPUS_PER_TASK: 20
+    SLURM_NTASKS: 4
+    SLURM_TIMELIMIT: "1:30:00"
+  script:
+    - srun ./.ci/unpack-spack-install-tree.sh
+    - cd ./ci-tests/Si_crpa
+    - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.sh
