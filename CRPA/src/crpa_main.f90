@@ -30,11 +30,15 @@ PROGRAM crpa_main
   !                               determine_num_pert_only, tmp_dir_save,      &
   !                               determine_q_mesh_only
   !
+  !
+  USE mod_sirius
+  !
   IMPLICIT NONE
   !
   INTEGER :: iq
   LOGICAL :: do_iq, setup_pw
   LOGICAL,EXTERNAL :: check_gpu_support
+  !
   !
   use_gpu = check_gpu_support()
   !
@@ -42,7 +46,12 @@ PROGRAM crpa_main
   !
   CALL mp_startup(start_images = .TRUE.)
   !
+#if defined(__SIRIUS)
+        CALL sirius_initialize(call_mpi_init=.false.)
+#endif
+  !
   CALL environment_start(code)
+  !
   !
   ! Print the preamble
   !
@@ -116,6 +125,7 @@ PROGRAM crpa_main
 !      IF (determine_q_mesh_only) GO TO 105
 !      !
 !      IF (sum_pertq) GO TO 102
+!
      !
      ! Loop over the q points
      !
