@@ -273,7 +273,7 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
          !
          ! TODO: should nbnd_occ(ikk) be nbnd_occ(ikmk)?
 #if defined(__SIRIUS)
-         ALLOCATE(vg_kq(3,ngk(ikq)))
+         ALLOCATE(vg_kq(3,npwq))
          DO ig = 1, npwq
            vg_kq(:, ig) = mill(:, igk_k(ig, ikq))
          ENDDO
