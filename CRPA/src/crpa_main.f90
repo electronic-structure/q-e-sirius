@@ -254,6 +254,11 @@ PROGRAM crpa_main
   !
   CALL environment_end(code)
   !
+#if defined(__SIRIUS)
+  CALL clear_sirius()
+  CALL sirius_finalize(call_mpi_fin=.false.)
+#endif
+  !
   IF ( use_para_diag ) CALL laxlib_end()
   CALL mp_global_end()
   !
