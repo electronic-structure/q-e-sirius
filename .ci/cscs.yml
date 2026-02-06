@@ -298,8 +298,9 @@ test (CRPA) Si:
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
     SIRIUS_PRINT_TIMING: 1
-    SLURM_CPUS_PER_TASK: 20
+    SLURM_CPUS_PER_TASK: 10
     SLURM_NTASKS: 1
+    SLURM_TIMELIMIT: "1:30:00"
   script:
     - ./.ci/unpack-spack-install-tree.sh
     - cd ./ci-tests/Si_crpa
