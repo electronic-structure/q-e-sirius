@@ -444,6 +444,8 @@ SUBROUTINE sternheimer_kernel_freq(first_iter, time_reversed, npert, lrdvpsi, iu
    COMPLEX(DP) , ALLOCATABLE :: aux2(:, :)
    !! temporary storage used in apply_dpot_bands
    !
+   !INTEGER, ALLOCATABLE :: vg_kq(:,:)
+   !
    EXTERNAL ch_psi_all_complex, ccg_psi
    !! functions passed to ccgsolve_all
    !
@@ -617,9 +619,26 @@ SUBROUTINE sternheimer_kernel_freq(first_iter, time_reversed, npert, lrdvpsi, iu
          !
          conv_root = .TRUE.
          !
+!#if defined(__SIRIUS)
+!         ALLOCATE(vg_kq(3,npwq))
+!         DO ig = 1, npwq
+!           vg_kq(:, ig) = mill(:, igk_k(ig, ikq))
+!         ENDDO
+!         !
+!         ! dvpsi == d0psi  <-- right-hand side (in, destroyed on exit)
+!         ! dpsi   <-- left-hand side (in/out)
+!         CALL sirius_linear_solver( gs_handler, vkq=MATMUL(TRANSPOSE(at), xk(:,ikq)),&
+!            &num_gvec_kq_loc=npwq, gvec_kq_loc=vg_kq, dpsi=dpsi,&
+!            &psi=evq, eigvals=et(:, ikmk), dvpsi=dvpsi, ld=npwx, num_spin_comp=npol,&
+!            &alpha_pv=alpha_pv, spin=current_spin, nbnd_occ_k=nbnd_occ(ikk),&
+!            &nbnd_occ_kq=nbnd_occ(ikq), tol=thresh, niter=num_iter,freq)
+!         !
+!         DEALLOCATE(vg_kq)
+!#else
          CALL ccgsolve_all(ch_psi_all_complex, ccg_psi, et(1, ikmk), dvpsi2, dpsi2, &
                            h_diag2, npwx, npwq, thresh, ik, num_iter, conv_root, &
                            anorm, nbnd_occ(ikk), npol, -omega)
+!#endif
          !
          tot_num_iter = tot_num_iter + num_iter
          tot_cg_calls = tot_cg_calls + 1

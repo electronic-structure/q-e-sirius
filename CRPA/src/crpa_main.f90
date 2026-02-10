@@ -141,7 +141,18 @@ PROGRAM crpa_main
         !
         ! If necessary the bands are recalculated
         !
+#if defined(__SIRIUS)
+        IF ( .not. setup_pw ) THEN
+           CALL clear_sirius()
+           CALL setup_sirius()
+        END IF
+#endif
+        !
         IF (setup_pw) CALL crpa_run_nscf(.TRUE.)
+        !
+#if defined(__SIRIUS)
+    CALL sirius_create_H0(gs_handler)
+#endif
         !
         ! Initialize the quantities which do not depend on
         ! the linear response of the system
