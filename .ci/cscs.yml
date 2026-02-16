@@ -293,7 +293,7 @@ test (KCW) LiF parallel:
     - cd ./ci-tests/LiF_koopmans
     - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.sh
 
-test (CRPA) Si:
+test (dHP) Si:
   extends: .run_tests
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
@@ -314,7 +314,7 @@ test (CRPA) Si:
       source /user-environment/venv/bin/activate
       python3 ../crpa_diff.py crpa_iq1.ref.yml crpa_iq1.yml
 
-test (CRPA) Si parallel:
+test (dHP) Si parallel:
   extends: .run_tests_baremetal
   variables:
     OMP_NUM_THREADS: $SLURM_CPUS_PER_TASK
