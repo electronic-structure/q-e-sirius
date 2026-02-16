@@ -303,7 +303,7 @@ test (dHP) Si:
     SLURM_TIMELIMIT: "1:30:00"
   script:
     - ./.ci/unpack-spack-install-tree.sh
-    - cd ./ci-tests/Si_crpa
+    - cd ./ci-tests/Si_dHP
     - ${QE_PATH}/pw.x -i Si.scf.in -use_qe_scf
     - ${QE_PATH}/wannier90.x -pp Si
     - ${QE_PATH}/pw2wannier90.x -i Si.pw2wann.in
@@ -324,5 +324,5 @@ test (dHP) Si parallel:
     SLURM_TIMELIMIT: "1:30:00"
   script:
     - srun ./.ci/unpack-spack-install-tree.sh
-    - cd ./ci-tests/Si_crpa
+    - cd ./ci-tests/Si_dHP
     - uenv --repo=$UENV_REPO_PATH run q-e-sirius-gh200/v1:$CI_PIPELINE_ID -- ./run_parallel.sh
