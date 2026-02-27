@@ -383,6 +383,10 @@ SUBROUTINE sternheimer_kernel_freq(first_iter, time_reversed, npert, lrdvpsi, iu
    USE eqv,                   ONLY : dpsi, dvpsi, evq
    USE apply_dpot_mod,        ONLY : apply_dpot_bands
    USE lr_nc_mag,             ONLY : lr_apply_time_reversal
+   USE cell_base,             ONLY : at
+   USE gvect,                 ONLY : mill
+   USE control_lr,            ONLY : alpha_pv
+   USE mod_sirius
    !
    IMPLICIT NONE
    !
@@ -444,7 +448,9 @@ SUBROUTINE sternheimer_kernel_freq(first_iter, time_reversed, npert, lrdvpsi, iu
    COMPLEX(DP) , ALLOCATABLE :: aux2(:, :)
    !! temporary storage used in apply_dpot_bands
    !
-   !INTEGER, ALLOCATABLE :: vg_kq(:,:)
+   INTEGER, ALLOCATABLE :: vg_kq(:,:)
+   !
+   INTEGER :: ig
    !
    EXTERNAL ch_psi_all_complex, ccg_psi
    !! functions passed to ccgsolve_all
@@ -602,25 +608,25 @@ SUBROUTINE sternheimer_kernel_freq(first_iter, time_reversed, npert, lrdvpsi, iu
          !
          conv_root = .TRUE.
          !
-!#if defined(__SIRIUS)
-!         ALLOCATE(vg_kq(3,npwq))
-!         DO ig = 1, npwq
-!           vg_kq(:, ig) = mill(:, igk_k(ig, ikq))
-!         ENDDO
-!         !
-!         ! dvpsi == d0psi  <-- right-hand side (in, destroyed on exit)
-!         ! dpsi   <-- left-hand side (in/out)
-!         CALL sirius_linear_solver( gs_handler, vkq=MATMUL(TRANSPOSE(at), xk(:,ikq)),&
-!            &num_gvec_kq_loc=npwq, gvec_kq_loc=vg_kq, dpsi=dpsi1,&
-!            &psi=evq, eigvals=et(:, ikmk), dvpsi=dvpsi1, ld=npwx, num_spin_comp=npol,&
-!            &alpha_pv=alpha_pv, spin=current_spin, nbnd_occ_k=nbnd_occ(ikk),&
-!            &nbnd_occ_kq=nbnd_occ(ikq), tol=thresh, omega=+omega, niter=num_iter)
-!         !
-!#else
+#if defined(__SIRIUS)
+         ALLOCATE(vg_kq(3,npwq))
+         DO ig = 1, npwq
+           vg_kq(:, ig) = mill(:, igk_k(ig, ikq))
+         ENDDO
+         !
+         ! dvpsi == d0psi  <-- right-hand side (in, destroyed on exit)
+         ! dpsi   <-- left-hand side (in/out)
+         CALL sirius_linear_solver( gs_handler, vkq=MATMUL(TRANSPOSE(at), xk(:,ikq)),&
+            &num_gvec_kq_loc=npwq, gvec_kq_loc=vg_kq, dpsi=dpsi1,&
+            &psi=evq, eigvals=et(:, ikmk), dvpsi=dvpsi1, ld=npwx, num_spin_comp=npol,&
+            &alpha_pv=alpha_pv, spin=current_spin, nbnd_occ_k=nbnd_occ(ikk),&
+            &nbnd_occ_kq=nbnd_occ(ikq), tol=thresh, omega=+omega, niter=num_iter)
+         !
+#else
          CALL ccgsolve_all(ch_psi_all_complex, ccg_psi, et(1, ikmk), dvpsi1, dpsi1, &
                            h_diag1, npwx, npwq, thresh, ik, num_iter, conv_root, &
                            anorm, nbnd_occ(ikk), npol, +omega)
-!#endif
+#endif
          !
          tot_num_iter = tot_num_iter + num_iter
          tot_cg_calls = tot_cg_calls + 1
@@ -635,21 +641,21 @@ SUBROUTINE sternheimer_kernel_freq(first_iter, time_reversed, npert, lrdvpsi, iu
          !
          conv_root = .TRUE.
          !
-!#if defined(__SIRIUS)
-!         ! dvpsi == d0psi  <-- right-hand side (in, destroyed on exit)
-!         ! dpsi   <-- left-hand side (in/out)
-!         CALL sirius_linear_solver( gs_handler, vkq=MATMUL(TRANSPOSE(at), xk(:,ikq)),&
-!            &num_gvec_kq_loc=npwq, gvec_kq_loc=vg_kq, dpsi=dpsi2,&
-!            &psi=evq, eigvals=et(:, ikmk), dvpsi=dvpsi2, ld=npwx, num_spin_comp=npol,&
-!            &alpha_pv=alpha_pv, spin=current_spin, nbnd_occ_k=nbnd_occ(ikk),&
-!            &nbnd_occ_kq=nbnd_occ(ikq), tol=thresh, omega=-omega, niter=num_iter)
-!         !
-!         DEALLOCATE(vg_kq)
-!#else
+#if defined(__SIRIUS)
+         ! dvpsi == d0psi  <-- right-hand side (in, destroyed on exit)
+         ! dpsi   <-- left-hand side (in/out)
+         CALL sirius_linear_solver( gs_handler, vkq=MATMUL(TRANSPOSE(at), xk(:,ikq)),&
+            &num_gvec_kq_loc=npwq, gvec_kq_loc=vg_kq, dpsi=dpsi2,&
+            &psi=evq, eigvals=et(:, ikmk), dvpsi=dvpsi2, ld=npwx, num_spin_comp=npol,&
+            &alpha_pv=alpha_pv, spin=current_spin, nbnd_occ_k=nbnd_occ(ikk),&
+            &nbnd_occ_kq=nbnd_occ(ikq), tol=thresh, omega=-omega, niter=num_iter)
+         !
+         DEALLOCATE(vg_kq)
+#else
          CALL ccgsolve_all(ch_psi_all_complex, ccg_psi, et(1, ikmk), dvpsi2, dpsi2, &
                            h_diag2, npwx, npwq, thresh, ik, num_iter, conv_root, &
                            anorm, nbnd_occ(ikk), npol, -omega)
-!#endif
+#endif
          !
          tot_num_iter = tot_num_iter + num_iter
          tot_cg_calls = tot_cg_calls + 1
