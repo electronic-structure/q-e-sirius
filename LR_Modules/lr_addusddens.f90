@@ -27,6 +27,7 @@ SUBROUTINE lr_addusddens (npert, dbecsum, drhop)
   USE uspp,                 ONLY : okvan
   USE uspp_param,           ONLY : upf, lmaxq, nh, nhm
   USE qpoint,               ONLY : xq, eigqts
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -39,7 +40,7 @@ SUBROUTINE lr_addusddens (npert, dbecsum, drhop)
   !
   ! the local variables
   !
-  INTEGER :: ig, na, nt, ih, jh, is, ijh, ir
+  INTEGER :: ig, na, nt, ih, jh, is, ijh, ir, na1, ld
   ! counter on G vectors
   ! counter on atoms
   ! counter on atomic type
@@ -51,16 +52,17 @@ SUBROUTINE lr_addusddens (npert, dbecsum, drhop)
   INTEGER :: ipert
   !! counter on perturbations
   !
-  REAL(DP), ALLOCATABLE :: qmod(:), qpg(:,:), ylmk0(:,:)
   ! the modulus of q+G
   ! the values of q+G
   ! the spherical harmonics
   !
-  COMPLEX(DP), ALLOCATABLE :: sk(:), qgm(:), aux(:, :, :), aux_r(:)
+  COMPLEX(DP), ALLOCATABLE :: aux(:, :, :), aux_r(:), dm1(:,:), tmp1(:,:)
   ! the structure factor
   ! q_lm(G)
   ! auxiliary variable for drho(G)
   ! auxiliary variable for drho(r)
+  !
+  COMPLEX(DP) :: z1
   !
   IF (.NOT.okvan) RETURN
   !
@@ -68,82 +70,51 @@ SUBROUTINE lr_addusddens (npert, dbecsum, drhop)
   !
   ALLOCATE (aux(ngm, nspin_mag, npert))
   ALLOCATE (aux_r(dfftp%nnr))
-  ALLOCATE (sk(ngm))
-  ALLOCATE (ylmk0(ngm,lmaxq * lmaxq))
-  ALLOCATE (qgm(ngm))
-  ALLOCATE (qmod(ngm))
-  ALLOCATE (qpg(3,ngm))
   !
   aux(:, :, :) = (0.d0, 0.d0)
-  !
-  ! Calculate the q+G vector, its modulus, and the spherical harmonics.
-  !
-  CALL setqmod (ngm, xq, g, qmod, qpg)
-  !
-  CALL ylmr2 (lmaxq * lmaxq, ngm, qpg, qmod, ylmk0)
-  !
-  DO ig = 1, ngm
-     qmod(ig) = sqrt(qmod(ig)) * tpiba
-  ENDDO
-  !
-  ! TODO: check performance. There was a bottleneck here which we fixed with the following call
-  !#if defined(__SIRIUS)
-  !DO nt = 1, ntyp
-  !   IF (upf(nt)%tvanp) THEN
-  !      CALL sirius_generate_rhoaug_q(gs_handler, nt, nat, ngm, nspin_mag, atom_type(nt)%qpw_t, &
-  !          & nh(nt) * (nh(nt) + 1) / 2, eigqts, mill, dbecsum, nhm * (nhm + 1) / 2, aux)
-  !   ENDIF
-  !ENDDO
-  !#else
-  !
-  ! in the newer version becsum and aux dimensions have changed
-  ! logic of the code is clear: compute Q_aug once and then add to all pertubations, but the benefit is not
-  ! clear to me as Q_aug depends on the perturbation index and all of them have to be generated
 
   DO nt = 1, ntyp
      IF (upf(nt)%tvanp) THEN
-        ijh = 0
-        DO ih = 1, nh (nt)
-           DO jh = ih, nh (nt)
-              !
-              ! Calculate the Fourier transform of the Q functions,
-              ! and put the result in qgm.
-              !
-              CALL qvan2 (ngm, ih, jh, nt, qmod, qgm, ylmk0)
-              !
-              ijh = ijh + 1
+        ! get number of atoms of the given type
+        na1 = 0
+        DO na = 1, nat
+           IF (ityp (na) .EQ. nt) THEN
+              na1 = na1 + 1
+           ENDIF
+        ENDDO
+        ld = nh(nt) * (nh(nt) + 1) / 2
+        ALLOCATE(dm1(ld, na1))
+        ALLOCATE(tmp1(na1, ngm))
+        DO ipert = 1, npert
+           DO is = 1, nspin_mag
+              na1 = 0
+              DO na = 1, nat
+                 IF (ityp (na) .EQ. nt) THEN
+                    na1 = na1 + 1
+                    dm1(1:ld, na1) = dbecsum(1:ld, na, is, ipert)
+                 ENDIF
+              ENDDO !ia
+              CALL zgemm('T', 'N', na1, ngm, ld, cmplx(1.d0, 0.d0, kind=kind(0.0d0)), dm1, ld,&
+                         atom_type(nt)%qpw_t, ld, cmplx(0.d0, 0.d0, kind=kind(0.0d0)), tmp1, na1)
+              na1 = 0
               DO na = 1, nat
                  IF (ityp (na) .eq.nt) THEN
-                    !
-                    ! Calculate the second term in Eq.(36) of the ultrasoft paper.
-                    !
-                    ! TODO: add omp statements here
-!                       !$omp parallel default(shared) private(is, z1)
-!                       DO is = 1, nspin_mag
-!   !$omp do
-!                          DO ig = 1, ngm
-                    DO ipert = 1, npert
-                       DO is = 1, nspin_mag
-                          DO ig = 1, ngm
-                             !
-                             ! Calculate the structure factor
-                             !
-                             sk(ig) = eigts1(mill(1,ig),na) * &
-                                      eigts2(mill(2,ig),na) * &
-                                      eigts3(mill(3,ig),na) * &
-                                      eigqts(na)
-                             !
-                             aux(ig, is, ipert) = aux(ig, is, ipert) &
-                                + 2.0d0 * qgm(ig) * sk(ig) * dbecsum(ijh,na,is, ipert)
-                             !
-                          ENDDO
-                       ENDDO
-                    ENDDO ! ipert
-                    !
+                    na1 = na1 + 1
+!$omp parallel do default(shared) private(z1)
+                    DO ig = 1, ngm
+                       z1 = eigts1(mill(1,ig),na) * &
+                            eigts2(mill(2,ig),na) * &
+                            eigts3(mill(3,ig),na) * &
+                            eigqts(na)
+                        aux(ig, is, ipert) = aux(ig, is, ipert) + 2.0d0 * tmp1(na1, ig) * z1
+                    ENDDO !ig
+!$omp end parallel do
                  ENDIF
-              ENDDO
-           ENDDO
-        ENDDO
+              ENDDO !na
+           ENDDO !is
+        ENDDO !ipert
+        DEALLOCATE(dm1)
+        DEALLOCATE(tmp1)
      ENDIF
   ENDDO
   !
@@ -168,11 +139,6 @@ SUBROUTINE lr_addusddens (npert, dbecsum, drhop)
      ENDDO
   ENDDO ! ipert
   !
-  DEALLOCATE (qpg)
-  DEALLOCATE (qmod)
-  DEALLOCATE (qgm)
-  DEALLOCATE (ylmk0)
-  DEALLOCATE (sk)
   DEALLOCATE (aux)
   DEALLOCATE (aux_r)
   !
