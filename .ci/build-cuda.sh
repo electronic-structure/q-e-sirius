@@ -19,7 +19,7 @@ spack -e ./spack-env add $SPEC
 
 
 # build sirius from source
-spack -e ./spack-env develop -p $PWD q-e-sirius@=develop-ristretto ^sirius@git.multi_cg/complex_solver=develop+cuda
+spack -e ./spack-env develop -p $PWD q-e-sirius@=develop-ristretto ^sirius@git.multi_cg/complex_solver_test_deep_copy=develop+cuda
 
 # display spack.yaml
 cat ./spack-env/spack.yaml
