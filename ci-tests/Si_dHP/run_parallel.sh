@@ -16,6 +16,6 @@ srun -n1 ${QE_PATH}/wannier90.x Si
 srun -n1 cat Si.wout
 
 #crpa
-srun ${QE_PATH}/crpa.x -i Si.crpa.in
+srun ${QE_PATH}/crpa.x -i Si.crpa.in -npool 2
 source /user-environment/venv/bin/activate
 srun -n1    python3 ../crpa_diff.py crpa_iq1.ref.yml crpa_iq1.yml
