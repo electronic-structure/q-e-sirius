@@ -437,7 +437,7 @@ SUBROUTINE input_sanity()
   !
   ! Validate matrix elements calculation mode
   !
-  IF (TRIM(crpa_mode) /= 'full' .AND. TRIM(crpa_mode) /= 'dHP') THEN
+  IF (TRIM(crpa_mode) /= 'full' .AND. TRIM(crpa_mode) /= 'dHP' .AND. TRIM(crpa_mode) /= 'debug') THEN
      CALL errore('crpa_readin', 'Invalid crpa_mode. Only full and dHP are currently allowed.', 1)
   END IF
   !

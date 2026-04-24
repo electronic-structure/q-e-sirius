@@ -142,6 +142,8 @@ SUBROUTINE crpa_prepare_perturbations_q(iq)
               !
               IF (TRIM(crpa_mode)=='dHP' .AND. (iw /= jw)) CYCLE
               !
+              IF (TRIM(crpa_mode)=='debug' .AND. (jw /= 1 .OR. iw /= 1)) CYCLE
+              !
               r_ijR = wann_centers(:, iw) - wann_centers(:, jw) - R
               CALL w90_find_wigner_seitz(r_ijR, nrr, mindist)
               !

@@ -349,7 +349,7 @@ SUBROUTINE divergence_GB(epsr_int, epsi_int, delta_bare, delta_scrd)
     delta_bare = -(nqs*div)/omega
     delta_scrd = -(nqs*div_eps)/omega
     !
-    WRITE (stdout,'(/,5X, "INFO: Gigi-Baldereschi correction scheme")')
+    WRITE (stdout,'(/,5X, "INFO: Gygi-Baldereschi correction scheme")')
     WRITE (stdout,'(  5X, "INFO: Delta_bare q=0 [eV]        ", 3X, 1F12.6 )') delta_bare*RYTOEV
     WRITE (stdout,'(  5X, "INFO: Delta_scrd q=0 [eV]        ", 3X, 1F12.6 )') delta_scrd*RYTOEV
     !
