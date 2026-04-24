@@ -72,9 +72,11 @@ lr_dvpsi_magnons.o\
 lr_Opsi_magnons.o\
 lr_calc_dens_magnons.o
 
+# see comments in file tldeps for explanations
 TLDEPS=lrmods
+include ../../install/tldeps
 
-all : tldeps libtddfpt.a turbo_lanczos.x turbo_davidson.x turbo_eels.x turbo_magnon.x turbo_spectrum.x
+all : libtddfpt.a turbo_lanczos.x turbo_davidson.x turbo_eels.x turbo_magnon.x turbo_spectrum.x
 
 libtddfpt.a : $(LROBJS) 
 	$(AR) $(ARFLAGS) $@ $?
@@ -109,10 +111,6 @@ turbo_spectrum.x : turbo_spectrum.o libtddfpt.a $(PWOBJS) $(QEMODS)
 		turbo_spectrum.o libtddfpt.a $(LRMODS) $(PWOBJS) $(QEMODS) $(QELIBS)
 	- ( cd ../../bin ; ln -fs ../TDDFPT/src/$@ . )
 	- if [ -d ../bin ] ; then  ( cd ../bin ; ln -fs ../src/$@ . ); fi
-
-tldeps :
-	if test -n "$(TLDEPS)" ; then \
-	( cd ../.. ; $(MAKE) $(TLDEPS) || exit 1 ) ; fi
 
 clean :
 	- /bin/rm -f ../bin/turbo_lanczos.x ../bin/turbo_davidson.x ../bin/turbo_eels.x \

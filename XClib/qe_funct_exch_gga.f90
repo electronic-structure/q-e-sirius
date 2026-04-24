@@ -1479,7 +1479,7 @@ END SUBROUTINE b86b
 !-----------------------------------------------------------------------
 SUBROUTINE W3MX( rho, grho, sx, v1x, v2x )
   !---------------------------------------------------------------------
-  !! Exchange for vdW-DF3-mc, DOI: 10.48550/arXiv.2509.02358
+  !! Exchange for vdW-DF3-mc, DOI: 10.1103/hp9d-4kpf
   !
   USE kind_l,      ONLY : DP
   !

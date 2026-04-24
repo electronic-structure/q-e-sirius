@@ -43,9 +43,9 @@ SUBROUTINE new_ns_hubbard ( noncolin, rho )
   ELSEIF (lda_plus_u_kind==2) THEN
      !
      IF (noncolin) THEN
-        CALL new_nsg_nc()
+        CALL new_nsg_nc( rho%nsg )
      ELSE
-        CALL new_nsg()
+        CALL new_nsg( rho%nsg )
      ENDIF
      !
   ENDIF

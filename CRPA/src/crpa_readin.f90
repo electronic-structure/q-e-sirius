@@ -28,7 +28,8 @@ SUBROUTINE crpa_readin()
   USE qpoint,           ONLY : nq1, nq2, nq3, start_q, last_q
   USE crpacom,          ONLY : tmp_dir_crpa, tmp_dir_save, wannier_seedname, filU, &
                                active_bands_min, active_bands_max, dist_thr, &
-                               dist_thr_large, folder_wan_Rr, write_wan_Rr, w_freq
+                               dist_thr_large, folder_wan_Rr, write_wan_Rr, w_freq, &
+                               q0div_treatment, crpa_mode
   USE crpa_pert,        ONLY : pert_basis
   USE crpa_qpoints,     ONLY : qplot
   USE qpoint,           ONLY : x_q, nqs
@@ -83,6 +84,10 @@ SUBROUTINE crpa_readin()
   !                prefix.wan_Rr.xxx and prefix.wan_R.dat files must exist inside folder_wan_Rr.
   !                (Default: .true.)
   ! w_freq : Complex frequency value for finite-frequency DFPT. (Default: 0 (static DFPT))
+  ! q0div_treatment : Correction scheme for the q->0 divergence of the Coulomb kernel.
+  !                   (Default: 'HL' - Hybertsen Louie correction)
+  ! crpa_mode : Calculation mode of the Uijkl(R) elements.
+  !             (Default: 'full' (all possible elements within the given distance thresholds)
   !
   NAMELIST / INPUTCRPA / prefix, outdir, lrpa, niter_max, alpha_mix, nq1, nq2, nq3, &
                          nmix, start_q, last_q, thresh_init, tr2, &
@@ -90,7 +95,7 @@ SUBROUTINE crpa_readin()
                          conv_thr_nscf, reduce_io, wannier_seedname, pert_basis, filU, &
                          qplot, dist_thr, dist_thr_large, cdfpt, cdfpt_active_space, &
                          cdfpt_bands_min, cdfpt_bands_max, folder_wan_Rr, &
-                         write_wan_Rr, w_freq
+                         write_wan_Rr, w_freq, q0div_treatment, crpa_mode
 ! , skip_equivalence_q,   &
 !                          conv_thr_chi, skip_atom, skip_type, equiv_type, iverbosity,  &
 !                          background, find_atpert, max_seconds, rmax,     &
@@ -156,6 +161,8 @@ SUBROUTINE crpa_readin()
   dist_thr           = 6.D-4
   dist_thr_large     = -999.0
   w_freq             = (0.d0, 0.d0)
+  q0div_treatment    = 'HL'
+  crpa_mode          = 'full'
   !
   CALL get_environment_variable( 'ESPRESSO_TMPDIR', outdir )
   IF ( TRIM( outdir ) == ' ' ) outdir = './'
@@ -421,6 +428,18 @@ SUBROUTINE input_sanity()
   ! Validate constrained DFPT parameters
   !
   IF (cdfpt) CALL cdfpt_validate_input()
+  !
+  ! Validate q->0 correction scheme
+  !
+  IF (TRIM(q0div_treatment) /= 'HL' .AND. TRIM(q0div_treatment) /= 'GB') THEN
+     CALL errore('crpa_readin', 'Invalid q0div_treatment. Only HL and GB are allowed.', 1)
+  END IF
+  !
+  ! Validate matrix elements calculation mode
+  !
+  IF (TRIM(crpa_mode) /= 'full' .AND. TRIM(crpa_mode) /= 'dHP') THEN
+     CALL errore('crpa_readin', 'Invalid crpa_mode. Only full and dHP are currently allowed.', 1)
+  END IF
   !
   RETURN
   !

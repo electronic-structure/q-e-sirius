@@ -221,7 +221,7 @@ SUBROUTINE dnsq_scf (npe, lmetq0)
   IF (nspin.EQ.1) dnsscf = 0.5d0 * dnsscf
   !
   ! USPP case: add to the dnsscf calculated with the P_c^+dpsi 
-  ! the non-scf part coming from the orthogonality contraints. 
+  ! the non-scf part coming from the orthogonality constraints. 
   ! The orthogonality correction comes only for an atomic displacement. 
   ! In the case of the electric field calculation, lr_has_dnsorth is false.
   !

@@ -1902,7 +1902,7 @@ SUBROUTINE set_asr (asr, nr1, nr2, nr3, frc, frc_lr, zeu, nat, ibrav, tau_blk, a
   enddo
   !
   ! Projection of the force-constants "vector" on the orthogonal of the
-  ! subspace of the vectors verifying the sum rules and symmetry contraints
+  ! subspace of the vectors verifying the sum rules and symmetry constraints
   !
   w(:,:,:,:,:,:,:)=0.0d0
   do l=1,m

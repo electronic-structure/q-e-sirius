@@ -27,8 +27,3 @@ set(src_elph_prog elph_main.f90)
 qe_add_executable(qe_elph_exe ${src_elph_prog})
 set_target_properties(qe_elph_exe PROPERTIES OUTPUT_NAME elph.x)
 target_link_libraries(qe_elph_exe PRIVATE qe_crpa qe_crpa_w90 qe_crpa_elph qe_pw qe_lax qe_modules qe_xclib  qe_phonon_ph qe_lr_modules)
-
-
-
-
-

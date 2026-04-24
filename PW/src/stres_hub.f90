@@ -20,7 +20,7 @@ SUBROUTINE stres_hub ( sigmah )
    USE wvfct,              ONLY : nbnd, npwx
    USE ldaU,               ONLY : Hubbard_lmax, Hubbard_l, is_hubbard, &
                                   lda_plus_u_kind, Hubbard_projectors, is_hubbard_back, &
-                                  ldim_back, ldmx_b, nsg, v_nsg, max_num_neighbors, &
+                                  ldim_back, ldmx_b, v_nsg, max_num_neighbors, &
                                   ldim_u, Hubbard_V, at_sc, neighood, ldmx_tot, &
                                   wfcU, nwfcU, Hubbard_J
    USE becmod,             ONLY : becp, calbec, allocate_bec_type_acc, deallocate_bec_type_acc

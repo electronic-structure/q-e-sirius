@@ -28,18 +28,17 @@ LIBPWPH =  ../../PHonon/PH/libph.a ../../LR_Modules/liblrmod.a \
 
 LIBMIN= ../minpack/minpacklib.a
 
-TLDEPS= phlibs 
+# TLDEPS should contain the same list of dependencies as in the main Makefile
+TLDEPS= phlibs
+# Ensure that "make" run in this subdirectory builds the needed dependencies
+include ../../install/tldeps
 
-all : tldeps head.x  
+all : head.x  
 
 head.x : head.o $(HEADOBJS) $(LIBPWPH) $(LIBMIN)
 	$(LD) $(LDFLAGS) -o head.x head.o \
 		 $(HEADOBJS) $(LIBPWPH)  $(QEMODS) $(LIBMIN) $(QELIBS)
 	- ( cd ../../bin ; ln -fs ../GWW/head/head.x . )
-
-tldeps :
-	if test -n "$(TLDEPS)" ; then \
-	( cd ../.. ; $(MAKE) $(TLDEPS) || exit 1 ) ; fi
 
 clean :
 	- /bin/rm -f *.x *.o *.a *~ *_tmp.f90 *.d *.mod *.i *.L

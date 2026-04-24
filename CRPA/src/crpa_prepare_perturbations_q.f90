@@ -76,6 +76,7 @@ SUBROUTINE crpa_prepare_perturbations_q(iq)
     USE w90_interface,     ONLY : num_wann, mp_grid, wann_centers
     USE w90_wigner,        ONLY : irvec, w90_find_wigner_seitz, w90_wigner_allocate, &
                                   w90_wigner_deallocate
+    USE crpacom,           ONLY : crpa_mode
     !
     IMPLICIT NONE
     !
@@ -138,6 +139,8 @@ SUBROUTINE crpa_prepare_perturbations_q(iq)
           !
           DO jw = 1, num_wann
             DO iw = 1, num_wann
+              !
+              IF (TRIM(crpa_mode)=='dHP' .AND. (iw /= jw)) CYCLE
               !
               r_ijR = wann_centers(:, iw) - wann_centers(:, jw) - R
               CALL w90_find_wigner_seitz(r_ijR, nrr, mindist)

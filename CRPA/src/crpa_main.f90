@@ -167,6 +167,10 @@ PROGRAM crpa_main
         !
         CALL crpa_solve_linear_system(iq)
         !
+        ! Apply q=0 correction
+        !
+        CALL crpa_q0correction()
+        !
         ! Write the Coulomb matrix for the current q to file
         !
         CALL crpa_postprocess_coulomb(iq)

@@ -37,6 +37,7 @@ set(src_crpa
 	crpa_symmetry.f90
 	crpa_update_coulomb.f90
 	lr_compute_matrix_elements.f90
+	crpa_q0correction.f90
 	)
 
 qe_add_library(qe_crpa ${src_crpa})
@@ -57,8 +58,3 @@ set(src_crpa_x crpa_main.f90)
 qe_add_executable(qe_crpa_exe ${src_crpa_x})
 set_target_properties(qe_crpa_exe PROPERTIES OUTPUT_NAME crpa.x)
 target_link_libraries(qe_crpa_exe PRIVATE qe_pw qe_crpa_w90  qe_lax qe_lr_modules qe_modules qe_crpa qe_xclib)
-
-
-
-
-

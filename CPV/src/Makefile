@@ -116,9 +116,11 @@ entropy.o
 
 QEMODS=$(BASEMODS)
 
-TLDEPS= bindir mods
+# see comments in file tldeps for explanations
+TLDEPS=bindir mods
+include ../../install/tldeps
 
-all : tldeps libcp.a manycp.x cp.x wfdd.x cppp.x
+all : libcp.a manycp.x cp.x wfdd.x cppp.x
 
 manycp.x : manycp.o libcp.a $(QEMODS)
 	$(LD) $(LDFLAGS) -o manycp.x manycp.o \
@@ -142,10 +144,6 @@ cppp.x : cppp.o $(QEMODS)
 wfdd.x : wfdd.o
 	$(LD) $(LDFLAGS) -o $@ wfdd.o $(QEMODS) $(QELIBS)
 	- ( cd ../../bin ; ln -fs ../CPV/src/$@ . )
-
-tldeps :
-	if test -n "$(TLDEPS)" ; then \
-	( cd ../.. ; $(MAKE) $(TLDEPS) || exit 1 ) ; fi
 
 clean :
 	- /bin/rm -f cppp.x *.o *.mod *.i core* *_tmp.f90 fort* \

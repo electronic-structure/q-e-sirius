@@ -43,6 +43,7 @@ SUBROUTINE sum_band()
   USE paw_variables,        ONLY : okpaw
   USE becmod,               ONLY : allocate_bec_type_acc, deallocate_bec_type_acc, &
                                    becp
+  USE extfield,             ONLY : dipfield, emaxpos, eopreg, edir
   USE gcscf_module,         ONLY : lgcscf, gcscf_calc_nelec
   USE add_dmft_occ,         ONLY : dmft, dmft_updated, v_dmft
 #if defined (__OSCDFT)
@@ -279,6 +280,9 @@ SUBROUTINE sum_band()
     rho%pol_r(:,2) = rho%pol_r(:,1) 
     rho%pol_g(:,2) = rho%pol_g(:,1) 
   END IF
+  !
+  IF (dipfield) &
+      CALL compute_el_dip(emaxpos, eopreg, edir, rho%of_r(:,1), rho%el_dipole)
   !
   ! ... sum number of electrons, for GC-SCF
   !

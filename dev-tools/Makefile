@@ -34,7 +34,3 @@ makedoc:
 
 clean:
 	- rm $(TMP_FILES)
-
-include make.depend
-
-

@@ -3051,7 +3051,7 @@ CONTAINS
   WRITE(stdout,'(5x,"%                                                                      %")')
   WRITE(stdout,'(5x,"%  vdW-DF NEWS:                                                        %")')
   WRITE(stdout,'(5x,"%                                                                      %")')
-  WRITE(stdout,'(5x,"%  * vdW-DF3-mc is now available. DOI: 10.48550/arXiv.2509.02358       %")')
+  WRITE(stdout,'(5x,"%  * vdW-DF3-mc is now available. DOI: 10.1103/hp9d-4kpf               %")')
   WRITE(stdout,'(5x,"%    use with input_dft = ''vdW-DF3-mc''                                 %")')
   WRITE(stdout,'(5x,"%  * vdW-DF3 is now available. DOI: 10.1021/acs.jctc.0c00471           %")')
   WRITE(stdout,'(5x,"%    use with input_dft = ''vdW-DF3-opt1'' or ''vdW-DF3-opt2''             %")')

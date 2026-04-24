@@ -478,7 +478,9 @@ CONTAINS
           ENDIF
           !
           IF (lr_exx) THEN
+             !$acc update host(psic)
              CALL lr_exx_apply_revc_int(psic, ibnd, nbnd,1)
+             !$acc update device(psic)
           ENDIF
           !
           IF (real_space .and. okvan .and. nkb > 0) THEN
@@ -569,7 +571,11 @@ CONTAINS
        !
     ENDIF
     !
-    IF (lr_exx .AND. .NOT.interaction) CALL lr_exx_kernel_noint(evc1,evc1_new)
+    IF (lr_exx .AND. .NOT.interaction) THEN
+            !$acc update host(evc1,psic)
+            CALL lr_exx_kernel_noint(evc1,evc1_new)
+            !$acc update device(evc1_new,psic)
+    ENDIF
     !
     ! The kinetic energy g2kin was already computed when
     ! calling the routine lr_solve_e.

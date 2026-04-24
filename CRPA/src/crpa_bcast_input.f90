@@ -25,7 +25,7 @@ SUBROUTINE crpa_bcast_input ( )
   USE constrained_dfpt, ONLY : cdfpt, cdfpt_active_space, cdfpt_bands_min, cdfpt_bands_max
   USE crpacom,          ONLY : filU, wannier_seedname, dist_thr, dist_thr_large, &
                                active_bands_min, active_bands_max, &
-                               folder_wan_Rr, write_wan_Rr, w_freq
+                               folder_wan_Rr, write_wan_Rr, w_freq, q0div_treatment, crpa_mode
   USE crpa_pert,        ONLY : pert_basis
   USE crpa_qpoints,     ONLY : qplot
   !
@@ -70,6 +70,8 @@ SUBROUTINE crpa_bcast_input ( )
   CALL mp_bcast (filU, meta_ionode_id, world_comm)
   CALL mp_bcast (folder_wan_Rr, meta_ionode_id, world_comm)
   CALL mp_bcast (wannier_seedname, meta_ionode_id, world_comm)
+  CALL mp_bcast (q0div_treatment, meta_ionode_id, world_comm)
+  CALL mp_bcast (crpa_mode, meta_ionode_id, world_comm)
   !
   ! Constrained DFPT parameters (from LR_Modules)
   CALL mp_bcast (cdfpt,              meta_ionode_id, world_comm)

@@ -163,6 +163,10 @@ MODULE crpacom
   REAL(DP) :: dist_thr_large
   !! Larger cutoff distance for the Wannier functions in bohr units. For matrix element calculation.
   !
+  CHARACTER(32) :: q0div_treatment
+  ! Correction scheme for the q->0 divergence of the Coulomb kernel
+  CHARACTER(32) :: crpa_mode
+  ! Calculation mode of the Uijkl(R) elements
 END MODULE crpacom
 
 

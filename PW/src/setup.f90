@@ -238,26 +238,22 @@ SUBROUTINE setup()
   ELSE IF (symm_by_label) THEN 
      colin_mag = 0
   END IF
-  IF ( xclib_dft_is('hybrid') ) THEN
-     IF ( colin_mag == 2 ) THEN
+  IF ( colin_mag == 2 ) THEN
+     IF ( xclib_dft_is('hybrid') ) THEN
         CALL infomsg( 'setup', 'colin_mag=2 not implemented for hybrid' )
         colin_mag = 1
      ENDIF
-  ENDIF
-  IF (lda_plus_u .AND. lda_plus_u_kind == 2) THEN
-     IF ( colin_mag == 2 ) THEN
+     IF (lda_plus_u .AND. lda_plus_u_kind == 2) THEN
         CALL infomsg( 'setup', 'colin_mag=2 not implemented for lda+U+V' )
         colin_mag = 1
      ENDIF
-  ENDIF
 #if defined (__OSCDFT)
-  IF (use_oscdft .AND. (oscdft_ctx%inp%oscdft_type==1)) THEN
-     IF ( colin_mag == 2 ) THEN
+     IF (use_oscdft .AND. (oscdft_ctx%inp%oscdft_type==1)) THEN
         CALL infomsg( 'setup', 'colin_mag=2 not implemented for OSCDFT' )
         colin_mag = 1
      ENDIF
-  ENDIF
 #endif
+  ENDIF
   !
   ! time reversal operation is set up to 0 by default
   t_rev = 0

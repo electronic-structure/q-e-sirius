@@ -28,13 +28,6 @@ SUBROUTINE v_of_rho( rho, rho_core, rhog_core, &
   USE tsvdw_module,     ONLY : tsvdw_calculate, UtsvdW
   USE libmbd_interface, ONLY : mbd_interface
   USE sic_mod,          ONLY : add_vsic
-#if defined (__OSCDFT)
-  USE ldaU,             ONLY : lda_plus_u_kind, Hubbard_lmax, Hubbard_l, &
-                               nsg, v_nsg
-  USE plugin_flags,     ONLY : use_oscdft
-  USE oscdft_base,      ONLY : oscdft_ctx
-  USE oscdft_functions, ONLY : oscdft_v_constraint
-#endif  
   !
   IMPLICIT NONE
   !
@@ -91,18 +84,6 @@ SUBROUTINE v_of_rho( rho, rho_core, rhog_core, &
   ! ... DFT+U(+V): build up (extended) Hubbard potential 
   !
   IF (lda_plus_u) CALL v_hubbard ( noncolin, rho, v, eth )
-  !
-#if defined (__OSCDFT)
-  IF (use_oscdft .AND. (oscdft_ctx%inp%oscdft_type==2)) THEN
-     IF (lda_plus_u) THEN
-        IF (lda_plus_u_kind == 0) THEN
-           CALL oscdft_v_constraint (oscdft_ctx, Hubbard_lmax, Hubbard_l, rho%ns, v%ns, eth)
-        ELSEIF (lda_plus_u_kind == 2) THEN
-           CALL oscdft_v_constraint_extended (nsg, v_nsg, eth)
-        ENDIF
-     ENDIF
-  ENDIF
-#endif
   !
   ! ... add an electric field
   ! 
