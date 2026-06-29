@@ -59,20 +59,18 @@ LRMODS = ../../LR_Modules/liblrmod.a
 PWOBJS = ../../PW/src/libpw.a ../../KS_Solvers/libks_solvers.a ../../dft-d3/libdftd3qe.a
 QEMODS = $(BASEMODS)
 
-TLDEPS= hplibs
+# see comments in file tldeps for explanations
+TLDEPS=pwlibs lrmods
+include ../../install/tldeps
 
-all : tldeps libs-hp hp.x 
+all : hplibs hp.x 
 
-libs-hp : libhp.a 
+hplibs : libhp.a 
 
 hp.x : hp_main.o libhp.a $(PWOBJS) $(LRMODS)
 	$(LD) $(LDFLAGS) -o $@ hp_main.o libhp.a \
 		$(LRMODS) $(PWOBJS) $(QEMODS) $(QELIBS)
 	- ( cd ../../bin ; ln -fs ../HP/src/hp.x . )
-
-tldeps :
-	if test -n "$(TLDEPS)" ; then \
-	( cd ../.. ; $(MAKE) $(TLDEPS) || exit 1 ) ; fi
 
 libhp.a : $(HPOBJS)
 	$(AR) $(ARFLAGS) $@ $?

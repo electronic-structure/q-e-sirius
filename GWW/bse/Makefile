@@ -52,17 +52,17 @@ PWOBJS = ../../PW/src/libpw.a ../../KS_Solvers/libks_solvers.a ../../dft-d3/libd
 PW4GWWOBJ = ../pw4gww/fft_custom.o ../pw4gww/stop_pp.o ../pw4gww/mp_wave_parallel.o
 GWWOBJ = ../gww/libgww.a ../minpack/minpacklib.a
 
+# TLDEPS should contain the same list of dependencies as in the main Makefile
 TLDEPS= pwlibs gwwlib pw4gwwlib
+# Ensure that "make" run in this subdirectory builds the needed dependencies
+include ../../install/tldeps
 
-all : tldeps bse_main.x
+all : bse_main.x
 
 bse_main.x : bse_main.o libbse.a  $(BSEOBJS) $(PWOBJS) $(QEMODS) $(GWWOBJ)
 	$(LD) $(LDFLAGS) -o $@ \
 		bse_main.o libbse.a $(PWOBJS) $(QEMODS) $(QELIBS)  $(PW4GWWOBJ) $(GWWOBJ)
 	- ( cd ../../bin ; ln -fs ../GWW/bse/$@ . )
- 
-tldeps:
-	test -n "$(TLDEPS)" && ( cd ../.. ; $(MAKE) $(MFLAGS) $(TLDEPS) || exit 1) || :
 
 libbse.a : $(BSEOBJS)
 	$(AR) $(ARFLAGS) $@ $?

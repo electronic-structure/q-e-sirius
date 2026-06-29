@@ -331,7 +331,7 @@ SUBROUTINE write_nsg
   USE ldaU,       ONLY : Hubbard_lmax, Hubbard_l, lda_plus_u_kind, &
                          iso_sys, is_hubbard, is_hubbard_back,     &
                          ldim_u, reserv, reserv_back, Hubbard_V,   &
-                         at_sc, neighood, nsgnew, backall, ldim_back
+                         at_sc, neighood, backall, ldim_back
   !
   IMPLICIT NONE
   INTEGER :: is, na, nt, m1, m2, ldim
@@ -396,7 +396,7 @@ SUBROUTINE write_nsg
                        DO viz = 1, neighood(na1)%num_neigh
                           IF (neighood(na1)%neigh(viz).EQ.na2) THEN
                              DO m2 = 1, ldim_u(nt2) ! TODO: Check 
-                                f(ldm1+m1,ldm2+m2) = nsgnew(m2,m1,viz,na1,is)
+                                f(ldm1+m1,ldm2+m2) = rho%nsg(m2,m1,viz,na1,is)
                              ENDDO
                              GO TO 3
                           ENDIF
@@ -495,8 +495,8 @@ SUBROUTINE write_nsg
                  nsuma = 0.d0
                  DO is = 1, nspin
                     DO m1 = 1, ldim1
-                       nsuma(is) = nsuma(is) + DBLE(nsgnew(m1,m1,viz,na1,is))
-                       IF (reserv(nt1)) rsrv = rsrv + DBLE(nsgnew(m1,m1,viz,na1,is))
+                       nsuma(is) = nsuma(is) + DBLE(rho%nsg(m1,m1,viz,na1,is))
+                       IF (reserv(nt1)) rsrv = rsrv + DBLE(rho%nsg(m1,m1,viz,na1,is))
                     ENDDO
                     nsum = nsum + nsuma(is)
                  ENDDO
@@ -523,7 +523,7 @@ SUBROUTINE write_nsg
                  IF (na2.EQ.na1) THEN
                     DO m1 = 1, ldim1
                        DO m2 = 1, ldim1
-                          f(m1,m2) = nsgnew(m2,m1,viz,na1,is)
+                          f(m1,m2) = rho%nsg(m2,m1,viz,na1,is)
                        ENDDO
                     ENDDO
                     GO TO 4
@@ -586,8 +586,8 @@ SUBROUTINE write_nsg
                  nsuma = 0.d0
                  DO is = 1, nspin
                     DO m1 = 1, ldim1
-                       nsuma(is) = nsuma(is) + DBLE(nsgnew(m1,m1,viz,na1,is))
-                       IF (reserv(nt1)) rsrv = rsrv + DBLE(nsgnew(m1,m1,viz,na1,is))
+                       nsuma(is) = nsuma(is) + DBLE(rho%nsg(m1,m1,viz,na1,is))
+                       IF (reserv(nt1)) rsrv = rsrv + DBLE(rho%nsg(m1,m1,viz,na1,is))
                     ENDDO
                     nsum = nsum + nsuma(is)
                  ENDDO
@@ -630,8 +630,8 @@ SUBROUTINE write_nsg
               nsuma = 0.d0
               DO is = 1, nspin
                  DO m1 = 2*Hubbard_l(nt1)+2, ldim_u(nt1)
-                    nsuma(is) = nsuma(is) + DBLE(nsgnew(m1,m1,viz,na1,is))
-                    IF (reserv_back(nt1)) rsrv = rsrv + DBLE(nsgnew(m1,m1,viz,na1,is))
+                    nsuma(is) = nsuma(is) + DBLE(rho%nsg(m1,m1,viz,na1,is))
+                    IF (reserv_back(nt1)) rsrv = rsrv + DBLE(rho%nsg(m1,m1,viz,na1,is))
                  ENDDO
                  nsum = nsum + nsuma(is)
               ENDDO
@@ -680,7 +680,7 @@ SUBROUTINE write_nsg_nc
    USE ldaU,       ONLY : Hubbard_lmax, Hubbard_l, lda_plus_u_kind, &
                           iso_sys, is_hubbard, is_hubbard_back,     &
                           ldim_u, reserv, reserv_back, Hubbard_V,   &
-                          at_sc, neighood, nsgnew, backall, ldim_back
+                          at_sc, neighood, backall, ldim_back
    USE noncollin_module,   ONLY : npol
    !
    IMPLICIT NONE
@@ -729,8 +729,8 @@ SUBROUTINE write_nsg_nc
                DO is = 1, npol
                   is1 = is**2
                   DO m1 = 1, ldim1
-                     nsuma(is) = nsuma(is) + DBLE(nsgnew(m1,m1,viz,na1,is1))
-                     IF (reserv(nt1)) rsrv = rsrv + DBLE(nsgnew(m1,m1,viz,na1,is))
+                     nsuma(is) = nsuma(is) + DBLE(rho%nsg(m1,m1,viz,na1,is1))
+                     IF (reserv(nt1)) rsrv = rsrv + DBLE(rho%nsg(m1,m1,viz,na1,is))
                   ENDDO
                ENDDO
                nsum = nsum + nsuma(1) + nsuma(2)
@@ -749,10 +749,10 @@ SUBROUTINE write_nsg_nc
             IF (na2.EQ.na1) THEN
                DO m1 = 1, ldim1
                   DO m2 = 1, ldim1
-                     f(m1,m2)              = nsgnew(m1,m2,viz,na1,1)
-                     f(m1, ldim1+m2)       = nsgnew(m1,m2,viz,na1,2)
-                     f(ldim1+m1, m2)       = nsgnew(m1,m2,viz,na1,3)
-                     f(ldim1+m1, ldim1+m2) = nsgnew(m1,m2,viz,na1,4)
+                     f(m1,m2)              = rho%nsg(m1,m2,viz,na1,1)
+                     f(m1, ldim1+m2)       = rho%nsg(m1,m2,viz,na1,2)
+                     f(ldim1+m1, m2)       = rho%nsg(m1,m2,viz,na1,3)
+                     f(ldim1+m1, ldim1+m2) = rho%nsg(m1,m2,viz,na1,4)
                   ENDDO
                ENDDO
                GO TO 4
@@ -789,9 +789,9 @@ SUBROUTINE write_nsg_nc
          my = 0.d0
          mz = 0.d0
          DO m1 = 1, ldim1
-           mx = mx + DBLE( nsgnew(m1,m1,viz,na1,2) + nsgnew(m1,m1,viz,na1,3) )
-           my = my + 2.d0 * AIMAG( nsgnew(m1,m1,viz,na1,2) )
-           mz = mz + DBLE( nsgnew(m1,m1,viz,na1,1) - nsgnew(m1,m1,viz,na1,4) )
+           mx = mx + DBLE( rho%nsg(m1,m1,viz,na1,2) + rho%nsg(m1,m1,viz,na1,3) )
+           my = my + 2.d0 * AIMAG( rho%nsg(m1,m1,viz,na1,2) )
+           mz = mz + DBLE( rho%nsg(m1,m1,viz,na1,1) - rho%nsg(m1,m1,viz,na1,4) )
          ENDDO
          WRITE(stdout,'(5x,"Atomic magnetic moment mx, my, mz = ",3f12.6)') mx, my, mz
          !
@@ -830,7 +830,7 @@ SUBROUTINE read_ns()
   USE mp_images,          ONLY : intra_image_comm
   USE io_global,          ONLY : ionode, ionode_id
   USE scf,                ONLY : rho, v
-  USE ldaU,               ONLY : lda_plus_u_kind, nsg, v_nsg, &
+  USE ldaU,               ONLY : lda_plus_u_kind, v_nsg, &
                                  hub_back, orbital_resolved
   USE noncollin_module,   ONLY : noncolin
   USE io_files,           ONLY : restart_dir
@@ -872,9 +872,9 @@ SUBROUTINE read_ns()
      ENDIF
   ELSEIF (lda_plus_u_kind.EQ.2) THEN
      IF ( ionode ) THEN
-        READ( UNIT = iunocc, FMT = * , iostat = ierr) nsg
+        READ( UNIT = iunocc, FMT = * , iostat = ierr) rho%nsg
      END IF
-     CALL mp_bcast(nsg, ionode_id, intra_image_comm)
+     CALL mp_bcast(rho%nsg, ionode_id, intra_image_comm)
   ENDIF
   IF ( ionode ) THEN
      CLOSE(UNIT=iunocc,STATUS='keep')

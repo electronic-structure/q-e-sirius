@@ -56,7 +56,7 @@ SUBROUTINE hp_solve_linear_system (na, iq)
   USE lsda_mod,             ONLY : nspin
   USE lr_nc_mag,            ONLY : lr_apply_time_reversal, deeq_nc_save, int3_nc_save
   USE lr_symm_base,         ONLY : lr_npert, upert, upert_mq
-  USE ldaU,                 ONLY : lda_plus_u_kind, nsg, v_nsg
+  USE ldaU,                 ONLY : lda_plus_u_kind, v_nsg
   !
   IMPLICIT NONE
   !

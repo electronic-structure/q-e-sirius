@@ -34,7 +34,7 @@
       !  cm_bgrp  wave functions at time t - dt 
       !
       !  on output:
-      !  cm_bgrp  wave functions at time t + dt, not yet othogonalized 
+      !  cm_bgrp  wave functions at time t + dt, not yet orthogonalized 
       !
       ! if compute_only_gradient is true, this routine only puts the gradient
       ! in the array cm_*

@@ -13,7 +13,7 @@ MODFLAGS= $(BASEMOD_FLAGS) \
           $(MOD_FLAG)../../PW/src \
           $(MOD_FLAG)../../PHonon/PH \
           $(MOD_FLAG)../../LR_Modules \
-          $(MOD_FLAG)../../external/wannier90/src/obj \
+          $(MOD_FLAG)../../wannier90/obj \
           $(MOD_FLAG)../../dft-d3
 
 #
@@ -88,14 +88,16 @@ utilities/screening.o \
 #default : epw
 
 PHOBJS = ../../PHonon/PH/libph.a
-W90LIB = ../../external/wannier90/libwannier.a
+W90LIB = ../../wannier90/lib/libwannier.a
 LRMODS = ../../LR_Modules/liblrmod.a
 PWOBJS = ../../PW/src/libpw.a ../../KS_Solvers/libks_solvers.a ../../dft-d3/libdftd3qe.a
 QEMODS = $(BASEMODS)
 
-TLDEPS= pw ph pp
+# see comments in file tldeps for explanations
+TLDEPS=phlibs libw90 pp
+include ../../install/tldeps
 
-all : iodir utildir bindir pw ph pp wannier libepw.a epw.x nscf2supercond.x
+all : iodir utildir bindir libepw.a epw.x nscf2supercond.x
 
 libepw.a : $(EPWOBJS)
 	$(AR) $(ARFLAGS) $@ $?
@@ -104,40 +106,24 @@ libepw.a : $(EPWOBJS)
 epw.x : epw.o libepw.a $(PHOBJS) $(LRMODS) $(PWOBJS) $(W90LIB) $(QEMODS)
 	$(LD) $(LDFLAGS) -o $@ \
 	epw.o  libepw.a	$(PHOBJS) $(LRMODS) $(W90LIB) $(PWOBJS) $(QEMODS) $(QELIBS)
-	- ( cd $(BUILDDIR)/EPW/bin ; ln -fs ../src/epw.x . )
+	- ( cd ../bin ; ln -fs ../src/epw.x . )
 
 nscf2supercond.x : utilities/nscf2supercond.o $(PWOBJS) $(QEMODS)
 	$(LD) $(LDFLAGS) -o $@ \
 	utilities/nscf2supercond.o ../../PP/src/libpp.a $(PWOBJS) $(QEMODS) $(QELIBS)
-	- ( cd $(BUILDDIR)/EPW/bin ; ln -fs ../src/$@ . )
-	- ( cd $(BUILDDIR)/bin ; ln -fs ../EPW/src/$@ . )
+	- ( cd ../bin ; ln -fs ../src/$@ . )
+	- ( cd ../../bin ; ln -fs ../EPW/src/$@ . )
 
 iodir :
-	if test ! $(TOPDIR) -ef $(BUILDDIR) ; then \
-	mkdir -p $(BUILDDIR)/EPW/src/io ; fi
+	if test ! -d io ; then mkdir io ; fi
 
 utildir :
-	if test ! $(TOPDIR) -ef $(BUILDDIR) ; then \
-	mkdir -p $(BUILDDIR)/EPW/src/utilities ; fi
+	if test ! -d utilities ; then mkdir utilities ; fi
 
+# for out-of-source build
 bindir :
 	if test ! $(TOPDIR) -ef $(BUILDDIR) ; then \
 	cp -r $(TOPDIR)/EPW/bin $(BUILDDIR)/EPW/bin ; fi
-
-pw :
-	cd ../../ ; make pw
-
-ph :
-	cd ../../ ; make ph
-
-pp :
-	cd ../../ ; make pp
-
-wannier :
-	cd ../../ ; make w90
-
-ld1 :
-	cd ../../ ; make ld1
 
 clean :
 	- /bin/rm -f  *.o *~ *.d *.mod *.i io/*.mod io/*.o utilities/*.mod utilities/*.o libepw.a liblr.a

@@ -10,7 +10,7 @@ Incompatible changes in 7.5.1 version:
 
 New in 7.5.1 version:
   * vdW-DF3-mc, van der Waals density functional for molecular crystals
-    (T. Jenkins, K. Berland, and T. Thonhauser, DOI: 10.48550/arXiv.2509.02358)
+    [T. Jenkins, K. Berland, and T. Thonhauser, Phys. Rev. B 112, 235121 (2025)]
 
 Incompatible changes in 7.5 version:
   * The Simpson routine for radial integration has been modified for the case

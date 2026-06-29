@@ -1,4 +1,4 @@
-# Copyright (C) 2001-2024 Quantum ESPRESSO group
+# Copyright (C) 2001-2025 Quantum ESPRESSO group
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -6,7 +6,7 @@
 # of the License. See the file `License' in the root directory
 # of the present distribution.
 
-AC_INIT(ESPRESSO, 7.4, , espresso)
+AC_INIT(ESPRESSO, 7.5, , espresso)
 
 AC_PREREQ(2.64)
 AC_CONFIG_MACRO_DIR([m4/])
@@ -28,8 +28,6 @@ if test ! $topdir -ef $topbuilddir ; then
 else
 	echo "in-source build"
 fi
-
-X_AC_QE_MAKEDEPS()
 
 # check system type (no cross-compilation for now)
 AC_CANONICAL_BUILD
@@ -151,14 +149,17 @@ AC_SUBST(extlib_flags)
 # (ie where configure is called from) 
 
 if test ! $topdir -ef $topbuilddir ; then
-X_AC_QE_MAKE_TREE()
+   X_AC_QE_MAKE_TREE()
 fi
 AC_CONFIG_FILES([make.inc:install/make.inc.in])
 AC_CONFIG_FILES([configure.msg:install/configure.msg.in])
 AC_CONFIG_FILES([install/make_wannier90.inc])
 
-
 AC_OUTPUT
+
+# generation of make.depend files - to be called after directories
+# have been created in X_AC_QE_MAKE_TREE + AC_OUTPUT
+X_AC_QE_MAKEDEPS()
 
 # final messages
 sed '/@delete@/d' configure.msg

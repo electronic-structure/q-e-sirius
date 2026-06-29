@@ -51,18 +51,16 @@ transmit.o
 PWOBJS = ../../PW/src/libpw.a ../../KS_Solvers/libks_solvers.a  ../../dft-d3/libdftd3qe.a
 QEMODS = $(BASEMODS)
 
-TLDEPS= pwlibs
+# see comments in file tldeps for explanations
+include ../../install/tldeps
+TLDEPS=pwlibs
 
-all : tldeps pwcond.x
+all : pwcond.x
 
 pwcond.x : $(PWCONDOBJS) $(PWOBJS) $(QEMODS)
 	$(LD) $(LDFLAGS) -o pwcond.x $(PWCONDOBJS) \
 		$(PWOBJS) $(QEMODS) $(QELIBS)
 	- ( cd ../../bin ; ln -fs ../PWCOND/src/pwcond.x . )
-
-tldeps :
-	if test -n "$(TLDEPS)" ; then \
-	( cd ../.. ; $(MAKE) $(TLDEPS) || exit 1 ) ; fi
 
 clean :
 	- /bin/rm -f *.x *.o *~ *_tmp.f90 *.d *.mod *.i *.a *.L

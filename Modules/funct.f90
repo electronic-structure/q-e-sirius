@@ -271,7 +271,7 @@ MODULE funct
   !              vdW-DF-ob86  Klimes et al, Phys. Rev. B, 83, 195131 (2011)
   !              vdW-DF3-opt1 D. Chakraborty, K. Berland, and T. Thonhauser, JCTC 16, 5893 (2020)
   !              vdW-DF3-opt2 D. Chakraborty, K. Berland, and T. Thonhauser, JCTC 16, 5893 (2020)
-  !              vdW-DF3-mc   T. Jenkins, K. Berland, and T. Thonhauser, DOI: 10.48550/arXiv.2509.02358 (2025)
+  !              vdW-DF3-mc   T. Jenkins, K. Berland, and T. Thonhauser, PRB 112, 235121 (2025)
   !              vdW-DF-C6    K. Berland, D. Chakraborty, and T. Thonhauser, PRB 99, 195418 (2019)
   !              c09x    V. R. Cooper, Phys. Rev. B 81, 161104(R) (2010)
   !              tpss    J.Tao, J.P.Perdew, V.N.Staroverov, G.E. Scuseria,

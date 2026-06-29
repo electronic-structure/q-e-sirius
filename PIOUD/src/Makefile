@@ -38,11 +38,11 @@ QEMODS = $(BASEMODS)
 F90FLAGS += -pg
 LDFLAGS += -pg
 
+# see comments in file tldeps for explanations
+include ../../install/tldeps
 TLDEPS=pwlibs
 
-TLDEPS=pwlibs
-
-all : tldeps pioud.x
+all : pioud.x
 
 pioud.x : $(PIOUDOBJS) libpioud.a $(PWOBJS) $(QEMODS)
 	$(LD) $(LDFLAGS) -o $@ \
@@ -53,14 +53,9 @@ libpioud.a : $(PIOUDLIBS)
 	$(AR) $(ARFLAGS) $@ $?
 	$(RANLIB) $@
 
-tldeps :
-	if test -n "$(TLDEPS)" ; then \
-	( cd ../.. ; $(MAKE) $(TLDEPS) || exit 1 ) ; fi
-
 clean :
 	- /bin/rm -f *.x *.o *.a *~ *_tmp.f90 *.d *.mod *.i *.L
 	- /bin/rm -f ../../bin/pioud.x
-
 
 include make.depend
 

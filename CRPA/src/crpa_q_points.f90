@@ -107,7 +107,7 @@ SUBROUTINE crpa_q_points ( )
       WRITE(iun, '(3i8)' ) nq1, nq2, nq3
       WRITE(iun, '( i8)' ) nqs
       DO iq = 1, nqs
-         WRITE(iun, '(3e24.15)') x_q(1, iq), x_q(2, iq), x_q(3, iq)
+         WRITE(iun, '(4e24.15)') x_q(1, iq), x_q(2, iq), x_q(3, iq), wq(iq)
       ENDDO
       CLOSE(iun, STATUS = 'keep')
    ENDIF

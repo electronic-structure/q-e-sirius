@@ -284,13 +284,13 @@ PWLIBS += \
   utils_gpu.o \
   oscdft_functions_gpu.o
 
-
-
 QEMODS=../../KS_Solvers/libks_solvers.a ../../dft-d3/libdftd3qe.a $(BASEMODS)
 
-TLDEPS= bindir pwlibs mods libks_solvers dftd3
+# see comments in file tldeps for explanations
+TLDEPS= bindir mods libks_solvers dftd3
+include ../../install/tldeps
 
-all : tldeps pw.x
+all : pw.x
 
 pw.x : $(PWOBJS) libpw.a $(QEMODS)
 	$(LD) $(LDFLAGS) -o $@ \
@@ -302,10 +302,6 @@ pw.x : $(PWOBJS) libpw.a $(QEMODS)
 libpw.a : $(PWLIBS) 
 	$(AR) $(ARFLAGS) $@ $?
 	$(RANLIB) $@
-
-tldeps :
-	if test -n "$(TLDEPS)" ; then \
-	( cd ../.. ; $(MAKE) $(TLDEPS) || exit 1 ) ; fi
 
 clean :
 	- /bin/rm -f *.x *.o *.a *~ *_tmp.f90 *.d *.mod *.i *.L

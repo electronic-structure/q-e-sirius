@@ -31,8 +31,3 @@ target_include_directories(qe_wannier2pw_exe PRIVATE
 )
 
 target_link_libraries(qe_wannier2pw_exe PRIVATE qe_crpa_w90 qe_pw qe_lax qe_modules qe_xclib)
-
-
-
-
-

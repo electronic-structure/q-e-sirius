@@ -7,8 +7,6 @@ VPATH = @srcdir@
 MODFLAGS= $(BASEMOD_FLAGS) \
           $(MOD_FLAG)../../CPV/src
 
-TLDEPS=pw cp
-
 COUPLEOBJS= \
 libpwscf.o \
 libcpv.o \
@@ -16,15 +14,15 @@ libqemod.o
 
 ########################################################################
 
-all : tldeps libqecouple.a
+# see comments in file tldeps for explanations
+TLDEPS=pw cp
+include ../../install/tldeps
+
+all : libqecouple.a
 
 libqecouple.a : $(COUPLEOBJS)
 	$(AR) $(ARFLAGS) $@ $?
 	$(RANLIB) $@
-
-tldeps :
-	if test -n "$(TLDEPS)" ; then \
-	( cd ../.. ; $(MAKE) $(TLDEPS) || exit 1 ) ; fi
 
 clean :
 	- /bin/rm -f *.x *.o *.a *~ *_tmp.f90 *.d *.mod *.i *.L

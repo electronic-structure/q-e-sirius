@@ -71,16 +71,17 @@ QEMODS = $(BASEMODS)
 
 MODULES = $(PWOBJS) $(QEMODS)
 
-TLDEPS= pwlibs
+# see comments in file tldeps for explanations
+include ../../install/tldeps
+TLDEPS=pwlibs
 
-all : tldeps open_grid.x average.x bands.x band_interpolation.x dos.x epsilon.x initial_state.x fs.x \
+all : open_grid.x average.x bands.x band_interpolation.x dos.x epsilon.x initial_state.x fs.x \
       plan_avg.x plotband.x plotproj.x plotrho.x pmw.x pp.x projwfc.x \
       pawplot.x sumpdos.x pw2wannier90.x pw2critic.x pw2gw.x pw2gt.x \
       wannier_ham.x wannier_plot.x molecularpdos.x \
       pw2bgw.x wfck2r.x fermi_velocity.x fermi_proj.x ppacf.x pprism.x \
       d3hess.x wannier2pw.x \
       oscdft_pp.x oscdft_et.x
-
 
 libpp.a : $(PPOBJS) 
 	$(AR) $(ARFLAGS) $@ $?
@@ -230,10 +231,6 @@ fs.x : fermisurface.o libpp.a $(MODULES)
 	$(LD) $(LDFLAGS) -o $@ \
 		fermisurface.o libpp.a $(MODULES) $(QELIBS)
 	- ( cd ../../bin ; ln -fs ../PP/src/$@ . )
-
-tldeps :
-	if test -n "$(TLDEPS)" ; then \
-	( cd ../.. ; $(MAKE) $(TLDEPS) || exit 1 ) ; fi
 
 fermi_velocity.x : fermi_velocity.o libpp.a $(MODULES) 
 	$(LD) $(LDFLAGS) -o $@ \

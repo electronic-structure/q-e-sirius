@@ -38,14 +38,15 @@ averages.o\
 scf_result.o\
 $(TEST_CPV_TRAJ_OBJ)
 
-
 QEMODS=../../PHonon/PH/libph.a ../../LR_Modules/liblrmod.a \
        ../../PW/src/libpw.a ../../KS_Solvers/libks_solvers.a ../../dft-d3/libdftd3qe.a \
       $(BASEMODS)
 
-TLDEPS= pw ph
+# see comments in file tldeps for explanations
+TLDEPS= pwlibs phlibs
+include ../../install/tldeps
 
-all : tldeps all_currents.x
+all : all_currents.x
 
 cpv-traj-test : cpv-traj-test.x cpv_traj_test.o
 
@@ -56,10 +57,6 @@ all_currents.x : all_currents.o lib_all_currents.a $(QEMODS)
 	$(LD) $(LDFLAGS) -o $@ \
 		all_currents.o lib_all_currents.a $(QEMODS) $(QELIBS)
 	- ( cd ../../bin ; ln -fs ../QEHeat/src/$@ . )
-
-
-tldeps:
-	test -n "$(TLDEPS)" && ( cd ../.. ; $(MAKE) $(MFLAGS) $(TLDEPS) || exit 1) || :
 
 lib_all_currents.a : $(ALLCURRENTSOBJS)
 	$(AR) $(ARFLAGS) $@ $?

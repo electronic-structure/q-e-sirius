@@ -47,7 +47,8 @@ crpa_prepare_perturbations_q.o \
 crpa_postprocess_coulomb.o \
 crpa_update_coulomb.o \
 crpa_copy_original_xk.o \
-lr_compute_matrix_elements.o
+lr_compute_matrix_elements.o \
+crpa_q0correction.f90
 
 # crpa_skip_nscf_by_rotate.o
 

@@ -197,8 +197,9 @@ SUBROUTINE nsg_adj ( )
   USE kinds,            ONLY : DP
   USE ions_base,        ONLY : nat, ntyp => nsp, ityp
   USE ldaU,             ONLY : Hubbard_lmax, Hubbard_l, starting_ns, &
-       nsgnew, neighood, is_hubbard, ldmx_tot
+                               neighood, is_hubbard, ldmx_tot
   USE lsda_mod,         ONLY : nspin
+  USE scf,              ONLY : rho
   USE noncollin_module, ONLY : noncolin
   USE io_global,        ONLY : stdout
 #if defined (__OSCDFT)
@@ -235,7 +236,7 @@ SUBROUTINE nsg_adj ( )
                     f(:,:) = (0.d0, 0.d0)
                     DO m1 = 1, ldim
                        DO m2 = 1, ldim
-                          f(m1,m2) = nsgnew(m2,m1,viz,na,is)
+                          f(m1,m2) = rho%nsg(m2,m1,viz,na,is)
                        ENDDO
                     ENDDO
                     GO TO 7
@@ -261,8 +262,8 @@ SUBROUTINE nsg_adj ( )
                     DO i = 1,ldim
                        temp = temp + CONJG(vet(m1,i))*lambda(i)*vet(m2,i)
                     ENDDO
-                    nsgnew(m2,m1,viz,na,is) = DBLE(temp)
-                    nsgnew(m1,m2,viz,na,is) = nsgnew(m2,m1,viz,na,is)
+                    rho%nsg(m2,m1,viz,na,is) = DBLE(temp)
+                    rho%nsg(m1,m2,viz,na,is) = rho%nsg(m2,m1,viz,na,is)
                  ENDDO
               ENDDO
               !
@@ -277,7 +278,7 @@ SUBROUTINE nsg_adj ( )
         ! Here we are copying the occupation matrix nsgnew to the 
         ! array oscdft_ctx%inp%occupation because it will be used in
         ! the constrained calculation
-        CALL oscdft_nsg(2)
+        CALL oscdft_nsg(2, rho%nsg)
      ENDIF
 #endif
      !
@@ -289,7 +290,7 @@ SUBROUTINE nsg_adj ( )
      IF (use_oscdft .AND. (oscdft_ctx%inp%oscdft_type==2)) THEN
        ! Here we are copying the target occupation matrix to the
        ! current/working occupation matrix nsgnew
-       CALL oscdft_nsg(4)
+       CALL oscdft_nsg(4, rho%nsg)
      ENDIF
      !
      ! Write the original occupation matrices

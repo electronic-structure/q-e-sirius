@@ -74,10 +74,6 @@ libdense :
 	if test -d DENSE ; then \
         ( cd DENSE ; $(MAKE) all || exit 1 ) ; fi
 
-librmm :
-	if test -d RMM ; then \
-        ( cd RMM ; $(MAKE) all || exit 1 ) ; fi
-
 libnewsolver : 
 	if test -d NewSolver ; then \
         ( cd NewSolver ; $(MAKE) all || exit 1 ) ; fi

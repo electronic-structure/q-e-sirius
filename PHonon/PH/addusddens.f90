@@ -70,18 +70,46 @@ subroutine addusddens (drhop, dbecsum, mode0, npe)
   ! the values of q+G
   ! the spherical harmonics
 
-  complex(DP) :: fact, zsum, bb, alpha, u1, u2, u3
+  complex(DP) :: fact, zsum, bb, alpha, u1, u2, u3, fact_alpha_bb
   ! auxiliary variables
   complex(DP), allocatable ::  sk (:), qgm(:), aux (:,:,:)
   ! the structure factor
   ! q_lm(G)
   ! auxiliary variable for drho(G)
+  
+  ! Arrays to store pre-computed mode-independent quantities  
+  complex(DP), allocatable :: alpha_array(:)
+  ! pre-computed alpha values for vectorization  
+  complex(DP), allocatable :: qgm_all(:,:)
+  integer, allocatable :: ijh_map(:,:)
+  integer :: n_entries, ientry
+  ! qgm values for all (nt,ih,jh) combinations  
+  ! mapping: (nt, ijh) for each entry
+  ! total number of (nt,ih,jh) entries
+  ! counter for entries
   !
   IF (.not.okvan) return
   !
   CALL start_clock ('addusddens')
   !
+  ! Pre-compute mode-independent quantities
+  ! First count the number of (nt,ih,jh) entries
+  n_entries = 0
+  do nt = 1, ntyp
+     if (upf(nt)%tvanp) then
+        do ih = 1, nh(nt)
+           do jh = ih, nh(nt)
+              n_entries = n_entries + 1
+           enddo
+        enddo
+     endif
+  enddo
+  !
+  ! Allocate arrays for pre-computed quantities
   allocate (aux(  ngm , nspin_mag , npe))
+  allocate (alpha_array(ngm))
+  allocate (qgm_all(ngm, n_entries))
+  allocate (ijh_map(2, n_entries))  ! stores (nt, ijh)
   allocate (sk (  ngm))
   allocate (ylmk0(ngm , lmaxq * lmaxq))
   allocate (qgm(  ngm))
@@ -90,6 +118,7 @@ subroutine addusddens (drhop, dbecsum, mode0, npe)
   !      WRITE( stdout,*) aux, ylmk0, qmod
   !
   !  And then we compute the additional charge in reciprocal space
+  !  These computations are independent of modes, so compute once for all
   !
   call setqmod (ngm, xq, g, qmod, qpg)
   call ylmr2 (lmaxq * lmaxq, ngm, qpg, qmod, ylmk0)
@@ -97,59 +126,91 @@ subroutine addusddens (drhop, dbecsum, mode0, npe)
      qmod (ig) = sqrt (qmod (ig) ) * tpiba
   enddo
   !
-  fact = cmplx (0.d0, - tpiba, kind=DP)
-  aux(:,:,:) = (0.d0, 0.d0)
+  ! Pre-compute qgm for all (nt,ih,jh) combinations
+  ientry = 0
   do nt = 1, ntyp
-     if (upf(nt)%tvanp  ) then
+     if (upf(nt)%tvanp) then
         ijh = 0
-        do ih = 1, nh (nt)
-           do jh = ih, nh (nt)
-              call qvan2 (ngm, ih, jh, nt, qmod, qgm, ylmk0)
+        do ih = 1, nh(nt)
+           do jh = ih, nh(nt)
               ijh = ijh + 1
-              do na = 1, nat
-                 if (ityp (na) .eq.nt) then
-                    mu = 3 * (na - 1)
-                    !
-                    ! calculate the structure factor
-                    !
-                    do ig = 1, ngm
-                       sk (ig) = eigts1 (mill(1,ig), na) * &
-                                 eigts2 (mill(2,ig), na) * &
-                                 eigts3 (mill(3,ig), na) * &
-                                 eigqts (na) * qgm (ig)
-                    enddo
-                    !
-                    !  And qgmq and becp and dbecq
-                    !
-                    do ipert = 1, npe
-                       do is = 1, nspin_mag
-                          mode = mode0 + ipert
-                          zsum = dbecsum (ijh, na, is, ipert)
-                          !
-                          u1 = u (mu + 1, mode)
-                          u2 = u (mu + 2, mode)
-                          u3 = u (mu + 3, mode)
-                          if (abs(u1) + abs(u2) + abs(u3) > 1d-12) then
-                             bb = becsum (ijh, na, is)
-                             zsum = zsum + &
-                                  ( alphasum (ijh, 1, na, is) * u1 &
-                                  + alphasum (ijh, 2, na, is) * u2 &
-                                  + alphasum (ijh, 3, na, is) * u3)
-                             !
-                             do ig = 1, ngm
-                                alpha = qpg(1,ig)*u1 + qpg(2,ig)*u2 + qpg(3,ig)*u3
-                                aux(ig,is,ipert) = aux(ig,is,ipert) + fact * alpha * bb * sk(ig)
-                             enddo
-                          endif
-                          call zaxpy (ngm, zsum, sk, 1, aux(1,is,ipert), 1)
-                          IF (okpaw) becsumort(ijh,na,is,mode) = zsum
-                       enddo
-                    enddo
-                 endif
+              ientry = ientry + 1
+              call qvan2 (ngm, ih, jh, nt, qmod, qgm, ylmk0)
+              !
+              ! Store mapping information and qgm
+              ijh_map(1, ientry) = nt
+              ijh_map(2, ientry) = ijh
+              do ig = 1, ngm
+                 qgm_all(ig, ientry) = qgm(ig)
               enddo
            enddo
         enddo
      endif
+  enddo
+  !
+  fact = cmplx (0.d0, - tpiba, kind=DP)
+  aux(:,:,:) = (0.d0, 0.d0)
+  !
+  ! Use pre-computed qgm and compute structure factors on-the-fly
+  !
+  do ientry = 1, n_entries
+     nt = ijh_map(1, ientry)
+     ijh = ijh_map(2, ientry)
+     !
+     ! Loop over all atoms of this type
+     do na = 1, nat
+        if (ityp(na) .eq. nt) then
+           mu = 3 * (na - 1)
+           !
+           ! Calculate structure factor for this (ientry, na) combination
+           do ig = 1, ngm
+              sk(ig) = eigts1 (mill(1,ig), na) * &
+                       eigts2 (mill(2,ig), na) * &
+                       eigts3 (mill(3,ig), na) * &
+                       eigqts (na) * qgm_all(ig, ientry)
+           enddo
+           !
+           ! Process perturbations - preliminary sums approach
+           !
+           do ipert = 1, npe
+              mode = mode0 + ipert
+              u1 = u (mu + 1, mode)
+              u2 = u (mu + 2, mode)
+              u3 = u (mu + 3, mode)
+              
+              ! Check if displacement is significant for u-dependent terms
+              if (abs(u1) + abs(u2) + abs(u3) >= 1.0E-12_DP) then
+                 ! Pre-compute alpha array only if displacement is significant
+                 alpha_array(1:ngm) = qpg(1,1:ngm)*u1 + qpg(2,1:ngm)*u2 + qpg(3,1:ngm)*u3
+              endif
+              
+              do is = 1, nspin_mag
+                 zsum = dbecsum (ijh, na, is, ipert)
+                 !
+                 bb = becsum (ijh, na, is)
+                 
+                 ! Add u-dependent terms only if displacement is significant
+                 if (abs(u1) + abs(u2) + abs(u3) >= 1.0E-12_DP) then
+                    zsum = zsum + &
+                         ( alphasum (ijh, 1, na, is) * u1 &
+                         + alphasum (ijh, 2, na, is) * u2 &
+                         + alphasum (ijh, 3, na, is) * u3)
+                 endif
+                 !
+                 call start_clock('compute_auxiliary')
+                 ! Vectorized update of aux array - only if displacement is significant
+                 if (abs(u1) + abs(u2) + abs(u3) >= 1.0E-12_DP) then
+                    fact_alpha_bb = fact * bb
+                    do ig = 1, ngm
+                       aux(ig,is,ipert) = aux(ig,is,ipert) + fact_alpha_bb * alpha_array(ig) * sk(ig)
+                    enddo
+                 endif
+                 call zaxpy (ngm, zsum, sk, 1, aux(1,is,ipert), 1)
+                 IF (okpaw) becsumort(ijh,na,is,mode) = zsum
+              enddo
+           enddo
+        endif
+     enddo
   enddo
   !
   !     convert aux to real space
@@ -170,6 +231,9 @@ subroutine addusddens (drhop, dbecsum, mode0, npe)
   deallocate (ylmk0)
   deallocate (sk)
   deallocate (aux)
+  deallocate (alpha_array)
+  deallocate (qgm_all)
+  deallocate (ijh_map)
   !
   call stop_clock ('addusddens')
   !
