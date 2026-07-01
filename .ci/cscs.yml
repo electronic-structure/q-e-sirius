@@ -58,7 +58,7 @@ build q-e-sirius cuda:
   extends: [.baremetal-runner-daint-gh200, .test_env_vars]
   needs: ["build q-e-sirius cuda"]
   variables:
-    UENV_REPO_PATH: /capstor/scratch/cscs/antonk/.uenv-images-ci-daint
+    UENV_REPO_PATH: /capstor/scratch/cscs/simonpi/.uenv-images-ci-daint
     SLURM_GPUS_PER_TASK: 1
     SLURM_CPU_BIND: 'socket'
     SLURM_HINT: nomultithread
