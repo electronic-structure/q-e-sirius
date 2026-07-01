@@ -12,5 +12,5 @@
   !dist_thr = 5
   !dist_thr_large = 10 
   cdfpt = .false.
-  w_freq = (0.5,0.00735)
+  w_freq = (0.5,0.01)
 /
