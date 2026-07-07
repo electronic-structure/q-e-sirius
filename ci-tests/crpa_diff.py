@@ -29,8 +29,8 @@ def main():
           v_1.append(float(d1[a][k]))
           v_2.append(float(d2[a][k]))
     #sort lists (could be removed)    
-    v_1.sort()
-    v_2.sort()
+    #v_1.sort()
+    #v_2.sort()
 
     #compare lists
     for a1, a2 in zip(v_1, v_2):

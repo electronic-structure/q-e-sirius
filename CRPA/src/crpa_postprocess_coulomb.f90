@@ -176,7 +176,7 @@ SUBROUTINE write_yml(iun, v, u)
          jw1 = mels_jwlist(ipert1)
          R1  = mels_Rlist(:, ipert1)
          !
-         WRITE(iun, '("iw1",1I4,"jw1",1I4,"R1",3I4,"iw2",1I4,"jw2",1I4,"R2",3I4,":")') iw1, jw1, R1, iw2, jw2, R2
+         WRITE(iun, '("iw1",1I4,"  jw1",1I4,"  R1",3I4,"  iw2",1I4,"  jw2",1I4,"  R2",3I4," :")') iw1, jw1, R1, iw2, jw2, R2
          WRITE(iun,'(2X,"bare:",F12.6,2X,F12.6)') v(ipert1, ipert2)*RYTOEV
          WRITE(iun,'(2X,"screened:",F12.6,2X,F12.6)') u(ipert1, ipert2)*RYTOEV
       ENDDO
