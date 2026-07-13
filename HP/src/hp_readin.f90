@@ -17,6 +17,7 @@ SUBROUTINE hp_readin()
   USE io_global,        ONLY : meta_ionode, meta_ionode_id, stdout
   USE mp,               ONLY : mp_bcast
   USE mp_world,         ONLY : world_comm
+  USE mp_images,        ONLY : nimage
   USE check_stop,       ONLY : max_seconds
   USE io_files,         ONLY : tmp_dir, prefix, create_directory
   USE control_flags,    ONLY : iverbosity
@@ -114,6 +115,14 @@ SUBROUTINE hp_readin()
   IF (TRIM(method) /= 'LRT' .AND. TRIM(method) /= 'CRPA') &
      CALL errore('hp_readin', 'Invalid method: ' // TRIM(method) // &
                  '. Must be LRT or CRPA.', 1)
+  !
+  ! Image parallelization is only supported for method='CRPA'. Check this
+  ! before any file I/O (create_directory, read_file): otherwise the images
+  ! race on the shared HP/ scratch directory during the errore abort,
+  ! producing a spurious secondary "File cannot be deleted" runtime error.
+  !
+  IF (TRIM(method) == 'LRT' .AND. nimage > 1) CALL errore ('hp_readin', &
+     & "image parallelization (-ni) is only supported for method='CRPA'", 1)
   !
   ! Inform the PW routines that we are performing the calculation
   ! of Hubbard parameters (needed before read_file)
@@ -277,14 +286,12 @@ SUBROUTINE input_sanity_lrt()
   ! Sanity checks specific to method = 'LRT' (calculation of Hubbard parameters).
   !
   USE Coul_cut_2D,      ONLY : do_cutoff_2D
-  USE mp_images,        ONLY : nimage
   USE ldaU,             ONLY : lda_plus_u, Hubbard_projectors, lda_plus_u_kind, Hubbard_J0, &
                                Hubbard_V, is_hubbard_back
   !
   IMPLICIT NONE
   !
-  IF (nimage > 1) CALL errore ('hp_readin', &
-     & "image parallelization (-ni) is only supported for method='CRPA'", 1)
+  ! The -ni-only-for-CRPA guard is enforced early in hp_readin.
   !
   IF (conv_thr_chi <= 0.D0) CALL errore ('hp_readin', ' Wrong conv_thr_chi ',1)
   !
