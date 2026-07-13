@@ -21,11 +21,10 @@ PROGRAM hp_main
   USE ions_base,         ONLY : nat, ityp, atm, tau, amass
   USE io_files,          ONLY : tmp_dir
   USE control_flags,     ONLY : use_para_diag, use_gpu
-  USE ldaU,              ONLY : dfpt_hub
   USE ldaU_hp,           ONLY : perturbed_atom, start_q, last_q, nqs, code, &
                                 compute_hp, sum_pertq, perturb_only_atom,   &
                                 determine_num_pert_only, tmp_dir_save,      &
-                                determine_q_mesh_only
+                                determine_q_mesh_only, method
   !
   IMPLICIT NONE
   !
@@ -41,21 +40,21 @@ PROGRAM hp_main
   !
   CALL environment_start(code)
   !
-  ! Inform the PW routines that we are performing the HP calculation
-  !
-  dfpt_hub = .TRUE.
-  ! 
-  ! Print the preamble
-  !
-  CALL hp_print_preamble()
-  !
-  ! Read the input parameters and the data produced by PWscf
+  ! Read the input parameters and the data produced by PWscf.
+  ! Also prints the preamble and, for method='LRT', sets dfpt_hub.
   !
   CALL hp_readin()
   !
   ! Initialization
   !
   CALL check_stop_init()
+  !
+  ! Dispatch to the CRPA driver
+  !
+  IF (TRIM(method) == 'CRPA') THEN
+     CALL hp_crpa_run()
+     GO TO 104
+  ENDIF
   !
   ! Allocate and initialize various arrays needed
   ! for the HP calculation
@@ -225,9 +224,10 @@ PROGRAM hp_main
   !
   CALL hp_dealloc_2()
   !
-  ! Print clocks
+  ! Print clocks (LRT only; the CRPA driver will handle its own clocks)
   !
-  IF (.NOT.compute_hp .AND. .NOT.sum_pertq .AND. .NOT.determine_num_pert_only) THEN
+  IF (TRIM(method) == 'LRT' .AND. &
+      .NOT.compute_hp .AND. .NOT.sum_pertq .AND. .NOT.determine_num_pert_only) THEN
      WRITE( stdout, * )
      WRITE( stdout, * )  '    PRINTING TIMING FROM PWSCF ROUTINES: '
      CALL print_clock_pw()
@@ -242,29 +242,5 @@ PROGRAM hp_main
 3336 FORMAT('     ',69('='))
   !
   STOP
-  !
-CONTAINS
-  !
-SUBROUTINE hp_print_preamble()
-  !
-  IMPLICIT NONE
-  !
-  WRITE( stdout, '(/5x,"=---------------------------------------------------------------------------=")')
-  WRITE( stdout, '(/5x,"      Calculation of Hubbard parameters using the HP code based on DFPT      ")')
-  WRITE( stdout, '(/5x,"          Please cite the following papers when using this program:          ")')
-  WRITE( stdout, '(/5x,"            - HP code : Comput. Phys. Commun. 279, 108455 (2022).            ")')
-  WRITE( stdout, '(/5x,"                                                                             ")')
-  WRITE( stdout, '(/5x,"      For a nonrelativistic, collinear calculation:                          ")')
-  WRITE( stdout, '(/5x,"            - Theory  : I. Timrov et al, Phys. Rev. B 98,  085127 (2018) and ")')
-  WRITE( stdout, '(/5x,"                        I. Timrov et al, Phys. Rev. B 103, 045141 (2021).    ")')
-  WRITE( stdout, '(/5x,"                                                                             ")')
-  WRITE( stdout, '(/5x,"      For a fully-relativistic, and/or noncollinear calculation:             ")')
-  WRITE( stdout, '(/5x,"            - Theory  : L. Binci et al., Phys. Rev. B 108, 115157 (2023) and ")')
-  WRITE( stdout, '(/5x,"                        I. Timrov et al, Phys. Rev. B 98,  085127 (2018) ")')
-  WRITE( stdout, '(/5x,"=-----------------------------------------------------------------------------=")')
-  !
-  RETURN
-  !
-END SUBROUTINE hp_print_preamble
   !
 END PROGRAM hp_main

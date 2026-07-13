@@ -1,7 +1,11 @@
 set(src_hp
+    src/crpacom.f90
     src/hp_allocate_q.f90
     src/hp_bcast_input.f90
     src/hpcom.f90
+    src/hp_crpa_bcast_input.f90
+    src/hp_crpa_readin.f90
+    src/hp_crpa_run.f90
     src/hp_clean_q.f90
     src/hp_close_q.f90
     src/hp_calc_chi.f90

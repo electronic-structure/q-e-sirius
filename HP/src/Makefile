@@ -10,9 +10,13 @@ MODFLAGS= $(BASEMOD_FLAGS) \
           $(MOD_FLAG)../../dft-d3 \
           $(MOD_FLAG)../../LR_Modules
 HPOBJS = \
+crpacom.o \
 hp_allocate_q.o \
 hp_bcast_input.o \
 hpcom.o \
+hp_crpa_bcast_input.o \
+hp_crpa_readin.o \
+hp_crpa_run.o \
 hp_clean_q.o \
 hp_close_q.o \
 hp_calc_chi.o \
