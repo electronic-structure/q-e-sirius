@@ -277,10 +277,14 @@ SUBROUTINE input_sanity_lrt()
   ! Sanity checks specific to method = 'LRT' (calculation of Hubbard parameters).
   !
   USE Coul_cut_2D,      ONLY : do_cutoff_2D
+  USE mp_images,        ONLY : nimage
   USE ldaU,             ONLY : lda_plus_u, Hubbard_projectors, lda_plus_u_kind, Hubbard_J0, &
                                Hubbard_V, is_hubbard_back
   !
   IMPLICIT NONE
+  !
+  IF (nimage > 1) CALL errore ('hp_readin', &
+     & "image parallelization (-ni) is only supported for method='CRPA'", 1)
   !
   IF (conv_thr_chi <= 0.D0) CALL errore ('hp_readin', ' Wrong conv_thr_chi ',1)
   !

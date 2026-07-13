@@ -10,67 +10,85 @@ SUBROUTINE hp_crpa_run()
   !-----------------------------------------------------------------------
   !
   ! Driver of the CRPA calculation (hp.x with method = 'CRPA').
-  ! STUB: the solver is ported in a later merge stage; for now this
-  ! routine only echoes the parsed &CRPA input and returns.
   !
-  USE kinds,            ONLY : DP
-  USE io_global,        ONLY : stdout
-  USE control_flags,    ONLY : isolve
-  USE control_lr,       ONLY : lrpa, tr2_ph, conv_thr_nscf, niter_ph, nmix_ph
-  USE qpoint,           ONLY : nq1, nq2, nq3, nqs, x_q
-  USE crpacom,          ONLY : wannier_seedname, active_bands_min, active_bands_max, &
-                               wan_dist_thr, wan_dist_thr_mels, folder_wan_Rr,       &
-                               write_wan_Rr, w_freq
-  USE crpa_pert,        ONLY : pert_basis
-  USE crpa_qpoints,     ONLY : qplot
-  USE constrained_dfpt, ONLY : cdfpt, cdfpt_active_space, cdfpt_bands_min, cdfpt_bands_max
+  ! Input has already been read (hp_readin -> hp_crpa_readin) and the
+  ! stop condition initialized in hp_main. MPI startup, the preamble,
+  ! citations and the environment are also handled by hp_main; this
+  ! routine performs the CRPA solver's own initialization, the q-point
+  ! loop, and its clock printing.
+  !
+  USE io_global,         ONLY : stdout
+  USE qpoint,            ONLY : nqs
+  USE w90_wan_Rr_buffer, ONLY : w90_wan_Rr_close_buffer
+  USE crpa_pert,         ONLY : pert_basis
   !
   IMPLICIT NONE
   !
-  INTEGER :: iq, ipol
+  INTEGER :: iq
+  LOGICAL :: do_iq, setup_pw
   !
-  WRITE(stdout, '(/,5x,69("="))')
-  WRITE(stdout, '(/,25x,"CRPA calculation",/)')
-  WRITE(stdout, '(5x,69("="))')
+  ! Allocate and initialize various arrays needed for the CRPA calculation
   !
-  ! Echo the parsed &CRPA input
+  CALL crpa_init()
   !
-  WRITE(stdout, '(/,5x,"Perturbation basis: ",a)') TRIM(pert_basis)
-  IF (TRIM(pert_basis) == 'bands') THEN
-     WRITE(stdout, '(5x,5x,"Perturbation bands: ",i5," - ",i5)') active_bands_min, active_bands_max
-  ELSEIF (TRIM(pert_basis) == 'wannier') THEN
-     WRITE(stdout, '(5x,5x,"Wannier seedname:   ",a)') TRIM(wannier_seedname)
-     WRITE(stdout, '(5x,5x,"folder_wan_Rr:      ",a)') TRIM(folder_wan_Rr)
-     WRITE(stdout, '(5x,5x,"write_wan_Rr:       ",l1)') write_wan_Rr
-     WRITE(stdout, '(5x,5x,"wan_dist_thr:       ",1pe10.2," bohr")') wan_dist_thr
-     WRITE(stdout, '(5x,5x,"wan_dist_thr_mels:  ",1pe10.2," bohr")') wan_dist_thr_mels
+  ! Print a summary
+  !
+  CALL crpa_summary()
+  !
+  ! Initialize the q mesh (q_points) and R mesh (R_points)
+  !
+  CALL crpa_generate_grids()
+  !
+  CALL crpa_setup_wannier()
+  !
+  ! Loop over the q points
+  !
+  DO iq = 1, nqs
+     !
+     ! Setup a calculation for a specific q point
+     !
+     CALL crpa_prepare_q(iq, do_iq, setup_pw)
+     !
+     !  If this q is not done in this run, cycle
+     !
+     IF (.NOT. do_iq) CYCLE
+     !
+     ! If necessary the bands are recalculated
+     !
+     IF (setup_pw) CALL crpa_run_nscf(.TRUE.)
+     !
+     ! Initialize the quantities which do not depend on
+     ! the linear response of the system
+     !
+     CALL crpa_load_q()
+     !
+     CALL crpa_prepare_perturbations_q(iq)
+     !
+     ! SCF solution of the linearized Kohn-Sham equation
+     !
+     CALL crpa_solve_linear_system(iq)
+     !
+     ! Write the Coulomb matrix for the current q to file
+     !
+     CALL crpa_postprocess_coulomb(iq)
+     !
+     ! Cleanup of the variables for the next q point
+     !
+     CALL crpa_clean_q(.TRUE.)
+     !
+  ENDDO
+  !
+  IF (pert_basis == 'wannier') THEN
+     ! Close the buffer
+     CALL w90_wan_Rr_close_buffer()
   ENDIF
   !
-  WRITE(stdout, '(/,5x,"lrpa:              ",l1)') lrpa
-  WRITE(stdout, '(  5x,"tr2:               ",1pe10.2)') tr2_ph
-  WRITE(stdout, '(  5x,"conv_thr_nscf:     ",1pe10.2)') conv_thr_nscf
-  WRITE(stdout, '(  5x,"niter_max:         ",i5)') niter_ph
-  WRITE(stdout, '(  5x,"nmix:              ",i5)') nmix_ph
-  WRITE(stdout, '(  5x,"diagonalization:   ",a)') MERGE('david', 'cg   ', isolve == 0)
-  WRITE(stdout, '(  5x,"w_freq:          (",1pe10.2,",",1pe10.2," ) Ry")') w_freq
+  ! Print clocks
   !
-  IF (cdfpt) THEN
-     WRITE(stdout, '(/,5x,"Constrained DFPT active space: ",a)') TRIM(cdfpt_active_space)
-     IF (TRIM(cdfpt_active_space) == 'bands') THEN
-        WRITE(stdout, '(5x,5x,"cDFPT active bands: ",i5," - ",i5)') cdfpt_bands_min, cdfpt_bands_max
-     ENDIF
-  ENDIF
-  !
-  IF (qplot) THEN
-     WRITE(stdout, '(/,5x,"q points from input (qplot), nqs = ",i5)') nqs
-     DO iq = 1, nqs
-        WRITE(stdout, '(5x,5x,"q(",i4,") = (",3f12.7," )")') iq, (x_q(ipol,iq), ipol=1,3)
-     ENDDO
-  ELSE
-     WRITE(stdout, '(/,5x,"q mesh: ",i4," x ",i4," x ",i4)') nq1, nq2, nq3
-  ENDIF
-  !
-  WRITE(stdout, '(/,5x,"hp.x method=''CRPA'': solver not yet implemented (merge stage 4 stub)",/)')
+  WRITE( stdout, * )
+  WRITE( stdout, * )  '    PRINTING TIMING FROM PWSCF ROUTINES: '
+  CALL print_clock_pw()
+  CALL crpa_print_clock()
   !
   RETURN
   !

@@ -36,7 +36,7 @@ PROGRAM hp_main
   !
   ! Initialize MPI, clocks, print initial messages
   !
-  CALL mp_startup()
+  CALL mp_startup(start_images = .TRUE.)
   !
   CALL environment_start(code)
   !

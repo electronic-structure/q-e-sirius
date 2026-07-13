@@ -1,0 +1,199 @@
+!
+! Copyright (C) 2001-2023 Quantum ESPRESSO group
+! This file is distributed under the terms of the
+! GNU General Public License. See the file `License'
+! in the root directory of the present distribution,
+! or http://www.gnu.org/copyleft/gpl.txt .
+!
+!
+!-----------------------------------------------------------------------
+SUBROUTINE crpa_setup_q()
+  !-----------------------------------------------------------------------
+  !
+  !  This subroutine prepares several variables which are needed in the
+  !  CRPA program at fixed q point:
+  !  1) computes the total local potential (external+scf) on the smooth
+  !     grid to be used in h_psi (and other places?)
+  !  2) Set the nonlinear core correction variable
+  !  3) Allocate the variable of the local magnetization
+  !  4) Compute the derivative of the XC potential (dmuxc)
+  !  5) Setup gradient correction stuff
+  !  6) Compute the inverse of each matrix of the crystal symmetry group
+  !  7) Computes the number of occupied bands for each k point
+  !  8) Compute alpha_pv
+  !  9) Set various symmetry-related variables
+  !       time_reversal true if there is time-reversal symmetry
+  !       gi            the G associated to each symmetry operation
+  !       gimq          the G of the q -> -q+G symmetry
+  !       nsymq         the order of the small group of q
+  !       irotmq        the index of the q->-q+G symmetry
+  !       minus_q       true if there is a symmetry sending q -> -q+G
+  !       rtau          rtau = S\tau_a - \tau_b
+  ! 10) Setup the parameters alpha_mix needed for the
+  !     solution of the linear system
+  ! 11) Initialize d1, d2, d3 to rotate the spherical harmonics
+  !
+  !  IMPORTANT NOTE ABOUT SYMMETRIES:
+  !  nrot  is the number of sym.ops. of the Bravais lattice
+  !        read from data file, only used in set_default_pw
+  !  nsym  is the number of sym.ops. of the crystal symmetry group
+  !        read from data file, should never be changed
+  !  nsymq is the number of sym.ops. of the small group of q
+  !        it is calculated in set_defaults_pw for each q
+  !  The matrices "s" of sym.ops are ordered as follows:
+  !   first the nsymq sym.ops. of the small group of q
+  !   (the ordering is done in subroutine copy_sym in set_defaults_pw),
+  !   followed by the remaining nsym-nsymq sym.ops. of the crystal group,
+  !   followed by the remaining nrot-nsym sym.ops. of the Bravais  group
+  !
+  USE kinds,            ONLY : DP
+  USE ions_base,        ONLY : tau, nat, ntyp => nsp, ityp
+  USE cell_base,        ONLY : at, bg
+  USE io_global,        ONLY : stdout
+  USE lsda_mod,         ONLY : nspin, starting_magnetization
+  USE scf,              ONLY : v, vrs, vltot, rho, kedtau
+  USE fft_base,         ONLY : dfftp
+  USE gvect,            ONLY : ngm
+  USE gvecs,            ONLY : doublegrid
+  USE symm_base,        ONLY : nrot, nsym, s, ft, irt, time_reversal, &
+                               inverse_s, d1, d2, d3
+  USE uspp_param,       ONLY : upf
+  USE uspp,             ONLY : nlcc_any, okvan, deeq_nc
+  USE constants,        ONLY : degspin, pi, rytoev
+  USE noncollin_module, ONLY : noncolin, domag, m_loc, nspin_mag, &
+                               angle1, angle2, ux
+  USE wvfct,            ONLY : nbnd, et
+  USE control_flags,    ONLY : noinv
+  USE eqv,              ONLY : dmuxc
+  USE qpoint,           ONLY : xq
+  USE control_lr,       ONLY : lgamma, flmixdpot, reduce_io, niter_ph, alpha_mix
+  USE lr_symm_base,     ONLY : gi, gimq, irotmq, minus_q, invsymq, nsymq, rtau
+  USE control_flags,    ONLY : modenum
+  USE lr_nc_mag,        ONLY : deeq_nc_save
+  USE dfunct,           ONLY : newd
+  USE Coul_cut_2D,      ONLY : do_cutoff_2D
+  USE Coul_cut_2D_ph,   ONLY : cutoff_fact_qg
+  !
+  IMPLICIT NONE
+  INTEGER :: ir, isym, ik, it, na
+  LOGICAL :: sym(48), magnetic_sym
+  !
+  CALL start_clock ('crpa_setup_q')
+  !
+  ! 1) Compute the total local potential (external+scf) on the smooth grid
+  !
+  CALL set_vrs (vrs, vltot, v%of_r, kedtau, v%kin_r, dfftp%nnr, nspin, doublegrid)
+  !
+  ! 2) Set the nonlinear core correction variable
+  !
+  nlcc_any = ANY ( upf(1:ntyp)%nlcc )
+  !
+  ! 3) Allocate the variable of the local magnetization.
+  !    This is needed in find_sym
+  !
+  IF (.NOT.ALLOCATED(m_loc)) ALLOCATE( m_loc( 3, nat ) )
+  !
+  IF (noncolin.and.domag) THEN
+     DO na = 1, nat
+       !
+       m_loc(1,na) = starting_magnetization(ityp(na)) * &
+                     SIN( angle1(ityp(na)) ) * COS( angle2(ityp(na)) )
+       m_loc(2,na) = starting_magnetization(ityp(na)) * &
+                     SIN( angle1(ityp(na)) ) * SIN( angle2(ityp(na)) )
+       m_loc(3,na) = starting_magnetization(ityp(na)) * &
+                     COS( angle1(ityp(na)) )
+     END DO
+     ux=0.0_DP
+     !
+     ! Change the sign of the magnetic field in the screened US coefficients
+     ! and save also the coefficients computed with -B_xc.
+     !
+     IF (okvan) THEN
+       deeq_nc_save(:,:,:,:,1)=deeq_nc(:,:,:,:)
+       v%of_r(:,2:4)=-v%of_r(:,2:4)
+       CALL newd()
+       v%of_r(:,2:4)=-v%of_r(:,2:4)
+       deeq_nc_save(:,:,:,:,2)=deeq_nc(:,:,:,:)
+       deeq_nc(:,:,:,:)=deeq_nc_save(:,:,:,:,1)
+     ENDIF
+  ENDIF
+  !
+  ! 4) Compute the derivative of the XC potential (dmuxc)
+  !
+  CALL setup_dmuxc()
+  !
+  ! 5) Setup gradient correction stuff
+  !
+  CALL setup_dgc()
+  !
+  ! 6) Compute the inverse of each matrix of the crystal symmetry group
+  !
+  CALL inverse_s()
+  !
+  ! 7) Computes the number of occupied bands for each k point
+  !
+  CALL setup_nbnd_occ()
+  !
+  ! 8) Compute alpha_pv
+  !
+  CALL setup_alpha_pv()
+  !
+  ! 9) Set various symmetry-related variables
+  !
+  magnetic_sym = noncolin .AND. domag
+  time_reversal = .NOT. noinv .AND. .NOT. magnetic_sym
+  !
+  ! The small group of q was already determined. At q\=0 it is calculated
+  ! by set_nscf, at q=0 it coincides with the point group and we take nsymq=nsym
+  !
+  IF (lgamma) THEN
+     !
+     nsymq   = nsym
+     !
+     IF ( time_reversal ) THEN
+         minus_q = .TRUE.
+     ELSE
+         minus_q = .FALSE.
+     ENDIF
+     !
+  ENDIF
+  !
+  ! Calculate rtau (the Bravais lattice vector associated to a rotation)
+  ! with the new symmetry order
+  !
+  CALL sgam_lr (at, bg, nsym, s, irt, tau, rtau, nat)
+  !
+  ! Calculate the vectors G associated to the symmetry Sq = q + G
+  ! If minus_q=.true. calculate also irotmq and the G associated to Sq=-q+G
+  !
+  CALL set_giq (xq,s,nsymq,nsym,irotmq,minus_q,gi,gimq)
+  !
+  ! 10) Setup the parameters alpha_mix
+  !
+  DO it = 2, niter_ph
+     IF (alpha_mix(it).eq.0.d0) alpha_mix(it) = alpha_mix(it - 1)
+  ENDDO
+  !
+  ! 11) Since the order of the S matrices is changed (for q\=0)
+  !     we need to re-initialize d1, d2, d3 to rotate the spherical harmonics
+  !
+  CALL d_matrix( d1, d2, d3 )
+  !
+  ! Set flmixdpot
+  !
+  IF (reduce_io) THEN
+     flmixdpot = ' '
+  ELSE
+     flmixdpot = 'mixd'
+  ENDIF
+  !
+  ! For 2d calculations, we need to initialize the fact for the q+G
+  ! component of the cutoff of the Coulomb interaction
+  !
+  IF (do_cutoff_2D) call cutoff_fact_qg()
+  !
+  CALL stop_clock ('crpa_setup_q')
+  !
+  RETURN
+  !
+END SUBROUTINE crpa_setup_q
