@@ -19,11 +19,20 @@ subroutine crpa_init()
   USE qpoint,        ONLY : nq1, nq2, nq3
   USE crpacom,       ONLY : chi0, chi, nqsh
   USE ldaU_hp,       ONLY : code
+  USE uspp,          ONLY : okvan
+  USE paw_variables, ONLY : okpaw
                            !  determine_num_pert_only
                            !  perturbed_atom, todo_atom
   !
   IMPLICIT NONE
   INTEGER :: na, nt
+  !
+  ! CRPA is implemented only for norm-conserving pseudopotentials.
+  !
+  IF (okvan) CALL errore('crpa_init', &
+     'CRPA is not implemented for ultrasoft pseudopotentials', 1)
+  IF (okpaw) CALL errore('crpa_init', &
+     'CRPA is not implemented for PAW pseudopotentials', 1)
   !
 !   ALLOCATE (todo_atom(nat))
 !   ALLOCATE (perturbed_atom(nat))
