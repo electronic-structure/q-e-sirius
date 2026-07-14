@@ -44,10 +44,12 @@ SUBROUTINE crpa_prepare_perturbations_q(iq)
   ELSEIF (pert_basis == 'wannier') THEN
     !
     WRITE(stdout, '(/5x, A)') 'Wannier function pairs for perturbation'
-    CALL crpa_find_close_WF_pairs(npert_tot, pert_iwlist, pert_jwlist, pert_Rlist, wan_dist_thr)
+    CALL crpa_find_close_WF_pairs(npert_tot, pert_iwlist, pert_jwlist, pert_Rlist, &
+                                  wan_dist_thr, 'pert', iq == 1)
     !
     WRITE(stdout, '(/5x, A)') 'Wannier function pairs for matrix element calculation'
-    CALL crpa_find_close_WF_pairs(nmels_tot, mels_iwlist, mels_jwlist, mels_Rlist, wan_dist_thr_mels)
+    CALL crpa_find_close_WF_pairs(nmels_tot, mels_iwlist, mels_jwlist, mels_Rlist, &
+                                  wan_dist_thr_mels, 'mels', iq == 1)
     !
     pert_nbnd = num_wann
     !
@@ -64,7 +66,7 @@ SUBROUTINE crpa_prepare_perturbations_q(iq)
   CONTAINS
   !
   !------------------------------------------------------------------------------
-  SUBROUTINE crpa_find_close_WF_pairs(npairs, iwlist, jwlist, Rlist, dist_thr)
+  SUBROUTINE crpa_find_close_WF_pairs(npairs, iwlist, jwlist, Rlist, dist_thr, tag, lprint)
   !------------------------------------------------------------------------------
   !! Find the list of WF pairs (i0, jR) whose distance is below dist_thr.
   !! We consider all supercell periodic images of the WFs using w90_find_wigner_seitz.
@@ -89,6 +91,10 @@ SUBROUTINE crpa_prepare_perturbations_q(iq)
     !! List of selected R vectors in crystal coordinates.
     REAL(DP), INTENT(IN) :: dist_thr
     !! Cutoff distance for the WFs in bohr units.
+    CHARACTER(LEN=*), INTENT(IN) :: tag
+    !! Short label ('pert'/'mels') for the machine-readable pair-list summary.
+    LOGICAL, INTENT(IN) :: lprint
+    !! If .true. print the machine-readable pair-list summary (for testing).
     !
     INTEGER :: iR1, iR2, iR3
     !! Indices for the supercell periodic images.
@@ -178,6 +184,18 @@ SUBROUTINE crpa_prepare_perturbations_q(iq)
     DO i = 1, npairs
       WRITE(stdout, '(5x, 5I8, F12.6)') iwlist(i), jwlist(i), Rlist(:, i), mindist_list(i) * alat
     ENDDO
+    !
+    ! Machine-readable summary of the WF pair list (for regression testing).
+    ! Printed only once (first q); the list is q-independent.
+    !
+    IF (lprint) THEN
+      WRITE(stdout, '(5x, "cRPA-WFPAIRS ", A, " npairs=", I6)') tag, npairs
+      DO i = 1, npairs
+        WRITE(stdout, '(5x, "cRPA-WFPAIR ", A, " idx=", I5, "  iw=", I4, "  jw=", I4, &
+                        &"  R=", 3I4, "  dist=", F14.8)') &
+          tag, i, iwlist(i), jwlist(i), Rlist(:, i), mindist_list(i) * alat
+      ENDDO
+    ENDIF
     !
   !------------------------------------------------------------------------------
   END SUBROUTINE crpa_find_close_WF_pairs
