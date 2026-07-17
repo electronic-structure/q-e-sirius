@@ -160,7 +160,7 @@ SUBROUTINE screen_coeff ()
        IF (kcw_iverbosity .gt. -1) WRITE(stdout,'(/,8X, "INFO: NSCF calculation DONE",/)')
     ENDIF
 #if defined(__SIRIUS)
-    CALL sirius_create_H0(gs_handler)
+    CALL sirius_create_hamiltonian(gs_handler, h0_handler)
 #endif
     ! 
     IF (.NOT. irr_bz) THEN

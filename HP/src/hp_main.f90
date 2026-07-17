@@ -142,7 +142,7 @@ PROGRAM hp_main
         IF (setup_pw) CALL hp_run_nscf(.true.) 
         !
 #if defined(__SIRIUS)
-        CALL sirius_create_H0(gs_handler)
+        CALL sirius_create_hamiltonian(gs_handler, h0_handler)
 #endif
         !
         ! Initialize the quantities which do not depend on
