@@ -79,6 +79,9 @@ MODULE mod_sirius
   TYPE(sirius_kpoint_set_handler) :: ks_handler
   !! SIRIUS k-point set handler
   !
+  TYPE(sirius_H0_handler) :: h0_handler
+  !! SIRIUS handler for k-independent Hamiltonian
+  !
  CONTAINS
   !
   !--------------------------------------------------------------------
@@ -1645,6 +1648,7 @@ MODULE mod_sirius
     IMPLICIT NONE
     !
     INTEGER iat
+    CALL sirius_free_handler(h0_handler)
     CALL sirius_free_handler(gs_handler)
     CALL sirius_free_handler(ks_handler)
     CALL sirius_free_handler(sctx)
