@@ -616,7 +616,7 @@ SUBROUTINE sternheimer_kernel_freq(first_iter, time_reversed, npert, lrdvpsi, iu
          !
          ! dvpsi == d0psi  <-- right-hand side (in, destroyed on exit)
          ! dpsi   <-- left-hand side (in/out)
-         CALL sirius_linear_solver( gs_handler, vkq=MATMUL(TRANSPOSE(at), xk(:,ikq)),&
+         CALL sirius_linear_solver( gs_handler, h0_handler, vkq=MATMUL(TRANSPOSE(at), xk(:,ikq)),&
             &num_gvec_kq_loc=npwq, gvec_kq_loc=vg_kq, dpsi=dpsi1,&
             &psi=evq, eigvals=et(:, ikmk), dvpsi=dvpsi1, ld=npwx, num_spin_comp=npol,&
             &alpha_pv=alpha_pv, spin=current_spin, nbnd_occ_k=nbnd_occ(ikk),&
@@ -644,7 +644,7 @@ SUBROUTINE sternheimer_kernel_freq(first_iter, time_reversed, npert, lrdvpsi, iu
 #if defined(__SIRIUS)
          ! dvpsi == d0psi  <-- right-hand side (in, destroyed on exit)
          ! dpsi   <-- left-hand side (in/out)
-         CALL sirius_linear_solver( gs_handler, vkq=MATMUL(TRANSPOSE(at), xk(:,ikq)),&
+         CALL sirius_linear_solver( gs_handler, h0_handler, vkq=MATMUL(TRANSPOSE(at), xk(:,ikq)),&
             &num_gvec_kq_loc=npwq, gvec_kq_loc=vg_kq, dpsi=dpsi2,&
             &psi=evq, eigvals=et(:, ikmk), dvpsi=dvpsi2, ld=npwx, num_spin_comp=npol,&
             &alpha_pv=alpha_pv, spin=current_spin, nbnd_occ_k=nbnd_occ(ikk),&
