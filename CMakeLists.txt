@@ -40,6 +40,11 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 include(cmake/qeHelpers.cmake)
 
+# add the automatically determined parts of the RPATH
+# which point to directories outside the build tree to the install RPATH
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+include(AddRPATH)
+
 ###########################################################
 # Build Type
 # Ensure that a specific, default build type is set when
@@ -307,6 +312,7 @@ qe_install_targets(qe_openmp_fortran)
 if(QE_ENABLE_OPENMP)
     find_package(OpenMP REQUIRED Fortran)
     target_link_libraries(qe_openmp_fortran INTERFACE OpenMP::OpenMP_Fortran)
+    AddRPATH("OpenMP" ${OpenMP_Fortran_LIBRARIES})
 endif(QE_ENABLE_OPENMP)
 if(QE_ENABLE_OFFLOAD)
     target_compile_definitions(qe_openmp_fortran INTERFACE "$<$<COMPILE_LANGUAGE:Fortran>:__OPENMP_GPU>")
@@ -582,7 +588,7 @@ if(QE_ENABLE_LIBXC)
     find_package(Libxc CONFIG REQUIRED COMPONENTS Fortran)
     if (NOT Libxc_FOUND)
         message(STATUS "Libxc searching failed in CMake Module mode, trying Config mode")
-        find_package(Libxc 5.1.2 COMPONENTS Fortran CONFIG)
+        find_package(Libxc COMPONENTS Fortran CONFIG)
     endif()
 
     if(${Libxc_FOUND})
@@ -720,6 +726,7 @@ add_subdirectory(XSpectra)
 add_subdirectory(QEHeat)
 add_subdirectory(KCW)
 add_subdirectory(PIOUD)
+add_subdirectory(CRPA)
 add_subdirectory(GUI)
 if(QE_ENABLE_DOC)
     add_subdirectory(Doc)

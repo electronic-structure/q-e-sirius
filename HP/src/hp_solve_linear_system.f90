@@ -56,7 +56,7 @@ SUBROUTINE hp_solve_linear_system (na, iq)
   USE lsda_mod,             ONLY : nspin
   USE lr_nc_mag,            ONLY : lr_apply_time_reversal, deeq_nc_save, int3_nc_save
   USE lr_symm_base,         ONLY : lr_npert, upert, upert_mq
-  USE ldaU,                 ONLY : lda_plus_u_kind, nsg, v_nsg
+  USE ldaU,                 ONLY : lda_plus_u_kind, v_nsg
   !
   IMPLICIT NONE
   !
@@ -349,7 +349,7 @@ SUBROUTINE hp_solve_linear_system (na, iq)
      !
      ! USPP: Compute the total response charge density (standard term + US term)
      !
-     IF (okvan) CALL lr_addusddens (drhoscfh, dbecsum)
+     IF (okvan) CALL lr_addusddens (1, dbecsum, drhoscfh)
      !
      call mp_sum ( drhoscf, inter_pool_comm )
      CALL mp_sum ( drhoscfh, inter_pool_comm ) 

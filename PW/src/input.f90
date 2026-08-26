@@ -291,10 +291,9 @@ SUBROUTINE control_iosys()
                             rmm_ndim, rmm_conv, gs_nblock, rmm_with_davidson, &
                             tr2, imix, gamma_only, tnosep, tnoseh, &
                             nmix, iverbosity, smallmem, nexxiter, niter, &
-                            io_level, ethr, lscf, lbfgs, lmd, &
-                            lbands, lconstrain, restart, &
+                            io_level, ethr, lscf, lbfgs, lmd, lforce, &
+                            lbands, lconstrain, restart, lensemb, &
                             llondon, ldftd3, do_makov_payne, lxdm, &
-                            lensemb, lforce   => tprnfor, &
                             tstress_          => tstress, &
                             remove_rigid_rot_ => remove_rigid_rot, &
                             diago_full_acc_   => diago_full_acc, &
@@ -1479,8 +1478,16 @@ SUBROUTINE magnetization_iosys()
      IF ( starting_magnetization(nt) == sm_not_set ) &
           starting_magnetization(nt) = 0.0_dp
   END DO
+  ! if any input value of starting_magnetization >1 in module  we assume user is using Bohr Magnetons 
+  ! we divide by z valence to have a relative magnetization value 
+  ! we further enforce relative value from now on. 
   IF (ANY(ABS(starting_magnetization(1:nsp)) .ge. 1._DP)) &
     starting_magnetization(1:nsp) = starting_magnetization(1:nsp) / zv(1:nsp)
+  DO nt = 1, nsp
+     starting_magnetization(nt) = MIN( 1.0_dp,starting_magnetization(nt))
+     starting_magnetization(nt) = MAX(-1.0_dp,starting_magnetization(nt))
+  ENDDO
+
   !
   !
   ! NONCOLLINEAR MAGNETISM, MAGNETIC CONSTRAINTS
@@ -1509,10 +1516,6 @@ SUBROUTINE magnetization_iosys()
      !
      ! ... bring starting_magnetization between -1 and 1
      !
-     DO nt = 1, nsp
-        starting_magnetization(nt) = MIN( 1.0_dp,starting_magnetization(nt))
-        starting_magnetization(nt) = MAX(-1.0_dp,starting_magnetization(nt))
-     ENDDO
      !
      i_cons = 0
      !
@@ -1537,16 +1540,16 @@ SUBROUTINE magnetization_iosys()
            theta = angle1(nt)
            phi   = angle2(nt)
            !
-           mcons(1,nt) = starting_magnetization(nt) * sin( theta ) * cos( phi )
-           mcons(2,nt) = starting_magnetization(nt) * sin( theta ) * sin( phi )
-           mcons(3,nt) = starting_magnetization(nt) * cos( theta )
+           mcons(1,nt) = zv(nt) * starting_magnetization(nt) * sin( theta ) * cos( phi )
+           mcons(2,nt) = zv(nt) * starting_magnetization(nt) * sin( theta ) * sin( phi )
+           mcons(3,nt) = zv(nt) * starting_magnetization(nt) * cos( theta )
            !
         ENDDO
      ELSE
         ! collinear case
         DO nt = 1, nsp
            !
-           mcons(1,nt) = starting_magnetization(nt)
+           mcons(1,nt) = zv(nt) * starting_magnetization(nt)
            !
         ENDDO
      ENDIF

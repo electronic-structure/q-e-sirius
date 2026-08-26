@@ -22,7 +22,7 @@ SUBROUTINE force_hub( forceh )
    USE ldaU,                 ONLY : hubbard_lmax, hubbard_l, Hubbard_projectors, &
                                     nwfcU, wfcU, is_hubbard, lda_plus_u_kind,    &
                                     offsetU, is_hubbard_back, ldim_back, ldmx_b, &
-                                    ldmx_tot, nsg, v_nsg, max_num_neighbors,     &
+                                    ldmx_tot, v_nsg, max_num_neighbors,     &
                                     ldim_u, Hubbard_V, at_sc, neighood, Hubbard_J
    USE basis,                ONLY : natomwfc, wfcatom, swfcatom
    USE symme,                ONLY : symvector
@@ -152,7 +152,7 @@ SUBROUTINE force_hub( forceh )
       ! ... Compute spsi = S * psi
       CALL allocate_bec_type_acc( nkb, nbnd, becp )
       Call calbec(offload_type, npw, vkb, evc, becp ) 
-      CALL s_psi_acc( npwx, npw, nbnd, evc, spsi )
+      CALL s_psi( npwx, npw, nbnd, evc, spsi )
       CALL deallocate_bec_type_acc( becp )
       !
       ! ... Set up various quantities, in particular wfcU which 

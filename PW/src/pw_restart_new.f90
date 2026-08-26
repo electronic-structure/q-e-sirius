@@ -72,7 +72,7 @@ MODULE pw_restart_new
                                        lscf, scf_error, n_scf_steps, &
                                        tqr, tq_smoothing, tbeta_smoothing, &
                                        gamma_only, noinv, smallmem, &
-                                       lforce=> tprnfor, tstress, &
+                                       lforce, tstress, &
                                        mbd_vdw, llondon, lxdm, ts_vdw
       USE constants,            ONLY : e2  
       USE realus,               ONLY : real_space
@@ -106,9 +106,9 @@ MODULE pw_restart_new
       USE ldaU,                 ONLY : lda_plus_u, lda_plus_u_kind, Hubbard_projectors, &
                                        Hubbard_lmax, Hubbard_l, Hubbard_n, Hubbard_U, Hubbard_Um, Hubbard_Um_nc, & 
                                        Hubbard_J, Hubbard_n2, Hubbard_n3, Hubbard_l2, Hubbard_l3, Hubbard_V,     & 
-                                       Hubbard_occ, Hubbard_alpha, Hubbard_alpha_back, nsg, order_um, Hubbard_J0,&
-                                       Hubbard_beta, Hubbard_U2, is_hubbard, is_hubbard_back, backall, neighood, &
-                                       nsg
+                                       Hubbard_occ, Hubbard_alpha, Hubbard_alpha_back, order_um, Hubbard_J0,&
+                                       Hubbard_beta, Hubbard_U2, is_hubbard, is_hubbard_back, backall, neighood
+
       USE symm_base,            ONLY : nrot, nsym, invsym, s, ft, irt, &
                                        t_rev, sname, time_reversal, no_t_rev,&
                                        spacegroup
@@ -338,13 +338,13 @@ MODULE pw_restart_new
          IF (noncolin) THEN
             CALL qexsd_init_atomic_species(output_obj%atomic_species, nsp, atm, psfile, &
                  amass, STARTING_MAGNETIZATION = starting_magnetization, &
-                 ANGLE1=angle1, ANGLE2=angle2)
+                 ANGLE1=angle1, ANGLE2=angle2, Zval=zv)
          ELSE IF (nspin==2) THEN 
             CALL qexsd_init_atomic_species(output_obj%atomic_species, nsp, atm, psfile, &
-                 amass, STARTING_MAGNETIZATION=starting_magnetization)
+                 amass, STARTING_MAGNETIZATION=starting_magnetization, Zval=zv)
          ELSE 
             CALL qexsd_init_atomic_species(output_obj%atomic_species, nsp, atm,psfile, &
-                 amass)
+                 amass, Zval=zv)
          END IF
          output_obj%atomic_species%pseudo_dir = TRIM(pseudo_dir)
          output_obj%atomic_species%pseudo_dir_ispresent = .TRUE.
@@ -528,7 +528,7 @@ MODULE pw_restart_new
                            DO is = 1, nspin
                               DO m1 = 1, 2*Hubbard_l(nt1)+1
                                  DO m2 = 1, 2*Hubbard_l(nt1)+1
-                                    nsg_(m1,m2,is,na1) = DBLE(nsg(m1,m2,viz,na1,is)) 
+                                    nsg_(m1,m2,is,na1) = DBLE(rho%nsg(m1,m2,viz,na1,is)) 
                                  ENDDO
                               ENDDO
                            ENDDO   

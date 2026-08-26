@@ -340,7 +340,7 @@ MODULE exx
     !! This subroutine is run before the first H_psi() of each iteration. 
     !! It saves the wavefunctions for the right density matrix, in real space.
     !
-    USE wavefunctions,        ONLY : evc
+    USE wavefunctions,        ONLY : evc, psic
     USE io_files,             ONLY : nwordwfc, iunwfc_exx
     USE buffers,              ONLY : get_buffer
     USE wvfct,                ONLY : nbnd, npwx, wg, current_k
@@ -397,7 +397,6 @@ MODULE exx
 #if defined(__CUDA)
     attributes(DEVICE)      :: psic_nc_d
 #endif
-    COMPLEX(DP),ALLOCATABLE :: psic_exx(:)
     INTEGER :: nxxs, nrxxs
 #if defined(__MPI)
     COMPLEX(DP),ALLOCATABLE  :: temppsic_all(:), psic_all(:)
@@ -449,8 +448,6 @@ MODULE exx
        ALLOCATE( temppsic(nrxxs) )
     ENDIF
     !
-    ALLOCATE( psic_exx(nrxxs) )
-    !
     IF (.NOT.exx_is_active()) THEN
        !
        erfc_scrlen = get_screening_parameter()
@@ -492,8 +489,6 @@ MODULE exx
        ENDDO
     ENDDO
     !
-!civn 
-    !IF (nbndproj == 0) nbndproj = nbnd
     IF(use_ace) THEN 
       IF (present(nbndproj_)) THEN 
        nbndproj = nbndproj_
@@ -503,7 +498,6 @@ MODULE exx
       WRITE(stdout, '(5X,A,2(I5,A))') "ACE projected onto ", nbndproj, " (nbndproj) and applied to ", &
                                                                               nbnd, " (nbnd) bands"
     END IF 
-!
     !
     CALL divide( inter_egrp_comm, x_nbnd_occ, ibnd_start, ibnd_end )
     CALL init_index_over_band( inter_egrp_comm, nbnd, nbnd )
@@ -627,38 +621,38 @@ MODULE exx
           evc_offset = 0
           DO ibnd = ibnd_loop_start, iexx_end, 2
              !
-             psic_exx(:) = ( 0._DP, 0._DP )
+             psic(:) = ( 0._DP, 0._DP )
              !
              IF ( ibnd < iexx_end ) THEN
                 IF ( ibnd == ibnd_loop_start .AND. MOD(iexx_start,2) == 0 ) THEN
                    DO ig = 1, npwt
-                      psic_exx(dfftt%nl(ig))  = ( 0._DP, 1._DP )*evc_exx(ig,1)
-                      psic_exx(dfftt%nlm(ig)) = ( 0._DP, 1._DP )*CONJG(evc_exx(ig,1))
+                      psic(dfftt%nl(ig))  = ( 0._DP, 1._DP )*evc_exx(ig,1)
+                      psic(dfftt%nlm(ig)) = ( 0._DP, 1._DP )*CONJG(evc_exx(ig,1))
                    ENDDO
                    evc_offset = -1
                 ELSE
                    DO ig = 1, npwt
-                      psic_exx(dfftt%nl(ig))  = evc_exx(ig,ibnd-ibnd_loop_start+evc_offset+1) &
+                      psic(dfftt%nl(ig))  = evc_exx(ig,ibnd-ibnd_loop_start+evc_offset+1) &
                            + ( 0._DP, 1._DP ) * evc_exx(ig,ibnd-ibnd_loop_start+evc_offset+2)
-                      psic_exx(dfftt%nlm(ig)) = CONJG( evc_exx(ig,ibnd-ibnd_loop_start+evc_offset+1) ) &
+                      psic(dfftt%nlm(ig)) = CONJG( evc_exx(ig,ibnd-ibnd_loop_start+evc_offset+1) ) &
                            + ( 0._DP, 1._DP ) * CONJG( evc_exx(ig,ibnd-ibnd_loop_start+evc_offset+2) )
                    ENDDO
                 ENDIF
              ELSE
                 DO ig=1,npwt
-                   psic_exx(dfftt%nl (ig)) = evc_exx(ig,ibnd-ibnd_loop_start+evc_offset+1)
-                   psic_exx(dfftt%nlm(ig)) = CONJG( evc_exx(ig,ibnd-ibnd_loop_start+evc_offset+1) )
+                   psic(dfftt%nl (ig)) = evc_exx(ig,ibnd-ibnd_loop_start+evc_offset+1)
+                   psic(dfftt%nlm(ig)) = CONJG( evc_exx(ig,ibnd-ibnd_loop_start+evc_offset+1) )
                 ENDDO
              ENDIF
              !
-             CALL invfft( 'Wave', psic_exx, dfftt )
+             CALL invfft( 'Wave', psic, dfftt )
              !
              IF (DoLoc) THEN
-               locbuff(1:nrxxs,ibnd-ibnd_loop_start+evc_offset+1,ik) = DBLE(  psic_exx(1:nrxxs) )
+               locbuff(1:nrxxs,ibnd-ibnd_loop_start+evc_offset+1,ik) = DBLE(  psic(1:nrxxs) )
                IF (ibnd-ibnd_loop_start+evc_offset+2 <= nbnd) &
-                  locbuff(1:nrxxs,ibnd-ibnd_loop_start+evc_offset+2,ik) = AIMAG( psic_exx(1:nrxxs) )
+                  locbuff(1:nrxxs,ibnd-ibnd_loop_start+evc_offset+2,ik) = AIMAG( psic(1:nrxxs) )
              ELSE
-               exxbuff(1:nrxxs,(ibnd+1)/2,current_ik)=psic_exx(1:nrxxs) 
+               exxbuff(1:nrxxs,(ibnd+1)/2,current_ik)=psic(1:nrxxs) 
              ENDIF
              !
           ENDDO
@@ -802,20 +796,20 @@ MODULE exx
                       ENDDO
 !$omp end parallel do
                    ENDIF
-                   CALL scatter_grid( dfftt, psic_all, psic_exx )
+                   CALL scatter_grid( dfftt, psic_all, psic )
 #else
 !$omp parallel do default(shared) private(ir) firstprivate(isym)
                    DO ir = 1, nrxxs
-                      psic_exx(ir) = temppsic(rir(ir,isym))
+                      psic(ir) = temppsic(rir(ir,isym))
                    ENDDO
 !$omp end parallel do
 #endif
 !$omp parallel do default(shared) private(ir) firstprivate(isym,ibnd,ikq)
                    DO ir = 1, nrxxs
                       IF (index_sym(ikq) < 0 ) THEN
-                         psic_exx(ir) = CONJG(psic_exx(ir))
+                         psic(ir) = CONJG(psic(ir))
                       ENDIF
-                      exxbuff(ir,ibnd,ikq) = psic_exx(ir)
+                      exxbuff(ir,ibnd,ikq) = psic(ir)
                    ENDDO
 !$omp end parallel do
                    !
@@ -831,7 +825,6 @@ MODULE exx
     ENDDO&
     KPOINTS_LOOP
     !
-    DEALLOCATE( psic_exx )
     IF (noncolin) THEN
        DEALLOCATE( temppsic_nc, psic_nc )
 #if defined(__MPI)

@@ -16,12 +16,13 @@ subroutine bcast_ph_input ( )
 
   use mp, only: mp_bcast
   use mp_world, only: world_comm
-  USE control_lr, ONLY : lgamma, lrpa, nmix_ph, niter_ph, alpha_mix, tr2_ph, reduce_io, lmultipole
+  USE control_lr, ONLY : lgamma, lrpa, nmix_ph, niter_ph, alpha_mix, tr2_ph, &
+                         reduce_io, lnoloc, thresh_init
   USE control_ph, ONLY : start_irr, last_irr, start_q, last_q, &
-                         lnoloc, recover, ldisp, zue, zeu, epsil, trans, &
+                         recover, ldisp, zue, zeu, epsil, trans, &
                          ldiag, lqdir, search_sym,  electron_phonon, &
                          qplot, only_init, only_wfc, low_directory_check,&
-                         nk1, nk2, nk3, k1, k2, k3
+                         nk1, nk2, nk3, k1, k2, k3, lmultipole
   USE gamma_gamma, ONLY : asr
   USE disp, ONLY : nq1, nq2, nq3
   USE partial, ONLY : nat_todo
@@ -45,6 +46,7 @@ subroutine bcast_ph_input ( )
       do_charge_neutral, wpot_dir
   USE ahc,           ONLY : elph_ahc, ahc_dir, ahc_nbnd, ahc_nbndskip, &
       skip_upper
+  USE constrained_dfpt, ONLY : cdfpt, cdfpt_active_space, cdfpt_bands_min, cdfpt_bands_max
 
   implicit none
   !
@@ -82,6 +84,7 @@ subroutine bcast_ph_input ( )
   call mp_bcast (do_long_range, meta_ionode_id, world_comm)
   call mp_bcast (elph_ahc, meta_ionode_id, world_comm)
   call mp_bcast (skip_upper, meta_ionode_id, world_comm)
+  call mp_bcast (cdfpt, meta_ionode_id, world_comm)
   !
   ! integers
   !
@@ -111,6 +114,8 @@ subroutine bcast_ph_input ( )
   CALL mp_bcast( el_ph_nsigma, meta_ionode_id, world_comm )
   CALL mp_bcast( ahc_nbnd, meta_ionode_id, world_comm )
   CALL mp_bcast( ahc_nbndskip, meta_ionode_id, world_comm )
+  CALL mp_bcast( cdfpt_bands_min, meta_ionode_id, world_comm )
+  CALL mp_bcast( cdfpt_bands_max, meta_ionode_id, world_comm )
   !
   ! real*8
   !
@@ -122,6 +127,7 @@ subroutine bcast_ph_input ( )
   call mp_bcast (max_seconds, meta_ionode_id, world_comm )
   call mp_bcast (dek, meta_ionode_id, world_comm )
   CALL mp_bcast( el_ph_sigma, meta_ionode_id, world_comm )
+  CALL mp_bcast( thresh_init, meta_ionode_id, world_comm )
   !
   ! characters
   !
@@ -135,6 +141,7 @@ subroutine bcast_ph_input ( )
   call mp_bcast (d2ns_type, meta_ionode_id, world_comm )
   call mp_bcast (wpot_dir, meta_ionode_id, world_comm )
   call mp_bcast (ahc_dir, meta_ionode_id, world_comm )
+  call mp_bcast (cdfpt_active_space, meta_ionode_id, world_comm )
   !
   ! derived type (one bit at a time)
   !

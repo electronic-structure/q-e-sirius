@@ -618,7 +618,7 @@ PROGRAM pw2bgw
     CALL print_clock ( 'real_wfng' )
   ENDIF
 
-  CALL environment_end ( codename )
+  CALL environment_end( )
 
   CALL stop_pp ( )
 
@@ -5054,15 +5054,9 @@ SUBROUTINE write_vhub_g (output_file_name, diag_nmin, diag_nmax, offdiag_nmin, o
     CALL davcio (evc, 2*nwordwfc, iunwfc, ik - iks + 1, -1)
     IF ( lda_plus_u .AND. (Hubbard_projectors .NE. 'pseudo') ) THEN
       CALL get_buffer ( wfcU, nwordwfcU, iunhub, ikk )
+      CALL vhpsi( npwx, npw, nbnd, evc, hpsi )
     ENDIF
 
-    IF ( lda_plus_u .AND. Hubbard_projectors.NE."pseudo" ) THEN
-      IF (noncolin) THEN
-        CALL vhpsi_nc( npwx, npw, nbnd, evc, hpsi )
-      ELSE
-        CALL vhpsi( npwx, npw, nbnd, evc, hpsi )
-      ENDIF
-    ENDIF
 
     ! MW: Use MATMUL instead of ZGEMM
     ! CALL ZGEMM( 'C', 'N', nbnd, nbnd, kdim, ( 1.D0, 0.D0 ), evc, kdmx,  hpsi, kdmx, ( 0.D0, 0.D0 ), hc, nbnd )

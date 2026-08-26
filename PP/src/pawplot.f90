@@ -337,7 +337,7 @@ PROGRAM PAWplot
   !
   DEALLOCATE (rhog)
   !
-  CALL environment_end ( 'PAW-plot' )
+  CALL environment_end( )
   !
   CALL stop_pp()
   STOP

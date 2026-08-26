@@ -3,7 +3,7 @@
 ------------------------------------------------------------------------
 INPUT FILE DESCRIPTION
 
-Program: ph.x / PHonon / Quantum ESPRESSO (version: 7.4)
+Program: ph.x / PHonon / Quantum ESPRESSO (version: 7.5)
 ------------------------------------------------------------------------
 
 
@@ -245,6 +245,18 @@ NAMELIST: &INPUTPH
                    M. Lazzeri and F. Mauri, PRL 90, 036401 (2003).
    +--------------------------------------------------------------------
    
+   +--------------------------------------------------------------------
+   Variable:       lmultipole
+   
+   Type:           LOGICAL
+   Default:        .false.
+   Description:    If .true. prints the induced density and potentials in fildrho and fildvscf.
+                   To extract multipoles and the finite-q dielectric function, multiple finite-q
+                   calculations need to be performed (see test-suite/ph_multipole,
+                   where multipole.py manages the flow of the calculations as described in test-suite/run-ph.sh).
+                   N.B.:  works only for 3d systems.
+   +--------------------------------------------------------------------
+   
    ///---
       OPTIONAL VARIABLES FOR RAMAN:
       
@@ -435,7 +447,7 @@ NAMELIST: &INPUTPH
       +--------------------------------------------------------------------
       
       +--------------------------------------------------------------------
-      Variable:       skip_upperfan
+      Variable:       skip_upper
       
       Type:           LOGICAL
       Default:        .false.
@@ -941,6 +953,19 @@ ________________________________________________________________________
 ENDIF
 ________________________________________________________________________
 
++--------------------------------------------------------------------
+Variable:       lmultipole
+
+Type:           LOGICAL
+Default:        .false.
+Description:    If .true. prints the induced density and potentials in "fildrho"
+                and "fildvscf". To extract multipoles and the finite-q dielectric
+                function, multiple finite-q calculations need to be performed (see:
+                test-suite/ph_multipole, where multipole.py manages the flow of the
+                calculations as described in test-suite/run-ph.sh).
+                Works only for 3d systems.
++--------------------------------------------------------------------
+
 
 ::::  ADDITIONAL INFORMATION 
 
@@ -997,4 +1022,4 @@ ________________________________________________________________________
    information.
    
 
-This file has been created by helpdoc utility on Wed Oct 16 19:27:29 CEST 2024
+This file has been created by helpdoc utility on Tue Oct 14 12:25:47 CEST 2025

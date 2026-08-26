@@ -56,7 +56,7 @@ SUBROUTINE clean_pw( lflag )
   USE pseudo_types,         ONLY : deallocate_pseudo_upf
   USE bp,                   ONLY : deallocate_bp_efield
   USE exx,                  ONLY : deallocate_exx
-  USE Coul_cut_2D,          ONLY : cutoff_2D, lr_Vloc 
+  USE Coul_cut_2D,          ONLY : deallocate_cutoff_2D
   !
   USE control_flags,        ONLY : ts_vdw, mbd_vdw, use_gpu
   USE tsvdw_module,         ONLY : tsvdw_finalize
@@ -154,9 +154,8 @@ SUBROUTINE clean_pw( lflag )
   ! ... arrays allocated in allocate_locpot.f90 ( and never deallocated )
   !
   IF ( ALLOCATED( vloc )      )  DEALLOCATE( vloc      )
-  IF ( ALLOCATED( cutoff_2D ) )  DEALLOCATE( cutoff_2D )
-  IF ( ALLOCATED( lr_Vloc )   )  DEALLOCATE( lr_Vloc   )
   IF ( ALLOCATED( strf )      )  DEALLOCATE( strf      )
+  CALL deallocate_cutoff_2D ()
   !
   CALL deallocate_tab_atwfc()
   CALL deallocate_uspp() 

@@ -1,4 +1,4 @@
-# Copyright (C) 2001-2024 Quantum ESPRESSO group
+# Copyright (C) 2001-2025 Quantum ESPRESSO group
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -6,16 +6,28 @@
 # of the License. See the file `License' in the root directory
 # of the present distribution.
 
-AC_INIT(ESPRESSO, 7.4, , espresso)
+AC_INIT(ESPRESSO, 7.5, , espresso)
 
 AC_PREREQ(2.64)
 AC_CONFIG_MACRO_DIR([m4/])
 
+# Needed by AC_CANONICAL_BUILD to find install scripts
+AC_CONFIG_AUX_DIR([install])
+
 # Initialize variables, filling with what comes from the environment...
 X_AC_QE_DEFAULT_ENV()
 
-# configure for current directory by default
-if test "$topdir" = "" ; then topdir="`pwd`" ; fi
+# source tree
+topdir=`(cd $srcdir && pwd)`
+
+# build tree
+topbuilddir=`pwd`
+
+if test ! $topdir -ef $topbuilddir ; then 
+	echo "out-of-source build"
+else
+	echo "in-source build"
+fi
 
 # check system type (no cross-compilation for now)
 AC_CANONICAL_BUILD
@@ -120,7 +132,8 @@ echo setting DFLAGS... $try_dflags
 # xlf compilers (AIX and powerpc) want comma-separated -D directives
 X_AC_QE_AIX_DFLAGS()
 
-if test "$iflags" = "" ; then iflags="$try_iflags" ; fi
+# prepend input $IFLAGS to what configure has found
+iflags="$iflags $try_iflags" 
 echo setting IFLAGS... $iflags
 
 # export additional settings to generated files
@@ -129,16 +142,24 @@ AC_SUBST(fdflags)
 AC_SUBST(iflags)
 AC_SUBST(ld_libs)
 AC_SUBST(topdir)
+AC_SUBST(topbuilddir)
 AC_SUBST(extlib_flags)
 
-AC_CONFIG_FILES([include/configure.h:include/configure.h.in])
+# Generate the Makefile tree in the build directory 
+# (ie where configure is called from) 
 
-AC_CONFIG_FILES(make.inc)
-AC_CONFIG_FILES(configure.msg)
-AC_CONFIG_FILES(install/make_wannier90.inc)
-
+if test ! $topdir -ef $topbuilddir ; then
+   X_AC_QE_MAKE_TREE()
+fi
+AC_CONFIG_FILES([make.inc:install/make.inc.in])
+AC_CONFIG_FILES([configure.msg:install/configure.msg.in])
+AC_CONFIG_FILES([install/make_wannier90.inc])
 
 AC_OUTPUT
+
+# generation of make.depend files - to be called after directories
+# have been created in X_AC_QE_MAKE_TREE + AC_OUTPUT
+X_AC_QE_MAKEDEPS()
 
 # final messages
 sed '/@delete@/d' configure.msg

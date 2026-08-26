@@ -295,7 +295,7 @@ MODULE mod_sirius
     USE ions_base,            ONLY : ityp, nat
     USE lsda_mod,             ONLY : nspin
     USE ldaU,                 ONLY : lda_plus_u, lda_plus_u_kind, Hubbard_U, Hubbard_l, Hubbard_n, &
-                                   & ldim_u, neighood, at_sc, Hubbard_V, nsg
+                                   & ldim_u, neighood, at_sc, Hubbard_V
     !
     IMPLICIT NONE
     !
@@ -349,7 +349,7 @@ MODULE mod_sirius
               mmax = 2 * Hubbard_l(iat) + 1
               ALLOCATE(occm(mmax, mmax))
               DO is = 1, nspin
-                occm(1:mmax, 1:mmax) = nsg(1:mmax, 1:mmax, viz, ia, is)
+                occm(1:mmax, 1:mmax) = rho%nsg(1:mmax, 1:mmax, viz, ia, is)
                 CALL sirius_access_local_occupation_matrix(gs_h, "set", ia, Hubbard_n(iat), Hubbard_l(iat),&
                     &is, occm, mmax)
               ENDDO !is
@@ -361,7 +361,7 @@ MODULE mod_sirius
               ALLOCATE(occm(mmax, mmax2))
               DO is = 1, nspin
                 DO i = 1, mmax
-                  occm(i, 1:mmax2) = nsg(1:mmax2, i, viz, ia, is) * j
+                  occm(i, 1:mmax2) = rho%nsg(1:mmax2, i, viz, ia, is) * j
                 ENDDO
                 CALL sirius_access_nonlocal_occupation_matrix(gs_h, "set", atom_pair, n_pair, l_pair, &
                                   &is, T, occm, mmax, mmax2)
@@ -383,7 +383,7 @@ MODULE mod_sirius
     USE ions_base,            ONLY : ityp, nat
     USE lsda_mod,             ONLY : nspin
     USE ldaU,                 ONLY : lda_plus_u, lda_plus_u_kind, Hubbard_U, Hubbard_l, Hubbard_n, &
-                                   & ldim_u, neighood, at_sc, Hubbard_V, nsg
+                                   & ldim_u, neighood, at_sc, Hubbard_V
 
     IMPLICIT NONE
 
@@ -433,7 +433,7 @@ MODULE mod_sirius
                 DO is = 1, nspin
                   CALL sirius_access_local_occupation_matrix(gs_handler, "get", ia, Hubbard_n(iat), Hubbard_l(iat),&
                       &is, occm, mmax)
-                  nsg(1:mmax, 1:mmax, ineigh, ia, is) = occm(1:mmax, 1:mmax)
+                  rho%nsg(1:mmax, 1:mmax, ineigh, ia, is) = occm(1:mmax, 1:mmax)
                 ENDDO
                 DEALLOCATE(occm)
               ELSE
@@ -444,7 +444,7 @@ MODULE mod_sirius
                   CALL sirius_access_nonlocal_occupation_matrix(gs_handler, "get", atom_pair, n_pair, l_pair, &
                                                                &is, T, occm, mmax, mmax2)
                   DO i = 1, mmax
-                    nsg(1:mmax2, i, ineigh, ia, is) = occm(i, 1:mmax2) * j ! QE <-- SIRIUS
+                    rho%nsg(1:mmax2, i, ineigh, ia, is) = occm(i, 1:mmax2) * j ! QE <-- SIRIUS
                   ENDDO
                 ENDDO ! is
                 DEALLOCATE(occm)
@@ -1097,7 +1097,7 @@ MODULE mod_sirius
     USE ldaU,                 ONLY : lda_plus_U, Hubbard_J, Hubbard_U, Hubbard_alpha, &
                                    & Hubbard_beta, is_Hubbard, lda_plus_u_kind, &
                                    & Hubbard_J0, Hubbard_projectors, Hubbard_l, Hubbard_n, Hubbard_occ, &
-                                   & ldim_u, neighood, at_sc, Hubbard_V, nsg
+                                   & ldim_u, neighood, at_sc, Hubbard_V
     USE esm,                  ONLY : do_comp_esm
     USE Coul_cut_2D,          ONLY : do_cutoff_2D
     USE constants,            ONLY : RYTOEV

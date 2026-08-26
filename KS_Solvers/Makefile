@@ -1,6 +1,8 @@
 # Makefile for  KS_Solvers
 include ../make.inc
 
+VPATH = @srcdir@
+
 # the following directive prevents execution of this makefile in parallel
 # Problem is, libks_solvers.a depends upon all libdavid libcg etc, but if
 # those dependencies are added explicitly to libks_solvers.a, the library
@@ -16,6 +18,8 @@ ALLOBJS = \
 Davidson_RCI/david_rci.o \
 Davidson/cegterg.o \
 Davidson/regterg.o \
+Davidson/pcegterg.o \
+Davidson/pregterg.o \
 CG/ccgdiagg.o \
 CG/rcgdiagg.o \
 ParO/bpcg_gamma.o \
@@ -37,12 +41,6 @@ DENSE/rotate_xpsi_gamma.o \
 DENSE/rotate_xpsi_k.o \
 RMM/crmmdiagg.o \
 RMM/rrmmdiagg.o
-
-
-# GPU-related objects
-ALLOBJS += \
-Davidson/cegterg_gpu.o \
-Davidson/regterg_gpu.o
 
 # add here other objects, e.g. ParO/*.o NewSolver/*.o
 
@@ -76,10 +74,6 @@ libdense :
 	if test -d DENSE ; then \
         ( cd DENSE ; $(MAKE) all || exit 1 ) ; fi
 
-librmm :
-	if test -d RMM ; then \
-        ( cd RMM ; $(MAKE) all || exit 1 ) ; fi
-
 libnewsolver : 
 	if test -d NewSolver ; then \
         ( cd NewSolver ; $(MAKE) all || exit 1 ) ; fi
@@ -96,4 +90,3 @@ clean :
 	rm -f *.fh 
 	rm -f libks_solvers.a
 
- 

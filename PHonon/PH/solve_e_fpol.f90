@@ -310,13 +310,13 @@ subroutine solve_e_fpol( iw )
         enddo
      endif
 
-     call addusddense (dvscfout, dbecsum)
+     call lr_addusddens (3, dbecsum, dvscfout)
      !
      !   dvscfout contains the (unsymmetrized) linear charge response
      !   for the three polarizations - symmetrize it
      !
      call mp_sum ( dvscfout, inter_pool_comm )
-     call psymdvscf(dvscfout)
+     call psymdvscf(dvscfout, dfftp)
      !
      !   save the symmetrized linear charge response to file
      !   calculate the corresponding linear potential response
