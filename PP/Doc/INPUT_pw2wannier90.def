@@ -69,6 +69,13 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program pw2wa
                 checked and a mismatch stops the run. The number of
                 projections must equal num_wann, so wannier90's
                 select_projections is not available here.
+
+                In 'library' mode A(k), M(k,b) and the eigenvalues are always
+                computed and passed to wannier90 in memory. @ref write_amn,
+                @ref write_mmn and write_eig only select which of them are also
+                written to file, as in 'standalone' mode; when they are .false.
+                the quantities are still computed and used for the
+                wannierisation, just not written out.
             }
             default { 'standalone' }
         }

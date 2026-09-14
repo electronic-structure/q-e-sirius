@@ -974,11 +974,6 @@ PROGRAM pw2wannier90
   WRITE(stdout,*) ' Wannier mode is: ',wan_mode
   WRITE(stdout,*)
   !
-  ! standalone and library differ only in where the setup comes from and in what
-  ! happens at the end: the matrices are built by the same routines either way.
-  ! A and M are always needed by the library, so they are computed there
-  ! regardless of write_amn/write_mmn; the write_* flags only select which files
-  ! are written alongside.
   IF(wan_mode=='standalone' .OR. wan_mode=='library') THEN
      !
      IF(wan_mode=='standalone') THEN
@@ -988,7 +983,10 @@ PROGRAM pw2wannier90
         WRITE(stdout,*)
         CALL read_nnkp
      ELSE
-        WRITE(stdout,*) ' Setting up...'
+        WRITE(stdout,*) ' -----------------'
+        WRITE(stdout,*) ' *** Setting up   '
+        WRITE(stdout,*) ' -----------------'
+        WRITE(stdout,*)
         CALL setup_nnkp
         WRITE(stdout,*)
      ENDIF
@@ -1173,16 +1171,14 @@ PROGRAM pw2wannier90
      ENDIF
      !
      IF(wan_mode=='library') THEN
-        WRITE(stdout,*) ' Running Wannier90 as a library'
+        WRITE(stdout,*) ' ------------------------------'
+        WRITE(stdout,*) ' *** Running Wannier90 library '
+        WRITE(stdout,*) ' ------------------------------'
+        WRITE(stdout,*)
         CALL run_wannier
         WRITE(stdout,*) ' Wannier90 run finished, see ', TRIM(seedname)//'.wout'
         WRITE(stdout,*)
         CALL lib_dealloc
-     ELSE
-        WRITE(stdout,*) ' ------------'
-        WRITE(stdout,*) ' *** Stop pp '
-        WRITE(stdout,*) ' ------------'
-        WRITE(stdout,*)
      ENDIF
      !
   ENDIF
@@ -1399,12 +1395,10 @@ SUBROUTINE setup_nnkp
      ENDDO
      !
      ! Hand the library QE's own k-point distribution rather than the one
-     ! w90_distribute_kpts would propose. dist_k is 0-based, so it is built as
-     ! my_pool_id+1 and shifted down after the reduction; every one of the iknum
-     ! k-points belongs to exactly one pool, so each entry is set exactly once.
-     ! No reordering is needed: Wannier90 takes a rank's local index to be the
-     ! ascending-global-index order among the k-points it owns, which is the
-     ! order of the contiguous block QE gives each pool.
+     ! w90_distribute_kpts would propose. dist_k holds 0-based pool ids; it is
+     ! filled with my_pool_id+1 and shifted down after the reduction, so that
+     ! the zero of the untouched entries is distinct from pool 0.
+     ! A rank's local order is ascending global index: the block QE gives it.
      ALLOCATE( dist_k(iknum), stat=ierr)
      IF (ierr /= 0) CALL errore('setup_nnkp', 'Error allocating dist_k', 1)
      dist_k(:) = 0
@@ -1472,21 +1466,21 @@ SUBROUTINE setup_nnkp
   ENDIF
 
   ! every pool root read the same .win, so a broadcast within each pool suffices
-  CALL mp_bcast(nnb,root_pool, intra_pool_comm)
-  CALL mp_bcast(kpb,root_pool, intra_pool_comm)
-  CALL mp_bcast(g_kpb,root_pool, intra_pool_comm)
-  CALL mp_bcast(num_bands,root_pool, intra_pool_comm)
-  CALL mp_bcast(n_wannier,root_pool, intra_pool_comm)
-  CALL mp_bcast(center_w,root_pool, intra_pool_comm)
-  CALL mp_bcast(l_w,root_pool, intra_pool_comm)
-  CALL mp_bcast(mr_w,root_pool, intra_pool_comm)
-  CALL mp_bcast(r_w,root_pool, intra_pool_comm)
-  CALL mp_bcast(zaxis,root_pool, intra_pool_comm)
-  CALL mp_bcast(xaxis,root_pool, intra_pool_comm)
-  CALL mp_bcast(alpha_w,root_pool, intra_pool_comm)
-  CALL mp_bcast(spin_eig,root_pool, intra_pool_comm)
-  CALL mp_bcast(spin_qaxis,root_pool, intra_pool_comm)
-  CALL mp_bcast(exclude_bands,root_pool, intra_pool_comm)
+  CALL mp_bcast(nnb, root_pool, intra_pool_comm)
+  CALL mp_bcast(kpb, root_pool, intra_pool_comm)
+  CALL mp_bcast(g_kpb, root_pool, intra_pool_comm)
+  CALL mp_bcast(num_bands, root_pool, intra_pool_comm)
+  CALL mp_bcast(n_wannier, root_pool, intra_pool_comm)
+  CALL mp_bcast(center_w, root_pool, intra_pool_comm)
+  CALL mp_bcast(l_w, root_pool, intra_pool_comm)
+  CALL mp_bcast(mr_w, root_pool, intra_pool_comm)
+  CALL mp_bcast(r_w, root_pool, intra_pool_comm)
+  CALL mp_bcast(zaxis, root_pool, intra_pool_comm)
+  CALL mp_bcast(xaxis, root_pool, intra_pool_comm)
+  CALL mp_bcast(alpha_w, root_pool, intra_pool_comm)
+  CALL mp_bcast(spin_eig, root_pool, intra_pool_comm)
+  CALL mp_bcast(spin_qaxis, root_pool, intra_pool_comm)
+  CALL mp_bcast(exclude_bands, root_pool, intra_pool_comm)
 
   ! Wannier90 v4 spin-expands the projections block. So the number of projections
   ! equals the number of Wannier functions.
@@ -1627,12 +1621,9 @@ SUBROUTINE run_wannier
      !
      CALL w90_disentangle(w90main, w90out, w90err, ierr)
      IF (ierr /= 0) CALL errore('run_wannier', 'Error in w90_disentangle', 1)
-     ! The checkpoints go where wannier90.x puts them, so that a library run
-     ! leaves the same .chk that postw90.x, EPW and the other readers expect.
-     ! 'postdis' only when there really was a disentanglement: w90_disentangle
-     ! is a no-op for num_bands == num_wann, and u_mat is not filled until
-     ! w90_project_overlap below, so writing it here would checkpoint an
-     ! uninitialised u_matrix (wannier_prog.F90 guards it the same way).
+     ! 'postdis' only when there really was a disentanglement, as
+     ! wannier_prog.F90 does: u_mat is not filled until w90_project_overlap
+     ! below, so writing it here would checkpoint an uninitialised u_matrix.
      IF (num_bands > n_wannier) THEN
         CALL write_chkpt(w90main, 'postdis', w90out, w90err, ierr)
         IF (ierr /= 0) CALL errore('run_wannier', 'Error writing the postdis checkpoint', 1)
@@ -1663,12 +1654,8 @@ SUBROUTINE run_wannier
      !
      CALL w90_print_timings(w90main, w90out)
      !
-     ! Only ionode has the files; the other pool roots were given stdout.
-     ! .werr is deleted on the way out, as wannier90.x does: the library only
-     ! ever writes fatal errors there (prterr, io.F90), so on a successful run
-     ! it is empty and its presence is the signal that the run failed. Every
-     ! library call above aborts through errore before reaching here, so a
-     ! genuine failure leaves the file behind with the message in it.
+     ! .werr is deleted on success, as wannier90.x does: its presence is the
+     ! signal that the run failed.
      IF (ionode) THEN
         CLOSE(w90out)
         CLOSE(w90err, STATUS='DELETE')
@@ -1676,11 +1663,11 @@ SUBROUTINE run_wannier
   ENDIF
 
   ! the library left the same results on every pool root
-  CALL mp_bcast(u_mat,root_pool, intra_pool_comm)
-  CALL mp_bcast(u_mat_opt,root_pool, intra_pool_comm)
-  CALL mp_bcast(lwindow,root_pool, intra_pool_comm)
-  CALL mp_bcast(wann_centers,root_pool, intra_pool_comm)
-  CALL mp_bcast(wann_spreads,root_pool, intra_pool_comm)
+  CALL mp_bcast(u_mat, root_pool, intra_pool_comm)
+  CALL mp_bcast(u_mat_opt, root_pool, intra_pool_comm)
+  CALL mp_bcast(lwindow, root_pool, intra_pool_comm)
+  CALL mp_bcast(wann_centers, root_pool, intra_pool_comm)
+  CALL mp_bcast(wann_spreads, root_pool, intra_pool_comm)
 
   CALL stop_clock('run_wannier')
 
@@ -3002,7 +2989,7 @@ SUBROUTINE compute_mmn
    !
    INTEGER :: npw, mmn_tot, ik, ikp, ipol, ib, npwq, i, m, n
    INTEGER :: ikb, jkb, ih, jh, na, nt, ijkb0
-   INTEGER :: ikevc, ikpevcq, s, counter, ik_g_w90, ik_loc, nkl
+   INTEGER :: ikevc, ikpevcq, s, counter, ik_g_w90, ik_loc, nk_local
    COMPLEX(DP), ALLOCATABLE :: phase(:), aux(:), evc_kb_m(:,:), evc_kb(:,:), &
                                Mkb(:,:), aux_nc(:,:)
    COMPLEX(DP), ALLOCATABLE :: evc_k(:, :)
@@ -3047,14 +3034,14 @@ SUBROUTINE compute_mmn
    IF (wan_mode=='library') THEN
       ! m_mat is the only matrix the library takes distributed: it holds just
       ! this pool's k-points, in ascending global order, which is the local
-      ! ordering implied by the distribution set in setup_nnkp. nkl may be zero
+      ! ordering implied by the distribution set in setup_nnkp. nk_local may be zero
       ! -- under LSDA a pool can own only the other spin -- which is supported.
       IF (lsda) THEN
-         nkl = COUNT(isk(1:nks) == ispinw)
+         nk_local = COUNT(isk(1:nks) == ispinw)
       ELSE
-         nkl = nks
+         nk_local = nks
       ENDIF
-      ALLOCATE(m_mat(num_bands, num_bands, nnb, nkl), stat=ierr)
+      ALLOCATE(m_mat(num_bands, num_bands, nnb, nk_local), stat=ierr)
       IF (ierr /= 0) CALL errore('pw2wannier90', 'Error allocating m_mat', 1)
    ENDIF
 
@@ -3298,9 +3285,9 @@ SUBROUTINE compute_mmn
       ENDDO !ib
    ENDDO  !ik
    !
-   ! m_mat's extent came from nkl, its contents from ik_loc; Wannier90 would
-   ! read a short m_matrix_local as valid, so fail loudly if the two disagree
-   IF (wan_mode=='library' .AND. ik_loc /= nkl) CALL errore('compute_mmn', &
+   ! Wannier90 reads a short m_matrix_local as valid, so fail loudly if the
+   ! filled count disagrees with the allocated extent
+   IF (wan_mode=='library' .AND. ik_loc /= nk_local) CALL errore('compute_mmn', &
       ' local k-point count does not match the allocated m_mat', 1)
    !
    IF (me_pool == root_pool .AND. write_mmn) CLOSE (iun_mmn, STATUS="KEEP")
