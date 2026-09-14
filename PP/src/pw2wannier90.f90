@@ -939,9 +939,9 @@ PROGRAM pw2wannier90
         WRITE(stdout,*)
         CALL read_nnkp
      ELSE
-        WRITE(stdout,*) ' -----------------'
-        WRITE(stdout,*) ' *** Setting up   '
-        WRITE(stdout,*) ' -----------------'
+        WRITE(stdout,*) ' --------------------'
+        WRITE(stdout,*) ' *** Setting up nnkp '
+        WRITE(stdout,*) ' --------------------'
         WRITE(stdout,*)
         CALL setup_nnkp
         WRITE(stdout,*)
@@ -1129,10 +1129,10 @@ PROGRAM pw2wannier90
      IF(wan_mode=='library') THEN
         WRITE(stdout,*) ' ------------------------------'
         WRITE(stdout,*) ' *** Running Wannier90 library '
-        WRITE(stdout,*) ' ------------------------------'
         WRITE(stdout,*)
         CALL run_wannier
         WRITE(stdout,*) ' Wannier90 run finished, see ', TRIM(seedname)//'.wout'
+        WRITE(stdout,*) ' ------------------------------'
         WRITE(stdout,*)
         CALL lib_dealloc
      ENDIF
@@ -1287,13 +1287,8 @@ SUBROUTINE setup_nnkp
 
   WRITE(stdout,'("  - Number of atoms is (",i3,")")') nat
 
-  ! The library runs on the pool roots. mp_start_pools builds inter_pool_comm
-  ! by splitting on me_pool with the parent rank as key, so on exactly these
-  ! ranks it is a communicator of size npool whose rank equals my_pool_id, with
-  ! ionode as its rank 0. The wannierisation is thus distributed over the same
-  ! k-point blocks QE's pools already hold, and the mp_bcast calls below spread
-  ! the results to the rest of each pool. The nproc_pool ranks within a pool do
-  ! not take part, so the parallelism is capped at min(npool, iknum).
+  ! The library runs on the root rank of each pool, communicating
+  ! over inter_pool_comm.
   IF (me_pool == root_pool) THEN
      !
      ! Wannier90 v4 has no wannier_setup(). The .win file is the input, read
@@ -1362,9 +1357,7 @@ SUBROUTINE setup_nnkp
         dist_k(global_kpoint_index(nkstot, ik) - ikstart + 1) = my_pool_id + 1
      ENDDO
      CALL mp_sum(dist_k, inter_pool_comm)
-     ! back to the 0-based pool ids Wannier90 wants; the +1 above kept the
-     ! untouched entries distinct from pool 0
-     dist_k(:) = dist_k(:) - 1
+     dist_k(:) = dist_k(:) - 1  ! convert from 1-based to 0-based indices Wannier90 needs
      CALL set_kpoint_distribution(w90main, dist_k, w90out, w90err, ierr)
      IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in set_kpoint_distribution', ierr)
      DEALLOCATE( dist_k)
@@ -1388,9 +1381,7 @@ SUBROUTINE setup_nnkp
      IF (ierr /= 0) CALL errore('setup_nnkp', 'Error allocating kpb_/g_kpb_', 1)
      CALL w90_get_nnkp(w90main, kpb_, w90out, w90err, ierr)
      IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_get_nnkp', ierr)
-     ! leave the same .nnkp standalone mode reads, for inspection and for the
-     ! postprocessing tools that expect one. Root-only inside the library.
-     CALL write_kmesh(w90main, w90out, w90err, ierr)
+     CALL write_kmesh(w90main, w90out, w90err, ierr)  ! Write .nnkp file (root only IO inside the subroutine)
      IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in write_kmesh', ierr)
      CALL w90_get_gkpb(w90main, g_kpb_, w90out, w90err, ierr)
      IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_get_gkpb', ierr)
@@ -1563,8 +1554,8 @@ SUBROUTINE run_wannier
   ALLOCATE(wann_spreads(n_wannier), stat=ierr)
   IF (ierr /= 0) CALL errore('pw2wannier90', 'Error allocating wann_spreads', 1)
 
-  ! the wannierisation runs on the pool roots, over inter_pool_comm; see
-  ! setup_nnkp, which set the communicator and the k-point distribution
+  ! The library runs on the root rank of each pool, communicating
+  ! over inter_pool_comm.
   IF (me_pool == root_pool) THEN
      !
      ! Wannier90 v4 has no wannier_run() either: the minimisation steps are
@@ -1611,7 +1602,7 @@ SUBROUTINE run_wannier
      ENDIF
   ENDIF
 
-  ! the library left the same results on every pool root
+  ! Broadcast the results from the root of each pool to the rest
   CALL mp_bcast(u_mat, root_pool, intra_pool_comm)
   CALL mp_bcast(u_mat_opt, root_pool, intra_pool_comm)
   CALL mp_bcast(lwindow, root_pool, intra_pool_comm)
