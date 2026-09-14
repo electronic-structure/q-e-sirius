@@ -37,6 +37,9 @@ PROGRAM wan2pw
   LOGICAL :: write_wan_Rr
   !! If .true. write the collected real-space Wannier functions to file.
   !! If .false. use the existing files in folder_wan_Rr.
+  LOGICAL :: ham_interp
+  !! If .true. do the standard Wannier interpolation of the band energies and
+  !! print them. Requires the seedname.eig file.
   !
   ! initialise environment
   !
@@ -56,7 +59,7 @@ PROGRAM wan2pw
   !
   CALL w90_read(seedname)
   !
-  CALL w90_setup_hamiltonian(seedname)
+  IF (ham_interp) CALL w90_setup_hamiltonian(seedname)
   !
   ! Important: w90_run_interpolate resets the k point list (xk, nks, etc.).
   !            This had to be done because one needs to call h_psi from QE.
@@ -65,9 +68,10 @@ PROGRAM wan2pw
   !
   CALL w90_run_interpolate()
   !
-  CALL w90_run_hamiltonian()
-  !
-  CALL w90_cleanup_hamiltonian()
+  IF (ham_interp) THEN
+    CALL w90_run_hamiltonian()
+    CALL w90_cleanup_hamiltonian()
+  ENDIF
   !
   CALL print_clock_w90()
   !
@@ -363,7 +367,8 @@ PROGRAM wan2pw
     LOGICAL :: reduce_io
     CHARACTER(LEN=256), EXTERNAL :: trimcheck
     !
-    NAMELIST / wannierpw / outdir, prefix, seedname, filkf, folder_wan_Rr, reduce_io, write_wan_Rr
+    NAMELIST / wannierpw / outdir, prefix, seedname, filkf, folder_wan_Rr, reduce_io, write_wan_Rr, &
+                          ham_interp
     !
     ! filkf : File containing k points.
     !
@@ -381,6 +386,11 @@ PROGRAM wan2pw
     !                If .false. use the existing files in folder_wan_Rr. In this case,
     !                prefix.wan_Rr.xxx and prefix.wan_R.dat files must exist inside folder_wan_Rr.
     !
+    ! ham_interp : If .true. interpolate the band energies with the standard Wannier
+    !              interpolation of the Hamiltonian and print them. This reads the
+    !              eigenvalues from the seedname.eig file.
+    !              Default: .false.
+    !
     !   set default values for variables in namelist
     !
     prefix = 'pwscf'
@@ -390,6 +400,7 @@ PROGRAM wan2pw
     seedname = 'wannier'
     filkf = ''
     write_wan_Rr = .true.
+    ham_interp = .false.
     !
     IF ( meta_ionode )  THEN
       !
@@ -415,6 +426,7 @@ PROGRAM wan2pw
     CALL mp_bcast(folder_wan_Rr, meta_ionode_id, world_comm)
     CALL mp_bcast(reduce_io, meta_ionode_id, world_comm)
     CALL mp_bcast(write_wan_Rr, meta_ionode_id, world_comm)
+    CALL mp_bcast(ham_interp, meta_ionode_id, world_comm)
     !
     IF (reduce_io) THEN
       io_level = 0  ! Store buffer in memory, no I/O
