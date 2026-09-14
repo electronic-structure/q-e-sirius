@@ -180,13 +180,8 @@ SUBROUTINE crpa_prepare_perturbations_q(iq)
     !
     WRITE(stdout, '(5x, A, I6)') 'Number of selected WF pairs : ', npairs
     WRITE(stdout, '(5x, A, F12.6)') 'Distance cutoff (bohr) : ', dist_thr
-    WRITE(stdout, '(5x, A)') '# i j R (crystal) |r_i0 - r_jR| (bohr)'
-    DO i = 1, npairs
-      WRITE(stdout, '(5x, 5I8, F12.6)') iwlist(i), jwlist(i), Rlist(:, i), mindist_list(i) * alat
-    ENDDO
     !
-    ! Machine-readable summary of the WF pair list (for regression testing).
-    ! Printed only once (first q); the list is q-independent.
+    ! The WF pair list is printed only once (first q); it is q-independent.
     !
     IF (lprint) THEN
       WRITE(stdout, '(5x, "cRPA-WFPAIRS ", A, " npairs=", I6)') tag, npairs
