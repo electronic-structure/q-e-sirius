@@ -70,12 +70,10 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program pw2wa
                 projections must equal num_wann, so wannier90's
                 select_projections is not available here.
 
-                In 'library' mode A(k), M(k,b) and the eigenvalues are always
-                computed and passed to wannier90 in memory. @ref write_amn,
-                @ref write_mmn and write_eig only select which of them are also
-                written to file, as in 'standalone' mode; when they are .false.
-                the quantities are still computed and used for the
-                wannierisation, just not written out.
+                In 'library' mode the matrices are handed to wannier90 in memory,
+                so @ref write_amn, @ref write_mmn and @ref write_eig default to
+                .false. there. All write_* flags are still honoured and select
+                only which files are written alongside.
             }
             default { 'standalone' }
         }
@@ -213,6 +211,13 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program pw2wa
         var write_mmn -type LOGICAL {
             info {
                 Set to .false. if M(k,b) is not required.
+            }
+            default { .TRUE. }
+        }
+
+        var write_eig -type LOGICAL {
+            info {
+                Set to .false. if the eigenvalue file is not required.
             }
             default { .TRUE. }
         }

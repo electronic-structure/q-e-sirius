@@ -1262,7 +1262,8 @@ SUBROUTINE setup_nnkp
   USE mp,        ONLY : mp_bcast, mp_sum
   USE w90_library, ONLY : w90_set_comm, w90_input_reader, w90_print_info,      &
                           w90_get_nn, w90_get_nnkp, w90_get_gkpb, w90_get_proj
-  USE w90_library_extra, ONLY : input_reader_special, set_kpoint_distribution
+  USE w90_library_extra, ONLY : input_reader_special, set_kpoint_distribution,  &
+                                write_kmesh
   USE w90_comms, ONLY : mpisize
   USE mp_pools,  ONLY : intra_pool_comm, inter_pool_comm, me_pool, root_pool,  &
                         my_pool_id, npool
@@ -1395,9 +1396,7 @@ SUBROUTINE setup_nnkp
      ENDDO
      !
      ! Hand the library QE's own k-point distribution rather than the one
-     ! w90_distribute_kpts would propose. dist_k holds 0-based pool ids; it is
-     ! filled with my_pool_id+1 and shifted down after the reduction, so that
-     ! the zero of the untouched entries is distinct from pool 0.
+     ! w90_distribute_kpts would propose.
      ! A rank's local order is ascending global index: the block QE gives it.
      ALLOCATE( dist_k(iknum), stat=ierr)
      IF (ierr /= 0) CALL errore('setup_nnkp', 'Error allocating dist_k', 1)
@@ -1407,6 +1406,8 @@ SUBROUTINE setup_nnkp
         dist_k(global_kpoint_index(nkstot, ik) - ikstart + 1) = my_pool_id + 1
      ENDDO
      CALL mp_sum(dist_k, inter_pool_comm)
+     ! back to the 0-based pool ids Wannier90 wants; the +1 above kept the
+     ! untouched entries distinct from pool 0
      dist_k(:) = dist_k(:) - 1
      CALL set_kpoint_distribution(w90main, dist_k, w90out, w90err, ierr)
      IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in set_kpoint_distribution', 1)
@@ -1431,6 +1432,10 @@ SUBROUTINE setup_nnkp
      IF (ierr /= 0) CALL errore('setup_nnkp', 'Error allocating kpb_/g_kpb_', 1)
      CALL w90_get_nnkp(w90main, kpb_, w90out, w90err, ierr)
      IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_get_nnkp', 1)
+     ! leave the same .nnkp standalone mode reads, for inspection and for the
+     ! postprocessing tools that expect one. Root-only inside the library.
+     CALL write_kmesh(w90main, w90out, w90err, ierr)
+     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in write_kmesh', 1)
      CALL w90_get_gkpb(w90main, g_kpb_, w90out, w90err, ierr)
      IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_get_gkpb', 1)
      kpb(:,1:nnb) = kpb_(:,:)
@@ -1621,24 +1626,12 @@ SUBROUTINE run_wannier
      !
      CALL w90_disentangle(w90main, w90out, w90err, ierr)
      IF (ierr /= 0) CALL errore('run_wannier', 'Error in w90_disentangle', 1)
-     ! 'postdis' only when there really was a disentanglement, as
-     ! wannier_prog.F90 does: u_mat is not filled until w90_project_overlap
-     ! below, so writing it here would checkpoint an uninitialised u_matrix.
-     IF (num_bands > n_wannier) THEN
-        CALL write_chkpt(w90main, 'postdis', w90out, w90err, ierr)
-        IF (ierr /= 0) CALL errore('run_wannier', 'Error writing the postdis checkpoint', 1)
-     ENDIF
      CALL w90_project_overlap(w90main, w90out, w90err, ierr)
      IF (ierr /= 0) CALL errore('run_wannier', 'Error in w90_project_overlap', 1)
      CALL w90_wannierise(w90main, w90out, w90err, ierr)
      IF (ierr /= 0) CALL errore('run_wannier', 'Error in w90_wannierise', 1)
      CALL write_chkpt(w90main, 'postwann', w90out, w90err, ierr)
      IF (ierr /= 0) CALL errore('run_wannier', 'Error writing the postwann checkpoint', 1)
-     ! NB: with npool > 1 this is the first W90 call that runs a large root-only
-     ! block (plot.F90) whose error paths are collective, so a failure inside it
-     ! -- an unwritable seedname_hr.dat, say -- deadlocks upstream rather than
-     ! aborting. Harmless on the success path, and unreachable when the .win
-     ! asks for no plot output.
      CALL w90_plot(w90main, w90out, w90err, ierr)
      IF (ierr /= 0) CALL errore('run_wannier', 'Error in w90_plot', 1)
      !
