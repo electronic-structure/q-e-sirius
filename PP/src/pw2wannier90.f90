@@ -669,12 +669,6 @@ PROGRAM pw2wannier90
   CHARACTER(LEN=256), EXTERNAL :: trimcheck
   !
   INTEGER :: ios, ierr
-  INTEGER :: iunnml
-  !! unit of a scratch copy of the input. The namelist has to be read twice --
-  !! wan_mode is only known after the first pass -- and unit 5 need not be
-  !! rewindable, since mpirun feeds rank 0 through a pipe.
-  INTEGER :: nch
-  CHARACTER(len=256) :: input_line
   CHARACTER(len=4) :: spin_component
   CHARACTER(len=256) :: outdir
 
@@ -710,35 +704,11 @@ PROGRAM pw2wannier90
   ! Read input on i/o node and broadcast to the rest
   !
   ios = 0
-  ! only ionode opens the scratch copy; check_namelist_read below is collective
-  ! but touches the unit on ionode alone
-  iunnml = 5
   IF(ionode) THEN
      !
      ! Check to see if we are reading from a file
      !
      CALL input_from_file()
-     !
-     OPEN(NEWUNIT=iunnml, STATUS='SCRATCH', FORM='FORMATTED')
-     ! non-advancing, so that a record longer than input_line -- a long
-     ! atom_proj_exclude list, say -- is copied in pieces instead of being
-     ! silently truncated
-     copy_input: DO
-        DO
-           READ(5, '(A)', ADVANCE='NO', SIZE=nch, IOSTAT=ierr) input_line
-           IF (IS_IOSTAT_EOR(ierr)) THEN
-              WRITE(iunnml, '(A)') input_line(1:nch)
-              EXIT
-           ELSEIF (ierr == 0) THEN
-              WRITE(iunnml, '(A)', ADVANCE='NO') input_line
-           ELSEIF (IS_IOSTAT_END(ierr)) THEN
-              EXIT copy_input
-           ELSE
-              CALL errore('pw2wannier90', 'Error reading the input', 1)
-           ENDIF
-        ENDDO
-     ENDDO copy_input
-     REWIND(iunnml)
      !
      !   set default values for variables in namelist
      !
@@ -790,20 +760,7 @@ PROGRAM pw2wannier90
      !
      !     reading the namelist inputpp
      !
-     READ (iunnml, inputpp, iostat=ios)
-     !
-     ! Library mode drives Wannier90 in the same run and takes the matrices in
-     ! memory, so the .amn/.mmn/.eig files are optional extras there rather than
-     ! the point of the run: default the three flags to .false. there. Read the
-     ! namelist again with those defaults in place; an explicit setting in the
-     ! input wins either way.
-     IF (ios == 0 .AND. wan_mode == 'library') THEN
-        write_amn = .false.
-        write_mmn = .false.
-        write_eig = .false.
-        REWIND (iunnml)
-        READ (iunnml, inputpp, iostat=ios)
-     ENDIF
+     READ (5, inputpp, iostat=ios)
      !
      !     Check of namelist variables
      !
@@ -812,8 +769,7 @@ PROGRAM pw2wannier90
   ENDIF
   !
   CALL mp_bcast(ios,ionode_id, world_comm)
-  CALL check_namelist_read(ios, iunnml, "inputpp")
-  IF (ionode) CLOSE(iunnml)
+  CALL check_namelist_read(ios, 5, "inputpp")
   !
   ! broadcast input variable to all nodes
   !
@@ -1371,11 +1327,11 @@ SUBROUTINE setup_nnkp
         &with MPI support, or run with -nk 1', 1)
      !
      CALL input_reader_special(w90main, TRIM(seedname), w90out, w90err, ierr)
-     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in input_reader_special', 1)
+     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in input_reader_special', ierr)
      CALL w90_input_reader(w90main, w90out, w90err, ierr)
-     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_input_reader', 1)
+     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_input_reader', ierr)
      CALL w90_print_info(w90main, w90out, w90err, ierr)
-     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_print_info', 1)
+     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_print_info', ierr)
      !
      num_bands = w90main%num_bands
      n_wannier = w90main%num_wann
@@ -1410,7 +1366,7 @@ SUBROUTINE setup_nnkp
      ! untouched entries distinct from pool 0
      dist_k(:) = dist_k(:) - 1
      CALL set_kpoint_distribution(w90main, dist_k, w90out, w90err, ierr)
-     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in set_kpoint_distribution', 1)
+     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in set_kpoint_distribution', ierr)
      DEALLOCATE( dist_k)
      !
      ! The band_loop below expects the v3 convention: an index list padded with
@@ -1423,7 +1379,7 @@ SUBROUTINE setup_nnkp
      ENDIF
      !
      CALL w90_get_nn(w90main, nnb, w90out, w90err, ierr)
-     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_get_nn', 1)
+     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_get_nn', ierr)
      IF (nnb > num_nnmax) CALL errore('setup_nnkp',' nnb exceeds num_nnmax',1)
      !
      ! kpb and g_kpb are dimensioned num_nnmax and broadcast at that size, while
@@ -1431,13 +1387,13 @@ SUBROUTINE setup_nnkp
      ALLOCATE( kpb_(iknum,nnb), g_kpb_(3,iknum,nnb), stat=ierr)
      IF (ierr /= 0) CALL errore('setup_nnkp', 'Error allocating kpb_/g_kpb_', 1)
      CALL w90_get_nnkp(w90main, kpb_, w90out, w90err, ierr)
-     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_get_nnkp', 1)
+     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_get_nnkp', ierr)
      ! leave the same .nnkp standalone mode reads, for inspection and for the
      ! postprocessing tools that expect one. Root-only inside the library.
      CALL write_kmesh(w90main, w90out, w90err, ierr)
-     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in write_kmesh', 1)
+     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in write_kmesh', ierr)
      CALL w90_get_gkpb(w90main, g_kpb_, w90out, w90err, ierr)
-     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_get_gkpb', 1)
+     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_get_gkpb', ierr)
      kpb(:,1:nnb) = kpb_(:,:)
      g_kpb(:,:,1:nnb) = g_kpb_(:,:,:)
      DEALLOCATE( kpb_, g_kpb_)
@@ -1625,15 +1581,15 @@ SUBROUTINE run_wannier
      u_mat_opt(:,:,:) = a_mat(:,:,:)
      !
      CALL w90_disentangle(w90main, w90out, w90err, ierr)
-     IF (ierr /= 0) CALL errore('run_wannier', 'Error in w90_disentangle', 1)
+     IF (ierr /= 0) CALL errore('run_wannier', 'Error in w90_disentangle', ierr)
      CALL w90_project_overlap(w90main, w90out, w90err, ierr)
-     IF (ierr /= 0) CALL errore('run_wannier', 'Error in w90_project_overlap', 1)
+     IF (ierr /= 0) CALL errore('run_wannier', 'Error in w90_project_overlap', ierr)
      CALL w90_wannierise(w90main, w90out, w90err, ierr)
-     IF (ierr /= 0) CALL errore('run_wannier', 'Error in w90_wannierise', 1)
+     IF (ierr /= 0) CALL errore('run_wannier', 'Error in w90_wannierise', ierr)
      CALL write_chkpt(w90main, 'postwann', w90out, w90err, ierr)
-     IF (ierr /= 0) CALL errore('run_wannier', 'Error writing the postwann checkpoint', 1)
+     IF (ierr /= 0) CALL errore('run_wannier', 'Error writing the postwann checkpoint', ierr)
      CALL w90_plot(w90main, w90out, w90err, ierr)
-     IF (ierr /= 0) CALL errore('run_wannier', 'Error in w90_plot', 1)
+     IF (ierr /= 0) CALL errore('run_wannier', 'Error in w90_plot', ierr)
      !
      CALL w90_get_centres(w90main, wann_centers)
      CALL w90_get_spreads(w90main, wann_spreads)

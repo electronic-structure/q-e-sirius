@@ -71,9 +71,10 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program pw2wa
                 select_projections is not available here.
 
                 In 'library' mode the matrices are handed to wannier90 in memory,
-                so @ref write_amn, @ref write_mmn and @ref write_eig default to
-                .false. there. All write_* flags are still honoured and select
-                only which files are written alongside.
+                so the files are not needed for the run itself. All write_* flags
+                are honoured exactly as in 'standalone' mode and select only which
+                files are written alongside; set @ref write_amn, @ref write_mmn and
+                @ref write_eig to .false. if you do not want them to be written to file.
             }
             default { 'standalone' }
         }
