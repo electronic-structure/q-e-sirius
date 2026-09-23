@@ -2582,12 +2582,15 @@ MODULE read_namelists_module
        IF( ionode ) THEN
          READ( unit_loc, direct_minimization, iostat = ios )
        END IF
-       ! bcast ios, because check_namelist_valid does comm too
        CALL mp_bcast(ios, ionode_id, intra_image_comm)
        IF ( ios /= 0) THEN
-         ! READ failed, check if namelist did not exist or if parsing failed
-         CALL check_namelist_valid(ios, unit_loc, "direct_minimization")
-         ! reset input position
+         ! DIRECT_MINIMIZATION namelist not found (or malformed): treat it as
+         ! optional and simply disable direct minimization.
+         ! Telling apart "not present" from "malformed" apart was brittle, and
+         ! didn't work with nvhpc
+         CALL infomsg( 'read_namelists', &
+              'DIRECT_MINIMIZATION namelist not found, direct minimization disabled' )
+         ! reset input position to just after the ELECTRONS namelist
          IF( ionode ) THEN
            REWIND(unit_loc)
            READ(unit_loc, electrons, iostat = ios)
@@ -2623,8 +2626,12 @@ MODULE read_namelists_module
           IF ( (ios /= 0) .AND. TRIM( calculation ) == 'scf' ) THEN
             ! presumably, not found: rewind the file pointer to the location
             ! of the previous present section, in this case electrons
+            ! (or direct_minimization, if that was present)
             REWIND( unit_loc )
             READ( unit_loc, electrons, iostat = ios )
+#if defined(__SIRIUS)
+            IF ( use_sirius_nlcg ) READ( unit_loc, direct_minimization, iostat = ios )
+#endif
           END IF
         END IF
           !
@@ -2756,76 +2763,5 @@ MODULE read_namelists_module
        END IF
        !
      END SUBROUTINE check_namelist_read
-     !
-     !
-     SUBROUTINE last_line(unit_loc, line)
-       USE io_global, ONLY : ionode, ionode_id
-       ! USE mp,        ONLY : mp_bcast
-       ! USE mp_images, ONLY : intra_image_comm
-
-       IMPLICIT NONE
-
-       INTEGER,INTENT(IN) :: unit_loc
-       INTEGER :: ios
-       CHARACTER(len=*),INTENT(OUT) :: line
-
-       IF ( ionode ) THEN
-         ! go back one line
-         BACKSPACE(unit_loc)
-         DO
-           READ(unit_loc, '(A512)', iostat=ios) line
-           IF (ios /= 0) THEN
-             exit
-           END IF
-         END DO
-         ! reset to begin of file
-         REWIND(unit_loc)
-       END IF
-
-     END SUBROUTINE last_line
-     !
-     ! same as check_namelist_read, but check only for validity, e.g. do not throw if namelist wasn't found
-     SUBROUTINE check_namelist_valid(ios, unit_loc, nl_name)
-       USE io_global, ONLY : ionode, ionode_id
-       USE mp,        ONLY : mp_bcast
-       USE mp_images, ONLY : intra_image_comm
-       !
-       IMPLICIT NONE
-       INTEGER,INTENT(in) :: ios, unit_loc
-       CHARACTER(LEN=*) :: nl_name
-       CHARACTER(len=512) :: line
-       CHARACTER(len=512) :: lastline
-       INTEGER :: ios2
-       !
-       IF( ionode ) THEN
-         ios2=0
-         IF (ios /=0) THEN
-           BACKSPACE(unit_loc)
-           READ(unit_loc,'(A512)', iostat=ios2) line
-         END IF
-
-         CALL last_line(unit_loc, lastline)
-       END IF
-
-       CALL mp_bcast( line, ionode_id, intra_image_comm )
-       CALL mp_bcast( lastline, ionode_id, intra_image_comm )
-
-       IF (lastline == line) THEN
-         ! 'lastline == line, this means nlcg namelist not found'
-         RETURN
-       END IF
-
-       CALL mp_bcast( ios2, ionode_id, intra_image_comm )
-       !
-       CALL mp_bcast( ios, ionode_id, intra_image_comm )
-       CALL mp_bcast( line, ionode_id, intra_image_comm )
-       IF( ios /= 0 ) THEN
-          CALL errore( ' read_namelists ', &
-                       ' bad line in namelist &'//TRIM(nl_name)//&
-                       ': "'//TRIM(line)//'" (error could be in the previous line)',&
-                       1 )
-       END IF
-       !
-     END SUBROUTINE check_namelist_valid
 
 END MODULE read_namelists_module
