@@ -276,9 +276,6 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program pw2wa
                 info {
                     Where the Kohn-Sham wavefunctions are kept after they are
                     read from the collected files in the save directory.
-                    With either option, a k+b point held by another pool is
-                    read from the collected file in the save directory, so a
-                    process never reads another process's prefix.wfcN file.
                 }
                 opt -val 'medium' {
                     Write them to one prefix.wfcN file per process in outdir

@@ -108,28 +108,22 @@ module wannier
    !----------------------------------------------------------------------------
    SUBROUTINE utility_setup_wfc_and_pw(ik_global, evc, npw, igk_k_ik)
       !-------------------------------------------------------------------------
-      !! Read the wavefunction evc at global k point ik_global and set up the
+      !! Get the wavefunction evc at global k point ik_global and set up the
       !! plane wave variables npw and igk_k_ik.
       !!
-      !! A k point of this pool is read with get_buffer (memory or disk,
-      !! depending on io_level). A k point of another pool is read from the
-      !! collected wavefunction file in the save directory, as in
-      !! read_collected_wfc, so it never needs another rank's prefix.wfcN file.
+      !! Collective over inter_pool_comm: a k point of another pool is sent by
+      !! that pool, see utility_wfc_exchange. Every loop that calls this
+      !! routine must be followed by utility_wfc_flush.
       !-------------------------------------------------------------------------
       USE kinds,           ONLY : DP
-      USE mp_pools,        ONLY : my_pool_id, intra_pool_comm
-      USE mp_bands,        ONLY : root_bgrp, intra_bgrp_comm
-      USE mp,              ONLY : mp_sum, mp_max
-      USE io_files,        ONLY : nwordwfc, iunwfc, iunpun, restart_dir
-      USE io_base,         ONLY : read_wfc
+      USE mp_pools,        ONLY : my_pool_id
+      USE io_files,        ONLY : nwordwfc, iunwfc
       USE buffers,         ONLY : get_buffer
-      USE pw_restart_new,  ONLY : gk_l2gmap_kdip
       USE wvfct,           ONLY : npwx
       USE pwcom,           ONLY : nbnd
       USE noncollin_module,ONLY : npol
-      USE lsda_mod,        ONLY : nspin
       USE klist,           ONLY : nkstot, igk_k, ngk
-      USE gvect,           ONLY : g, ngm, ig_l2g
+      USE gvect,           ONLY : g, ngm
       USE gvecw,           ONLY : gcutw
       !
       IMPLICIT NONE
@@ -147,73 +141,139 @@ module wannier
       !! Pool index where ik_global belongs to
       INTEGER :: ik_local
       !! Local k index of ik_global in ipool
-      INTEGER :: ig, ierr, ik_file, ispin, npw_g, ngk_g, npol_, nbnd_
-      INTEGER, ALLOCATABLE :: igk_l2g(:), igk_l2g_kdip(:), mill_k(:,:)
-      REAL(DP) :: g2kin_(npwx), xk_(3), b1(3), b2(3), b3(3), scalef
-      LOGICAL :: gamma_only_
-      CHARACTER(LEN=2), PARAMETER :: updw(2) = (/ 'up', 'dw' /)
-      CHARACTER(LEN=320) :: filename
-      CHARACTER(len=6), EXTERNAL :: int_to_char
+      LOGICAL :: all_flushing
+      REAL(DP) :: g2kin_(npwx)
       !
-      evc = (0.0_DP, 0.0_DP)
+      CALL utility_wfc_exchange(ik_global, evc, all_flushing)
       !
-      ! For a global k point index, find the pool and local k point index.
       CALL pool_and_local_kpoint_index(nkstot, ik_global, ipool, ik_local)
       !
       IF (ipool == my_pool_id) THEN
-         !
          CALL get_buffer(evc, nwordwfc, iunwfc, ik_local)
          npw = ngk(ik_local)
          igk_k_ik = igk_k(:, ik_local)
-         !
       ELSE
-         !
-         ! G vector ordering at ik_global on this pool's G vectors, and the
-         ! map to the global G list that read_wfc needs to distribute them.
+         ! The G vector distribution is the same on all pools, so the G vector
+         ! ordering of the owner is reproduced by gk_sort.
          CALL gk_sort(xk_all(1, ik_global), ngm, g, gcutw, npw, igk_k_ik, g2kin_)
-         !
-         ALLOCATE(igk_l2g(npwx), igk_l2g_kdip(npwx), mill_k(3, npwx))
-         igk_l2g = 0
-         DO ig = 1, npw
-            igk_l2g(ig) = ig_l2g(igk_k_ik(ig))
-         ENDDO
-         npw_g = MAXVAL(igk_l2g(1:npw))
-         CALL mp_max(npw_g, intra_pool_comm)
-         ngk_g = npw
-         CALL mp_sum(ngk_g, intra_bgrp_comm)
-         igk_l2g_kdip = 0
-         CALL gk_l2gmap_kdip(npw_g, ngk_g, npw, igk_l2g, igk_l2g_kdip)
-         !
-         ! LSDA: QE stores the spin-up k points first, then the spin-down ones.
-         IF (nspin == 2) THEN
-            ik_file = MOD(ik_global - 1, nkstot / 2) + 1
-            ispin = 1
-            IF (ik_global > nkstot / 2) ispin = 2
-            filename = TRIM(restart_dir()) // 'wfc' // updw(ispin) // TRIM(int_to_char(ik_file))
-         ELSE
-            ik_file = ik_global
-            ispin = 1
-            filename = TRIM(restart_dir()) // 'wfc' // TRIM(int_to_char(ik_file))
-         ENDIF
-         !
-         CALL start_clock('read_col_wfc')
-         npol_ = npol
-         nbnd_ = nbnd
-         CALL read_wfc(iunpun, filename, root_bgrp, intra_bgrp_comm, &
-              ik_file, xk_, ispin, npol_, evc, npw_g, gamma_only_, nbnd_, &
-              igk_l2g_kdip(:), npw, b1, b2, b3, mill_k, scalef, ierr)
-         CALL stop_clock('read_col_wfc')
-         IF (ierr /= 0) CALL errore('utility_setup_wfc_and_pw', &
-            'cannot read collected wavefunction ' // TRIM(filename), ABS(ierr))
-         IF (nbnd_ < nbnd) CALL errore('utility_setup_wfc_and_pw', &
-            'fewer bands than nbnd in ' // TRIM(filename), 1)
-         !
-         DEALLOCATE(igk_l2g, igk_l2g_kdip, mill_k)
-         !
       ENDIF
       !
    !----------------------------------------------------------------------------
    END SUBROUTINE utility_setup_wfc_and_pw
+   !----------------------------------------------------------------------------
+   !
+   !----------------------------------------------------------------------------
+   SUBROUTINE utility_wfc_exchange(ik_global, evc, all_flushing)
+      !-------------------------------------------------------------------------
+      !! One round of wavefunction exchange between the pools. Collective over
+      !! inter_pool_comm. In a round, every pool asks for at most one k point.
+      !! If another pool owns it, that pool sends it and it is received in evc.
+      !!
+      !! ik_global = -1 asks for nothing and only serves the other pools. It is
+      !! used by utility_wfc_flush, for the pools that need fewer rounds.
+      !-------------------------------------------------------------------------
+      USE kinds,           ONLY : DP
+      USE parallel_include
+      USE mp_pools,        ONLY : my_pool_id, npool, inter_pool_comm
+      USE mp,              ONLY : mp_sum
+      USE io_files,        ONLY : nwordwfc, iunwfc
+      USE buffers,         ONLY : get_buffer
+      USE wvfct,           ONLY : npwx
+      USE pwcom,           ONLY : nbnd
+      USE noncollin_module,ONLY : npol
+      USE klist,           ONLY : nkstot
+      !
+      IMPLICIT NONE
+      !
+      INTEGER, INTENT(IN) :: ik_global
+      !! Global k point index needed by this pool, or -1
+      COMPLEX(DP), INTENT(INOUT) :: evc(*)
+      !! (npwx * npol, nbnd) wavefunction at ik_global. Set only if ik_global
+      !! belongs to another pool.
+      LOGICAL, INTENT(OUT) :: all_flushing
+      !! True if all pools called with ik_global = -1
+      !
+      INTEGER :: ip, ip_owner, ik_local, request, ierr
+      LOGICAL :: remote
+      !! True if ik_global belongs to another pool
+      INTEGER :: ik_request(0:npool-1)
+      !! Global k point index requested by each pool in this round
+      COMPLEX(DP), ALLOCATABLE :: evc_send(:, :)
+      !
+      all_flushing = (ik_global == -1)
+      !
+#if defined(__MPI)
+      IF (npool == 1) RETURN
+      !
+      CALL start_clock('wfc_exchange')
+      !
+      ik_request = 0
+      ik_request(my_pool_id) = ik_global
+      CALL mp_sum(ik_request, inter_pool_comm)
+      all_flushing = ALL(ik_request == -1)
+      !
+      ! The rank in inter_pool_comm is the pool index. A pool gets at most one
+      ! message per round, so a single tag is enough. The receive is posted
+      ! before the blocking sends to avoid a deadlock.
+      !
+      remote = .FALSE.
+      IF (ik_global > 0) THEN
+         CALL pool_and_local_kpoint_index(nkstot, ik_global, ip_owner, ik_local)
+         remote = (ip_owner /= my_pool_id)
+      ENDIF
+      !
+      IF (remote) THEN
+         CALL MPI_IRECV(evc, nwordwfc, MPI_DOUBLE_COMPLEX, ip_owner, 0, &
+            inter_pool_comm, request, ierr)
+         IF (ierr /= 0) CALL errore('utility_wfc_exchange', 'MPI_IRECV failed', 1)
+      ENDIF
+      !
+      DO ip = 0, npool - 1
+         IF (ip == my_pool_id .OR. ik_request(ip) <= 0) CYCLE
+         CALL pool_and_local_kpoint_index(nkstot, ik_request(ip), ip_owner, ik_local)
+         IF (ip_owner /= my_pool_id) CYCLE
+         !
+         IF (.NOT. ALLOCATED(evc_send)) ALLOCATE(evc_send(npwx * npol, nbnd))
+         CALL get_buffer(evc_send, nwordwfc, iunwfc, ik_local)
+         CALL MPI_SEND(evc_send, nwordwfc, MPI_DOUBLE_COMPLEX, ip, 0, &
+            inter_pool_comm, ierr)
+         IF (ierr /= 0) CALL errore('utility_wfc_exchange', 'MPI_SEND failed', 1)
+      ENDDO
+      IF (ALLOCATED(evc_send)) DEALLOCATE(evc_send)
+      !
+      IF (remote) THEN
+         CALL MPI_WAIT(request, MPI_STATUS_IGNORE, ierr)
+         IF (ierr /= 0) CALL errore('utility_wfc_exchange', 'MPI_WAIT failed', 1)
+      ENDIF
+      !
+      CALL stop_clock('wfc_exchange')
+#endif
+      !
+   !----------------------------------------------------------------------------
+   END SUBROUTINE utility_wfc_exchange
+   !----------------------------------------------------------------------------
+   !
+   !----------------------------------------------------------------------------
+   SUBROUTINE utility_wfc_flush()
+      !-------------------------------------------------------------------------
+      !! Collective over inter_pool_comm. To be called after a loop that calls
+      !! utility_setup_wfc_and_pw: serve the other pools until all of them
+      !! have finished their loop.
+      !-------------------------------------------------------------------------
+      USE kinds,           ONLY : DP
+      !
+      IMPLICIT NONE
+      !
+      LOGICAL :: all_flushing
+      COMPLEX(DP) :: evc_dum(1)
+      !
+      DO
+         CALL utility_wfc_exchange(-1, evc_dum, all_flushing)
+         IF (all_flushing) EXIT
+      ENDDO
+      !
+   !----------------------------------------------------------------------------
+   END SUBROUTINE utility_wfc_flush
    !----------------------------------------------------------------------------
    !
    !----------------------------------------------------------------------------

@@ -1205,7 +1205,7 @@ SUBROUTINE print_clock_pw2wannier90
   CALL print_clock('scdm_QRCP')
   CALL print_clock('compute_u_kb')
   CALL print_clock('h_psi')
-  CALL print_clock('read_col_wfc')
+  CALL print_clock('wfc_exchange')
   !
 END SUBROUTINE print_clock_pw2wannier90
 !
@@ -2876,6 +2876,8 @@ SUBROUTINE compute_dmn
       ENDDO !isym
    ENDDO  !ik
    !
+   CALL utility_wfc_flush()
+   !
    WRITE(stdout, *) ' DMN(d_matrix_band) calculated'
    !
    IF (me_pool == root_pool) CLOSE (iun_dmn, STATUS="KEEP")
@@ -3239,6 +3241,8 @@ SUBROUTINE compute_mmn
          !
       ENDDO !ib
    ENDDO  !ik
+   !
+   CALL utility_wfc_flush()
    !
    ! Wannier90 reads a short m_matrix_local as valid, so fail loudly if the
    ! filled count disagrees with the allocated extent
@@ -4847,6 +4851,8 @@ SUBROUTINE compute_orb
       ENDDO ! i_b2
    ENDDO ! ik
    !
+   CALL utility_wfc_flush()
+   !
    IF (me_pool == root_pool) THEN
       IF (write_uHu) CLOSE(iun_uHu, STATUS="KEEP")
       IF (write_uIu) CLOSE(iun_uIu, STATUS="KEEP")
@@ -5114,6 +5120,8 @@ SUBROUTINE compute_shc
          !
       ENDDO ! i_b
    ENDDO ! ik
+   !
+   CALL utility_wfc_flush()
    !
    IF (me_pool == root_pool) THEN
       IF (write_sHu) CLOSE(iun_sHu, STATUS="KEEP")
