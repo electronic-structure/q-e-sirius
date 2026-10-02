@@ -71,7 +71,6 @@ module wannier
    real(DP)              :: rlatt(3,3),glatt(3,3) ! real and recip lattices (Cartesian co-ords, units of Angstrom)
    real(DP), allocatable :: kpt_latt(:,:)  ! k-points in crystal co-ords. kpt_latt(3,iknum)
    integer               :: num_bands      ! number of bands left after exclusions
-   integer               :: num_nnmax=12
    ! target: the Wannier90 v4 setters keep pointers to these for the duration of
    ! the minimisation, so the association has to outlive the setter call
    complex(DP), allocatable, target :: m_mat(:,:,:,:)
@@ -109,17 +108,28 @@ module wannier
    !----------------------------------------------------------------------------
    SUBROUTINE utility_setup_wfc_and_pw(ik_global, evc, npw, igk_k_ik)
       !-------------------------------------------------------------------------
-      !! Read wavefunction evc from file for global k point ik_global.
-      !! Setup the plane wave variables npw and igk_k_ik
+      !! Read the wavefunction evc at global k point ik_global and set up the
+      !! plane wave variables npw and igk_k_ik.
+      !!
+      !! A k point of this pool is read with get_buffer (memory or disk,
+      !! depending on io_level). A k point of another pool is read from the
+      !! collected wavefunction file in the save directory, as in
+      !! read_collected_wfc, so it never needs another rank's prefix.wfcN file.
       !-------------------------------------------------------------------------
-      USE kinds,           ONLY : DP, i8b
-      USE mp_pools,        ONLY : my_pool_id, nproc_pool, me_pool
-      USE io_files,        ONLY : prefix, tmp_dir, nwordwfc, iunwfc
+      USE kinds,           ONLY : DP
+      USE mp_pools,        ONLY : my_pool_id, intra_pool_comm
+      USE mp_bands,        ONLY : root_bgrp, intra_bgrp_comm
+      USE mp,              ONLY : mp_sum, mp_max
+      USE io_files,        ONLY : nwordwfc, iunwfc, iunpun, restart_dir
+      USE io_base,         ONLY : read_wfc
+      USE buffers,         ONLY : get_buffer
+      USE pw_restart_new,  ONLY : gk_l2gmap_kdip
       USE wvfct,           ONLY : npwx
       USE pwcom,           ONLY : nbnd
       USE noncollin_module,ONLY : npol
+      USE lsda_mod,        ONLY : nspin
       USE klist,           ONLY : nkstot, igk_k, ngk
-      USE gvect,           ONLY : g, ngm
+      USE gvect,           ONLY : g, ngm, ig_l2g
       USE gvecw,           ONLY : gcutw
       !
       IMPLICIT NONE
@@ -127,32 +137,22 @@ module wannier
       INTEGER, INTENT(IN) :: ik_global
       !! Global k point index
       COMPLEX(DP), INTENT(OUT) :: evc(npwx * npol, nbnd)
-      !! wavefunction at ik_global, read from file
+      !! wavefunction at ik_global
       INTEGER, INTENT(OUT) :: npw
       !! number of plane waves at ik_global
       INTEGER, INTENT(OUT) :: igk_k_ik(npwx)
       !! index of G vectors at ik_global
       !
-      CHARACTER(LEN = 256) :: wfcfile
-      !! Temp file
       INTEGER :: ipool
       !! Pool index where ik_global belongs to
       INTEGER :: ik_local
       !! Local k index of ik_global in ipool
-      INTEGER :: iproc
-      !! Processer index, which is the postfix of the filename.
-      INTEGER :: iun
-      !! File unit
-      INTEGER(KIND=i8b) :: unf_recl
-      !! Record length. Double precision to prevent integer overflow
-      INTEGER :: direct_io_factor
-      !! Factor for record length
-      INTEGER :: ios
-      !! Error number
-      REAL(KIND = DP) :: dummy
-      !! Dummy variable
-      REAL(DP) :: g2kin_(npwx)
-      !! Dummy g2kin_ to call gk_sort
+      INTEGER :: ig, ierr, ik_file, ispin, npw_g, ngk_g, npol_, nbnd_
+      INTEGER, ALLOCATABLE :: igk_l2g(:), igk_l2g_kdip(:), mill_k(:,:)
+      REAL(DP) :: g2kin_(npwx), xk_(3), b1(3), b2(3), b3(3), scalef
+      LOGICAL :: gamma_only_
+      CHARACTER(LEN=2), PARAMETER :: updw(2) = (/ 'up', 'dw' /)
+      CHARACTER(LEN=320) :: filename
       CHARACTER(len=6), EXTERNAL :: int_to_char
       !
       evc = (0.0_DP, 0.0_DP)
@@ -161,42 +161,55 @@ module wannier
       CALL pool_and_local_kpoint_index(nkstot, ik_global, ipool, ik_local)
       !
       IF (ipool == my_pool_id) THEN
-! print*, "pool ", my_pool_id, " Reading locally  pool, ik_local ", ipool, ik_local
          !
-         ! If ipool is this pool, just read from the buffer
-         !
-         CALL davcio(evc, 2*nwordwfc, iunwfc, ik_local, -1)
-         !
-      ELSE
-         !
-         ! If ipool is not this pool, open wfc file, read, and close.
-         !
-         ! Processer id
-         iproc = ipool * nproc_pool + me_pool
-         !
-         wfcfile = TRIM(tmp_dir) // TRIM(prefix) // '.wfc' // TRIM(int_to_char( iproc+1 ))
-! print*, "pool ", my_pool_id, " Reading globally pool, ik_local ", ipool, ik_local, trim(wfcfile)
-         !
-         INQUIRE(IOLENGTH = direct_io_factor) dummy
-         unf_recl = direct_io_factor * INT(2*nwordwfc, KIND=KIND(unf_recl))
-         !
-         OPEN(NEWUNIT = iun, FILE = TRIM(wfcfile), FORM = 'unformatted', &
-            ACCESS = 'direct', IOSTAT = ios, RECL = unf_recl)
-         IF (ios /= 0) CALL errore('utility_setup_wfc_and_pw', &
-            'error opening wfc file', 1)
-         READ(iun, REC = ik_local) evc
-         CLOSE(iun, STATUS = 'KEEP')
-      ENDIF
-      !
-      ! Setup npw and igk_k_ik, the G vector ordering at ik_global.
-      !
-      IF (ipool == my_pool_id) THEN
-         ! Use local G vector ordering
+         CALL get_buffer(evc, nwordwfc, iunwfc, ik_local)
          npw = ngk(ik_local)
          igk_k_ik = igk_k(:, ik_local)
+         !
       ELSE
-         ! k point from different pool. Calculate G vector ordering.
+         !
+         ! G vector ordering at ik_global on this pool's G vectors, and the
+         ! map to the global G list that read_wfc needs to distribute them.
          CALL gk_sort(xk_all(1, ik_global), ngm, g, gcutw, npw, igk_k_ik, g2kin_)
+         !
+         ALLOCATE(igk_l2g(npwx), igk_l2g_kdip(npwx), mill_k(3, npwx))
+         igk_l2g = 0
+         DO ig = 1, npw
+            igk_l2g(ig) = ig_l2g(igk_k_ik(ig))
+         ENDDO
+         npw_g = MAXVAL(igk_l2g(1:npw))
+         CALL mp_max(npw_g, intra_pool_comm)
+         ngk_g = npw
+         CALL mp_sum(ngk_g, intra_bgrp_comm)
+         igk_l2g_kdip = 0
+         CALL gk_l2gmap_kdip(npw_g, ngk_g, npw, igk_l2g, igk_l2g_kdip)
+         !
+         ! LSDA: QE stores the spin-up k points first, then the spin-down ones.
+         IF (nspin == 2) THEN
+            ik_file = MOD(ik_global - 1, nkstot / 2) + 1
+            ispin = 1
+            IF (ik_global > nkstot / 2) ispin = 2
+            filename = TRIM(restart_dir()) // 'wfc' // updw(ispin) // TRIM(int_to_char(ik_file))
+         ELSE
+            ik_file = ik_global
+            ispin = 1
+            filename = TRIM(restart_dir()) // 'wfc' // TRIM(int_to_char(ik_file))
+         ENDIF
+         !
+         CALL start_clock('read_col_wfc')
+         npol_ = npol
+         nbnd_ = nbnd
+         CALL read_wfc(iunpun, filename, root_bgrp, intra_bgrp_comm, &
+              ik_file, xk_, ispin, npol_, evc, npw_g, gamma_only_, nbnd_, &
+              igk_l2g_kdip(:), npw, b1, b2, b3, mill_k, scalef, ierr)
+         CALL stop_clock('read_col_wfc')
+         IF (ierr /= 0) CALL errore('utility_setup_wfc_and_pw', &
+            'cannot read collected wavefunction ' // TRIM(filename), ABS(ierr))
+         IF (nbnd_ < nbnd) CALL errore('utility_setup_wfc_and_pw', &
+            'fewer bands than nbnd in ' // TRIM(filename), 1)
+         !
+         DEALLOCATE(igk_l2g, igk_l2g_kdip, mill_k)
+         !
       ENDIF
       !
    !----------------------------------------------------------------------------

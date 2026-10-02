@@ -656,7 +656,7 @@ PROGRAM pw2wannier90
   USE klist,      ONLY : nkstot, nks, xk
   USE io_files,   ONLY : prefix, tmp_dir
   USE noncollin_module, ONLY : noncolin
-  USE control_flags,    ONLY : gamma_only
+  USE control_flags,    ONLY : gamma_only, io_level
   USE environment,ONLY : environment_start, environment_end
   USE wannier
   use atproj, only : atom_proj, atom_proj_dir, atom_proj_ext, &
@@ -671,6 +671,7 @@ PROGRAM pw2wannier90
   INTEGER :: ios, ierr
   CHARACTER(len=4) :: spin_component
   CHARACTER(len=256) :: outdir
+  CHARACTER(len=20) :: disk_io
 
   ! these are in wannier module.....-> integer :: ispinw, ikstart, ikstop, iknum
   NAMELIST / inputpp / outdir, prefix, spin_component, wan_mode, &
@@ -689,7 +690,7 @@ PROGRAM pw2wannier90
    ! end change Vitale
        atom_proj, atom_proj_dir, atom_proj_ext, atom_proj_exclude, &
        atom_proj_ortho, atom_proj_frozen, &
-       write_vmn, write_pmn
+       write_vmn, write_pmn, disk_io
   !
   ! initialise environment
   !
@@ -757,6 +758,7 @@ PROGRAM pw2wannier90
      atom_proj_sym = .false.
      write_vmn = .false.
      write_pmn = .false.
+     disk_io = 'medium'
      !
      !     reading the namelist inputpp
      !
@@ -817,6 +819,18 @@ PROGRAM pw2wannier90
   CALL mp_bcast(atom_proj_frozen, ionode_id, world_comm)
   CALL mp_bcast(write_vmn, ionode_id, world_comm)
   CALL mp_bcast(write_pmn, ionode_id, world_comm)
+  CALL mp_bcast(disk_io, ionode_id, world_comm)
+  !
+  ! io_level must be set before read_file: with io_level = 0 the
+  ! wavefunctions stay in memory and no prefix.wfcN file is written.
+  SELECT CASE (TRIM(disk_io))
+  CASE ('low')
+     io_level = 0
+  CASE ('medium')
+     io_level = 1
+  CASE DEFAULT
+     CALL errore('pw2wannier90', 'disk_io must be ''low'' or ''medium'', not '//TRIM(disk_io), 1)
+  END SELECT
   !
   IF (wan_mode /= 'standalone' .AND. wan_mode /= 'library' .AND. &
       wan_mode /= 'wannier2sic') CALL errore('pw2wannier90', &
@@ -946,8 +960,12 @@ PROGRAM pw2wannier90
         CALL setup_nnkp
         WRITE(stdout,*)
      ENDIF
-     WRITE(stdout,*) ' Opening pp-files '
-     CALL openfil_pp
+     ! With io_level = 0 read_file left iunwfc open as an in-memory buffer
+     ! and there is no prefix.wfcN file to open.
+     IF (io_level > 0) THEN
+        WRITE(stdout,*) ' Opening pp-files '
+        CALL openfil_pp
+     ENDIF
      WRITE(stdout,*)
      WRITE(stdout,*) ' Ylm expansion'
      CALL ylm_expansion
@@ -1187,6 +1205,7 @@ SUBROUTINE print_clock_pw2wannier90
   CALL print_clock('scdm_QRCP')
   CALL print_clock('compute_u_kb')
   CALL print_clock('h_psi')
+  CALL print_clock('read_col_wfc')
   !
 END SUBROUTINE print_clock_pw2wannier90
 !
@@ -1235,7 +1254,7 @@ SUBROUTINE setup_nnkp
   real(DP) :: xnorm, znorm, coseno
   INTEGER  :: exclude_bands(nbnd)
   INTEGER  :: n_proj_found, nexcl
-  INTEGER, ALLOCATABLE :: kpb_(:,:), g_kpb_(:,:,:), dist_k(:)
+  INTEGER, ALLOCATABLE :: dist_k(:)
   !
   INTEGER, EXTERNAL :: global_kpoint_index
 
@@ -1261,8 +1280,6 @@ SUBROUTINE setup_nnkp
 
   ALLOCATE( kpt_latt(3,iknum), stat=ierr)
   IF (ierr /= 0) CALL errore('pw2wannier90', 'Error allocating kpt_latt', 1)
-  ALLOCATE( kpb(iknum,num_nnmax), g_kpb(3,iknum,num_nnmax), stat=ierr)
-  IF (ierr /= 0) CALL errore('pw2wannier90', 'Error allocating kpb/g_kpb', 1)
   ALLOCATE( center_w(3,nbnd), alpha_w(nbnd), l_w(nbnd), &
        mr_w(nbnd), r_w(nbnd), zaxis(3,nbnd), xaxis(3,nbnd), stat=ierr)
        IF (ierr /= 0) CALL errore('pw2wannier90', 'Error allocating center_w/alpha_w/l_w/...', 1)
@@ -1373,21 +1390,14 @@ SUBROUTINE setup_nnkp
      !
      CALL w90_get_nn(w90main, nnb, w90out, w90err, ierr)
      IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_get_nn', ierr)
-     IF (nnb > num_nnmax) CALL errore('setup_nnkp',' nnb exceeds num_nnmax',1)
-     !
-     ! kpb and g_kpb are dimensioned num_nnmax and broadcast at that size, while
-     ! the getters want arrays of exactly nnb neighbours
-     ALLOCATE( kpb_(iknum,nnb), g_kpb_(3,iknum,nnb), stat=ierr)
-     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error allocating kpb_/g_kpb_', 1)
-     CALL w90_get_nnkp(w90main, kpb_, w90out, w90err, ierr)
+     ALLOCATE( kpb(iknum,nnb), g_kpb(3,iknum,nnb), stat=ierr)
+     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error allocating kpb/g_kpb', 1)
+     CALL w90_get_nnkp(w90main, kpb, w90out, w90err, ierr)
      IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_get_nnkp', ierr)
      CALL write_kmesh(w90main, w90out, w90err, ierr)  ! Write .nnkp file (root only IO inside the subroutine)
      IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in write_kmesh', ierr)
-     CALL w90_get_gkpb(w90main, g_kpb_, w90out, w90err, ierr)
+     CALL w90_get_gkpb(w90main, g_kpb, w90out, w90err, ierr)
      IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_get_gkpb', ierr)
-     kpb(:,1:nnb) = kpb_(:,:)
-     g_kpb(:,:,1:nnb) = g_kpb_(:,:,:)
-     DEALLOCATE( kpb_, g_kpb_)
      !
      ! n_proj_found is pure output here; the arrays only have to be large enough
      CALL w90_get_proj(w90main, n_proj_found, center_w, l_w, mr_w, spin_eig,   &
@@ -1419,6 +1429,10 @@ SUBROUTINE setup_nnkp
 
   ! every pool root read the same .win, so a broadcast within each pool suffices
   CALL mp_bcast(nnb, root_pool, intra_pool_comm)
+  IF (.NOT. ALLOCATED(kpb)) THEN
+     ALLOCATE( kpb(iknum,nnb), g_kpb(3,iknum,nnb), stat=ierr)
+     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error allocating kpb/g_kpb', 1)
+  ENDIF
   CALL mp_bcast(kpb, root_pool, intra_pool_comm)
   CALL mp_bcast(g_kpb, root_pool, intra_pool_comm)
   CALL mp_bcast(num_bands, root_pool, intra_pool_comm)
@@ -2906,6 +2920,7 @@ SUBROUTINE compute_mmn
    USE fft_interfaces,  ONLY : fwfft, invfft
    USE klist,           ONLY : nks, nkstot, xk, igk_k, ngk
    USE io_files,        ONLY : nwordwfc, iunwfc
+   USE buffers,         ONLY : get_buffer
    USE gvect,           ONLY : g, ngm, gstart
    USE cell_base,       ONLY : omega, alat, tpiba, at, bg
    USE ions_base,       ONLY : nat, ntyp => nsp, ityp, tau
@@ -3060,7 +3075,7 @@ SUBROUTINE compute_mmn
       !
       ! Read wavefunctions at k, exclude the excluded bands
       !
-      CALL davcio(evc, 2*nwordwfc, iunwfc, ik, -1 )
+      CALL get_buffer(evc, nwordwfc, iunwfc, ik)
       !
       ! Trim excluded bands from evc
       ibnd_m = 0
@@ -3273,6 +3288,7 @@ SUBROUTINE compute_mmn_ibz
    USE wvfct,           ONLY : nbnd, npwx
    USE control_flags,   ONLY : gamma_only
    USE io_files,        ONLY : nwordwfc, iunwfc
+   USE buffers,         ONLY : get_buffer
    USE wavefunctions,   ONLY : evc, psic
    USE fft_base,        ONLY : dffts
    !USE klist,           ONLY : nkstot, xk, ngk
@@ -3352,7 +3368,7 @@ SUBROUTINE compute_mmn_ibz
       IF( MOD(ik,10) == 0 ) WRITE (stdout,*)
       FLUSH(stdout)
       ikevc1 = ik + ikstart - 1
-      CALL davcio (evc, 2*nwordwfc, iunwfc, ikevc1, -1 )
+      CALL get_buffer(evc, nwordwfc, iunwfc, ikevc1)
       npw = ngk(ik)
       !
       !  USPP
@@ -3368,7 +3384,7 @@ SUBROUTINE compute_mmn_ibz
          CALL kpb_search(ik, ib, ikp, isym, kdiff, skp)
          IF (ionode) WRITE (iun_mmn,'(7i5)') ik, ikp, (nint(kdiff(n)), n=1,3)
          ikevc2 = ikp + ikstart - 1
-         CALL davcio (evc2, 2*nwordwfc, iunwfc, ikevc2, -1 )
+         CALL get_buffer(evc2, nwordwfc, iunwfc, ikevc2)
          CALL rotate_evc(isym, ikp, ik, kdiff, evc2, evc_kb)
          !
          ! USPP
@@ -3642,6 +3658,7 @@ SUBROUTINE compute_mmn_ibz
       USE klist,           ONLY : nkstot, xk, ngk, igk_k
       USE wavefunctions,   ONLY : evc
       USE io_files,        ONLY : nwordwfc, iunwfc
+      USE buffers,         ONLY : get_buffer
       USE wvfct,           ONLY : nbnd, npwx, et
       USE uspp,            ONLY : nkb, vkb, okvan
       USE becmod,          ONLY : bec_type, becp, calbec, &
@@ -3671,7 +3688,7 @@ SUBROUTINE compute_mmn_ibz
       DO ik=1, nkstot
          k = xkc(:,ik)
          npw = ngk(ik)
-         CALL davcio (evc, 2*nwordwfc, iunwfc, ik, -1 )
+         CALL get_buffer(evc, nwordwfc, iunwfc, ik)
          IF (okvan) THEN
             CALL init_us_2(npw, igk_k(1,ik), xk(1,ik), vkb)
             CALL calbec(npw, vkb, evc, becp)
@@ -4339,6 +4356,7 @@ SUBROUTINE compute_spin
    USE fft_interfaces,  ONLY : fwfft, invfft
    USE klist,           ONLY : nkstot, xk, ngk, igk_k, nks
    USE io_files,        ONLY : nwordwfc, iunwfc
+   USE buffers,         ONLY : get_buffer
    USE gvect,           ONLY : g
    USE cell_base,       ONLY : alat, at, bg
    USE ions_base,       ONLY : nat, ntyp => nsp, ityp, tau
@@ -4425,7 +4443,7 @@ SUBROUTINE compute_spin
       !
       IF (lsda .AND. isk(ik) /= ispinw) CYCLE
       !
-      CALL davcio (evc, 2*nwordwfc, iunwfc, ik, -1 )
+      CALL get_buffer(evc, nwordwfc, iunwfc, ik)
       npw = ngk(ik)
       !
       ! Trim excluded bands from evc
@@ -4888,6 +4906,7 @@ SUBROUTINE compute_shc
    USE mp_pools,        ONLY : intra_pool_comm, my_pool_id, me_pool, root_pool
    USE io_global,       ONLY : stdout, ionode
    USE io_files,        ONLY : nwordwfc, iunwfc
+   USE buffers,         ONLY : get_buffer
    USE constants,       ONLY : rytoev
    USE fft_base,        ONLY : dfftp
    USE control_flags,   ONLY : gamma_only
@@ -5004,7 +5023,7 @@ SUBROUTINE compute_shc
       !
       ! Read wavefunctions at k, exclude the excluded bands
       !
-      CALL davcio(evc, 2*nwordwfc, iunwfc, ik, -1 )
+      CALL get_buffer(evc, nwordwfc, iunwfc, ik)
       !
       ibnd_m = 0
       DO m = 1, nbnd
@@ -5167,6 +5186,7 @@ SUBROUTINE compute_vmn(add_nonlocal)
    USE wavefunctions,   ONLY : evc
    USE klist,           ONLY : ngk, igk_k, nks, xk
    USE io_files,        ONLY : iunwfc, nwordwfc
+   USE buffers,         ONLY : get_buffer
    USE gvect,           ONLY : g
    USE cell_base,       ONLY : tpiba
    USE uspp,            ONLY : nkb, vkb, okvan
@@ -5284,7 +5304,7 @@ SUBROUTINE compute_vmn(add_nonlocal)
          ndim = npw
       ENDIF
       !
-      CALL davcio(evc, 2*nwordwfc, iunwfc, ik, -1)
+      CALL get_buffer(evc, nwordwfc, iunwfc, ik)
       !
       IF (add_nonlocal) THEN
          CALL init_us_2(npw, igk_k(1,ik), xk(1,ik), vkb)
@@ -5555,6 +5575,7 @@ SUBROUTINE compute_amn
    USE control_flags,   ONLY : gamma_only
    USE wavefunctions,   ONLY : evc
    USE io_files,        ONLY : nwordwfc, iunwfc
+   USE buffers,         ONLY : get_buffer
    USE gvect,           ONLY : g, ngm, gstart
    USE uspp,            ONLY : nkb, vkb, okvan
    USE becmod,          ONLY : bec_type, becp, calbec, &
@@ -5649,7 +5670,7 @@ SUBROUTINE compute_amn
       !
       ! Read wavefunctions at k, exclude the excluded bands
       !
-      CALL davcio(evc, 2*nwordwfc, iunwfc, ik, -1 )
+      CALL get_buffer(evc, nwordwfc, iunwfc, ik)
       !
       ibnd1 = 0
       DO ibnd = 1, nbnd
@@ -5839,6 +5860,7 @@ SUBROUTINE compute_amn_with_scdm
    USE control_flags,   ONLY : gamma_only
    USE wavefunctions,   ONLY : evc, psic, psic_nc
    USE io_files,        ONLY : nwordwfc, iunwfc
+   USE buffers,         ONLY : get_buffer
    USE wannier
    USE klist,           ONLY : nkstot, xk, ngk, igk_k, nks
    USE gvect,           ONLY : g, mill
@@ -6015,7 +6037,7 @@ SUBROUTINE compute_amn_with_scdm
    IF (my_pool_id == ipool_gamma) THEN
       !
       ik = ik_gamma_loc
-      CALL davcio(evc, 2*nwordwfc, iunwfc, ik, -1)
+      CALL get_buffer(evc, nwordwfc, iunwfc, ik)
       !
       npw = ngk(ik)
       !
@@ -6213,7 +6235,7 @@ SUBROUTINE compute_amn_with_scdm
       !
       npw = ngk(ik)
       !
-      CALL davcio(evc, 2*nwordwfc, iunwfc, ik, -1)
+      CALL get_buffer(evc, nwordwfc, iunwfc, ik)
       !
       ! Trim excluded bands from evc and et
       evc_k(:, :) = (0.d0, 0.d0)
@@ -6378,6 +6400,7 @@ SUBROUTINE compute_amn_with_atomproj
    USE uspp_init, ONLY : init_us_2
    USE becmod, ONLY: bec_type, becp, calbec, allocate_bec_type, deallocate_bec_type
    USE io_files, ONLY: prefix, restart_dir, tmp_dir, nwordwfc, iunwfc
+   USE buffers,  ONLY: get_buffer
    USE control_flags, ONLY: gamma_only, use_para_diag
    USE pw_restart_new, ONLY: read_collected_wfc
    USE wavefunctions, ONLY: evc
@@ -6755,7 +6778,7 @@ SUBROUTINE compute_amn_with_atomproj
       !
       ! Read wavefunctions at k, exclude the excluded bands
       !
-      CALL davcio(evc, 2*nwordwfc, iunwfc, ik, -1 )
+      CALL get_buffer(evc, nwordwfc, iunwfc, ik)
       !
       ibnd1 = 0
       DO ibnd = 1, nbnd
@@ -7383,6 +7406,7 @@ SUBROUTINE write_plot
    USE control_flags, ONLY : gamma_only
    USE wavefunctions, ONLY : evc
    USE io_files, ONLY : nwordwfc, iunwfc
+   USE buffers,  ONLY : get_buffer
    USE wannier
    USE klist,           ONLY : nkstot, xk, ngk, igk_k, nks
    USE gvect,           ONLY : g, ngm
@@ -7478,7 +7502,7 @@ SUBROUTINE write_plot
          ENDIF
       ENDIF
       !
-      CALL davcio(evc, 2*nwordwfc, iunwfc, ik, -1 )
+      CALL get_buffer(evc, nwordwfc, iunwfc, ik)
       !
       DO ibnd = 1, nbnd
          IF (excluded_band(ibnd)) CYCLE
@@ -7552,6 +7576,7 @@ SUBROUTINE write_parity
    USE control_flags,        ONLY : gamma_only
    USE wavefunctions,        ONLY : evc
    USE io_files,             ONLY : nwordwfc, iunwfc
+   USE buffers,              ONLY : get_buffer
    USE klist,                ONLY : nkstot, xk, igk_k, ngk, nks
    USE gvect,                ONLY : g, ngm, mill
    USE cell_base,            ONLY : at
@@ -7637,7 +7662,7 @@ SUBROUTINE write_parity
       !
       ! building the evc array corresponding to the Gamma point
       !
-      CALL davcio(evc, 2*nwordwfc, iunwfc, kgamma, -1)
+      CALL get_buffer(evc, nwordwfc, iunwfc, kgamma)
       npw = ngk(kgamma)
       !
       ! Count and identify the G vectors we will be extracting for each cpu.
@@ -7691,6 +7716,7 @@ SUBROUTINE wan2sic
   USE io_global,  ONLY : stdout
   USE kinds, ONLY : DP
   USE io_files, ONLY : iunwfc, nwordwfc, nwordwann
+  USE buffers,  ONLY : get_buffer
   USE gvect, ONLY : g, ngm
   USE wavefunctions, ONLY : evc, psic
   USE wvfct, ONLY : nbnd, npwx
@@ -7727,7 +7753,7 @@ SUBROUTINE wan2sic
   !
   DO ik=1,iknum
      ikevc = ik + ikstart - 1
-     CALL davcio (evc, 2*nwordwfc, iunwfc, ikevc, -1)
+     CALL get_buffer(evc, nwordwfc, iunwfc, ikevc)
      npw = ngk(ik)
      WRITE(stdout,*) 'npw ',npw
      DO iw = 1, n_wannier

@@ -270,6 +270,29 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program pw2wa
             default { .FALSE. }
         }
 
+        var disk_io -type CHARACTER {
+            default { 'medium' }
+            options {
+                info {
+                    Where the Kohn-Sham wavefunctions are kept after they are
+                    read from the collected files in the save directory.
+                    With either option, a k+b point held by another pool is
+                    read from the collected file in the save directory, so a
+                    process never reads another process's prefix.wfcN file.
+                }
+                opt -val 'medium' {
+                    Write them to one prefix.wfcN file per process in outdir
+                    and read them back from there.
+                }
+                opt -val 'low' {
+                    Keep them in memory, which costs about
+                    nbnd * npwx * npol complex numbers per local k point and
+                    process, and avoids the per-k-point file reads that are
+                    slow on parallel filesystems.
+                }
+            }
+        }
+
         var write_uHu -type LOGICAL {
             info {
                 Set to .true. to write out the matrix elements of
