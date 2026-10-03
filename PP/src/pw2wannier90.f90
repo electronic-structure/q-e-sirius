@@ -2235,7 +2235,7 @@ SUBROUTINE compute_dmn
    USE becmod,          ONLY : bec_type, becp, calbec, &
                                allocate_bec_type, deallocate_bec_type
    USE mp_pools,        ONLY : intra_pool_comm, inter_pool_comm, me_pool, root_pool, my_pool_id
-   USE mp,              ONLY : mp_sum, mp_bcast, mp_barrier
+   USE mp,              ONLY : mp_sum, mp_max, mp_bcast, mp_barrier
    USE mp_world,        ONLY : world_comm
    USE noncollin_module,ONLY : noncolin, npol
    USE gvecw,           ONLY : gcutw
@@ -2288,6 +2288,8 @@ SUBROUTINE compute_dmn
    INTEGER :: ikb, jkb, ih, jh, na, nt, ijkb0, ind, nir
    INTEGER :: ikevc, ikpevcq, s, counter, iun_dmn, iun_sym, ig, igp, ip, jp, np, iw, jw
    INTEGER :: ir_start, ir_end
+   INTEGER :: ir_loc, nir_loc_max
+   !! Local irreducible k point index, and its maximum among pools
    INTEGER :: ik_global, isk_global, ipool, ik_local
    COMPLEX(DP), ALLOCATABLE :: phase(:), aux(:), aux2(:), &
                                becp2(:,:), Mkb(:,:), aux_nc(:,:)
@@ -2721,7 +2723,26 @@ SUBROUTINE compute_dmn
    WRITE(stdout,'(a,i8)') '  DMN(d_matrix_band): nir = ', nir
    WRITE(stdout,'(a,i8)') '  DMN(d_matrix_band): nir in this pool = ', ir_end - ir_start + 1
    !
-   DO ir = ir_start, ir_end
+   ! At each (k, S), if k or S*k is not part of the current k-point pool, it
+   ! communicates with the pool that has it. All pools must participate in
+   ! this communication. Thus, we loop over the maximum number of irreducible
+   ! k points per pool to keep all pools in the loop.
+   !
+   nir_loc_max = ir_end - ir_start + 1
+   CALL mp_max(nir_loc_max, inter_pool_comm)
+   !
+   DO ir_loc = 1, nir_loc_max
+      ir = ir_start + ir_loc - 1
+      !
+      ! No irreducible k point left in this pool: only serve the wavefunctions
+      ! at k and S*k to the other pools.
+      IF (ir > ir_end) THEN
+         DO isym = 0, nsym
+            CALL utility_wfc_exchange() ! only serve the other pools
+         ENDDO
+         CYCLE
+      ENDIF
+      !
       CALL print_progress(ir, ir_end)
       ik_global = ir2ik(ir) ! global index of the ir-th irreducible k point
       !
@@ -2876,8 +2897,6 @@ SUBROUTINE compute_dmn
       ENDDO !isym
    ENDDO  !ik
    !
-   CALL utility_wfc_flush()
-   !
    WRITE(stdout, *) ' DMN(d_matrix_band) calculated'
    !
    IF (me_pool == root_pool) CLOSE (iun_dmn, STATUS="KEEP")
@@ -2932,8 +2951,8 @@ SUBROUTINE compute_mmn
    USE upf_spinorb,     ONLY : transform_qq_so
    USE becmod,          ONLY : bec_type, becp, calbec, &
                                allocate_bec_type, deallocate_bec_type
-   USE mp_pools,        ONLY : intra_pool_comm, root_pool, me_pool
-   USE mp,              ONLY : mp_sum, mp_barrier
+   USE mp_pools,        ONLY : intra_pool_comm, inter_pool_comm, root_pool, me_pool
+   USE mp,              ONLY : mp_sum, mp_max, mp_barrier
    USE noncollin_module,ONLY : noncolin, npol, lspinorb
    USE lsda_mod,        ONLY : lsda, isk
    USE gvecw,           ONLY : gcutw
@@ -2945,6 +2964,10 @@ SUBROUTINE compute_mmn
    complex(DP), parameter :: cmplx_i=(0.0_DP,1.0_DP)
    !
    INTEGER :: npw, mmn_tot, ik, ikp, ipol, ib, npwq, i, m, n
+   INTEGER :: nks_max
+   !! Maximum number of local k points among pools
+   LOGICAL :: skip_k
+   !! True if this pool does no work at the current k point
    INTEGER :: ikb, jkb, ih, jh, na, nt, ijkb0
    INTEGER :: ikevc, ikpevcq, s, counter, ik_g_w90, ik_loc, nk_local
    COMPLEX(DP), ALLOCATABLE :: phase(:), aux(:), evc_kb_m(:,:), evc_kb(:,:), &
@@ -3064,12 +3087,33 @@ SUBROUTINE compute_mmn
    !
    WRITE(stdout, '(a,i8)') '  Number of local k points = ', nks
    !
+   ! At each (k, b), if k+b is not part of the current k-point pool, it
+   ! communicates with the pool that has it. All pools must participate in
+   ! this communication. Thus, we loop over the maximum number of k points
+   ! per pool to keep all pools in the loop.
+   !
+   nks_max = nks
+   CALL mp_max(nks_max, inter_pool_comm)
+   !
    ik_loc = 0
-   DO ik = 1, nks
+   DO ik = 1, nks_max
       !
-      CALL print_progress(ik, nks)
+      IF (ik <= nks) CALL print_progress(ik, nks)
       !
-      IF (lsda .AND. isk(ik) /= ispinw) CYCLE
+      ! No local k point left, or a k point of the other spin: do no work,
+      ! but serve the wavefunctions at k+b to the other pools.
+      IF (ik > nks) THEN
+         skip_k = .TRUE.
+      ELSE
+         skip_k = lsda .AND. isk(ik) /= ispinw
+      ENDIF
+      !
+      IF (skip_k) THEN
+         DO ib = 1, nnb
+            CALL utility_wfc_exchange() ! only serve the other pools
+         ENDDO
+         CYCLE
+      ENDIF
       !
       ik_loc = ik_loc + 1
       ik_g_w90 = global_kpoint_index(nkstot, ik) - ikstart + 1
@@ -3098,8 +3142,7 @@ SUBROUTINE compute_mmn
       ENDIF
       !
       !
-      !do ib=1,nnb(ik)
-      DO ib=1,nnb
+      DO ib = 1, nnb
          !
          ! Read wavefunction at k+b. If okvan, also compute the product
          ! of beta functions with the wavefunctions.
@@ -3241,8 +3284,6 @@ SUBROUTINE compute_mmn
          !
       ENDDO !ib
    ENDDO  !ik
-   !
-   CALL utility_wfc_flush()
    !
    ! Wannier90 reads a short m_matrix_local as valid, so fail loudly if the
    ! filled count disagrees with the allocated extent
@@ -4605,9 +4646,9 @@ SUBROUTINE compute_orb
    !
    USE kinds,           ONLY : DP
    USE io_global,       ONLY : stdout, ionode
-   USE mp,              ONLY : mp_sum, mp_barrier
+   USE mp,              ONLY : mp_sum, mp_max, mp_barrier
    USE mp_world,        ONLY : world_comm
-   USE mp_pools,        ONLY : intra_pool_comm, my_pool_id, me_pool, root_pool
+   USE mp_pools,        ONLY : intra_pool_comm, inter_pool_comm, my_pool_id, me_pool, root_pool
    USE wvfct,           ONLY : npwx, current_k
    USE control_flags,   ONLY : gamma_only
    USE fft_base,        ONLY : dfftp
@@ -4632,6 +4673,10 @@ SUBROUTINE compute_orb
    !
    INTEGER                  :: ik, npw, m, n, ierr
    INTEGER                  :: i_b, i_b1, i_b2
+   INTEGER :: nks_max
+   !! Maximum number of local k points among pools
+   LOGICAL :: skip_k
+   !! True if this pool does no work at the current k point
    COMPLEX(DP), ALLOCATABLE :: evc_b(:, :, :)
    !! Wavefunction at k+b for all b vectors
    COMPLEX(DP), ALLOCATABLE :: evc_b1(:,:)
@@ -4734,11 +4779,31 @@ SUBROUTINE compute_orb
    !
    WRITE(stdout, '(a,i8)') '  Number of local k points = ', nks
    !
-   DO ik = 1, nks ! loop over k points
+   ! At each (k, b), if k+b is not part of the current k-point pool, it
+   ! communicates with the pool that has it. All pools must participate in
+   ! this communication. Thus, we loop over the maximum number of k points
+   ! per pool to keep all pools in the loop.
+   !
+   nks_max = nks
+   CALL mp_max(nks_max, inter_pool_comm)
+   !
+   DO ik = 1, nks_max ! loop over k points
       !
-      CALL print_progress(ik, nks)
+      IF (ik <= nks) CALL print_progress(ik, nks)
       !
-      IF (lsda .AND. isk(ik) /= ispinw) CYCLE
+      ! No local k point left, or a k point of the other spin: do no work,
+      ! but serve the wavefunctions at k+b to the other pools.
+      IF (ik > nks) THEN
+         skip_k = .TRUE.
+      ELSE
+         skip_k = lsda .AND. isk(ik) /= ispinw
+      ENDIF
+      IF (skip_k) THEN
+         DO i_b = 1, nnb
+            CALL utility_wfc_exchange() ! only serve the other pools
+         ENDDO
+         CYCLE
+      ENDIF
       !
       npw = ngk(ik)
       !
@@ -4851,8 +4916,6 @@ SUBROUTINE compute_orb
       ENDDO ! i_b2
    ENDDO ! ik
    !
-   CALL utility_wfc_flush()
-   !
    IF (me_pool == root_pool) THEN
       IF (write_uHu) CLOSE(iun_uHu, STATUS="KEEP")
       IF (write_uIu) CLOSE(iun_uIu, STATUS="KEEP")
@@ -4907,9 +4970,9 @@ SUBROUTINE compute_shc
    !-----------------------------------------------------------------------
    !
    USE kinds,           ONLY : DP
-   USE mp,              ONLY : mp_sum, mp_barrier
+   USE mp,              ONLY : mp_sum, mp_max, mp_barrier
    USE mp_world,        ONLY : world_comm
-   USE mp_pools,        ONLY : intra_pool_comm, my_pool_id, me_pool, root_pool
+   USE mp_pools,        ONLY : intra_pool_comm, inter_pool_comm, my_pool_id, me_pool, root_pool
    USE io_global,       ONLY : stdout, ionode
    USE io_files,        ONLY : nwordwfc, iunwfc
    USE buffers,         ONLY : get_buffer
@@ -4937,6 +5000,10 @@ SUBROUTINE compute_shc
    COMPLEX(DP), parameter :: cmplx_i = (0.0_DP, 1.0_DP)
    !
    INTEGER :: ik, npw, m, n, ibnd_m, ispol, i_b, ierr
+   INTEGER :: nks_max
+   !! Maximum number of local k points among pools
+   LOGICAL :: skip_k
+   !! True if this pool does no work at the current k point
    COMPLEX(DP) :: sigma_x, sigma_y, sigma_z, cdum1, cdum2
    !
    COMPLEX(DP), ALLOCATABLE :: evc_kb(:, :), H_evc_kb(:, :)
@@ -5019,11 +5086,31 @@ SUBROUTINE compute_shc
    WRITE(stdout, *)
    WRITE(stdout, '(a,i8)') '  Number of local k points = ', nks
    !
-   DO ik = 1, nks ! loop over k points
+   ! At each (k, b), if k+b is not part of the current k-point pool, it
+   ! communicates with the pool that has it. All pools must participate in
+   ! this communication. Thus, we loop over the maximum number of k points
+   ! per pool to keep all pools in the loop.
+   !
+   nks_max = nks
+   CALL mp_max(nks_max, inter_pool_comm)
+   !
+   DO ik = 1, nks_max ! loop over k points
       !
-      CALL print_progress(ik, nks)
+      IF (ik <= nks) CALL print_progress(ik, nks)
       !
-      IF (lsda .AND. isk(ik) /= ispinw) CYCLE
+      ! No local k point left, or a k point of the other spin: do no work,
+      ! but serve the wavefunctions at k+b to the other pools.
+      IF (ik > nks) THEN
+         skip_k = .TRUE.
+      ELSE
+         skip_k = lsda .AND. isk(ik) /= ispinw
+      ENDIF
+      IF (skip_k) THEN
+         DO i_b = 1, nnb
+            CALL utility_wfc_exchange() ! only serve the other pools
+         ENDDO
+         CYCLE
+      ENDIF
       !
       npw = ngk(ik)
       !
@@ -5120,8 +5207,6 @@ SUBROUTINE compute_shc
          !
       ENDDO ! i_b
    ENDDO ! ik
-   !
-   CALL utility_wfc_flush()
    !
    IF (me_pool == root_pool) THEN
       IF (write_sHu) CLOSE(iun_sHu, STATUS="KEEP")

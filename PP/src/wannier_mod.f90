@@ -112,8 +112,7 @@ module wannier
       !! plane wave variables npw and igk_k_ik.
       !!
       !! Collective over inter_pool_comm: a k point of another pool is sent by
-      !! that pool, see utility_wfc_exchange. Every loop that calls this
-      !! routine must be followed by utility_wfc_flush.
+      !! that pool, see utility_wfc_exchange.
       !-------------------------------------------------------------------------
       USE kinds,           ONLY : DP
       USE mp_pools,        ONLY : my_pool_id
@@ -141,10 +140,9 @@ module wannier
       !! Pool index where ik_global belongs to
       INTEGER :: ik_local
       !! Local k index of ik_global in ipool
-      LOGICAL :: all_flushing
       REAL(DP) :: g2kin_(npwx)
       !
-      CALL utility_wfc_exchange(ik_global, evc, all_flushing)
+      CALL utility_wfc_exchange(ik_global, evc)
       !
       CALL pool_and_local_kpoint_index(nkstot, ik_global, ipool, ik_local)
       !
@@ -163,14 +161,15 @@ module wannier
    !----------------------------------------------------------------------------
    !
    !----------------------------------------------------------------------------
-   SUBROUTINE utility_wfc_exchange(ik_global, evc, all_flushing)
+   SUBROUTINE utility_wfc_exchange(ik_global, evc)
       !-------------------------------------------------------------------------
       !! One round of wavefunction exchange between the pools. Collective over
-      !! inter_pool_comm. In a round, every pool asks for at most one k point.
-      !! If another pool owns it, that pool sends it and it is received in evc.
+      !! inter_pool_comm. Every pool asks for at most one k point per round; if
+      !! another pool owns it, that pool sends it and it is received in evc.
       !!
-      !! ik_global = -1 asks for nothing and only serves the other pools. It is
-      !! used by utility_wfc_flush, for the pools that need fewer rounds.
+      !! Without arguments, ask for nothing and only serve the other pools. A
+      !! pool calls it this way in the loop iterations it has no work for, so
+      !! that all pools make the same number of calls.
       !-------------------------------------------------------------------------
       USE kinds,           ONLY : DP
       USE parallel_include
@@ -185,22 +184,22 @@ module wannier
       !
       IMPLICIT NONE
       !
-      INTEGER, INTENT(IN) :: ik_global
-      !! Global k point index needed by this pool, or -1
-      COMPLEX(DP), INTENT(INOUT) :: evc(*)
+      INTEGER, OPTIONAL, INTENT(IN) :: ik_global
+      !! Global k point index needed by this pool
+      COMPLEX(DP), OPTIONAL, INTENT(INOUT) :: evc(*)
       !! (npwx * npol, nbnd) wavefunction at ik_global. Set only if ik_global
       !! belongs to another pool.
-      LOGICAL, INTENT(OUT) :: all_flushing
-      !! True if all pools called with ik_global = -1
       !
       INTEGER :: ip, ip_owner, ik_local, request, ierr
-      LOGICAL :: remote
+      LOGICAL :: ik_is_remote
       !! True if ik_global belongs to another pool
-      INTEGER :: ik_request(0:npool-1)
-      !! Global k point index requested by each pool in this round
+      INTEGER :: ik_request(2, 0:npool-1)
+      !! Owner pool index plus one, and local k index, requested by each pool.
+      !! Zero if that pool asks for nothing.
       COMPLEX(DP), ALLOCATABLE :: evc_send(:, :)
       !
-      all_flushing = (ik_global == -1)
+      IF (PRESENT(ik_global) .NEQV. PRESENT(evc)) &
+         CALL errore('utility_wfc_exchange', 'provide both ik_global and evc, or neither', 1)
       !
 #if defined(__MPI)
       IF (npool == 1) RETURN
@@ -208,40 +207,47 @@ module wannier
       CALL start_clock('wfc_exchange')
       !
       ik_request = 0
-      ik_request(my_pool_id) = ik_global
+      ik_is_remote = .FALSE.
+      IF (PRESENT(ik_global)) THEN
+         CALL pool_and_local_kpoint_index(nkstot, ik_global, ip_owner, ik_local)
+         ! This pool needs ik_local from ip_owner.
+         ik_request(:, my_pool_id) = [ip_owner + 1, ik_local]
+         ik_is_remote = (ip_owner /= my_pool_id)
+      ENDIF
       CALL mp_sum(ik_request, inter_pool_comm)
-      all_flushing = ALL(ik_request == -1)
       !
       ! The rank in inter_pool_comm is the pool index. A pool gets at most one
       ! message per round, so a single tag is enough. The receive is posted
       ! before the blocking sends to avoid a deadlock.
       !
-      remote = .FALSE.
-      IF (ik_global > 0) THEN
-         CALL pool_and_local_kpoint_index(nkstot, ik_global, ip_owner, ik_local)
-         remote = (ip_owner /= my_pool_id)
-      ENDIF
-      !
-      IF (remote) THEN
+      IF (ik_is_remote) THEN
+         ! Non-blocking, so this pool can still send below
          CALL MPI_IRECV(evc, nwordwfc, MPI_DOUBLE_COMPLEX, ip_owner, 0, &
             inter_pool_comm, request, ierr)
          IF (ierr /= 0) CALL errore('utility_wfc_exchange', 'MPI_IRECV failed', 1)
       ENDIF
       !
-      DO ip = 0, npool - 1
-         IF (ip == my_pool_id .OR. ik_request(ip) <= 0) CYCLE
-         CALL pool_and_local_kpoint_index(nkstot, ik_request(ip), ip_owner, ik_local)
-         IF (ip_owner /= my_pool_id) CYCLE
-         !
-         IF (.NOT. ALLOCATED(evc_send)) ALLOCATE(evc_send(npwx * npol, nbnd))
-         CALL get_buffer(evc_send, nwordwfc, iunwfc, ik_local)
-         CALL MPI_SEND(evc_send, nwordwfc, MPI_DOUBLE_COMPLEX, ip, 0, &
-            inter_pool_comm, ierr)
-         IF (ierr /= 0) CALL errore('utility_wfc_exchange', 'MPI_SEND failed', 1)
-      ENDDO
-      IF (ALLOCATED(evc_send)) DEALLOCATE(evc_send)
+      ! Loop over pools and process their requests.
       !
-      IF (remote) THEN
+      DO ip = 0, npool - 1
+         !
+         IF (ip == my_pool_id) CYCLE  ! skip my own request
+         !
+         IF (ik_request(1, ip) == my_pool_id + 1) THEN
+            ik_local = ik_request(2, ip)
+            !
+            ! ik_local from this pool was requested by pool ip
+            !
+            IF (.NOT. ALLOCATED(evc_send)) ALLOCATE(evc_send(npwx * npol, nbnd))
+            CALL get_buffer(evc_send, nwordwfc, iunwfc, ik_local)
+            !
+            CALL MPI_SEND(evc_send, nwordwfc, MPI_DOUBLE_COMPLEX, ip, 0, inter_pool_comm, ierr)
+            IF (ierr /= 0) CALL errore('utility_wfc_exchange', 'MPI_SEND failed', 1)
+         ENDIF
+      ENDDO
+      !
+      IF (ik_is_remote) THEN
+         ! Block until the receive posted by MPI_IRECV is complete, so evc is ready
          CALL MPI_WAIT(request, MPI_STATUS_IGNORE, ierr)
          IF (ierr /= 0) CALL errore('utility_wfc_exchange', 'MPI_WAIT failed', 1)
       ENDIF
@@ -254,35 +260,14 @@ module wannier
    !----------------------------------------------------------------------------
    !
    !----------------------------------------------------------------------------
-   SUBROUTINE utility_wfc_flush()
-      !-------------------------------------------------------------------------
-      !! Collective over inter_pool_comm. To be called after a loop that calls
-      !! utility_setup_wfc_and_pw: serve the other pools until all of them
-      !! have finished their loop.
-      !-------------------------------------------------------------------------
-      USE kinds,           ONLY : DP
-      !
-      IMPLICIT NONE
-      !
-      LOGICAL :: all_flushing
-      COMPLEX(DP) :: evc_dum(1)
-      !
-      DO
-         CALL utility_wfc_exchange(-1, evc_dum, all_flushing)
-         IF (all_flushing) EXIT
-      ENDDO
-      !
-   !----------------------------------------------------------------------------
-   END SUBROUTINE utility_wfc_flush
-   !----------------------------------------------------------------------------
-   !
-   !----------------------------------------------------------------------------
    SUBROUTINE utility_compute_u_kb(ik, i_b, evc_kb, evc_kb_m, becp_kb)
       !-------------------------------------------------------------------------
       !!
       !! For a given k point ik and b vector i_b, compute |u_{n, k+b}>.
       !! Optionally compute becp for k+b (for USPP case).
       !! Do not calculate the excluded bands, using the variable excluded_band.
+      !!
+      !! Collective over inter_pool_comm through utility_setup_wfc_and_pw.
       !!
       !! Uses pre-computed information about b vector: kpb, zerophase, and ig_.
       !!
