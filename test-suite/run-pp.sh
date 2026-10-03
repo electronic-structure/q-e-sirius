@@ -56,5 +56,18 @@ then
     cat $3
   fi
   cat *.wout >> $3 2> /dev/null
+elif [[ "$1" == "5" ]]
+then
+  # echo "Running pw2wannier90 with two processes per k-point pool ..."
+  # Odd process counts and runs without QE_USE_MPI use a single pool.
+  if [[ "$QE_USE_MPI" != "" ]] && (( QE_USE_MPI % 2 == 0 )); then
+    export PARA_SUFFIX="-nk $(( QE_USE_MPI / 2 ))"
+  fi
+  ${PARA_PREFIX} ${ESPRESSO_BUILD}/bin/pw2wannier90.x ${PARA_SUFFIX} < $2 > $3 2> $4
+  if [[ -e CRASH ]]
+  then
+    cat $3
+  fi
+  cat *.wout >> $3 2> /dev/null
 fi
 

@@ -1,0 +1,13 @@
+pw2wannier90 in Wannier90 library mode (wan_mode='library'). Run with
+NPROCS=4 so that the pool cases split the 27-point Si mesh unevenly:
+
+    make run-custom-test testdir=pp_w90_library NPROCS=4
+
+run-pp.sh modes for pw2wannier90.x:
+  3: one k-point pool
+  4: one pool per process (-nk NPROCS)
+  5: two processes per pool (-nk NPROCS/2), one pool for odd NPROCS
+
+si.pw2wan_low_io.in is si.pw2wan.in with disk_io='low'. Modes 4 and 5 and
+the low_io case have the same numerical output as mode 3, so their
+benchmarks are copies of the mode-3 benchmark.
