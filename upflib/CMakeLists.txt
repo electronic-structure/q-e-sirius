@@ -131,3 +131,26 @@ add_custom_target(upf
         qe_upflib_upfconv_exe
     COMMENT
         "utilities for pseudopotential conversion")
+
+if(QE_ENABLE_TEST)
+    qe_add_executable(test_qe_upflib_aainit tests/test_aainit.f90)
+    target_link_libraries(test_qe_upflib_aainit PRIVATE qe_upflib qe_mpi_fortran)
+    add_unit_test(test_qe_upflib_aainit-r1 1 1 $<TARGET_FILE:test_qe_upflib_aainit>)
+    add_unit_test(test_qe_upflib_aainit-r2 2 1 $<TARGET_FILE:test_qe_upflib_aainit>)
+    foreach(invalid_input negative oversized)
+        set(error_command $<TARGET_FILE:test_qe_upflib_aainit> ${invalid_input})
+        if(QE_ENABLE_MPI)
+            list(PREPEND error_command ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 1 ${MPIEXEC_PREFLAGS})
+        endif()
+        if(invalid_input STREQUAL "negative")
+            set(expected_error "lli not allowed")
+        else()
+            set(expected_error "nlx is too small")
+        endif()
+        add_test(NAME test_qe_upflib_aainit-${invalid_input}
+            COMMAND ${CMAKE_COMMAND} "-DTEST_COMMAND=${error_command}"
+                "-DEXPECTED_ERROR=${expected_error}"
+                -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_aainit_error.cmake)
+        set_tests_properties(test_qe_upflib_aainit-${invalid_input} PROPERTIES LABELS "unit")
+    endforeach()
+endif()
