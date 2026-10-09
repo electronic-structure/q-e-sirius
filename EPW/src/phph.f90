@@ -228,15 +228,15 @@
               wqnu2 = wf(nu2, iq2)
               IF (wqnu2 < phwmin_tdbe) CYCLE
               q1pq2(:) = xqf(:, iq1) + xqf(:, iq2)
-              iqx = MODULO(INT(q1pq2(1) * nqf1), nqf1) + 1
-              iqy = MODULO(INT(q1pq2(2) * nqf2), nqf2) + 1
-              iqz = MODULO(INT(q1pq2(3) * nqf3), nqf3) + 1
+              iqx = MODULO(NINT(q1pq2(1) * nqf1), nqf1) + 1
+              iqy = MODULO(NINT(q1pq2(2) * nqf2), nqf2) + 1
+              iqz = MODULO(NINT(q1pq2(3) * nqf3), nqf3) + 1
               iq3p = (iqx - 1) * nqf2 * nqf3 + &
                      (iqy - 1) * nqf3 + iqz
               q1mq2(:) = xqf(:, iq1) - xqf(:, iq2)
-              iqx = MODULO(INT(q1mq2(1) * nqf1), nqf1) + 1
-              iqy = MODULO(INT(q1mq2(2) * nqf2), nqf2) + 1
-              iqz = MODULO(INT(q1mq2(3) * nqf3), nqf3) + 1
+              iqx = MODULO(NINT(q1mq2(1) * nqf1), nqf1) + 1
+              iqy = MODULO(NINT(q1mq2(2) * nqf2), nqf2) + 1
+              iqz = MODULO(NINT(q1mq2(3) * nqf3), nqf3) + 1
               iq3m = (iqx - 1) * nqf2 * nqf3 + &
                      (iqy - 1) * nqf3 + iqz
               DO nu3 = 1, nmodes
