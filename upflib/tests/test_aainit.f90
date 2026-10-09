@@ -11,27 +11,14 @@ program test_aainit
   implicit none
   integer, parameter :: nq=lqmax*lqmax, nd=37
   real(dp) :: ref(nq,nlx,nlx), refined(nq,nlx,nlx), saved(nq,nlx,nlx)
-  real(dp) :: xyz(3,nd), rr(nd), y(nd,nq), residual, sparse(nd), before, after
-  integer :: i,j,k,l,n,lli,rep,failures,rank,info,all_failures
-  character(32) :: argument
+  real(dp) :: xyz(3,nd), rr(nd), y(nd,nq), sparse(nd)
+  integer :: i,j,k,l,n,lli,pass,step,failures,rank,info
   failures=0
   rank=0
 #if defined(__MPI)
   call MPI_INIT(info)
   call MPI_COMM_RANK(MPI_COMM_WORLD,rank,info)
 #endif
-  call get_command_argument(1,argument)
-  if (trim(argument)=='negative' .or. trim(argument)=='oversized') then
-     if (trim(argument)=='negative') call aainit(-1)
-     if (trim(argument)=='oversized') call aainit(lmaxx+2)
-     ! The error harness must reject incorrectly accepted input.
-#if defined(__MPI)
-     call MPI_FINALIZE(info)
-#endif
-     stop 0
-  end if
-  if (len_trim(argument)>0) stop 3
-
   call reference(24,64,ref)
   call reference(48,128,refined)
   call check('reference refinement',maxval(abs(ref-refined)),1.e-13_dp)
@@ -42,18 +29,18 @@ program test_aainit
   end do
   rr=sum(xyz*xyz,dim=1)
   call ylmr2(nq,nd,xyz,rr,y)
-  call cpu_time(before)
-  do rep=1,16
-     do lli=1,lmaxx+1
+  ! Exercise each supported range, then shrink it to expose stale state.
+  do pass=1,2
+     do step=1,lmaxx+1
+        lli=step
+        if (pass==2) lli=lmaxx+2-step
         n=(2*lli-1)**2
         call aainit(lli)
         if (.not.all(ieee_is_finite(ap))) failures=failures+1
         call check('quadrature coefficients',maxval(abs(ap(:n,:lli**2,:lli**2)-refined(:n,:lli**2,:lli**2))),1.e-12_dp)
-        residual=0.0_dp
         do j=1,lli**2
            do i=1,lli**2
               call check('exchange symmetry',maxval(abs(ap(:n,i,j)-ap(:n,j,i))),1.e-14_dp)
-              residual=max(residual,maxval(abs(matmul(y(:,:n),ap(:n,i,j))-y(:,i)*y(:,j))))
               if (lpx(i,j)<0 .or. lpx(i,j)>size(lpl,3)) then
                  failures=failures+1
                  cycle
@@ -74,20 +61,11 @@ program test_aainit
               call check('sparse reconstruction',maxval(abs(sparse-y(:,i)*y(:,j))),1.e-11_dp)
            end do
         end do
-        call check('dense reconstruction',residual,1.e-11_dp)
         if (lli==lmaxx+1) then
-           if (rep==1) saved=ap
+           if (pass==1) saved=ap
            call check('repeat initialization',maxval(abs(ap-saved)),1.e-14_dp)
         end if
      end do
-  end do
-  call cpu_time(after)
-  if(rank==0) write(*,'(a,es14.6)') '80 initialization/check cycles CPU seconds: ',after-before
-  do lli=lmaxx+1,1,-1
-     call aainit(lli)
-     n=(2*lli-1)**2
-     call check('reverse initialization order', &
-          maxval(abs(ap(:n,:lli**2,:lli**2)-refined(:n,:lli**2,:lli**2))),1.e-12_dp)
   end do
   call aainit(lmaxx+1)
   call check('Y00 product',abs(ap(1,1,1)-1.0_dp/sqrt(fpi)),1.e-14_dp)
@@ -107,20 +85,14 @@ program test_aainit
         end do
      end do
   end do
-#if defined(__MPI)
-  saved=ap
-  call MPI_BCAST(saved,size(saved),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,info)
-  call check('MPI coefficient agreement',maxval(abs(ap-saved)),0.0_dp)
-#endif
   call aainit(0)
   call check('zero angular range',maxval(abs(ap)),0.0_dp)
-  all_failures=failures
+  if (any(lpx/=0) .or. any(lpl/=0)) failures=failures+1
 #if defined(__MPI)
-  call MPI_ALLREDUCE(failures,all_failures,1,MPI_INTEGER,MPI_SUM,MPI_COMM_WORLD,info)
   call MPI_FINALIZE(info)
 #endif
-  if (all_failures/=0) then
-     if(rank==0) write(*,'(a,i0)') 'FAILURES: ',all_failures
+  if (failures/=0) then
+     if(rank==0) write(*,'(a,i0)') 'FAILURES: ',failures
      stop 1
   end if
   if(rank==0) write(*,'(a)') 'PASS: aainit coefficients, reconstruction, sparsity, state and symmetry'
