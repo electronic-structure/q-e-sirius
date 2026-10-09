@@ -982,6 +982,8 @@ SUBROUTINE offdiag_calc ( intersmear, intrasmear, nbndmin, nbndmax, shift, metal
   USE mp_pools,             ONLY : inter_pool_comm
   USE mp,                   ONLY : mp_sum
   USE grid_module,          ONLY : focc, nw, wgrid
+  USE uspp,                 ONLY : nkb
+  USE becmod,               ONLY : becp, allocate_bec_type, deallocate_bec_type
 
   !
   IMPLICIT NONE
@@ -1013,6 +1015,9 @@ SUBROUTINE offdiag_calc ( intersmear, intrasmear, nbndmin, nbndmax, shift, metal
   !
   ALLOCATE( dipoletot(3,3, nbnd, nbnd), STAT=ierr )
   IF (ierr/=0) CALL errore('epsilon','allocating dipoletot', abs(ierr) )
+  !
+  ! allocate beta projectors for calculation of the non-local contributions
+  CALL allocate_bec_type(nkb, nbnd, becp)
   !
   ALLOCATE( dipole_aux(3, nbnd, nbnd), STAT=ierr )
   IF (ierr/=0) CALL errore('epsilon','allocating dipole_aux', abs(ierr) )
@@ -1154,6 +1159,7 @@ SUBROUTINE offdiag_calc ( intersmear, intrasmear, nbndmin, nbndmax, shift, metal
   ! local cleaning
   !
   DEALLOCATE ( dipoletot, dipole_aux, epstot )
+  CALL deallocate_bec_type(becp)
 
 END SUBROUTINE offdiag_calc
 
