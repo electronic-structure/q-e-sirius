@@ -1179,7 +1179,7 @@
     REAL(KIND = DP) :: detmp 
     !! et - e_latt(itemp)
     REAL(KIND = DP) :: temp_it
-    !! Effective lattice temperarure  
+    !! Effective lattice temperature  
     REAL(KIND = DP) :: n_eq
     !! Equilibrium phonon population at temperature
     REAL(KIND = DP) :: nph

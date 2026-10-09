@@ -160,9 +160,9 @@
       
      threshold of phonon freqency(mev):  0.619921
      Fermi Surface thickness =   0.300000 eV
-     Initial distribution of phonon is simulated with BE distribution at  300.000 K temperarue
+     Initial distribution of phonon is simulated with BE distribution at  300.000 K temperature
 
-     Initial distribution of electrons is simulated with FD distribution at 1500.000 K (temperarue)
+     Initial distribution of electrons is simulated with FD distribution at 1500.000 K (temperature)
      Real time dynamics for electron, initial distribution determined by FD distribution
      chemical potential of electron is6.600000 eV
  npool_g2 =            1
