@@ -16,7 +16,7 @@
 
     SUBROUTINE potential_print_info( iunit )
 
-        USE control_flags, ONLY: iesr
+        USE cp_control, ONLY: iesr
 
         INTEGER, INTENT(IN) :: iunit
 

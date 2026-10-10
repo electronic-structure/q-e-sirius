@@ -23,7 +23,7 @@ SUBROUTINE phq_readin()
   USE start_k,       ONLY : reset_grid
   USE klist,         ONLY : xk, nks, nkstot, lgauss, two_fermi_energies, ltetra
   USE control_flags, ONLY : gamma_only, tqr, restart, io_level, &
-                            ts_vdw, ldftd3, lxdm, isolve, dfpt_hub
+                            ts_vdw, ldftd3, lxdm, isolve
   USE xc_lib,        ONLY : xclib_dft_is
   USE uspp,          ONLY : okvan
   USE fixed_occ,     ONLY : tfixed_occ
@@ -31,13 +31,13 @@ SUBROUTINE phq_readin()
   USE cellmd,        ONLY : lmovecell
   USE run_info,      ONLY : title
   USE control_ph,    ONLY : epsil, zue, zeu, xmldyn, newgrid,                      &
-                            trans, ldisp, recover, lnoloc, start_irr, &
+                            trans, ldisp, recover, start_irr, &
                             last_irr, start_q, last_q, current_iq, tmp_dir_ph, &
                             ext_recover, ext_restart, u_from_file, ldiag, &
                             search_sym, lqdir, electron_phonon, tmp_dir_phq, &
                             qplot, only_init, only_wfc, &
                             low_directory_check, nk1, nk2, nk3, k1, k2, k3, &
-                            dftd3_hess
+                            dftd3_hess, lmultipole
   USE save_ph,       ONLY : tmp_dir_save, save_ph_input_variables
   USE gamma_gamma,   ONLY : asr
   USE partial,       ONLY : atomo, nat_todo, nat_todo_input
@@ -63,7 +63,10 @@ SUBROUTINE phq_readin()
 
   USE qpoint,        ONLY : nksq, xq
   USE control_lr,    ONLY : lgamma, lrpa, alpha_mix, lgamma_gamma, tr2_ph, niter_ph, &
-                            nmix_ph, maxter, reduce_io, rec_code_read, lmultipole, lnolr
+                            nmix_ph, maxter, reduce_io, rec_code_read, lnolr, lnoloc, &
+                            thresh_init
+  USE constrained_dfpt, ONLY : cdfpt, cdfpt_active_space, cdfpt_bands_min, cdfpt_bands_max, &
+                               cdfpt_validate_input
   ! YAMBO >
   USE YAMBO,         ONLY : elph_yambo,dvscf_yambo
   ! YAMBO <
@@ -127,7 +130,9 @@ SUBROUTINE phq_readin()
                        lshift_q, read_dns_bare, d2ns_type, diagonalization, &
                        ldvscf_interpolate, do_long_range, do_charge_neutral, &
                        wpot_dir, ahc_dir, ahc_nbnd, ahc_nbndskip, &
-                       skip_upper, dftd3_hess, kx, ky, kz, lmultipole
+                       skip_upper, dftd3_hess, kx, ky, kz, lmultipole, &
+                       thresh_init, cdfpt, cdfpt_active_space, cdfpt_bands_min, &
+                       cdfpt_bands_max
 
   ! tr2_ph       : convergence threshold
   ! amass        : atomic masses
@@ -256,6 +261,7 @@ SUBROUTINE phq_readin()
   alpha_mix(1) = 0.7D0
   niter_ph     = maxter
   nmix_ph      = 4
+  thresh_init  = 1.D-2
   nat_todo     = 0
   modenum      = 0
   iverbosity   = 1234567
@@ -263,6 +269,10 @@ SUBROUTINE phq_readin()
   trans        = .TRUE.
   lrpa         = .FALSE.
   lnoloc       = .FALSE.
+  cdfpt        = .FALSE.
+  cdfpt_active_space = ''
+  cdfpt_bands_min    = 0
+  cdfpt_bands_max    = 0
   epsil        = .FALSE.
   zeu          = .TRUE.
   zue          = .FALSE.
@@ -429,6 +439,7 @@ SUBROUTINE phq_readin()
   IF (modenum < 0) CALL errore ('phq_readin', ' Wrong modenum ', 1)
   IF (dek <= 0.d0) CALL errore ( 'phq_readin', ' Wrong dek ', 1)
   !
+  IF (cdfpt) CALL cdfpt_validate_input()
   !
   elph_simple= .FALSE.
   elph_mat   = .FALSE.
@@ -954,7 +965,7 @@ SUBROUTINE phq_readin()
   !   IF (meta_ionode) ios = close_input_file ()
   !
   IF (twochem.AND.elph) CALL errore ('phq_readin', 'electron-phonon with twochem approach not yet implemented',1)
-  IF (epsil.AND.(lgauss .OR. ltetra)) &
+  IF (epsil.AND.(lgauss .OR. ltetra) .AND. (.NOT. cdfpt)) &
         CALL errore ('phq_readin', 'no elec. field with metals', 1)
   IF (modenum > 0) THEN
      IF ( ldisp ) &

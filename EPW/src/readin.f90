@@ -1027,7 +1027,7 @@
   ahc_win_max = ahc_win_max / ryd2ev
   !
   IF ((asr_typ /= 'simple') .AND. (asr_typ /= 'crystal') .AND. (asr_typ /= 'one-dim') .AND. &
-      (asr_typ /= 'zero-dim')) THEN
+      (asr_typ /= 'zero-dim') .AND. (asr_typ /= 'no')) THEN
     CALL errore('set_asr','invalid Acoustic Sum Rule:' // asr_typ, 1)
   ENDIF
   !

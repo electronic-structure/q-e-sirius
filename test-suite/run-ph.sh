@@ -28,6 +28,7 @@ then
   fi
 elif [[ "$1" == "11" ]]
 then
+  # Option 11: ph.x, but skip if a previous run has crashed
   if [[ -e CRASH ]]
   then
     cat CRASH > $3

@@ -662,7 +662,7 @@ CONTAINS
     TYPE(pseudo_upf),INTENT(IN) :: upf ! the pseudo data
     !
     INTEGER :: nw, ind, l
-    CHARACTER(LEN=8) :: tag
+    CHARACTER(LEN=9) :: tag
     !
     CALL xmlw_opentag( capitalize_if_v2('pp_pswfc') )
     DO nw =1, upf%nwfc

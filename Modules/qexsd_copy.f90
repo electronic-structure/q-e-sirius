@@ -110,7 +110,7 @@ CONTAINS
             amass(isp) = atomic_species%species(isp)%mass
        atm(isp) = TRIM ( atomic_species%species(isp)%name )
        IF ( PRESENT (psfile) ) THEN
-          psfile(isp) = TRIM ( atomic_species%species(isp)%pseudo_file) 
+          psfile(isp) = TRIM ( atomic_species%species(isp)%pseudo_file%pseudoPath ) 
        END IF
        IF ( PRESENT (starting_magnetization) ) THEN
           IF ( atomic_species%species(isp)%starting_magnetization_ispresent) THEN

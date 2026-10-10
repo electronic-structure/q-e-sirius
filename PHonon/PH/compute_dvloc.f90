@@ -29,7 +29,7 @@ subroutine compute_dvloc (uact, addnlcc, dvlocin)
   USE qpoint,           ONLY : xq, eigqts
   USE modes,            ONLY : nmodes
   USE dv_of_drho_lr,    ONLY : dv_of_drho_xc
-  USE control_lr,       ONLY : lmultipole
+  USE control_ph,       ONLY : lmultipole
   !
   IMPLICIT NONE
   !

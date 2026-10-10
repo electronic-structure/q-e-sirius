@@ -336,7 +336,7 @@ fi
 
 if test "$have_blas" -eq 0  ; then
     # No blas library found: use internal one (in lapack)
-    blas_libs="\$(TOPDIR)/external/lapack/libblas.a"
+    blas_libs="\$(BUILDDIR)/external/lapack/libblas.a"
 else
     echo setting BLAS_LIBS... $blas_libs
 fi

@@ -771,7 +771,7 @@ PROGRAM postahc
   !
 1001 CONTINUE
   !
-  CALL environment_end('POSTAHC')
+  CALL environment_end( )
   CALL mp_global_end()
   !
 CONTAINS

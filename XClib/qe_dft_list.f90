@@ -25,7 +25,7 @@ MODULE qe_dft_list
   !
   SAVE
   !
-  INTEGER, PARAMETER :: nxc=10, ncc=14, ngcx=50, ngcc=14, nmeta=8
+  INTEGER, PARAMETER :: nxc=10, ncc=14, ngcx=51, ngcc=14, nmeta=8
   CHARACTER(LEN=4)   :: dft_LDAx_name(0:nxc),  dft_LDAc_name(0:ncc),  &
                         dft_GGAx_name(0:ngcx), dft_GGAc_name(0:ngcc), &
                         dft_MGGA_name(0:nmeta)
@@ -57,7 +57,7 @@ MODULE qe_dft_list
                        'R860', 'CX0P', 'AHCX', 'AHF2', 'AHPB', 'AHPS',  & !30 "  35
                        'CX14', 'CX15', 'BR0',  'CX16', 'C090', 'B86X',  & !36 "  41
                        'B88X', 'BEEX', 'HHNX', 'W31X', 'W32X', 'AHBR',  & !42 "  47 
-                       'EHPB', 'HJPB', 'HJPS' /                           !48 "  50 
+                       'EHPB', 'HJPB', 'HJPS', 'W3MX' /                   !48 "  51 
   ! GGA correlation terms
   DATA dft_GGAc_name / 'NOGC', 'P86', 'GGC', 'BLYP', 'PBC', 'HCTH',     & ! 0 to  5
                        'NONE', 'B3LP','PSC', 'PBE' , 'xxxx','xxxx',     & ! 6 "  11

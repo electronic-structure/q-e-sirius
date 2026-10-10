@@ -2083,8 +2083,11 @@
         var electron_maxstep    -type INTEGER { 
             default { 100 }
             info {
-                maximum number of iterations in a scf step. If exact exchange is active, 
-                this will affect the inner loops.
+                In a scf calculation: maximum number of scf iterations.
+                If exact exchange is active: maximum number of iterations in the inner loop.
+                If restarting from a previously interrupted calculation:
+                maximum number of scf iterations performed in the current run,
+                irrespective of how many have already been performed in previous runs.
             }
         }
 

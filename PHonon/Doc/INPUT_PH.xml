@@ -206,6 +206,17 @@ using second-order response as in:
 M. Lazzeri and F. Mauri, <a href="https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.90.036401">PRL 90, 036401 (2003)</a>.
          </info>
       </var>
+      <var name="lmultipole" type="LOGICAL" >
+         <default> .false.
+         </default>
+         <info>
+If .true. prints the induced density and potentials in fildrho and fildvscf.
+To extract multipoles and the finite-q dielectric function, multiple finite-q
+calculations need to be performed (see test-suite/ph_multipole,
+where multipole.py manages the flow of the calculations as described in test-suite/run-ph.sh).
+N.B.:  works only for 3d systems.
+         </info>
+      </var>
       <group>
          <label> Optional variables for Raman:
          </label>
@@ -376,7 +387,7 @@ is computed for bands with indices from <ref>ahc_nbndskip</ref>+1 to
 exceed nbnd of the preceding SCF or NSCF calculation.
             </info>
          </var>
-         <var name="skip_upperfan" type="LOGICAL" >
+         <var name="skip_upper" type="LOGICAL" >
             <default> .false.
             </default>
             <info>
@@ -836,6 +847,19 @@ calculation if <ref>nat_todo</ref> is specified.
          </linecard>
       </when>
    </choose>
+   <var name="lmultipole" type="LOGICAL" >
+      <default>
+.false.
+      </default>
+      <info>
+If .true. prints the induced density and potentials in <ref>fildrho</ref>
+and <ref>fildvscf</ref>. To extract multipoles and the finite-q dielectric
+function, multiple finite-q calculations need to be performed (see:
+test-suite/ph_multipole, where multipole.py manages the flow of the
+calculations as described in test-suite/run-ph.sh).
+Works only for 3d systems.
+      </info>
+   </var>
    <section title=" ADDITIONAL INFORMATION " >
       <text>
 NB: The program ph.x writes on the tmp_dir/_ph0/{prefix}.phsave directory

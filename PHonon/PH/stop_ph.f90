@@ -28,7 +28,7 @@ SUBROUTINE stop_ph( flag )
   !
   CALL print_clock_ph()
   !
-  CALL environment_end('PHONON')
+  CALL environment_end( )
   !
   CALL mp_global_end()
   !

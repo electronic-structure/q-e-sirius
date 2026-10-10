@@ -196,7 +196,7 @@ subroutine initialize_grid_variables()
      write(stdout,'(/,5x, "The code stops because there is nothing to do")') 
      CALL clean_pw(.FALSE.)
      CALL close_files(.FALSE.)
-     CALL environment_end('PHONON')
+     CALL environment_end( )
      CALL mp_global_end()
      STOP
   ENDIF

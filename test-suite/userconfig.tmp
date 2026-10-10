@@ -13,7 +13,8 @@ tolerance = ( (8.0e-4, 1.0e-4, 'e1'),
               (2.0e-1, None,   'band'),
               (1.0e-2, 1.0e-2, 'tf1'),
               (1.5e-1, None,   'vol'),
-              (5.0e-3, None,   'geom') )
+              (5.0e-3, None,   'geom'),
+              (5.0e-3, None,   'num_kpts'), )
 skip_program = grep
 skip_args = 'not present in this version\|libxc needed for this functional'
 
@@ -46,9 +47,9 @@ tolerance = ( (5.0e-5, 5.0e-3, 'e1'),
               (1.0e-2, 2.0e-2, 'ehl1'),
               (1.0e-2, 1.0e-2, 'tf1'),
               (5.0e-2, 5.0e-3, 'diel'),
-              (5.0e-2, 5.0e-3, 'born'),
+              (5.0e-2,   None, 'born'),
               (5.0e-4, 5.0e-4, 'dos'),
-              (5.0e-2, 1.0e-1, 'born_diff'),
+              (5.0e-2,   None, 'born_diff'),
               (1.5e-0,   None, 'lambda'),
               (1.0e-4,   None, 'dnsscf_e'),
               (1.0e-4,   None, 'dnsscf_ph'),
@@ -172,7 +173,9 @@ tolerance = ( (1.0e-6, 5.0e-3, 'e1'),
               (3.0e-3,   None, 'imepsm1'),
               (3.0e-3,   None, 'reeps'),
               (3.0e-3,   None, 'imeps'),
-              (1.0e-5, 5.0e-4, 'averageosc'))
+              (1.0e-5, 5.0e-4, 'averageosc'),
+              (1.0e-4,   None, 'epsiloninv'),
+              (1.0e-4,   None, 'chirr'),)
 
 skip_program = grep
 skip_args = 'not present in this version'
@@ -238,7 +241,7 @@ tolerance = ( (5.0e-5, 5.0e-3, 'e1'),
               (5.0e-2, 5.0e-3, 'diel'),
               (5.0e-2, 5.0e-3, 'born'),
               (5.0e-4, 5.0e-4, 'dos'),
-              (5.0e-2, 1.0e-1, 'born_diff'),
+              (5.0e-2,   None, 'born_diff'),
               (1.5e-0,   None, 'lambda'),
               (3.0e-1, 5.0e-3, 'lambda2'),
               (1.0e-6, 1.0e-6, 'qpt'),

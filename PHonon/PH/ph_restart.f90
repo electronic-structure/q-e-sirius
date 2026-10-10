@@ -1210,13 +1210,14 @@ MODULE ph_restart
    !! \(\text{nqs}\) and \(\text{x_q}\) have been decided, either reading
    !! them from file when recover is TRUE or recalculating them from scratch.
    !
-   USE disp, ONLY : nqs, done_iq, comp_iq, omega_disp              
+   USE disp, ONLY : nqs, done_iq, comp_iq
+   USE modes, ONLY : omega_for_all_q
    USE grid_irr_iq, ONLY : done_irr_iq, irr_iq, nsymq_iq, &
                            comp_irr_iq, npert_irr_iq, done_bands, &
                            done_elph_iq
    USE freq_ph, ONLY : done_iu, comp_iu, nfs
    USE ions_base, ONLY : nat
-   USE el_phon, ONLY : elph_simple, gamma_disp, el_ph_nsigma
+   USE el_phon, ONLY : elph_simple, gamma_for_all_q, el_ph_nsigma
    USE control_ph, ONLY : qplot
 
    IMPLICIT NONE
@@ -1249,8 +1250,8 @@ MODULE ph_restart
    npert_irr_iq=0
 
    IF (qplot) THEN
-      ALLOCATE(omega_disp(3*nat,nqs))
-      IF (elph_simple) ALLOCATE(gamma_disp(3*nat,el_ph_nsigma,nqs))
+      ALLOCATE(omega_for_all_q(3*nat,nqs))
+      IF (elph_simple) ALLOCATE(gamma_for_all_q(3*nat,el_ph_nsigma,nqs))
    ENDIF
 
    RETURN
@@ -1258,10 +1259,11 @@ MODULE ph_restart
 
    SUBROUTINE destroy_status_run()
    USE start_k,     ONLY : xk_start, wk_start
-   USE disp,        ONLY : nqs, x_q, done_iq, comp_iq, lgamma_iq, omega_disp
+   USE disp,        ONLY : nqs, x_q, done_iq, comp_iq, lgamma_iq
    USE grid_irr_iq, ONLY : done_irr_iq, irr_iq, nsymq_iq, &
                           npert_irr_iq, comp_irr_iq, done_bands, done_elph_iq
-   USE el_phon,     ONLY : gamma_disp
+   USE el_phon,     ONLY : gamma_for_all_q
+   USE modes,       ONLY : omega_for_all_q
    USE freq_ph,     ONLY : comp_iu, done_iu, fiu
    IMPLICIT NONE
 
@@ -1279,8 +1281,8 @@ MODULE ph_restart
    IF (ALLOCATED(fiu)) DEALLOCATE(fiu)
    IF (ALLOCATED(done_iu)) DEALLOCATE(done_iu)
    IF (ALLOCATED(comp_iu)) DEALLOCATE(comp_iu)
-   IF (ALLOCATED(omega_disp)) DEALLOCATE(omega_disp)
-   IF (ALLOCATED(gamma_disp)) DEALLOCATE(gamma_disp)
+   IF (ALLOCATED(omega_for_all_q)) DEALLOCATE(omega_for_all_q)
+   IF (ALLOCATED(gamma_for_all_q)) DEALLOCATE(gamma_for_all_q)
 !
 ! Note that these two variables are allocated by read_file. 
 ! They cannot be deallocated by clean_pw because the starting xk and wk 

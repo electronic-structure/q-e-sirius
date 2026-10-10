@@ -288,7 +288,9 @@ SUBROUTINE ahc_do_upperfan(ik)
   CALL orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, .FALSE.)
   dpsi = (0.d0, 0.d0)
   !
+  !$acc data copyin(dpsi_cart) copyout(dpsi)
   CALL h_psi(npwx, npwq, ahc_nbnd, dpsi_cart(1,1,imode), dpsi)
+  !$acc end data
   DO ibnd = 1, ahc_nbnd
     dpsi(:,ibnd) = dpsi(:,ibnd) - et(ibnd + ahc_nbndskip, ikk) * dpsi_cart(:,ibnd,imode)
   ENDDO

@@ -40,7 +40,7 @@ MODULE io_dyn_mat
 
     INTEGER, INTENT(IN) :: ntyp, nat, ibrav, nspin_mag, nqs
     CHARACTER(LEN=256), INTENT(IN) :: fildyn
-    CHARACTER(LEN=3), INTENT(IN) :: atm(ntyp)
+    CHARACTER(LEN=6), INTENT(IN) :: atm(ntyp)
     REAL(DP), INTENT(IN) :: celldm(6)
     REAL(DP), INTENT(IN) :: at(3,3)
     REAL(DP), INTENT(IN) :: bg(3,3)
@@ -305,7 +305,7 @@ MODULE io_dyn_mat
     !
     IMPLICIT NONE
     !
-    CHARACTER(LEN = 3), INTENT(out) :: atm(ntyp)
+    CHARACTER(LEN = 6), INTENT(out) :: atm(ntyp)
     !! Atom
     LOGICAL, INTENT(out), OPTIONAL :: lrigid
     !!

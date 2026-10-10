@@ -466,7 +466,7 @@ MODULE wannier_subroutines
     USE electrons_base,         ONLY : nbsp, nspin, nupdwn, f, ispin
     USE cell_base,              ONLY : ainv, alat, at
     USE gvect,                  ONLY : gstart
-    USE control_flags,          ONLY : tsde
+    USE cp_control,             ONLY : tsde
     USE wave_base,              ONLY : wave_steepest, wave_verlet
     USE cp_interfaces,          ONLY : dforce
     USE fft_base,               ONLY : dffts
@@ -673,7 +673,7 @@ MODULE wannier_subroutines
     USE wannier_module, ONLY : what1, wfc, utwf
     USE electrons_base, ONLY : nbsp
     USE gvecw,          ONLY : ngw
-    USE control_flags,  ONLY : ndw
+    USE cp_control,     ONLY : ndw
     USE cell_base,      ONLY : h, hold
     USE uspp,           ONLY : nkbus
     USE cp_interfaces,  ONLY : writefile

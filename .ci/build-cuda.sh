@@ -17,8 +17,6 @@ spack -e ./spack-env config add 'config:install_tree:projections:all:"{name}-{ve
 
 spack -e ./spack-env add $SPEC
 
-
-
 # build sirius from source
 spack -e ./spack-env develop -p $PWD q-e-sirius@=develop-ristretto ^sirius@git.${SIRIUS_BRANCH:-develop}=develop+cuda
 

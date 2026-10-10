@@ -2,6 +2,8 @@
 
 include ../../make.inc
 
+VPATH = @srcdir@
+
 MODFLAGS= $(MOD_FLAG)../../UtilXlib $(MOD_FLAG).. $(MOD_FLAG).
 
 SRCS = test_diaghg_1.f90 \

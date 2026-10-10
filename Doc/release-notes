@@ -1,3 +1,23 @@
+Fixed in 7.5.1 version:
+  * Calculation of Raman coefficients with second-order response was broken
+    since v.7.4.1
+  * Bug in ELF normalization for nspin=1 (courtesy Nicolas F. Barrera)
+  * Phonon bug for GPU + 1 k-point + finite wave-vector (courtesy A. Dal Corso)
+
+Incompatible changes in 7.5.1 version:
+  * Removed the option to compile PW with the pre-processor flag
+    __SPIN_BALANCE (T. Thonhauser)
+
+New in 7.5.1 version:
+  * vdW-DF3-mc, van der Waals density functional for molecular crystals
+    [T. Jenkins, K. Berland, and T. Thonhauser, Phys. Rev. B 112, 235121 (2025)]
+
+Incompatible changes in 7.5 version:
+  * The Simpson routine for radial integration has been modified for the case
+    of an even number of points in the integration grid. The current version 
+    is more accurate than the previous one, but may yield slightly different
+    numerical results.
+
 New in 7.5 version:
   * New Orbital Resolved DFT+U method -E. Macke, I. Timrov 
     (see Macke et al. JCTC  2024 20 (11), 4824-4843) 

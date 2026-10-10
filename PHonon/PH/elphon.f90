@@ -12,13 +12,11 @@ SUBROUTINE elphon()
   !! Electron-phonon calculation from data saved in \(\texttt{fildvscf}\).
   !
   USE kinds, ONLY : DP
-  USE constants, ONLY : amu_ry, RY_TO_THZ, RY_TO_CMM1
-  USE cell_base, ONLY : celldm, omega, ibrav, at, bg
-  USE ions_base, ONLY : nat, ntyp => nsp, ityp, tau, amass
+  USE ions_base, ONLY : nat
   USE gvecs, ONLY: doublegrid
   USE fft_base, ONLY : dfftp, dffts
   USE fft_interfaces, ONLY : fft_interpolate
-  USE noncollin_module, ONLY : nspin_mag, noncolin, m_loc
+  USE noncollin_module, ONLY : nspin_mag, noncolin
   USE lsda_mod, ONLY : nspin
   USE uspp,  ONLY: okvan
   USE paw_variables, ONLY : okpaw
@@ -26,11 +24,8 @@ SUBROUTINE elphon()
   USE dynmat, ONLY : dyn, w2
   USE modes,  ONLY : npert, nirr, u, nmodes
   USE uspp_param, ONLY : nhm
-  USE control_ph, ONLY : trans, xmldyn
-  USE output,     ONLY : fildyn,fildvscf
-  USE io_dyn_mat, ONLY : read_dyn_mat_param, read_dyn_mat_header, &
-                         read_dyn_mat, read_dyn_mat_tail
-  USE units_ph, ONLY : iudyn, lrdrho, iudvscf, iuint3paw, lint3paw
+  USE output,     ONLY : fildvscf
+  USE units_ph, ONLY :  lrdrho, iudvscf, iuint3paw, lint3paw
   USE dfile_star,    ONLY : dvscf_star
   USE mp_images,  ONLY : intra_image_comm
   USE mp,        ONLY : mp_bcast
@@ -38,7 +33,6 @@ SUBROUTINE elphon()
   USE lrus,   ONLY : int3, int3_nc, int3_paw
   USE qpoint, ONLY : xq
   USE dvscf_interpolate, ONLY : ldvscf_interpolate, dvscf_r2q
-  USE ahc,    ONLY : elph_ahc
   !
   IMPLICIT NONE
   !
@@ -46,15 +40,9 @@ SUBROUTINE elphon()
   ! counter on the representations
   ! counter on the modes
   ! the change of Vscf due to perturbations
-  INTEGER :: i,j
   COMPLEX(DP), ALLOCATABLE :: dvscfin_all(:, :, :)
   !! dvscfin for all modes. Used when doing dvscf_r2q interpolation.
   COMPLEX(DP), POINTER :: dvscfin(:,:,:), dvscfins (:,:,:)
-  COMPLEX(DP), allocatable :: phip (:, :, :, :)
-
-  INTEGER :: ntyp_, nat_, ibrav_, nspin_mag_, mu, nu, na, nb, nta, ntb, nqs_
-  REAL(DP) :: celldm_(6), w1
-  CHARACTER(LEN=3) :: atm(ntyp)
 
   CALL start_clock ('elphon')
 
@@ -129,16 +117,40 @@ SUBROUTINE elphon()
   !
   IF (ldvscf_interpolate) DEALLOCATE(dvscfin_all)
   !
-  ! In AHC calculation, we do not need the dynamical matrix. So return here.
-  IF (elph_ahc) THEN
-     CALL stop_clock('elphon')
-     RETURN
-  ENDIF
+  CALL stop_clock('elphon')
+  !
+  RETURN
+  !
+END SUBROUTINE elphon
+!
+SUBROUTINE rediagonalize_dyn( )
+  !
+  USE kinds, ONLY : DP
+  USE constants, ONLY : amu_ry, RY_TO_THZ, RY_TO_CMM1
+  USE cell_base, ONLY : celldm, omega, ibrav, at, bg
+  USE ions_base, ONLY : nat, ntyp => nsp, ityp, tau, amass
+  USE io_global, ONLY : stdout, ionode, ionode_id
+  USE noncollin_module, ONLY : nspin_mag, m_loc
+  !
+  USE control_ph,ONLY : xmldyn
+  USE dynmat,    ONLY : dyn, w2
+  USE io_dyn_mat,ONLY : read_dyn_mat_param, read_dyn_mat_header, &
+                         read_dyn_mat, read_dyn_mat_tail
+  USE output,    ONLY : fildyn
+  USE units_ph,  ONLY : iudyn
+  USE qpoint,    ONLY : xq
+  !
+  IMPLICIT NONE
+  !
+  INTEGER :: i,j, na, nb
+  INTEGER :: ntyp_, nat_, ibrav_, nspin_mag_, mu, nu, nta, ntb, nqs_
+  REAL(DP) :: celldm_(6), w1
+  CHARACTER(LEN=6) :: atm(ntyp)
+  COMPLEX(DP), allocatable :: phip (:, :, :, :)
   !
   ! now read the eigenvalues and eigenvectors of the dynamical matrix
   ! calculated in a previous run
   !
-  IF (.NOT.trans) THEN
      IF (.NOT. xmldyn) THEN
         WRITE (6, '(5x,a)') "Reading dynamics matrix from file "//trim(fildyn)
         CALL readmat (iudyn, ibrav, celldm, nat, ntyp, &
@@ -161,8 +173,6 @@ SUBROUTINE elphon()
         !
         !  Diagonalize the dynamical matrix
         !
-
-
         DO i=1,3
            do na=1,nat
               nta = ityp (na)
@@ -193,7 +203,8 @@ SUBROUTINE elphon()
         CALL read_dyn_mat_tail(nat)
 
         deallocate( phip )
-     ENDIF
+        !
+     END IF
      !
      ! Write phonon frequency to stdout
      !
@@ -207,16 +218,12 @@ SUBROUTINE elphon()
      !
      WRITE( stdout, '(1x,74("*"))')
      !
-  ENDIF ! .NOT. trans
-  !
-  CALL stop_clock ('elphon')
   !
 8000 FORMAT(/,5x,'Diagonalizing the dynamical matrix', &
        &       //,5x,'q = ( ',3f14.9,' ) ',//,1x,74('*'))
 8010 FORMAT   (5x,'freq (',i5,') =',f15.6,' [THz] =',f15.6,' [cm-1]')
-  !
-  RETURN
-END SUBROUTINE elphon
+!
+END SUBROUTINE rediagonalize_dyn
 !
 !-----------------------------------------------------------------------
 SUBROUTINE readmat (iudyn, ibrav, celldm, nat, ntyp, ityp, omega, &
@@ -239,7 +246,7 @@ SUBROUTINE readmat (iudyn, ibrav, celldm, nat, ntyp, ityp, omega, &
   ! local
   REAL(DP) :: dynr (2, 3, nat, 3, nat)
   CHARACTER(len=80) :: line
-  CHARACTER(len=3)  :: atm
+  CHARACTER(len=6)  :: atm
   INTEGER :: nt, na, nb, naa, nbb, nu, mu, i, j
   !
   !
@@ -524,8 +531,9 @@ SUBROUTINE elphel (irr, npe, imode0, dvscfins)
            !  selfconsist term which comes from the dependence of D on
            !  V_{eff} on the bare change of the potential
            !
+           call adddvscf (ipert, ik, isolv==2)
+           !
            IF (isolv==1) THEN
-              call adddvscf (ipert, ik)
               !
               ! DFPT+U: add to dvpsi the scf part of the response
               ! Hubbard potential dV_hub
@@ -534,8 +542,6 @@ SUBROUTINE elphel (irr, npe, imode0, dvscfins)
                  IF (.NOT.trans) dnsscf(:,:,:,:,ipert) = dnsscf_all_modes(:,:,:,:,mode)
                  call adddvhubscf (ipert, ik)
               ENDIF
-           ELSE
-              call adddvscf_ph_mag (ipert, ik)
            END IF
            !
            !  reset the original magnetic field if it was changed
@@ -1203,7 +1209,7 @@ SUBROUTINE elphsum_simple
   USE modes, ONLY : u, nirr
   USE control_ph, only : current_iq, qplot
   USE lsda_mod, only : isk
-  USE el_phon,   ONLY : done_elph, gamma_disp
+  USE el_phon,   ONLY : done_elph, gamma_for_all_q
   USE io_global, ONLY : stdout, ionode, ionode_id
   USE mp,        ONLY: mp_sum, mp_bcast
 
@@ -1365,7 +1371,7 @@ SUBROUTINE elphsum_simple
         ENDIF
         WRITE (stdout, 9010) nu, lambda, gamma * ry_to_gHz
         IF (ionode) WRITE (iuelph, 9010) nu, lambda, gamma * ry_to_gHz
-        IF (qplot) gamma_disp(nu,isig,current_iq) = gamma * ry_to_gHz
+        IF (qplot) gamma_for_all_q(nu,isig,current_iq) = gamma * ry_to_gHz
      ENDDO
   ENDDO
 

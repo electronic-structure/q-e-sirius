@@ -44,7 +44,7 @@ SUBROUTINE run_pwscf( exit_status )
   USE cell_base,            ONLY : fix_volume, fix_area
   USE control_flags,        ONLY : conv_elec, gamma_only, ethr, lscf, treinit_gvecs
   USE control_flags,        ONLY : conv_ions, istep, nstep, restart, lmd, lbfgs,&
-                                   lensemb, lforce=>tprnfor, tstress
+                                   lensemb, lforce, tstress
   USE cellmd,               ONLY : lmovecell
   USE command_line_options, ONLY : command_line
   USE force_mod,            ONLY : sigma, force

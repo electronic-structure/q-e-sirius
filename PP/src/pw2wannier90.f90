@@ -1099,7 +1099,7 @@ PROGRAM pw2wannier90
      CALL mp_barrier(world_comm)
      !
      ! not sure if this should be called also in 'library' mode or not !!
-     CALL environment_end ( 'PW2WANNIER' )
+     CALL environment_end( )
      IF ( ionode ) WRITE( stdout, *  )
      CALL stop_pp
      !

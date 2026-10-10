@@ -520,7 +520,11 @@ CONTAINS
           !
           ! End of real space stuff
           !
-          IF (lr_exx) CALL lr_exx_kernel_int ( evc1(:,:,1), ibnd, nbnd, 1 )
+          IF (lr_exx) THEN
+          !$acc update host(evc1,psic)
+          CALL lr_exx_kernel_int ( evc1(:,:,1), ibnd, nbnd, 1 )
+          !$acc update device(evc1,psic)
+          ENDIF
           !
        ENDIF
        !

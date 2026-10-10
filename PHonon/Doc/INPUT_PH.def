@@ -85,11 +85,20 @@ input_description -distribution {Quantum ESPRESSO} -package PHonon -program ph.x
             }
         }
 
-        var nmix_ph   -type INTEGER { 
+        var nmix_ph   -type INTEGER {
             default { 4 }
             info {
                 Number of iterations used in potential mixing. Using a larger value (8~20)
                 can significantly speed up convergence, at the cost of using more memory.
+            }
+        }
+
+        var thresh_init  -type REAL {
+            default { 1.D-14 }
+            info {
+                Initial and maximum threshold for the solution of the Sternheimer equation.
+                Set to a low value (e.g., 1.d-10) for DFPT calculation of metals near
+                (but not exactly) q=0 for stable DFPT convergence.
             }
         }
 
@@ -174,11 +183,58 @@ input_description -distribution {Quantum ESPRESSO} -package PHonon -program ph.x
             }
         }
 
-        var lnoloc  -type LOGICAL { 
+        var lnoloc  -type LOGICAL {
             default { .false. }
             info {
                 If .true. the dielectric constant is calculated without
-                local fields, i.e. by setting DV_H=0 and DV_xc=0. 
+                local fields, i.e. by setting DV_H=0 and DV_xc=0.
+            }
+        }
+
+        var cdfpt  -type LOGICAL {
+            default { .false. }
+            info {
+                If .true. perform constrained DFPT calculation, where the
+                active-space susceptibility is subtracted from the full susceptibility.
+                This is used to compute screened Coulomb interactions excluding
+                specific bands from the screening (e.g., for CRPA calculations).
+                Requires @ref cdfpt_active_space to be specified.
+
+                Note: When @ref cdfpt=.true., the code allows calculations at q=0
+                for metals (overriding the usual restriction).
+            }
+        }
+
+        var cdfpt_active_space  -type CHARACTER {
+            default { '' }
+            info {
+                Specifies the type of active space for constrained DFPT:
+
+                'bands' : Active space defined by a range of band indices
+                          (requires @ref cdfpt_bands_min and @ref cdfpt_bands_max)
+
+                'wannier' : Active space defined by Wannier functions
+                           (not yet implemented for PHonon, available in CRPA)
+
+                This parameter is required when @ref cdfpt=.true.
+            }
+        }
+
+        var cdfpt_bands_min  -type INTEGER {
+            default { 0 }
+            info {
+                Minimum band index for the constrained DFPT active space.
+                Only used when @ref cdfpt=.true. and @ref cdfpt_active_space='bands'.
+                Must be >= 1 and <= @ref cdfpt_bands_max.
+            }
+        }
+
+        var cdfpt_bands_max  -type INTEGER {
+            default { 0 }
+            info {
+                Maximum band index for the constrained DFPT active space.
+                Only used when @ref cdfpt=.true. and @ref cdfpt_active_space='bands'.
+                Must be >= @ref cdfpt_bands_min.
             }
         }
 
@@ -201,6 +257,17 @@ input_description -distribution {Quantum ESPRESSO} -package PHonon -program ph.x
                 M. Lazzeri and F. Mauri, PRL 90, 036401 (2003).
             }
         }
+
+        var lmultipole -type LOGICAL {
+            default { .false. } 
+            info {
+                  If .true. prints the induced density and potentials in fildrho and fildvscf. 
+                  To extract multipoles and the finite-q dielectric function, multiple finite-q 
+                  calculations need to be performed (see test-suite/ph_multipole, 
+                  where multipole.py manages the flow of the calculations as described in test-suite/run-ph.sh). 
+                  N.B.:  works only for 3d systems.
+            }
+	}
 
         group {
             label { Optional variables for Raman: }

@@ -1,7 +1,9 @@
 # Makefile for EPW
 sinclude ../make.inc
 
-default: epw
+# see comments in file tldeps for explanations
+TLDEPS=phlibs libw90 pp
+include ../install/tldeps
 
 all: epw
 

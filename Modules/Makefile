@@ -2,6 +2,8 @@
 
 include ../make.inc
 
+VPATH = @srcdir@
+
 # location of needed modules
 MODFLAGS=$(BASEMOD_FLAGS)
 
@@ -225,8 +227,10 @@ sockets.o
 # GPU versions of modules
 MODULES += \
   random_numbers_gpu.o
-
-TLDEPS= libfox libla libfft libutil libmbd librxc libupf
+ 
+# see comments in file tldeps for explanations
+TLDEPS= $(FOX) libla libfft libutil libmbd librxc libupf
+include ../install/tldeps
 
 all : libqemod.a
 
@@ -234,12 +238,10 @@ libqemod.a: 	$(MODULES) $(OBJS) $(RISMLIB)
 	$(AR) $(ARFLAGS) $@ $?       
 	$(RANLIB) $@    
 
-tldeps :
-	if test -n "$(TLDEPS)" ; then \
-	( cd ../.. ; $(MAKE) $(TLDEPS) || exit 1 ) ; fi
-
-
 clean :
 	- /bin/rm -f *.o *.a *.d *.i *~ *_tmp.f90 *.mod *.L
 
+
 include make.depend
+
+

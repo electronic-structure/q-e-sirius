@@ -57,11 +57,11 @@ MODULE cp_restart_new
                              iupdwn_tot, nupdwn_tot, wfc, dt )
       !------------------------------------------------------------------------
       !
-      USE control_flags,            ONLY : gamma_only, force_pairing, trhow, &
-                                           tksw, do_makov_payne, smallmem,   &
-                                           mbd_vdw,                           &
-                                           llondon, lxdm, ts_vdw, tfor, tpre
-      USE control_flags,            ONLY : lwfpbe0nscf, lwfnscf, lwf ! Lingzhu Kong
+      USE control_flags,            ONLY : gamma_only, &
+                                           do_makov_payne, smallmem, mbd_vdw, &
+                                           llondon, lxdm, ts_vdw
+      USE cp_control,               ONLY : tpre, tfor, trhow, tksw, lwfnscf, &
+                                           lwfpbe0nscf, force_pairing, lwf ! Lingzhu Kong
       USE constants,                ONLY : e2
       USE parameters,               ONLY : ntypx
       USE dener,                    ONLY : detot
@@ -568,8 +568,9 @@ MODULE cp_restart_new
       !------------------------------------------------------------------------
       !! Read XML file.
       !
-      USE control_flags,            ONLY : gamma_only, force_pairing, llondon,&
-                                           ts_vdw, mbd_vdw, lxdm, iverbosity, lwf
+      USE control_flags,            ONLY : gamma_only, llondon, ts_vdw, &
+                                           mbd_vdw, lxdm, iverbosity
+      USE cp_control,               ONLY : force_pairing, lwf
       USE run_info,                 ONLY : title
       USE gvect,                    ONLY : ngm
       USE gvecw,                    ONLY : ngw, ngw_g
@@ -651,7 +652,7 @@ MODULE cp_restart_new
       ! ... variables read for testing purposes
       !
       INTEGER               :: ibrav_
-      CHARACTER(LEN=3)      :: atm_(ntypx)
+      CHARACTER(LEN=6)      :: atm_(ntypx)
       INTEGER               :: nat_, nsp_, na_
       INTEGER               :: nk_, isk_(2), nt_, natomwfc
       LOGICAL               :: gamma_only_ , lsda_

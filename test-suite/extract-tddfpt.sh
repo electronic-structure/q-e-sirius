@@ -38,6 +38,8 @@ fi
 #turbo_eels.x
 if [ "$eels" = "1" ]; then
         nblanczos=`grep "Number of Lanczos iterations" $fname | awk '{print $6}'`
+        epsiloninv=`grep "epsilon^-1" $fname | awk '{print $3; print $4}'`
+        chirr=`grep "chirr" $fname | awk '{print $3; print $4}'`
 fi
 
 # turbo_magnons.x
@@ -66,6 +68,16 @@ fi
 if test "$nblanczos" != ""; then
         echo nblanczos
         for x in $nblanczos; do echo $x; done
+fi
+
+if test "$epsiloninv" != ""; then
+        echo epsiloninv
+        for x in $epsiloninv; do echo $x; done
+fi
+
+if test "$chirr" != ""; then
+        echo chirr
+        for x in $chirr; do echo $x; done
 fi
 
 if test "$rechi" != ""; then

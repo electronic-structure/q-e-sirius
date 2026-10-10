@@ -42,7 +42,6 @@ set(src_pw
    src/compute_qdipol.f90 
    src/compute_qdipol_so.f90 
    src/compute_ux.f90 
-   src/coset.f90 
    src/Coul_cut_2D.f90 
    src/d_matrix.f90 
    src/data_structure.f90 
@@ -114,11 +113,10 @@ set(src_pw
    src/init_vloc.f90 
    src/input.f90 
    src/io_rho_xml.f90 
-   src/irrek.f90 
+   src/irreducible_BZ.f90
    src/iweights.f90 
    src/intersite_V.f90 
    src/init_nsg.f90 
-   src/nsg_adj.f90 
    src/start_k.f90 
    src/kpoint_grid.f90 
    src/lchk_tauxk.f90 
@@ -188,7 +186,6 @@ set(src_pw
    src/run_pwscf.f90 
    src/s_1psi.f90 
    src/s_psi.f90 
-   src/s_psi_acc.f90 
    src/save_in_cbands.f90 
    src/save_in_electrons.f90 
    src/scale_h.f90 
@@ -234,10 +231,12 @@ set(src_pw
    src/update_pot.f90 
    src/us_exx.f90 
    src/usnldiag.f90 
+   src/v_hubbard.f90
    src/v_of_rho.f90 
    src/vcsmd.f90 
    src/vcsubs.f90 
    src/vhpsi.f90 
+   src/vhpsi_U.f90
    src/vloc_psi_tg.f90 
    src/vloc_psi_acc.f90 
    src/utils.f90 
@@ -253,13 +252,7 @@ set(src_pw
    src/wannier_occ.f90
    src/d3hess_mod.f90
    # CUDA Fortran
-   src/rotate_wfc_gpu.f90
-   src/hs_1psi_gpu.f90
-   src/s_1psi_gpu.f90
-   src/h_psi_gpu.f90
-   src/utils_gpu.f90
-   src/vhpsi_gpu.f90
-   src/hs_psi_gpu.f90)
+   src/utils_gpu.f90)
 # OSCDFT
 if (QE_ENABLE_OSCDFT)
     list(APPEND src_pw

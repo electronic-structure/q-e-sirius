@@ -49,9 +49,10 @@ subroutine deallocate_phq
   USE two_chem,      ONLY : twochem
   USE klist,         ONLY : lgauss
   USE lr_two_chem,   ONLY : alphasum_cond, alphasum_cond_nc, becsum_cond_nc, becsumort_cond,becsum_cond
- 
+
   USE lr_two_chem,   ONLY : alphasum_cond, alphasum_cond_nc, becsum_cond_nc, becsumort_cond,becsum_cond
- 
+  USE constrained_dfpt, ONLY : cdfpt, cdfpt_deallocate
+
   IMPLICIT NONE
   INTEGER :: ik, ipol
 
@@ -207,5 +208,7 @@ subroutine deallocate_phq
   ENDIF
 
   call deallocate_2d_arrays ()
- 
+
+  IF (cdfpt) CALL cdfpt_deallocate()  ! Constrained DFPT
+
 end subroutine deallocate_phq
