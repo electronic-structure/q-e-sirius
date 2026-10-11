@@ -113,6 +113,7 @@ SUBROUTINE read_file_ph( needwf_ph )
   !
   CALL divide_et_impera( nkstot, xk, wk, isk, nks )
   CALL poolscatter( nbnd, nkstot, et, nks, et )
+  !$acc enter data create (et)
   !$acc update device(et)
   CALL poolscatter( nbnd, nkstot, wg, nks, wg )
   !

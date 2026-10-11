@@ -734,7 +734,6 @@ CONTAINS
       !
       IF ( .NOT. ALLOCATED(et) ) THEN
          ALLOCATE( et(nbnd,nkstot) )
-         !$acc enter data create(et)
       ENDIF
       IF ( .NOT. ALLOCATED(wg) ) ALLOCATE( wg(nbnd,nkstot) )
       !
@@ -759,7 +758,6 @@ CONTAINS
          END IF
          !
       END DO
-      !$acc update device(et)
       !
     END SUBROUTINE qexsd_copy_band_structure
     !
