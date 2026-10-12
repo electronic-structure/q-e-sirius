@@ -32,7 +32,7 @@ build:cp:
 
 build:cmake-nvhpc:
   tags: [gitlab-org-docker]
-  image: nvcr.io/nvidia/nvhpc:26.5-devel-cuda13.2-ubuntu24.04
+  image: nvcr.io/nvidia/nvhpc:24.11-devel-cuda12.6-ubuntu24.04
   variables:
     DEBIAN_FRONTEND: "noninteractive"
   script:
@@ -43,11 +43,11 @@ build:cmake-nvhpc:
     - mkdir build
     - cd build
     - cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_Fortran_COMPILER=mpif90 -DCMAKE_C_COMPILER=mpicc
-            -DQE_GPU_ARCHS=sm_75 .. && make -j 4
+            -DQE_GPU_ARCHS=sm_75 -DNVFORTRAN_CUDA_VERSION=12.6 .. && make -j 4
 
 build:cmake-nvhpc-nocuda:
   tags: [gitlab-org-docker]
-  image: nvcr.io/nvidia/nvhpc:26.5-devel-cuda13.2-ubuntu24.04
+  image: nvcr.io/nvidia/nvhpc:24.11-devel-cuda12.6-ubuntu24.04
   variables:
     DEBIAN_FRONTEND: "noninteractive"
   script:
