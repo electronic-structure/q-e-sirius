@@ -21,12 +21,12 @@ build:cmake-gnu:
 
 build:pgi:
   tags: [gitlab-org-docker]
-  image: nvcr.io/nvidia/nvhpc:21.2-devel-cuda11.2-ubuntu20.04
+  image: nvcr.io/nvidia/nvhpc:24.11-devel-cuda12.6-ubuntu24.04
   script:
     - apt-get -qq update
     - apt-get -qq install ca-certificates git m4
-    - ./configure FC=pgf90 F90=pgf90 F77=pgfortran MPIF90=mpif90 --enable-openmp --with-cuda=yes --enable-cuda-env-check=no --with-cuda-runtime=11.2  --with-cuda-cc=70
-    - make -j 2 pw cp ph
+    - ./configure FC=nvfortran F90=nvfortran F77=nvfortran MPIF90=mpif90 --enable-openmp --with-cuda=yes --enable-cuda-env-check=no --with-cuda-runtime=12.6 --with-cuda-cc=75
+    - make -j 2 pw cp ph pp w90
 
 
 # Validate every INPUT_*.def with `helpdoc -strict` when a .def file or the
