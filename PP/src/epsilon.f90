@@ -27,12 +27,13 @@
   !
   INTEGER                :: nw
   REAL(DP)               :: wmax, wmin
-  REAL(DP)               :: alpha, full_occ
+  REAL(DP)               :: alpha
   REAL(DP), ALLOCATABLE  :: focc(:,:), wgrid(:)
   !
   PUBLIC :: grid_build, grid_destroy
   PUBLIC :: nw, wmax, wmin
-  PUBLIC :: focc, wgrid, alpha, full_occ
+  PUBLIC :: focc, wgrid, alpha
+  PUBLIC :: is_active_interband
   !
 CONTAINS
 
@@ -55,18 +56,19 @@ CONTAINS
   !
   ! local vars
   INTEGER         :: iw,ik,i,ierr
-
   !
-  ! check on the number of bands: we need to include empty bands in order
-  ! to compute the transitions
+  ! The number of states, nbnd times the number of electrons each band holds
+  ! (2 for nspin=1 and 1 for nspin=4), must exceed the number of electrons, so
+  ! that unoccupied bands are available as final states of the transitions.
+  ! For nspin=2, each channel has nbnd bands and nelec/2 electrons is assumed
+  ! per channel, which gives the same condition as nspin=1.
   !
-  IF ( nspin == 1) full_occ = 2.0d0
-  IF ( nspin == 2 .OR. nspin == 4) full_occ = 1.0d0
-  !
-  IF ( nspin == 2 ) THEN
-     IF ( nbnd*full_occ <= nelec/2.d0 ) CALL errore('epsilon', 'bad band number', 2)
+  IF ( nspin == 1 .OR. nspin == 2 ) THEN
+     IF ( 2.d0*nbnd <= nelec ) &
+        CALL errore('epsilon', 'nbnd too small, increase to include unoccupied bands', 1)
   ELSE
-     IF ( nbnd*full_occ <= nelec ) CALL errore('epsilon', 'bad band number', 1)
+     IF ( nbnd <= nelec ) &
+        CALL errore('epsilon', 'nbnd too small, increase to include unoccupied bands', 1)
   ENDIF
 
 
@@ -87,12 +89,12 @@ CONTAINS
   IF (ierr/=0) CALL errore('grid_build','allocating wgrid', abs(ierr))
 
   !
-  ! occupation numbers, to be normalized differently
-  ! whether we are spin resolved or not
+  ! occupation numbers f in [0,1], without the spin degeneracy, which is
+  ! carried by wk (wk sums to 2 for nspin=1)
   !
   DO ik = 1, nks
     DO i = 1, nbnd
-        focc(i, ik) = wg(i, ik) * full_occ / wk(ik)
+        focc(i, ik) = wg(i, ik) / wk(ik)
     ENDDO
   ENDDO
 
@@ -127,6 +129,34 @@ END SUBROUTINE grid_build
   ENDIF
   !
 END SUBROUTINE grid_destroy
+
+!-------------------------------------------
+LOGICAL FUNCTION is_active_interband( iband1, iband2, ik )
+  !-------------------------------------------
+  !
+  ! Whether the transition iband1 -> iband2 enters the interband sum.
+  !
+  ! The sum runs over ordered band pairs, each term weighted by the occupation
+  ! of the initial band only, focc(iband1), times a kernel that is odd in the
+  ! transition energy e = E(iband2) - E(iband1). Adding iband1 -> iband2 and
+  ! iband2 -> iband1 therefore gives (focc(iband1) - focc(iband2)) * K(e).
+  ! A pair is skipped when
+  ! - iband1 == iband2: e = 0; this is the intraband (Drude) term.
+  ! - focc(iband1) is negligible: the term is weighted by focc(iband1). The
+  !   reverse transition, weighted by focc(iband2), is still included. ABS
+  !   because Methfessel-Paxton and Marzari-Vanderbilt occupations can be negative.
+  ! - focc(iband1) and focc(iband2) are (nearly) equal: the two ordered terms
+  !   cancel. Transitions into fully occupied bands are not skipped otherwise,
+  !   since they do not cancel when the initial band is partially occupied.
+  ! The cancellation is exact only for shift = 0.
+  !
+  INTEGER, INTENT(IN) :: iband1, iband2, ik
+  !
+  is_active_interband = iband1 /= iband2 .AND. &
+                        ABS(focc(iband1,ik)) >= 0.5d-4 .AND. &
+                        ABS(focc(iband2,ik) - focc(iband1,ik)) >= 1.0d-3
+  !
+END FUNCTION is_active_interband
 !---------------------------------------------------------------------------
 END MODULE grid_module
 !
@@ -400,7 +430,8 @@ SUBROUTINE eps_calc ( intersmear,intrasmear, nbndmin, nbndmax, shift, metalcalc 
   USE klist,                ONLY : nks, nkstot, degauss, ngauss
   USE io_global,            ONLY : ionode, stdout
   !
-  USE grid_module,          ONLY : alpha, focc, full_occ, nw, wgrid, grid_destroy
+  USE grid_module,          ONLY : alpha, focc, nw, wgrid, grid_destroy, &
+                                   is_active_interband
   USE eps_writer,           ONLY : eps_writetofile
   USE mp_pools,             ONLY : inter_pool_comm
   USE mp,                   ONLY : mp_sum
@@ -496,36 +527,30 @@ SUBROUTINE eps_calc ( intersmear,intrasmear, nbndmin, nbndmax, shift, metalcalc 
         ! Interband
         !
         DO iband2 = nbndmin,nbndmax
-            !
-            IF ( focc(iband2,ik) < full_occ) THEN
-                DO iband1 = nbndmin,nbndmax
+            DO iband1 = nbndmin,nbndmax
+                !
+                IF (.NOT. is_active_interband(iband1, iband2, ik)) CYCLE
+                !
+                ! transition energy
+                !
+                etrans = ( et(iband2,ik) -et(iband1,ik) ) * RYTOEV + shift
+                !
+                ! loop over frequencies
+                !
+                DO iw = 1, nw
                     !
-                    IF (iband1==iband2) CYCLE
-                    IF ( focc(iband1,ik) >= 0.5d-4*full_occ ) THEN
-                        IF (abs(focc(iband2,ik)-focc(iband1,ik))< 1.0d-3*full_occ) CYCLE
-                        !
-                        ! transition energy
-                        !
-                        etrans = ( et(iband2,ik) -et(iband1,ik) ) * RYTOEV + shift
-                        !
-                        ! loop over frequencies
-                        !
-                        DO iw = 1, nw
-                            !
-                            w = wgrid(iw)
-                            !
-                            epsi(:,iw) = epsi(:,iw) + dipole(:,iband1,iband2) * intersmear * w* &
-                                                    RYTOEV**3 * (focc(iband1,ik))/  &
-                                                    (( (etrans**2 -w**2 )**2 + intersmear**2 * w**2 )* etrans )
+                    w = wgrid(iw)
+                    !
+                    epsi(:,iw) = epsi(:,iw) + dipole(:,iband1,iband2) * intersmear * w* &
+                                            RYTOEV**3 * (focc(iband1,ik))/  &
+                                            (( (etrans**2 -w**2 )**2 + intersmear**2 * w**2 )* etrans )
 
-                            epsr(:,iw) = epsr(:,iw) + dipole(:,iband1,iband2) * RYTOEV**3 * &
-                                                    (focc(iband1,ik)) * &
-                                                    (etrans**2 - w**2 ) / &
-                                                    (( (etrans**2 -w**2 )**2 + intersmear**2 * w**2 )* etrans )
-                        ENDDO
-                    ENDIF
+                    epsr(:,iw) = epsr(:,iw) + dipole(:,iband1,iband2) * RYTOEV**3 * &
+                                            (focc(iband1,ik)) * &
+                                            (etrans**2 - w**2 ) / &
+                                            (( (etrans**2 -w**2 )**2 + intersmear**2 * w**2 )* etrans )
                 ENDDO
-            ENDIF
+            ENDDO
         ENDDO
 
         !
@@ -538,10 +563,10 @@ SUBROUTINE eps_calc ( intersmear,intrasmear, nbndmin, nbndmax, shift, metalcalc 
                 w = wgrid(iw)
                 epsi(:, iw) = epsi(:, iw) +  dipole(:, iband1, iband1) * intrasmear * w * &
                       RYTOEV**2 * w0gauss((et(iband1,ik)-efermi)/degauss, ngauss) / &
-                      (( w**4 + intrasmear**2 * w**2 )*degauss ) * (0.5d0 * full_occ)
+                      (( w**4 + intrasmear**2 * w**2 )*degauss ) * 0.5d0
                 epsr(:,iw) = epsr(:,iw) - dipole(:,iband1,iband1) * RYTOEV**2 * &
                       w0gauss((et(iband1,ik)-efermi)/degauss, ngauss) * w**2 / &
-                      (( w**4 + intrasmear**2 * w**2 )*degauss ) * (0.5d0 * full_occ)
+                      (( w**4 + intrasmear**2 * w**2 )*degauss ) * 0.5d0
               ENDDO
           ENDDO
         ENDIF
@@ -556,7 +581,7 @@ SUBROUTINE eps_calc ( intersmear,intrasmear, nbndmin, nbndmax, shift, metalcalc 
     !
     ! impose the correct normalization
     !
-    const = 64.0d0 * PI / ( omega ) * full_occ
+    const = 64.0d0 * PI / omega
     !
     epsr(:,:) = 1.0_DP + epsr(:,:) * const
     epsi(:,:) =          epsi(:,:) * const
@@ -695,10 +720,10 @@ IF (nspin == 1) THEN
        ! 'intersmear' is the brodening parameter
        !
        DO iband2 = 1,nbnd
-           IF ( focc(iband2,ik) <  2.0d0) THEN
+           IF ( focc(iband2,ik) <  1.0d0) THEN
        DO iband1 = 1,nbnd
            !
-           IF ( focc(iband1,ik) >= 1.0d-4 ) THEN
+           IF ( focc(iband1,ik) >= 0.5d-4 ) THEN
                  !
                  ! transition energy
                  !
@@ -738,8 +763,8 @@ IF (nspin == 1) THEN
        DO iband2 = 1,nbnd
        DO iband1 = 1,nbnd
            !
-           IF ( focc(iband2,ik) <  2.0d0) THEN
-           IF ( focc(iband1,ik) >= 1.0d-4 ) THEN
+           IF ( focc(iband2,ik) <  1.0d0) THEN
+           IF ( focc(iband1,ik) >= 0.5d-4 ) THEN
                  !
                  ! transition energy
                  !
@@ -947,15 +972,18 @@ SUBROUTINE offdiag_calc ( intersmear, intrasmear, nbndmin, nbndmax, shift, metal
   !
   USE kinds,                ONLY : DP
   USE constants,            ONLY : PI, RYTOEV
-  USE cell_base,            ONLY : tpiba2, omega
+  USE cell_base,            ONLY : omega
   USE wvfct,                ONLY : nbnd, et
   USE ener,                 ONLY : efermi => ef
-  USE klist,                ONLY : nks, nkstot, degauss
-  USE grid_module,          ONLY : focc, wgrid, grid_build, grid_destroy
+  USE klist,                ONLY : nks, degauss, ngauss, wk
+  USE grid_module,          ONLY : focc, wgrid, grid_build, grid_destroy, &
+                                   is_active_interband
   USE io_global,            ONLY : ionode, stdout
   USE mp_pools,             ONLY : inter_pool_comm
   USE mp,                   ONLY : mp_sum
   USE grid_module,          ONLY : focc, nw, wgrid
+  USE uspp,                 ONLY : nkb
+  USE becmod,               ONLY : becp, allocate_bec_type, deallocate_bec_type
 
   !
   IMPLICIT NONE
@@ -975,6 +1003,8 @@ SUBROUTINE offdiag_calc ( intersmear, intrasmear, nbndmin, nbndmax, shift, metal
   !
   COMPLEX(DP), ALLOCATABLE :: dipole_aux(:,:,:)
   COMPLEX(DP), ALLOCATABLE :: epstot(:,:,:),dipoletot(:,:,:,:)
+  !
+  REAL(DP) , EXTERNAL :: w0gauss
 
   !
   !--------------------------
@@ -985,6 +1015,9 @@ SUBROUTINE offdiag_calc ( intersmear, intrasmear, nbndmin, nbndmax, shift, metal
   !
   ALLOCATE( dipoletot(3,3, nbnd, nbnd), STAT=ierr )
   IF (ierr/=0) CALL errore('epsilon','allocating dipoletot', abs(ierr) )
+  !
+  ! allocate beta projectors for calculation of the non-local contributions
+  CALL allocate_bec_type(nkb, nbnd, becp)
   !
   ALLOCATE( dipole_aux(3, nbnd, nbnd), STAT=ierr )
   IF (ierr/=0) CALL errore('epsilon','allocating dipole_aux', abs(ierr) )
@@ -1010,7 +1043,7 @@ SUBROUTINE offdiag_calc ( intersmear, intrasmear, nbndmin, nbndmax, shift, metal
      !
      DO it2 = 1, 3
         DO it1 = 1, 3
-           dipoletot(it1,it2,:,:) = tpiba2 * dipole_aux(it1,:,:) * conjg( dipole_aux(it2,:,:) )
+           dipoletot(it1,it2,:,:) = dipole_aux(it1,:,:) * conjg( dipole_aux(it2,:,:) ) * wk(ik)
         ENDDO
      ENDDO
      !
@@ -1020,30 +1053,24 @@ SUBROUTINE offdiag_calc ( intersmear, intrasmear, nbndmin, nbndmax, shift, metal
      ! 'intersmear' is the brodening parameter
      !
      DO iband2 = 1,nbnd
-         IF ( focc(iband2,ik) <  2.0d0) THEN
      DO iband1 = 1,nbnd
          !
-         IF ( focc(iband1,ik) >= 1e-4 ) THEN
-             !
-             ! transition energy
-             !
-             etrans = ( et(iband2,ik) -et(iband1,ik) ) * RYTOEV + shift
-             !
-             IF (abs(focc(iband2,ik)-focc(iband1,ik))< 1e-4) CYCLE
-             !
-             ! loop over frequencies
-             !
-             DO iw = 1, nw
-                  !
-                  w = wgrid(iw)
-                  !
-                  epstot(:,:,iw) = epstot(:,:,iw) + dipoletot(:,:,iband1,iband2)*RYTOEV**3/(etrans) *&
-                                   focc(iband1,ik)/(etrans**2 - w**2 - (0,1)*intersmear*w)
-             ENDDO
-             !
-         ENDIF
+         IF (.NOT. is_active_interband(iband1, iband2, ik)) CYCLE
+         !
+         ! transition energy
+         !
+         etrans = ( et(iband2,ik) -et(iband1,ik) ) * RYTOEV + shift
+         !
+         ! loop over frequencies
+         !
+         DO iw = 1, nw
+              !
+              w = wgrid(iw)
+              !
+              epstot(:,:,iw) = epstot(:,:,iw) + dipoletot(:,:,iband1,iband2)*RYTOEV**3/(etrans) *&
+                               focc(iband1,ik)/(etrans**2 - w**2 - (0,1)*intersmear*w)
+         ENDDO
      ENDDO
-         ENDIF
      ENDDO
      !
      !Intraband (only if metalcalc is true)
@@ -1051,24 +1078,16 @@ SUBROUTINE offdiag_calc ( intersmear, intrasmear, nbndmin, nbndmax, shift, metal
      IF (metalcalc) THEN
      DO iband1 = 1,nbnd
          !
-         IF ( focc(iband1,ik) < 2.0d0) THEN
-         IF ( focc(iband1,ik) >= 1e-4 ) THEN
-               !
-               ! loop over frequencies
-               !
-               DO iw = 1, nw
-                   !
-                   w = wgrid(iw)
-                   !
-                   epstot(:,:,iw) = epstot(:,:,iw) - dipoletot(:,:,iband1,iband1)* &
-                                RYTOEV**2 * (exp((et(iband1,ik)-efermi)/degauss ))/  &
-                    (( w**2 + (0,1)*intrasmear*w)*(1+exp((et(iband1,ik)-efermi)/ &
-                    degauss))**2*degauss )
-               ENDDO
-
-         ENDIF
-         ENDIF
-
+         ! loop over frequencies
+         !
+         DO iw = 1, nw
+             !
+             w = wgrid(iw)
+             !
+             epstot(:,:,iw) = epstot(:,:,iw) - dipoletot(:,:,iband1,iband1)* &
+                          RYTOEV**2 * w0gauss((et(iband1,ik)-efermi)/degauss, ngauss) / &
+                          (( w**2 + (0,1)*intrasmear*w)*degauss ) * 0.5d0
+         ENDDO
      ENDDO
      ENDIF
   ENDDO
@@ -1078,9 +1097,9 @@ SUBROUTINE offdiag_calc ( intersmear, intrasmear, nbndmin, nbndmax, shift, metal
   !
   CALL mp_sum( epstot, inter_pool_comm )
   !
-  ! impose the correct normalization
+  ! impose the correct normalization, as in eps_calc
   !
-  const = 64.0d0 * PI / ( omega * REAL(nkstot, DP) )
+  const = 64.0d0 * PI / omega
   epstot(:,:,:) = epstot(:,:,:) * const
   !
   ! add diagonal term
@@ -1140,6 +1159,7 @@ SUBROUTINE offdiag_calc ( intersmear, intrasmear, nbndmin, nbndmax, shift, metal
   ! local cleaning
   !
   DEALLOCATE ( dipoletot, dipole_aux, epstot )
+  CALL deallocate_bec_type(becp)
 
 END SUBROUTINE offdiag_calc
 
@@ -1155,7 +1175,7 @@ SUBROUTINE dipole_calc( ik, dipole_aux, metalcalc, nbndmin, nbndmax )
   USE gvect,                ONLY : ngm, g
   USE io_files,             ONLY : restart_dir
   USE pw_restart_new,       ONLY : read_collected_wfc
-  USE grid_module,          ONLY : focc, full_occ
+  USE grid_module,          ONLY : is_active_interband
   USE mp_bands,             ONLY : intra_bgrp_comm
   USE mp,                   ONLY : mp_sum
   USE lsda_mod,             ONLY : nspin
@@ -1187,29 +1207,25 @@ SUBROUTINE dipole_calc( ik, dipole_aux, metalcalc, nbndmin, nbndmax )
   npw = ngk(ik)
   !
   DO iband2 = nbndmin,nbndmax
-      IF ( focc(iband2,ik) <  full_occ) THEN
-          DO iband1 = nbndmin,nbndmax
+      DO iband1 = nbndmin,nbndmax
+          !
+          IF (.NOT. is_active_interband(iband1, iband2, ik)) CYCLE
+          !
+          DO ig=1,npw
               !
-              IF ( iband1==iband2 ) CYCLE
-              IF ( focc(iband1,ik) >= 0.5e-4*full_occ ) THEN
-                  !
-                  DO ig=1,npw
-                      !
-                      caux= conjg(evc(ig,iband1))*evc(ig,iband2)
-                      !
-                      ! Non collinear case
-                      IF ( nspin == 4 ) THEN
-                          caux = caux + conjg(evc(ig+npwx,iband1))*evc(ig+npwx,iband2)
-                      ENDIF
-                      !
-                      dipole_aux(:,iband1,iband2) = dipole_aux(:,iband1,iband2) + &
-                            ( g(:,igk_k(ig,ik)) ) * caux
-                      !
-                  ENDDO
+              caux= conjg(evc(ig,iband1))*evc(ig,iband2)
+              !
+              ! Non collinear case
+              IF ( nspin == 4 ) THEN
+                  caux = caux + conjg(evc(ig+npwx,iband1))*evc(ig+npwx,iband2)
               ENDIF
               !
+              dipole_aux(:,iband1,iband2) = dipole_aux(:,iband1,iband2) + &
+                    ( g(:,igk_k(ig,ik)) ) * caux
+              !
           ENDDO
-      ENDIF
+          !
+      ENDDO
   ENDDO
   !
   ! The diagonal terms are taken into account only if the system is treated like a metal, not
@@ -1260,7 +1276,7 @@ SUBROUTINE dipole_calc_2( ik, dipole_aux, metalcalc, nbndmin, nbndmax )
   USE io_global,            ONLY : stdout, ionode
   USE io_files,             ONLY : restart_dir
   USE pw_restart_new,       ONLY : read_collected_wfc
-  USE grid_module,          ONLY : focc, full_occ
+  USE grid_module,          ONLY : is_active_interband
   USE mp_bands,             ONLY : intra_bgrp_comm
   USE mp,                   ONLY : mp_sum
 
@@ -1323,39 +1339,34 @@ SUBROUTINE dipole_calc_2( ik, dipole_aux, metalcalc, nbndmin, nbndmax )
     !
     !    DO iband2 = 1, nbnd
     DO iband2 = nbndmin, nbndmax
-      !
-      IF ( focc(iband2,ik) <  full_occ) THEN
-         !        DO iband1 = 1, nbnd
-         DO iband1 = nbndmin, nbndmax
-          IF ( iband1==iband2 ) CYCLE
-          !
-          IF ( focc(iband1,ik) >= 0.5e-4*full_occ ) THEN
-            DO ig = 1, npw
-              dipole_aux(ipol,iband1,iband2) = dipole_aux(ipol,iband1,iband2) +&
-                                             & conjg(evc(ig,iband1))*ppsi(ig,iband2)
-              IF (okvan) THEN
-                dipole_aux(ipol,iband1,iband2) = dipole_aux(ipol,iband1,iband2) +&
-                     & conjg(evc(ig,iband1))*(0.d0,0.5d0)*(et(iband1,ik) - et(iband2,ik))*ppsi_us(ig,iband2)
-              END IF
+      !        DO iband1 = 1, nbnd
+      DO iband1 = nbndmin, nbndmax
+        !
+        IF (.NOT. is_active_interband(iband1, iband2, ik)) CYCLE
+        DO ig = 1, npw
+          dipole_aux(ipol,iband1,iband2) = dipole_aux(ipol,iband1,iband2) +&
+                                         & conjg(evc(ig,iband1))*ppsi(ig,iband2)
+          IF (okvan) THEN
+            dipole_aux(ipol,iband1,iband2) = dipole_aux(ipol,iband1,iband2) +&
+                 & conjg(evc(ig,iband1))*(0.d0,0.5d0)*(et(iband1,ik) - et(iband2,ik))*ppsi_us(ig,iband2)
+          END IF
 
-              !
-              ! Non collinear case
-              !
-              IF ( noncolin ) THEN
-                dipole_aux(ipol,iband1,iband2) = dipole_aux(ipol,iband1,iband2) +&
-                     & conjg(evc(ig+npwx,iband1))*ppsi(ig+npwx,iband2)
-                IF (okvan) THEN
-                  dipole_aux(ipol,iband1,iband2) = dipole_aux(ipol,iband1,iband2) +&
-                       & conjg(evc(ig+npwx,iband1))*(0.d0,0.5d0)*(et(iband1,ik) -&
-                       & et(iband2,ik))*ppsi_us(ig+npwx,iband2)
-                END IF
-              ENDIF
-              !
-            ENDDO
+          !
+          ! Non collinear case
+          !
+          IF ( noncolin ) THEN
+            dipole_aux(ipol,iband1,iband2) = dipole_aux(ipol,iband1,iband2) +&
+                 & conjg(evc(ig+npwx,iband1))*ppsi(ig+npwx,iband2)
+            IF (okvan) THEN
+              dipole_aux(ipol,iband1,iband2) = dipole_aux(ipol,iband1,iband2) +&
+                   & conjg(evc(ig+npwx,iband1))*(0.d0,0.5d0)*(et(iband1,ik) -&
+                   & et(iband2,ik))*ppsi_us(ig+npwx,iband2)
+            END IF
           ENDIF
           !
         ENDDO
-      ENDIF
+        !
+      ENDDO
       !
     ENDDO
 
@@ -1403,7 +1414,6 @@ SUBROUTINE dipole_symmetrize (ik, dipole_aux, dipole_sqr,nbndmin,nbndmax)
   USE wvfct,                ONLY : nbnd
   USE cell_base,            ONLY : at, bg
   USE symm_base,            ONLY : s, nsym
-  USE grid_module,          ONLY : full_occ
 
   IMPLICIT NONE
 
