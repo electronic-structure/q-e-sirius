@@ -815,7 +815,8 @@ MODULE cp_restart_new
       IF ( lsda_ .AND. (nspin /= 2) ) CALL errore('cp_readfile','wrong spin',1)
       !
       nbnd_ = nupdwn(1)
-      ALLOCATE( occ_(nbnd_, nspin), et_(nbnd_, nspin) )
+      ! Note: occ_ and et_ are allocated inside qexsd_copy_band_structure
+      !       et_ is allocated as ACC variable 
       CALL qexsd_copy_band_structure( output_obj%band_structure, lsda_, &
            nk_, isk_, nbnd, nbnd_up, nbnd_dw, nelec_, xk, &
            wk_, occ_, ef, ef_up, ef_dw, et_ )
@@ -826,6 +827,7 @@ MODULE cp_restart_new
          occ0(ib:ib+nb-1) = occ_(1:nb,iss)
       END DO
       occm(:) = occ0(:)
+      !$acc exit data delete(et_)
       DEALLOCATE (occ_, et_)
       !
       DO iss = 1, nspin

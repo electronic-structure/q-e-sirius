@@ -668,7 +668,9 @@ CONTAINS
          ef, ef_up, ef_dw, et )
       !------------------------------------------------------------------------
       !
-      ! IMPORTANT NOTICE: IN LSDA CASE CONVERTS TO "PWSCF" LOGIC for k-points
+      ! IMPORTANT: In LSDA case, converts to PWSCF logic for k-points
+      ! ALSO NOTE: "wg" and "et" are allocated here if not allocated on input;
+      !            if allocated on input, "et" must be an ACC variable
       !
       USE qes_types_module, ONLY : band_structure_type
       !
@@ -734,6 +736,7 @@ CONTAINS
       !
       IF ( .NOT. ALLOCATED(et) ) THEN
          ALLOCATE( et(nbnd,nkstot) )
+         !$acc enter data create (et)
       ENDIF
       IF ( .NOT. ALLOCATED(wg) ) ALLOCATE( wg(nbnd,nkstot) )
       !
@@ -758,6 +761,7 @@ CONTAINS
          END IF
          !
       END DO
+      !$acc update device(et)
       !
     END SUBROUTINE qexsd_copy_band_structure
     !
