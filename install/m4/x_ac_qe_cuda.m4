@@ -52,17 +52,9 @@ AC_ARG_ENABLE([nvtx],
    [enable_nvtx=no])
 
 if test "x$with_cuda" != "xno"; then
-   # NVHPC v.< 21.7 too old (FIXME: still allowing 21.2 for CI)
-   if (test "$f90_major_version" -lt 21 ) || (test "$f90_major_version" -eq 21 && test "$f90_minor_version" -lt 2 ) ; then
-      AC_MSG_WARN([Compiler version too old, use at least 21.7])
-   fi
-   if (test "$f90_major_version" -lt 21 ) ; then
-      AC_MSG_ERROR([Compiler version too old, use at least 21.7])
-   fi
-   # NVHPC v. 21.11-22.1 buggy
-   if (test "$f90_major_version" -eq 21 && test "$f90_minor_version" -ge 11) ||
-      (test "$f90_major_version" -eq 22 && test "$f90_minor_version" -le 1 ) ; then
-      AC_MSG_ERROR([Buggy compiler version, upgrade to 22.3 or downgrade to 21.9])
+   # NVHPC v.< 24.11 too old
+   if (test "$f90_major_version" -lt 24 ) || (test "$f90_major_version" -eq 24 && test "$f90_minor_version" -lt 11 ) ; then
+      AC_MSG_ERROR([Compiler version too old, use at least 24.11])
    fi
 
    # -----------------------------------------
