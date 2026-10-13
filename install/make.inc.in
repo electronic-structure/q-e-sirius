@@ -87,7 +87,7 @@ MPIF90         = @mpif90@
 F90           = @f90@
 CC             = @cc@
 
-# NVidia GPU arch (Kepler: 35, Pascal: 60, Volta: 70, Turing: 75, Ampere: 80)
+# NVIDIA GPU arch (Kepler: 35, Pascal: 60, Volta: 70, Turing: 75, Ampere: 80)
 CUDA_ARCH=@cuda_arch@
 
 # CUDA runtime (should be compatible with the CUDA driver)

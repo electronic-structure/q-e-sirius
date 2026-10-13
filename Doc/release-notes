@@ -170,7 +170,7 @@ Fixed in 7.3.1 version:
   * f channel of GTH pseudopotentials fixed again (see issue #86 on gitlab)
     Thanks to Chang Liu for reporting.
   * Distributed parallel diagonalization (option -nd N with N=4,9,16,25,...) 
-    crashed when used together with NVidia GPUs (thanks to Laura Bellentani)
+    crashed when used together with NVIDIA GPUs (thanks to Laura Bellentani)
   * Old PPs with zero nonlocal part were crashing in parallel execution
     (see issue #633 on gitlab). Affects v.7.3. Thanks to Ye Luo for reporting 
   * assume_isolated='2D' was giving wrong results when used with Gamma tricks
@@ -252,7 +252,7 @@ Fixed in v.7.2:
 
 New in 7.1 version:
   * DFT+RISM (1D, 3D, Laue) by S. Nishihara & M. Otani [Phys. Rev. B 96, 115429 (2017)].
-  * Improved, streamlined and extended porting to NVidia GPUs
+  * Improved, streamlined and extended porting to NVIDIA GPUs
   * KCW package for Koopmans-compliant functionals in a Wannier representation:
     https://journals.aps.org/prx/abstract/10.1103/PhysRevX.8.021051.
     Developed and maintained by N. Colonna, R. de Gennaro, E. Linscott

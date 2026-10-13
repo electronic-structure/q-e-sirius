@@ -7,7 +7,7 @@
 #
 # DESCRIPTION
 #
-# Simplified compilation for NVidia GPUs using nvhpc compiler
+# Simplified compilation for NVIDIA GPUs using nvhpc compiler
 # Assumes a standard installation of a recente nvhpc sdk
 # The following variables are substituted in the makefile:
 #    cuda_arch

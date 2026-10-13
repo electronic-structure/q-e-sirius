@@ -73,7 +73,7 @@ SUBROUTINE stres_knl( sigmanlc, sigmakin )
      !
      DO l = 1, 3
         DO m = 1, l
-           ! Stupid workaround for NVidia HPC-SDK v. < 22
+           ! Stupid workaround for NVIDIA HPC-SDK v. < 22
            ! that cannot make a reduction on a matrix
            sigma = 0.0_dp
            !$acc parallel loop collapse(2) reduction(+:sigma)
