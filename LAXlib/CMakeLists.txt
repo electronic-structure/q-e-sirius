@@ -27,15 +27,15 @@ target_link_libraries(qe_lax
         qe_utilx
         qe_devxlib)
 if(QE_ENABLE_CUDA)
-    if(CMAKE_Fortran_COMPILER_ID MATCHES "PGI" OR CMAKE_Fortran_COMPILER_ID MATCHES "NVHPC")
+    if(CMAKE_Fortran_COMPILER_ID MATCHES "NVHPC")
         set(CMAKE_REQUIRED_LINK_OPTIONS "${CUDA_FLAG}lib=cusolver;-fortranlibs")
         check_function_exists(cusolverDnZhegvdx cusolverDnZhegvdx_FOUND)
         if (NOT cusolverDnZhegvdx_FOUND)
             unset(cusolverDnZhegvdx_FOUND CACHE)
-            message(FATAL_ERROR "The version of CUDAToolkit chosen by the PGI/NVHPC compiler internally"
+            message(FATAL_ERROR "The version of CUDAToolkit chosen by the NVHPC compiler internally"
                                 " doesn't contain cusolverDnZhegvdx. cuSOLVER features used by LAXLib are"
                                 " only supported since CUDAToolkit 10.1 release. Use a newer compiler"
-                                " or select a newer CUDAToolkit internal to the PGI/NVHPC compiler.")
+                                " or select a newer CUDAToolkit internal to the NVHPC compiler.")
         endif()
     else()
         if(CUDAToolkit_VERSION VERSION_LESS 10.1)
