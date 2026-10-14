@@ -97,8 +97,8 @@ arm:armflang )
         fi
         try_foxflags="-fast -Mcache_align -Mpreprocess -Mlarge_arrays"
         if test "$f90_flavor" = "nvfortran" ; then
-           if (test "$f90_major_version" -lt 24 ) || (test "$f90_major_version" -eq 24 && test "$f90_minor_version" -lt 11 ) ; then
-              AC_MSG_ERROR([Compiler version too old, use at least 24.11])
+           if (test "$f90_major_version" -lt 22 ) || (test "$f90_major_version" -eq 22 && test "$f90_minor_version" -lt 7 ) ; then
+              AC_MSG_ERROR([Compiler version too old, use at least 22.7])
            fi
         fi
         try_fflags_noopt="-O0"

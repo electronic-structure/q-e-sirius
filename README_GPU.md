@@ -9,7 +9,7 @@ Installation
 ============
 
 This version requires the nvfortran (previously PGI) compiler from the
-NVIDIA HPC SDK, v.24.11 or later (freely downloadable from NVIDIA).
+NVIDIA HPC SDK, v.22.7 or later (freely downloadable from NVIDIA).
 Earlier versions may or may not work and are no longer supported. 
 You are advised to use the most recent version of NVIDIA software you can find.
 

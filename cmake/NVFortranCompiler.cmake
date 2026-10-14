@@ -1,6 +1,6 @@
 # Check compiler version
-if(CMAKE_Fortran_COMPILER_VERSION VERSION_LESS 24.11)
-    message(FATAL_ERROR "Requires nvfortran 24.11 or higher ")
+if(CMAKE_Fortran_COMPILER_VERSION VERSION_LESS 22.7)
+    message(FATAL_ERROR "Requires nvfortran 22.7 or higher ")
 endif()
 
 include(CheckFortranCompilerFlag)

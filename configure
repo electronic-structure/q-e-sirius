@@ -4432,8 +4432,8 @@ arm:armflang )
         fi
         try_foxflags="-fast -Mcache_align -Mpreprocess -Mlarge_arrays"
         if test "$f90_flavor" = "nvfortran" ; then
-           if (test "$f90_major_version" -lt 24 ) || (test "$f90_major_version" -eq 24 && test "$f90_minor_version" -lt 11 ) ; then
-              as_fn_error $? "Compiler version too old, use at least 24.11" "$LINENO" 5
+           if (test "$f90_major_version" -lt 22 ) || (test "$f90_major_version" -eq 22 && test "$f90_minor_version" -lt 7 ) ; then
+              as_fn_error $? "Compiler version too old, use at least 22.7" "$LINENO" 5
            fi
         fi
         try_fflags_noopt="-O0"
@@ -4749,9 +4749,9 @@ fi
 
 
 if test "x$with_cuda" != "xno"; then
-   # NVHPC v.< 24.11 too old
-   if (test "$f90_major_version" -lt 24 ) || (test "$f90_major_version" -eq 24 && test "$f90_minor_version" -lt 11 ) ; then
-      as_fn_error $? "Compiler version too old, use at least 24.11" "$LINENO" 5
+   # NVHPC v.< 22.7 too old
+   if (test "$f90_major_version" -lt 22 ) || (test "$f90_major_version" -eq 22 && test "$f90_minor_version" -lt 7 ) ; then
+      as_fn_error $? "Compiler version too old, use at least 22.7" "$LINENO" 5
    fi
 
    # -----------------------------------------
