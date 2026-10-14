@@ -23,7 +23,7 @@ Predefined by specific compilers:
       __INTEL_COMPILER   Intel compiler
 
 Hardware / Compiler:
-*     __CUDA      Compilation for NVidia GPUs
+*     __CUDA      Compilation for NVIDIA GPUs
       __AIX       Ibm rs/6000 machines (obsolescent)
       __PGI       Portland Group compiler workarounds for compiler bugs
        _WIN32     Windows 32-bits
