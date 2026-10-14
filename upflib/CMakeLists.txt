@@ -131,3 +131,9 @@ add_custom_target(upf
         qe_upflib_upfconv_exe
     COMMENT
         "utilities for pseudopotential conversion")
+
+if(QE_ENABLE_TEST)
+    qe_add_executable(test_qe_upflib_aainit tests/test_aainit.f90)
+    target_link_libraries(test_qe_upflib_aainit PRIVATE qe_upflib qe_mpi_fortran)
+    add_unit_test(test_qe_upflib_aainit-r1 1 1 $<TARGET_FILE:test_qe_upflib_aainit>)
+endif()

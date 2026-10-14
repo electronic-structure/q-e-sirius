@@ -101,203 +101,138 @@ CONTAINS
   !-----------------------------------------------------------------------
   subroutine aainit(lli)
     !-----------------------------------------------------------------------
-    !
-    ! this routine computes the coefficients of the expansion of the product
-    ! of two real spherical harmonics into real spherical harmonics.
-    !
-    !     Y_limi(r) * Y_ljmj(r) = \sum_LM  ap(LM,limi,ljmj)  Y_LM(r)
-    !
-    ! On output:
-    ! ap     the expansion coefficients
-    ! lpx    for each input limi,ljmj is the number of LM in the sum
-    ! lpl    for each input limi,ljmj points to the allowed LM
-    !
-    ! The indices limi,ljmj and LM assume the order for real spherical
-    ! harmonics given in routine ylmr2
-    !
-    USE upf_invmat
+    ! Product coefficients of real spherical harmonics, in ylmr2 order:
+    ! Y_li(r) Y_lj(r) = sum_l ap(l,li,lj) Y_l(r).
+    ! Evaluate the Gaunt integral analytically instead of inverting a matrix
+    ! of harmonics at random points. See DLMF 34.3.22 and 34.2.4 (3-j sum).
     implicit none
-    !
-    ! input: the maximum li considered
-    !  
     integer :: lli
-    !
-    ! local variables
-    !
-    integer :: llx, l, li, lj
-    real(DP) , allocatable :: r(:,:), rr(:), ylm(:,:), mly(:,:)
-    ! an array of random vectors: r(3,llx)
-    ! the norm of r: rr(llx)
-    ! the real spherical harmonics for array r: ylm(llx,llx)
-    ! the inverse of ylm considered as a matrix: mly(llx,llx)
-    !
+    integer :: llx, li, lj, lm, l1, l2, l3, i
+    real(dp) :: factorial(0:4*lmaxx+1)
+    integer :: angular(lqmax*lqmax), magnetic(2,lqmax*lqmax)
+    complex(dp) :: transform(2,lqmax*lqmax)
+
     if (lli < 0) call upf_error('aainit','lli not allowed',lli)
-
     if (lli*lli > nlx) call upf_error('aainit','nlx is too small ',lli*lli)
-
     llx = (2*lli-1)**2
     if (2*lli-1 > lqmax) &
          call upf_error('aainit','ap leading dimension is too small',llx)
 
-    allocate (r( 3, llx ))    
-    allocate (rr( llx ))    
-    allocate (ylm( llx, llx ))    
-    allocate (mly( llx, llx ))    
-
-    r(:,:)   = 0.0_DP
-    ylm(:,:) = 0.0_DP
-    mly(:,:) = 0.0_DP
-    ap(:,:,:)= 0.0_DP
-
-    ! - generate an array of random vectors (uniform deviate on unitary sphere)
-
-    call gen_rndm_r(llx,r,rr)
-
-    ! - generate the real spherical harmonics for the array: ylm(ir,lm)
-
-    call ylmr2(llx,llx,r,rr,ylm)
-
-    !-  store the inverse of ylm(ir,lm) in mly(lm,ir)
-
-    call invmat(llx, ylm, mly)
-
-    !-  for each li,lj compute ap(l,li,lj) and the indices, lpx and lpl
+    ap = 0.0_dp
+    lpx = 0
+    lpl = 0
+    if (lli == 0) return
+    factorial(0) = 1.0_dp
+    do i = 1, ubound(factorial,1)
+       factorial(i) = real(i,dp)*factorial(i-1)
+    end do
+    do lm = 1, llx
+       call real_harmonic_components(lm,angular(lm),magnetic(:,lm),transform(:,lm))
+    end do
     do li = 1, lli*lli
-       do lj = 1, lli*lli
-          lpx(li,lj)=0
-          do l = 1, llx
-             ap(l,li,lj) = compute_ap(l,li,lj,llx,ylm,mly)
-             if (abs(ap(l,li,lj)) > 1.d-3) then
+       l2 = angular(li)
+       do lj = 1, li
+          l3 = angular(lj)
+          do lm = 1, llx
+             l1 = angular(lm)
+             if (l1 < abs(l2-l3) .or. l1 > l2+l3) cycle
+             if (mod(l1+l2+l3,2) /= 0) cycle
+             ap(lm,li,lj) = real_gaunt(l1,l2,l3,magnetic(:,lm),magnetic(:,li),magnetic(:,lj), &
+                                      transform(:,lm),transform(:,li),transform(:,lj),factorial)
+             ap(lm,lj,li) = ap(lm,li,lj)
+             if (abs(ap(lm,li,lj)) > 1.d-3) then
                 lpx(li,lj) = lpx(li,lj) + 1
                 if (lpx(li,lj) > mx) &
-                     call upf_error('aainit','mx dimension too small', lpx(li,lj))
-                lpl(li,lj,lpx(li,lj)) = l
+                     call upf_error('aainit','mx dimension too small',lpx(li,lj))
+                lpl(li,lj,lpx(li,lj)) = lm
              end if
+          end do
+          lpx(lj,li) = lpx(li,lj)
+          lpl(lj,li,:) = lpl(li,lj,:)
+       end do
+    end do
+  end subroutine aainit
+
+  subroutine real_harmonic_components(lm,l,m,c)
+    ! ylmr2 orders each l as m=0, cos(phi), sin(phi), cos(2phi), ...
+    ! With Condon-Shortley complex harmonics:
+    ! R_cos = (Y_m + (-1)^m Y_-m)/sqrt(2)
+    ! R_sin = (Y_m - (-1)^m Y_-m)/(i sqrt(2)).
+    implicit none
+    integer, intent(in) :: lm
+    integer, intent(out) :: l, m(2)
+    complex(dp), intent(out) :: c(2)
+    integer :: k, phase
+    real(dp) :: q
+    l = int(sqrt(real(lm-1,dp)))
+    k = lm-l*l-1
+    m = 0
+    c = (0.0_dp,0.0_dp)
+    if (k == 0) then
+       c(1) = (1.0_dp,0.0_dp)
+    else
+       m(1) = (k+1)/2
+       m(2) = -m(1)
+       phase = 1-2*mod(m(1),2)
+       q = 1.0_dp/sqrt(2.0_dp)
+       if (mod(k,2) == 1) then
+          c(1) = cmplx(q,0.0_dp,dp)
+          c(2) = cmplx(phase*q,0.0_dp,dp)
+       else
+          c(1) = cmplx(0.0_dp,-q,dp)
+          c(2) = cmplx(0.0_dp,phase*q,dp)
+       end if
+    end if
+  end subroutine real_harmonic_components
+
+  real(dp) function real_gaunt(l1,l2,l3,m1,m2,m3,c1,c2,c3,f) result(value)
+    use upf_const, only: fpi
+    implicit none
+    integer, intent(in) :: l1,l2,l3,m1(2),m2(2),m3(2)
+    complex(dp), intent(in) :: c1(2),c2(2),c3(2)
+    real(dp), intent(in) :: f(0:)
+    integer :: i,j,k
+    real(dp) :: prefactor
+    complex(dp) :: total
+    prefactor = sqrt(real((2*l1+1)*(2*l2+1)*(2*l3+1),dp)/fpi) * &
+                wigner_3j(l1,l2,l3,0,0,0,f)
+    total = (0.0_dp,0.0_dp)
+    do i=1,2
+       do j=1,2
+          do k=1,2
+             if (m1(i)+m2(j)+m3(k) /= 0) cycle
+             total = total+c1(i)*c2(j)*c3(k)*wigner_3j(l1,l2,l3,m1(i),m2(j),m3(k),f)
           end do
        end do
     end do
-    ! 
-    deallocate(mly)
-    deallocate(ylm)
-    deallocate(rr)
-    deallocate(r)
-    !
-    return
-  end subroutine aainit
-  !
-  !-----------------------------------------------------------------------
-  subroutine gen_rndm_r(llx,r,rr)
-    !-----------------------------------------------------------------------
-    ! - generate an array of random vectors (uniform deviate on unitary sphere)
-    !
-    USE upf_const,  ONLY: tpi
-    implicit none
-    !
-    ! first the I/O variables
-    !
-    integer :: llx   ! input: the dimension of r and rr
-    real(DP) :: &
-         r(3,llx),  &! output: an array of random vectors
-         rr(llx)     ! output: the norm of r
-    !
-    ! here the local variables
-    !
-    integer  :: ir
-    real(DP) :: costheta, sintheta, phi
-    
-    do ir = 1, llx
-       costheta = 2.0_DP * randy() - 1.0_DP
-       sintheta = SQRT ( 1.0_DP - costheta*costheta)
-       phi = tpi * randy()
-       r (1,ir) = sintheta * cos(phi)
-       r (2,ir) = sintheta * sin(phi)
-       r (3,ir) = costheta
-       rr(ir)   = 1.0_DP
-    end do
-    
-    return
-  end subroutine gen_rndm_r
-!
-!------------------------------------------------------------------------
-   FUNCTION randy ( irand )
-      !------------------------------------------------------------------------
-      !   
-      ! x=randy(n): reseed with initial seed idum=n ( 0 <= n <= ic, see below)
-      !             if randy is not explicitly initialized, it will be
-      !             initialized with seed idum=0 the first time it is called
-      ! x=randy() : generate uniform real(DP) numbers x in [0,1]
-      !   
-      use upf_kinds, only : DP
-      implicit none
-      !
-      REAL(DP) :: randy
-      INTEGER, optional    :: irand
-      !   
-      INTEGER , PARAMETER  :: m    = 714025, &
-                              ia   = 1366, &
-                              ic   = 150889, &
-                              ntab = 97
-      REAL(DP), PARAMETER  :: rm = 1.0_DP / m 
-      INTEGER              :: j
-      INTEGER, SAVE        :: ir(ntab), iy, idum=0
-      LOGICAL, SAVE        :: first=.true.
-      !   
-      IF ( present(irand) ) THEN
-         idum = MIN( ABS(irand), ic) 
-         first=.true.
-      END IF
+    value = prefactor*real(total,dp)
+  end function real_gaunt
 
-      IF ( first ) THEN
-         !   
-         first = .false.
-         idum = MOD( ic - idum, m ) 
-         !   
-         DO j=1,ntab
-            idum=mod(ia*idum+ic,m)
-            ir(j)=idum
-         END DO
-         idum=mod(ia*idum+ic,m)
-         iy=idum
-      END IF
-      j=1+(ntab*iy)/m
-      IF( j > ntab .OR. j <  1 ) call upf_error('randy','j out of range',ABS(j)+1)
-      iy=ir(j)
-      randy=iy*rm
-      idum=mod(ia*idum+ic,m)
-      ir(j)=idum
-      !   
-      RETURN
-      !   
-   END FUNCTION randy
-  !
-  !-----------------------------------------------------------------------
-  function compute_ap(l,li,lj,llx,ylm,mly)
-    !-----------------------------------------------------------------------
-    !-  given an l and a li,lj pair compute ap(l,li,lj)
+  real(dp) function wigner_3j(j1,j2,j3,m1,m2,m3,f) result(value)
+    ! Finite Racah sum for integer angular momenta. Only the small bounded
+    ! angular momenta supported by upflib are used (j1+j2+j3 <= 4*lmaxx).
     implicit none
-    !
-    ! first the I/O variables
-    !
-    integer :: &
-         llx,         &! the dimension of ylm and mly
-         l,li,lj       ! the arguments of the array ap
-    
-    real(DP) :: &
-         compute_ap,  &! this function
-         ylm(llx,llx),&! the real spherical harmonics for array r
-         mly(llx,llx)  ! the inverse of ylm considered as a matrix
-    !
-    ! here the local variables
-    !
-    integer :: ir
-    
-    compute_ap = 0.0_DP
-    do ir = 1,llx
-       compute_ap = compute_ap + mly(l,ir)*ylm(ir,li)*ylm(ir,lj)
+    integer, intent(in) :: j1,j2,j3,m1,m2,m3
+    real(dp), intent(in) :: f(0:)
+    integer :: z,zmin,zmax,phase
+    real(dp) :: prefactor,series
+    value = 0.0_dp
+    if (m1+m2+m3 /= 0) return
+    if (abs(m1)>j1 .or. abs(m2)>j2 .or. abs(m3)>j3) return
+    if (j3<abs(j1-j2) .or. j3>j1+j2) return
+    phase = 1-2*mod(abs(j1-j2-m3),2)
+    prefactor = real(phase,dp)*sqrt( &
+         f(j1+j2-j3)*f(j1-j2+j3)*f(-j1+j2+j3)/f(j1+j2+j3+1) * &
+         f(j1+m1)*f(j1-m1)*f(j2+m2)*f(j2-m2)*f(j3+m3)*f(j3-m3))
+    zmin = max(0,j2-j3-m1,j1-j3+m2)
+    zmax = min(j1+j2-j3,j1-m1,j2+m2)
+    series = 0.0_dp
+    do z=zmin,zmax
+       series = series+real(1-2*mod(z,2),dp)/(f(z)*f(j1+j2-j3-z)* &
+                f(j1-m1-z)*f(j2+m2-z)*f(j3-j2+m1+z)*f(j3-j1-m2+z))
     end do
-    
-    return
-  end function compute_ap
+    value = prefactor*series
+  end function wigner_3j
   !
   !-----------------------------------------------------------------------
   subroutine allocate_uspp(use_gpu,noncolin,lspinorb,tqr,nhm,nsp,nat,nspin)
