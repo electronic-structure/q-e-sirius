@@ -29,5 +29,10 @@ FCOPTS=@f90flags@
 LDOPTS=@ldflags@
 AR=@ar@
 ARFLAGS=@arflags@
-
 LIBS = @lapack_libs@ @blas_libs@ @mass_libs@
+
+# Atrocious workaround for nvfortran 23-25 problem compiling disentangle.F90
+NVFORTRAN=@f90@
+ifneq (,$(findstring nvfortran,$(NVFORTRAN)))
+FCOPTS=@f90flags@ -Mnoinline
+endif

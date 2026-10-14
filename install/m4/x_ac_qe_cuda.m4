@@ -7,7 +7,7 @@
 #
 # DESCRIPTION
 #
-# Simplified compilation for NVidia GPUs using nvhpc compiler
+# Simplified compilation for NVIDIA GPUs using nvhpc compiler
 # Assumes a standard installation of a recente nvhpc sdk
 # The following variables are substituted in the makefile:
 #    cuda_arch
@@ -52,19 +52,11 @@ AC_ARG_ENABLE([nvtx],
    [enable_nvtx=no])
 
 if test "x$with_cuda" != "xno"; then
-   # NVHPC v.< 21.7 too old (FIXME: still allowing 21.2 for CI)
-   if (test "$f90_major_version" -lt 21 ) || (test "$f90_major_version" -eq 21 && test "$f90_minor_version" -lt 2 ) ; then
-      AC_MSG_WARN([Compiler version too old, use at least 21.7])
-   fi
-   if (test "$f90_major_version" -lt 21 ) ; then
-      AC_MSG_ERROR([Compiler version too old, use at least 21.7])
-   fi
-   # NVHPC v. 21.11-22.1 buggy
-   if (test "$f90_major_version" -eq 21 && test "$f90_minor_version" -ge 11) ||
-      (test "$f90_major_version" -eq 22 && test "$f90_minor_version" -le 1 ) ; then
-      AC_MSG_ERROR([Buggy compiler version, upgrade to 22.3 or downgrade to 21.9])
-   fi
-
+   # NVHPC v.< 22.7 too old 
+   version=`echo $nvfortran_version | cut -d ' ' -f2`
+   AS_VERSION_COMPARE([$version], [22.7], [
+                AC_MSG_ERROR([Compiler version $version too old, use at least 22.7])
+                have_cudafor=0])
    # -----------------------------------------
    # Check compiler
    # -----------------------------------------

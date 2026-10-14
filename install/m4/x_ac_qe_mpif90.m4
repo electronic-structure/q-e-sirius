@@ -20,11 +20,11 @@ try_f90="gfortran f90"
 # candidate compilers and flags based on architecture
 case $arch in
 ia32 | ia64 | x86_64 )
-        try_f90="ifx ifort nvfortran pgf90 nagfor $try_f90"
+        try_f90="ifx ifort nvfortran nagfor $try_f90"
         try_mpif90="mpiifx mpiifort $try_mpif90"
         ;;
 arm )
-        try_f90="nvfortran pgf90 armflang $try_f90"
+        try_f90="nvfortran armflang $try_f90"
         ;;
 craype* )
         try_f90="ftn"
@@ -116,7 +116,6 @@ mpif90=$FC
 echo $ECHO_N "checking version of $mpif90... $ECHO_C"
 ifort_version=`$mpif90 --version 2>&1 | grep "IFORT"`
 ifx_version=`$mpif90 --version 2>&1 | grep "IFX"`
-pgf_version=`$mpif90 -V 2>&1 | grep "^pgf"`
 nvfortran_version=`$mpif90 -V 2>&1 | grep "^nvfortran"`
 gfortran_version=`$mpif90 -v 2>&1 | grep "gcc version"`
 nagfor_version=`$mpif90 -v 2>&1 | grep "NAG Fortran"`
@@ -145,12 +144,6 @@ then
 	f90_minor_version=`echo $version | cut -d. -f2 | cut -d- -f1`
         echo "${ECHO_T}nvfortran $version"
         f90_in_mpif90="nvfortran"
-elif test "$pgf_version" != ""
-then
-        version=`echo $pgf_version | cut -d ' ' -f2`
-        f90_major_version=`echo $version | cut -d. -f1`
-        echo "${ECHO_T}pgf90 $version"
-        f90_in_mpif90="pgf90"
 elif test "$gfortran_version" != ""
 then
         version=`echo $gfortran_version | cut -d ' ' -f3`
@@ -210,8 +203,6 @@ ftn )
     echo $ECHO_N "checking version wrapped by $mpif90 command... $ECHO_C"
     if $mpif90 -V 2>&1 | grep -q "Intel(R)" ; then
         f90_flavor=ifort
-    elif $mpif90 -V 2>&1 | grep -q "^pgf" ; then
-        f90_flavor=pgf
     elif $mpif90 -V 2>&1 | grep -q "^nvfortran" ; then
         f90_flavor=nvfortran
     elif $mpif90 -v 2>&1 | grep -q "gcc version" ; then

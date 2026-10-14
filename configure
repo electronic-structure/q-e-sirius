@@ -3358,11 +3358,11 @@ try_f90="gfortran f90"
 # candidate compilers and flags based on architecture
 case $arch in
 ia32 | ia64 | x86_64 )
-        try_f90="ifx ifort nvfortran pgf90 nagfor $try_f90"
+        try_f90="ifx ifort nvfortran nagfor $try_f90"
         try_mpif90="mpiifx mpiifort $try_mpif90"
         ;;
 arm )
-        try_f90="nvfortran pgf90 armflang $try_f90"
+        try_f90="nvfortran armflang $try_f90"
         ;;
 craype* )
         try_f90="ftn"
@@ -3681,7 +3681,6 @@ mpif90=$FC
 echo $ECHO_N "checking version of $mpif90... $ECHO_C"
 ifort_version=`$mpif90 --version 2>&1 | grep "IFORT"`
 ifx_version=`$mpif90 --version 2>&1 | grep "IFX"`
-pgf_version=`$mpif90 -V 2>&1 | grep "^pgf"`
 nvfortran_version=`$mpif90 -V 2>&1 | grep "^nvfortran"`
 gfortran_version=`$mpif90 -v 2>&1 | grep "gcc version"`
 nagfor_version=`$mpif90 -v 2>&1 | grep "NAG Fortran"`
@@ -3710,12 +3709,6 @@ then
 	f90_minor_version=`echo $version | cut -d. -f2 | cut -d- -f1`
         echo "${ECHO_T}nvfortran $version"
         f90_in_mpif90="nvfortran"
-elif test "$pgf_version" != ""
-then
-        version=`echo $pgf_version | cut -d ' ' -f2`
-        f90_major_version=`echo $version | cut -d. -f1`
-        echo "${ECHO_T}pgf90 $version"
-        f90_in_mpif90="pgf90"
 elif test "$gfortran_version" != ""
 then
         version=`echo $gfortran_version | cut -d ' ' -f3`
@@ -3776,8 +3769,6 @@ ftn )
     echo $ECHO_N "checking version wrapped by $mpif90 command... $ECHO_C"
     if $mpif90 -V 2>&1 | grep -q "Intel(R)" ; then
         f90_flavor=ifort
-    elif $mpif90 -V 2>&1 | grep -q "^pgf" ; then
-        f90_flavor=pgf
     elif $mpif90 -V 2>&1 | grep -q "^nvfortran" ; then
         f90_flavor=nvfortran
     elif $mpif90 -v 2>&1 | grep -q "gcc version" ; then
@@ -4744,20 +4735,23 @@ fi
 
 
 if test "x$with_cuda" != "xno"; then
-   # NVHPC v.< 21.7 too old (FIXME: still allowing 21.2 for CI)
-   if (test "$f90_major_version" -lt 21 ) || (test "$f90_major_version" -eq 21 && test "$f90_minor_version" -lt 2 ) ; then
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: Compiler version too old, use at least 21.7" >&5
-printf "%s\n" "$as_me: WARNING: Compiler version too old, use at least 21.7" >&2;}
-   fi
-   if (test "$f90_major_version" -lt 21 ) ; then
-      as_fn_error $? "Compiler version too old, use at least 21.7" "$LINENO" 5
-   fi
-   # NVHPC v. 21.11-22.1 buggy
-   if (test "$f90_major_version" -eq 21 && test "$f90_minor_version" -ge 11) ||
-      (test "$f90_major_version" -eq 22 && test "$f90_minor_version" -le 1 ) ; then
-      as_fn_error $? "Buggy compiler version, upgrade to 22.3 or downgrade to 21.9" "$LINENO" 5
-   fi
+   # NVHPC v.< 22.7 too old
+   version=`echo $nvfortran_version | cut -d ' ' -f2`
+   as_arg_v1=$version
+as_arg_v2=22.7
+awk "$as_awk_strverscmp" v1="$as_arg_v1" v2="$as_arg_v2" /dev/null
+case $? in #(
+  1) :
 
+                as_fn_error $? "Compiler version $version too old, use at least 22.7" "$LINENO" 5
+                have_cudafor=0 ;; #(
+  0) :
+     ;; #(
+  2) :
+     ;; #(
+  *) :
+     ;;
+esac
    # -----------------------------------------
    # Check compiler
    # -----------------------------------------

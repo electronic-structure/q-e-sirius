@@ -9,13 +9,13 @@ Installation
 ============
 
 This version requires the nvfortran (previously PGI) compiler from the
-NVidia HPC SDK, v.21.7 or later (freely downloadable from NVidia). 
+NVIDIA HPC SDK, v.22.7 or later (freely downloadable from NVIDIA).
 Earlier versions may or may not work and are no longer supported. 
-You are advised to use the most recent version of NVidia software you can find. 
+You are advised to use the most recent version of NVIDIA software you can find.
 
 For compilation using CMake, see GitLab.com/QEF/q-e/-/wikis/Developers/CMake-build-system. For compilation using `configure`, see the User Guide in Doc/.
 The `configure` script checks for the presence of the nvfortran compiler and 
-of a few cuda libraries. The NVidia SDK (standard development kit) must be
+of a few cuda libraries. The NVIDIA SDK (standard development kit) must be
 properly installed under `$NVHPC_CUDA_HOME` and the path pointing to the cuda 
 libraries must be present in `LD_LIBRARY_PATH`. A template for the configure 
 command is:
