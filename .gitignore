@@ -56,3 +56,10 @@ LAXlib/*.fh
 **/Doc/INPUT_*.txt
 **/Doc/INPUT_*.html
 **/Doc/INPUT_*.xml
+
+KS_Solvers/*.fh
+spack-build-*
+spack-build-env.txt
+spack-build-out.txt
+spack-configure-args.txt
+/build-*

@@ -41,11 +41,12 @@ SUBROUTINE wfcinit()
   USE qes_libs_module,      ONLY : qes_reset
   USE uspp_init,            ONLY : init_us_2
   USE control_flags,        ONLY : use_gpu
+  USE input_parameters,     ONLY : use_sirius_scf, use_sirius_nlcg
   !
   IMPLICIT NONE
   !
   INTEGER :: ik, ierr, exst_sum
-  LOGICAL :: exst, exst_mem, exst_file, opnd_file, twfcollect_file
+  LOGICAL :: exst, exst_mem, exst_file, opnd_file, twfcollect_file, do_init
   CHARACTER (LEN=256)  :: dirname
   TYPE ( output_type ) :: output_obj
   !
@@ -57,6 +58,10 @@ SUBROUTINE wfcinit()
   !
   ! ... Orthogonalized atomic functions needed for DFT+U and other cases
   !
+  !CALL using_evc(0) ! this may be removed
+  do_init = .TRUE.
+  IF (use_sirius_scf.OR.use_sirius_nlcg) do_init = .FALSE.
+  IF (do_init) THEN
   IF ( use_wannier .OR. one_atom_occupations ) THEN
      !
      IF ( lda_plus_u ) CALL errore ( 'wfcinit', 'incompatible options', 1 )
@@ -75,6 +80,7 @@ SUBROUTINE wfcinit()
         CALL orthoUwfc(.FALSE.)
      ENDIF
      !
+  END IF
   END IF
   !
   ! ... open files/buffer for wavefunctions (nwordwfc set in openfil)
@@ -203,22 +209,22 @@ SUBROUTINE wfcinit()
      !
      ! ... More Hpsi initialization: nonlocal pseudopotential projectors |beta>
      !
-     IF ( nkb > 0 ) CALL init_us_2( ngk(ik), igk_k(1,ik), xk(1,ik), vkb , use_gpu)
+     IF ( nkb > 0 .AND. do_init ) CALL init_us_2( ngk(ik), igk_k(1,ik), xk(1,ik), vkb , use_gpu)
      !
      ! ... Needed for DFT+U
      !
-     IF ( nks > 1 .AND. lda_plus_u .AND. (Hubbard_projectors.NE.'pseudo') ) THEN
+     IF ( nks > 1 .AND. lda_plus_u .AND. (Hubbard_projectors.NE.'pseudo') .AND. do_init ) THEN
         CALL get_buffer( wfcU, nwordwfcU, iunhub, ik )
         !$acc update device(wfcU)
      END IF
      !
      ! DFT+U+V: calculate the phase factor at a given k point
      !
-     IF (lda_plus_u .AND. lda_plus_u_kind.EQ.2) CALL phase_factor(ik)
+     IF (lda_plus_u .AND. lda_plus_u_kind.EQ.2 .AND. do_init ) CALL phase_factor(ik)
      !
      ! ... calculate starting wavefunctions (calls Hpsi)
-     ! 
-     CALL init_wfc ( ik )
+     !
+     IF (do_init) CALL init_wfc ( ik )
      !
      ! ... write  starting wavefunctions to file
      !
@@ -240,7 +246,7 @@ SUBROUTINE init_wfc ( ik )
   !----------------------------------------------------------------------------
   !
   ! ... This routine computes starting wavefunctions for k-point ik
-  !
+  !:
   USE kinds,                ONLY : DP
   USE bp,                   ONLY : lelfield
   USE becmod,               ONLY : allocate_bec_type_acc, deallocate_bec_type_acc, &

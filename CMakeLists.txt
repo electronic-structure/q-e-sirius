@@ -16,7 +16,7 @@ endif()
 project(qe
     VERSION 7.6
     DESCRIPTION "ESPRESSO: opEn-Source Package for Research in Electronic Structure, Simulation, and Optimization"
-    LANGUAGES Fortran C)
+    LANGUAGES Fortran C CXX)
 
 if(${qe_BINARY_DIR} STREQUAL ${qe_SOURCE_DIR})
     message(FATAL_ERROR "QE source folder cannot be safely used as a build folder!")
@@ -31,6 +31,8 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${qe_BINARY_DIR}/lib
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${qe_BINARY_DIR}/bin 
     CACHE
     PATH "Single output directory for building all executables.")
+
+find_package(sirius CONFIG REQUIRED)
 
 ###########################################################
 # Build helpers
@@ -73,6 +75,13 @@ include(DetermineGPUFeatures)
 include(DetermineDeviceArchitectures)
 
 include(CMakeDependentOption)
+
+option(QE_ENABLE_SIRIUS
+    "enable SIRIUS interface" OFF)
+cmake_dependent_option(QE_ENABLE_OFFLOAD
+    "enable OpenMP offload"
+    OFF "QE_ENABLE_OPENMP" OFF)
+
 option(QE_ENABLE_MPI
     "enable distributed execution support via MPI" ON)
 option(QE_ENABLE_MPI_GPU_AWARE
@@ -452,7 +461,7 @@ add_library(qe_mpi_fortran INTERFACE)
 qe_install_targets(qe_mpi_fortran)
 ###########################################################
 if(QE_ENABLE_MPI)
-    find_package(MPI REQUIRED Fortran)
+    find_package(MPI REQUIRED Fortran C)
 
     # choose using mpi module or header file.
     if(MPI_Fortran_HAVE_F90_MODULE)
@@ -663,7 +672,7 @@ qe_install_targets(qe_external_libxc)
 if(QE_ENABLE_LIBXC)
     target_compile_definitions(qe_external_libxc INTERFACE "__LIBXC")
 
-    find_package(Libxc 5.1.2 COMPONENTS Fortran)
+    find_package(Libxc CONFIG REQUIRED COMPONENTS Fortran)
     if (NOT Libxc_FOUND)
         message(STATUS "Libxc searching failed in CMake Module mode, trying Config mode")
         find_package(Libxc COMPONENTS Fortran CONFIG)
@@ -730,6 +739,10 @@ if(QE_ENABLE_HDF5)
         INTERFACE
             ${HDF5_C_DEFINITIONS})
 endif(QE_ENABLE_HDF5)
+
+if(QE_ENABLE_SIRIUS)
+    qe_add_global_compile_definitions(__SIRIUS)
+endif(QE_ENABLE_SIRIUS)
 
 ###########################################################
 # Tests
