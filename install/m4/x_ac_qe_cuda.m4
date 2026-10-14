@@ -52,11 +52,11 @@ AC_ARG_ENABLE([nvtx],
    [enable_nvtx=no])
 
 if test "x$with_cuda" != "xno"; then
-   # NVHPC v.< 22.7 too old
-   if (test "$f90_major_version" -lt 22 ) || (test "$f90_major_version" -eq 22 && test "$f90_minor_version" -lt 7 ) ; then
-      AC_MSG_ERROR([Compiler version too old, use at least 22.7])
-   fi
-
+   # NVHPC v.< 22.7 too old 
+   version=`echo $nvfortran_version | cut -d ' ' -f2`
+   AS_VERSION_COMPARE([$version], [22.7], [
+                AC_MSG_ERROR([Compiler version $version too old, use at least 22.7])
+                have_cudafor=0])
    # -----------------------------------------
    # Check compiler
    # -----------------------------------------
