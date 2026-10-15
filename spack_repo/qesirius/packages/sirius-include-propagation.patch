@@ -1,0 +1,14 @@
+--- a/PW/CMakeLists.txt
++++ b/PW/CMakeLists.txt
+@@ -287,7 +287,10 @@
+
+ if(QE_ENABLE_SIRIUS)
+   get_property(_sirius_include_dirs TARGET sirius::sirius PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
+-  target_include_directories(qe_pw PRIVATE ${_sirius_include_dirs})
++  # PUBLIC (not PRIVATE): targets that link qe_pw (qe_pw_exe, qe_lr_modules, ...)
++  # do "USE mod_sirius", and nvfortran needs sirius.mod transitively resolvable
++  # wherever mod_sirius.mod is consumed, not just where mod_sirius.f90 is compiled.
++  target_include_directories(qe_pw PUBLIC ${_sirius_include_dirs})
+ endif(QE_ENABLE_SIRIUS)
+
+ target_link_libraries(qe_pw

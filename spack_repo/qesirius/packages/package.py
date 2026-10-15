@@ -5,6 +5,7 @@
 
 
 from spack_repo.builtin.build_systems.cmake import CMakePackage
+from spack_repo.builtin.build_systems.cuda import CudaPackage
 
 from spack.package import *
 
@@ -24,6 +25,23 @@ class QESirius(CMakePackage, CudaPackage):
     version("1.0.2", sha256="6885979d6c23b81b49d4a96c7f73f2eac618adccb0181bfb96ae2318664d9828")
     version("1.0.1", sha256="512f982aa60fe9fd1cc588fa270e74427c66b62cb2d02ac1cb6cd07dcbe72204")
     version("1.0.0", sha256="d85485db8e9252a0bcd67a6a348b2a74626030183199b0edeb97f14c33bca15b")
+
+    # cmake/FindSCALAPACK.cmake unconditionally clears SCALAPACK_LIBRARIES
+    # before its own vendor search, discarding a caller-supplied value. That
+    # search only knows single-library ("scalapack") and MKL-style split
+    # (mkl_scalapack + mkl_blacs_*) layouts, so it can never find a provider
+    # like nvpl-scalapack whose blacs/scalapack libraries have other names.
+    # Letting a pre-supplied SCALAPACK_LIBRARIES survive (as cmake_args()
+    # below now passes) lets any such provider work.
+    patch("nvpl-scalapack-support.patch", when="@1.0.2,develop-ristretto")
+
+    # PW/CMakeLists.txt exposes SIRIUS's Fortran include dir to qe_pw as
+    # PRIVATE, but targets that link qe_pw (qe_pw_exe, qe_lr_modules, ...) also
+    # do "USE mod_sirius", and nvfortran needs sirius.mod transitively
+    # resolvable there too, not just where mod_sirius.f90 itself is compiled.
+    # Without this, linking pw.x/ph.x fails with "Unable to open MODULE file
+    # sirius.mod".
+    patch("sirius-include-propagation.patch", when="@1.0.2,develop-ristretto")
 
     variant("openmp", default=True, description="Enables OpenMP support")
     variant("libxc", default=False, description="Support functionals through libxc")
@@ -46,6 +64,10 @@ class QESirius(CMakePackage, CudaPackage):
     depends_on("sirius +apps", when="+sirius_apps")
     depends_on("sirius ~apps", when="~sirius_apps")
     depends_on("sirius +openmp", when="+openmp")
+    depends_on("sirius +cuda", when="+cuda")
+    depends_on("sirius ~cuda", when="~cuda")
+    for _arch in CudaPackage.cuda_arch_values:
+        depends_on(f"sirius cuda_arch={_arch}", when=f"+cuda cuda_arch={_arch}")
     depends_on("sirius@develop", when="@develop-ristretto")
 
     depends_on("mpi")
@@ -67,6 +89,11 @@ class QESirius(CMakePackage, CudaPackage):
     depends_on("hdf5@1.8.16:+fortran+hl+mpi", when="hdf5=parallel")
     depends_on("hdf5@1.8.16:+fortran+hl~mpi", when="hdf5=serial")
 
+    # GPU support requires CUDA Fortran, i.e. the NVHPC compiler.
+    with when("+cuda"):
+        requires("%fortran=nvhpc", msg="+cuda requires the NVHPC Fortran compiler")
+        conflicts("cuda_arch=none", msg="+cuda requires cuda_arch to be set")
+
     with when("+openmp"):
         requires("^fftw+openmp", when="^[virtuals=fftw-api] fftw")
         requires("^openblas threads=openmp", when="^[virtuals=blas] openblas")
@@ -84,8 +111,21 @@ class QESirius(CMakePackage, CudaPackage):
             self.define_from_variant("QE_ENABLE_SCALAPACK", "scalapack"),
         ]
 
-        if "@develop-ristretto" in self.spec:
-            args += ["-DQE_ENABLE_CUDA=OFF"]
+        # QE >= 7.6 (develop-ristretto) removed QE_ENABLE_CUDA/QE_ENABLE_OPENACC
+        # in favor of QE_GPU/QE_GPU_ARCHS
+        if self.spec.satisfies("@1.0.0:1.0.2"):
+            args.append(self.define_from_variant("QE_ENABLE_CUDA", "cuda"))
+        elif self.spec.satisfies("@develop-ristretto"):
+            if self.spec.satisfies("+cuda"):
+                args.append(self.define("QE_GPU", "openacc;cuda"))
+                args.append(
+                    self.define(
+                        "QE_GPU_ARCHS",
+                        ";".join("sm_" + arch for arch in self.spec.variants["cuda_arch"].value),
+                    )
+                )
+            else:
+                args.append(self.define("QE_GPU", ""))
 
         if not self.spec.satisfies("hdf5=none"):
             args.append(self.define("QE_ENABLE_HDF5", True))
@@ -97,6 +137,20 @@ class QESirius(CMakePackage, CudaPackage):
             args.append("-DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON")
         spec = self.spec
         args.append(self.define("BLAS_LIBRARIES", spec["blas"].libs.joined(";")))
-        args.append(self.define("LAPACK_LIBRARIES", spec["lapack"].libs.joined(";")))
+        # LAPACK_LIBRARIES is what actually ends up on qe_lapack's link line
+        # (BLAS_LIBRARIES above is only consumed by FindSCALAPACK/FindVendorFFTW,
+        # not by the main CMakeLists). For a combined provider that's fine, but
+        # nvpl-lapack ships LAPACK without BLAS symbols (e.g. zdotc), so targets
+        # that only link qe_lapack fail to link. Append the blas libs so
+        # LAPACK_LIBRARIES is self-contained regardless of provider.
+        args.append(
+            self.define(
+                "LAPACK_LIBRARIES",
+                (spec["lapack"].libs + spec["blas"].libs).joined(";"),
+            )
+        )
+
+        if "+scalapack" in spec:
+            args.append(self.define("SCALAPACK_LIBRARIES", spec["scalapack"].libs.joined(";")))
 
         return args
