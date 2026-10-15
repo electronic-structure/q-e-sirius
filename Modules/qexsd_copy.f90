@@ -677,16 +677,17 @@ CONTAINS
       IMPLICIT NONE
       TYPE ( band_structure_type)         :: band_struct_obj
       LOGICAL, INTENT(out) :: lsda
-      INTEGER, INTENT(out) :: nkstot, nbnd, nbnd_up, nbnd_dw, &
-              isk(:)
+      INTEGER, INTENT(out) :: nkstot, nbnd, nbnd_up, nbnd_dw, isk(:)
       REAL(dp), INTENT(out):: nelec, ef, ef_up, ef_dw, xk(:,:), wk(:)
       REAL(dp), INTENT(inout), ALLOCATABLE ::  wg(:,:), et(:,:)
       !
       LOGICAL :: two_fermi_energies
-      INTEGER :: ik
+      INTEGER :: nbnd_, ik
       ! 
       lsda = band_struct_obj%lsda
       nkstot = band_struct_obj%nks  
+      nbnd_up = 0
+      nbnd_dw = 0
       !
       IF ( lsda) THEN
          !
@@ -694,6 +695,9 @@ CONTAINS
             nbnd  = band_struct_obj%nbnd / 2
          ELSE IF ( band_struct_obj%nbnd_up_ispresent .AND. band_struct_obj%nbnd_dw_ispresent ) THEN 
             nbnd = (band_struct_obj%nbnd_up + band_struct_obj%nbnd_dw)/2 
+            ! I think that a better choice in this case should be
+            ! nbnd = MAX(band_struct_obj%nbnd_up,band_struct_obj%nbnd_dw)
+            ! instead of the trick below with auxiliary variable nbnd_
          ELSE 
             CALL errore ('qexsd_copy_band_structure: ','both nbnd and nbnd_up+nbnd_dw missing', 1)  
          END IF
@@ -733,12 +737,13 @@ CONTAINS
       !
       CALL qexsd_copy_efermi ( band_struct_obj, &
            nelec, ef, two_fermi_energies, ef_up, ef_dw )
-      !
+      ! Next line prevents out-of-bounds error in CP with LSDA
+      nbnd_ = MAX(nbnd,nbnd_up,nbnd_dw)
       IF ( .NOT. ALLOCATED(et) ) THEN
-         ALLOCATE( et(nbnd,nkstot) )
+         ALLOCATE( et(nbnd_,nkstot) )
          !$acc enter data create (et)
       ENDIF
-      IF ( .NOT. ALLOCATED(wg) ) ALLOCATE( wg(nbnd,nkstot) )
+      IF ( .NOT. ALLOCATED(wg) ) ALLOCATE( wg(nbnd_,nkstot) )
       !
       DO ik =1, band_struct_obj%ndim_ks_energies
          IF ( band_struct_obj%lsda) THEN
