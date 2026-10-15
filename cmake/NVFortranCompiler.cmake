@@ -1,3 +1,8 @@
+# Check compiler version
+if(CMAKE_Fortran_COMPILER_VERSION VERSION_LESS 22.7)
+    message(FATAL_ERROR "Requires nvfortran 22.7 or higher ")
+endif()
+
 include(CheckFortranCompilerFlag)
 
 qe_add_global_compile_definitions(__PGI)
@@ -5,22 +10,9 @@ qe_add_global_compile_definitions(__PGI)
 # set optimization specific flags
 set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Mcache_align -Mlarge_arrays -Mbackslash")
 
-if (CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL 21.11 AND CMAKE_Fortran_COMPILER_VERSION VERSION_LESS_EQUAL 22.2)
-    if(QE_ENABLE_OPENACC AND QE_ENABLE_OPENMP)
-        message(FATAL_ERROR "NVHPC 21.11-22.2 have a severe bug causing hanging in runs"
-                            " when QE is compiled with both OpenMP and OpenACC. "
-                            "Use a different compiler release or dislable OpenMP with potential performance loss.")
-    endif()
-endif()
-
 # set up GPU architecture options which can be applied to CUDA Fortran, OpenACC and OpenMP offload
 set(GPU_TARGET_COMPILE_OPTIONS)
 if(QE_ENABLE_CUDA OR QE_ENABLE_OPENACC OR QE_ENABLE_OFFLOAD)
-    if(CMAKE_Fortran_COMPILER_VERSION VERSION_LESS 19.10)
-        message(FATAL_ERROR "Compiler Version ${CMAKE_Fortran_COMPILER_VERSION}. "
-                            "GPU acceleration requires PGI 19.10 or NVIDIA HPC SDK 20.7 or higher!")
-    endif()
-
     if(NVFORTRAN_CUDA_VERSION)
         list(APPEND GPU_TARGET_COMPILE_OPTIONS "-gpu=cuda${NVFORTRAN_CUDA_VERSION}")
     endif()
@@ -35,11 +27,7 @@ if(QE_ENABLE_CUDA OR QE_ENABLE_OPENACC OR QE_ENABLE_OFFLOAD)
 endif()
 
 if(QE_ENABLE_CUDA)
-    if(CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL 20.7)
-        set(CUDA_FLAG "-cuda")
-    else()
-        set(CUDA_FLAG "-Mcuda")
-    endif()
+    set(CUDA_FLAG "-cuda")
 
     set(QE_CUDA_COMPILE_OPTIONS ${CUDA_FLAG})
 

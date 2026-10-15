@@ -129,7 +129,7 @@ The \qe\ codes work on many different types of Unix machines,
 including parallel machines using both OpenMP and MPI
 (Message Passing Interface), as well as machines running
 Mac OS X or MS-Windows.
-Since Feb.2021 NVidia GPU's are supported by the stable releases.
+Since Feb.2021 NVIDIA GPU's are supported by the stable releases.
 AMD GPU's are also supported but not yet in the main repository
 and in stable releases.
 
@@ -167,7 +167,7 @@ is promoted by the \qe\ Foundation under the coordination of
 Paolo Giannozzi (Univ. Udine and IOM-CNR, Italy) and Pietro Delugas
 (SISSA Trieste) with a strong support from the MaX - Materials design
 at the Exascale EU Centre of Excellence and from the CINECA computing 
-centre. The NVidia GPU porting owes much to Pietro Bonf\`a (Univ. Modena), 
+centre. The NVIDIA GPU porting owes much to Pietro Bonf\`a (Univ. Modena),
 Ivan Carnimeo (SISSA Trieste), Fabrizio Ferrari Ruffino (IOM-CNR).
 
 Contributors to \qe, beyond the authors of the papers
@@ -201,7 +201,7 @@ mentioned in Sec.\ref{SubSec:Terms}, include:
   \item Daniel Forrer (Padua Univ.) and Michele Pavone
         (Naples Univ. Federico II) for dispersions interaction in the
         framework of DFT-D;
-\item Filippo Spiga (University of Cambridge, now at NVidia)
+\item Filippo Spiga (University of Cambridge, now at NVIDIA)
   for mixed MPI-OpenMP parallelization and for the first
   GPU-enabled version;
   \item Costas Bekas and Alessandro Curioni (IBM Zurich) for the initial
@@ -436,8 +436,8 @@ non-blocking broadcast and gather operations) are required.
 For massively parallel machines, or for simple multicore parallelization, 
 an OpenMP-aware Fortran compiler and libraries are also required. 
 To compile 
-for NVidia GPUs you need the NVidia HPC SDK (software development kit) 
-v.21.7 or later, freely available for download.
+for NVIDIA GPUs you need the NVIDIA HPC SDK (software development kit)
+v.22.7 or later, freely available for download.
 
 As a rule, \qe\ tries to keep compatibility with older compilers,
 avoiding nonstandard extensions and newer features that are not
@@ -578,7 +578,7 @@ compilation.
 
 \subsubsection{Supported architectures}
 Presently \configure\ supports all "common" computers, that is: based on 
-Intel, AMD, ARM CPUs, NVidia and (in a development branch) AMD GPUs, 
+Intel, AMD, ARM CPUs, NVIDIA and (in a development branch) AMD GPUs,
 running Linux and (often but not always) Mac OS X and MS-Windows.
 \qe\ works on many more kinds of machines but may requires some tweaking, 
 especially for the hardware of large HPC centers.
@@ -655,8 +655,8 @@ and the following optional packages:\\
 \texttt{--with-libxc-include}& directory where \libxc\ Fortran headers reside\\
 \end{tabular}
 
-\subsubsection{\configure\ for NVidia GPU's}
-In order to compile the code for NVidia GPU's you need the NVidia HPC software
+\subsubsection{\configure\ for NVIDIA GPU's}
+In order to compile the code for NVIDIA GPU's you need the NVIDIA HPC software
 development kit (SDK). Beware: some versions may mis-compile \qe.
 Ensure that all needed environmental variables
 are properly defined, e.g. by running the "module" file provided in the HPC SDK with command
@@ -673,7 +673,7 @@ The following \configure\ GPU options are available:\\
 \texttt{--with-cuda-cc=value}&      sets the compute capabilities for the compilation\\
                              &      of the accelerated subroutines. \\
                              &      \texttt{value} must be consistent with the hardware and the\\
-                             &      NVidia driver installed on the workstation or on the\\
+                             &      NVIDIA driver installed on the workstation or on the\\
                              &      compute nodes of the HPC facility (default: 35)\\
 \texttt{--with-cuda-runtime=value}& (optional) sets the version of the CUDA toolkit used \\
                                   & for the compilation of the accelerated code.\\
@@ -803,9 +803,9 @@ serial or parallel HDF5 library, and will  set the flag
 
 
 \subsubsection{Other libraries}
-The accelerated version of the code for NVidia GPU's uses standard CUDA 
+The accelerated version of the code for NVIDIA GPU's uses standard CUDA
 libraries \texttt{cublas, cufft, curand, cusolver} that are available 
-from the NVidia HPC SDK and found by \configure.
+from the NVIDIA HPC SDK and found by \configure.
 
 If the appropriate \configure\ option is set, the code downloads and compile 
 the FoX library (\texttt{m4} is required in this case) for reading and writing
@@ -1131,7 +1131,7 @@ that runs on different machines, compile it on the oldest machine you have
 (i.e. the one with the oldest version of the operating system).
 
 Currently, configure\ supports, and \qe\ works with, not-too-old and
-not-too-buggy versions of gfortran, Intel (ifx, ifort), NVidia (nvfortran), 
+not-too-buggy versions of gfortran, Intel (ifx, ifort), NVIDIA (nvfortran),
 AMD (AOCC v.5), ARM (armflang), Cray (ftn) compilers.
 
 \paragraph{Linux PCs with Intel compiler (ifx, ifort)}

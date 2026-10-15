@@ -54,7 +54,7 @@ if(QE_WANNIER90_INTERNAL)
 
     # nvfortran 25.x aborts with "gen_llvm_expr(): no incoming ili" on the
     # recursive internal procedure in disentangle.F90 unless inlining is off.
-    if(CMAKE_Fortran_COMPILER_ID MATCHES "PGI" OR CMAKE_Fortran_COMPILER_ID MATCHES "NVHPC")
+    if(CMAKE_Fortran_COMPILER_ID MATCHES "NVHPC")
         set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/wannier90/src/disentangle.F90
             TARGET_DIRECTORY Wannier90_lib
             PROPERTIES COMPILE_OPTIONS "-Mnoinline")
