@@ -1,7 +1,7 @@
 gcc-env:
   compiler: [gcc]
   network:
-      mpi: cray-mpich@8.1.32+cuda
+      mpi: cray-mpich@8.1.32 +cuda
   unify: when_possible
   specs:
   - q-e-sirius@develop-ristretto +libxc +openmp
