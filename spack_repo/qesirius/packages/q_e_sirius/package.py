@@ -64,8 +64,6 @@ class QESirius(CMakePackage, CudaPackage):
     depends_on("sirius +apps", when="+sirius_apps")
     depends_on("sirius ~apps", when="~sirius_apps")
     depends_on("sirius +openmp", when="+openmp")
-    depends_on("sirius +cuda", when="+cuda")
-    depends_on("sirius ~cuda", when="~cuda")
     for _arch in CudaPackage.cuda_arch_values:
         depends_on(f"sirius cuda_arch={_arch}", when=f"+cuda cuda_arch={_arch}")
     depends_on("sirius@develop", when="@develop-ristretto")
