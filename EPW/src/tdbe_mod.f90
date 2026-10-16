@@ -1975,11 +1975,11 @@
 
     tstart = zero
     WRITE(stdout, '(5x, a, f8.3, a/)' ) 'Initial distribution of phonon is simulated with BE distribution at ', & 
-                                     temp_ph_tdbe, ' K temperarue'
+                                     temp_ph_tdbe, ' K temperature'
     IF (init_type_tdbe == 'FD') THEN
       inv_temp_el = one / (kelvin2Ry * temp_el_tdbe)
       WRITE(stdout, '(5x, a, f8.3, a)' ) 'Initial distribution of electrons is simulated with FD distribution at ', &
-      temp_el_tdbe, ' K (temperarue)'
+      temp_el_tdbe, ' K (temperature)'
       IF (carr_dyn_tdbe == 1) THEN   
         WRITE(stdout,'(5x,a)') 'Real time dynamics for electron, initial distribution determined by FD distribution'
         WRITE(stdout,'(5x,a,f8.6,a)') 'chemical potential of electron is', ef_c_tdbe,' eV'
