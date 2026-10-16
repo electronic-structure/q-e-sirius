@@ -71,7 +71,6 @@ module wannier
    real(DP)              :: rlatt(3,3),glatt(3,3) ! real and recip lattices (Cartesian co-ords, units of Angstrom)
    real(DP), allocatable :: kpt_latt(:,:)  ! k-points in crystal co-ords. kpt_latt(3,iknum)
    integer               :: num_bands      ! number of bands left after exclusions
-   integer               :: num_nnmax=12
    ! target: the Wannier90 v4 setters keep pointers to these for the duration of
    ! the minimisation, so the association has to outlive the setter call
    complex(DP), allocatable, target :: m_mat(:,:,:,:)
@@ -109,12 +108,16 @@ module wannier
    !----------------------------------------------------------------------------
    SUBROUTINE utility_setup_wfc_and_pw(ik_global, evc, npw, igk_k_ik)
       !-------------------------------------------------------------------------
-      !! Read wavefunction evc from file for global k point ik_global.
-      !! Setup the plane wave variables npw and igk_k_ik
+      !! Get the wavefunction evc at global k point ik_global and set up the
+      !! plane wave variables npw and igk_k_ik.
+      !!
+      !! Collective over inter_pool_comm: a k point of another pool is sent by
+      !! that pool, see utility_wfc_exchange.
       !-------------------------------------------------------------------------
-      USE kinds,           ONLY : DP, i8b
-      USE mp_pools,        ONLY : my_pool_id, nproc_pool, me_pool
-      USE io_files,        ONLY : prefix, tmp_dir, nwordwfc, iunwfc
+      USE kinds,           ONLY : DP
+      USE mp_pools,        ONLY : my_pool_id
+      USE io_files,        ONLY : nwordwfc, iunwfc
+      USE buffers,         ONLY : get_buffer
       USE wvfct,           ONLY : npwx
       USE pwcom,           ONLY : nbnd
       USE noncollin_module,ONLY : npol
@@ -127,80 +130,133 @@ module wannier
       INTEGER, INTENT(IN) :: ik_global
       !! Global k point index
       COMPLEX(DP), INTENT(OUT) :: evc(npwx * npol, nbnd)
-      !! wavefunction at ik_global, read from file
+      !! wavefunction at ik_global
       INTEGER, INTENT(OUT) :: npw
       !! number of plane waves at ik_global
       INTEGER, INTENT(OUT) :: igk_k_ik(npwx)
       !! index of G vectors at ik_global
       !
-      CHARACTER(LEN = 256) :: wfcfile
-      !! Temp file
       INTEGER :: ipool
       !! Pool index where ik_global belongs to
       INTEGER :: ik_local
       !! Local k index of ik_global in ipool
-      INTEGER :: iproc
-      !! Processer index, which is the postfix of the filename.
-      INTEGER :: iun
-      !! File unit
-      INTEGER(KIND=i8b) :: unf_recl
-      !! Record length. Double precision to prevent integer overflow
-      INTEGER :: direct_io_factor
-      !! Factor for record length
-      INTEGER :: ios
-      !! Error number
-      REAL(KIND = DP) :: dummy
-      !! Dummy variable
       REAL(DP) :: g2kin_(npwx)
-      !! Dummy g2kin_ to call gk_sort
-      CHARACTER(len=6), EXTERNAL :: int_to_char
       !
-      evc = (0.0_DP, 0.0_DP)
+      CALL utility_wfc_exchange(ik_global, evc)
       !
-      ! For a global k point index, find the pool and local k point index.
       CALL pool_and_local_kpoint_index(nkstot, ik_global, ipool, ik_local)
       !
       IF (ipool == my_pool_id) THEN
-! print*, "pool ", my_pool_id, " Reading locally  pool, ik_local ", ipool, ik_local
-         !
-         ! If ipool is this pool, just read from the buffer
-         !
-         CALL davcio(evc, 2*nwordwfc, iunwfc, ik_local, -1)
-         !
-      ELSE
-         !
-         ! If ipool is not this pool, open wfc file, read, and close.
-         !
-         ! Processer id
-         iproc = ipool * nproc_pool + me_pool
-         !
-         wfcfile = TRIM(tmp_dir) // TRIM(prefix) // '.wfc' // TRIM(int_to_char( iproc+1 ))
-! print*, "pool ", my_pool_id, " Reading globally pool, ik_local ", ipool, ik_local, trim(wfcfile)
-         !
-         INQUIRE(IOLENGTH = direct_io_factor) dummy
-         unf_recl = direct_io_factor * INT(2*nwordwfc, KIND=KIND(unf_recl))
-         !
-         OPEN(NEWUNIT = iun, FILE = TRIM(wfcfile), FORM = 'unformatted', &
-            ACCESS = 'direct', IOSTAT = ios, RECL = unf_recl)
-         IF (ios /= 0) CALL errore('utility_setup_wfc_and_pw', &
-            'error opening wfc file', 1)
-         READ(iun, REC = ik_local) evc
-         CLOSE(iun, STATUS = 'KEEP')
-      ENDIF
-      !
-      ! Setup npw and igk_k_ik, the G vector ordering at ik_global.
-      !
-      IF (ipool == my_pool_id) THEN
-         ! Use local G vector ordering
+         CALL get_buffer(evc, nwordwfc, iunwfc, ik_local)
          npw = ngk(ik_local)
          igk_k_ik = igk_k(:, ik_local)
       ELSE
-         ! k point from different pool. Calculate G vector ordering.
+         ! The G vector distribution is the same on all pools, so the G vector
+         ! ordering of the owner is reproduced by gk_sort.
          CALL gk_sort(xk_all(1, ik_global), ngm, g, gcutw, npw, igk_k_ik, g2kin_)
       ENDIF
       !
    !----------------------------------------------------------------------------
    END SUBROUTINE utility_setup_wfc_and_pw
+   !----------------------------------------------------------------------------
+   !
+   !----------------------------------------------------------------------------
+   SUBROUTINE utility_wfc_exchange(ik_global, evc)
+      !-------------------------------------------------------------------------
+      !! One round of wavefunction exchange between the pools. Collective over
+      !! inter_pool_comm. Every pool asks for at most one k point per round; if
+      !! another pool owns it, that pool sends it and it is received in evc.
+      !!
+      !! Without arguments, ask for nothing and only serve the other pools. A
+      !! pool calls it this way in the loop iterations it has no work for, so
+      !! that all pools make the same number of calls.
+      !-------------------------------------------------------------------------
+      USE kinds,           ONLY : DP
+      USE parallel_include
+      USE mp_pools,        ONLY : my_pool_id, npool, inter_pool_comm
+      USE mp,              ONLY : mp_sum
+      USE io_files,        ONLY : nwordwfc, iunwfc
+      USE buffers,         ONLY : get_buffer
+      USE wvfct,           ONLY : npwx
+      USE pwcom,           ONLY : nbnd
+      USE noncollin_module,ONLY : npol
+      USE klist,           ONLY : nkstot
+      !
+      IMPLICIT NONE
+      !
+      INTEGER, OPTIONAL, INTENT(IN) :: ik_global
+      !! Global k point index needed by this pool
+      COMPLEX(DP), OPTIONAL, INTENT(INOUT) :: evc(*)
+      !! (npwx * npol, nbnd) wavefunction at ik_global. Set only if ik_global
+      !! belongs to another pool.
+      !
+      INTEGER :: ip, ip_owner, ik_local, request, ierr
+      LOGICAL :: ik_is_remote
+      !! True if ik_global belongs to another pool
+      INTEGER :: ik_request(2, 0:npool-1)
+      !! Owner pool index plus one, and local k index, requested by each pool.
+      !! Zero if that pool asks for nothing.
+      COMPLEX(DP), ALLOCATABLE :: evc_send(:, :)
+      !
+      IF (PRESENT(ik_global) .NEQV. PRESENT(evc)) &
+         CALL errore('utility_wfc_exchange', 'provide both ik_global and evc, or neither', 1)
+      !
+#if defined(__MPI)
+      IF (npool == 1) RETURN
+      !
+      CALL start_clock('wfc_exchange')
+      !
+      ik_request = 0
+      ik_is_remote = .FALSE.
+      IF (PRESENT(ik_global)) THEN
+         CALL pool_and_local_kpoint_index(nkstot, ik_global, ip_owner, ik_local)
+         ! This pool needs ik_local from ip_owner.
+         ik_request(:, my_pool_id) = [ip_owner + 1, ik_local]
+         ik_is_remote = (ip_owner /= my_pool_id)
+      ENDIF
+      CALL mp_sum(ik_request, inter_pool_comm)
+      !
+      ! The rank in inter_pool_comm is the pool index. A pool gets at most one
+      ! message per round, so a single tag is enough. The receive is posted
+      ! before the blocking sends to avoid a deadlock.
+      !
+      IF (ik_is_remote) THEN
+         ! Non-blocking, so this pool can still send below
+         CALL MPI_IRECV(evc, nwordwfc, MPI_DOUBLE_COMPLEX, ip_owner, 0, &
+            inter_pool_comm, request, ierr)
+         IF (ierr /= 0) CALL errore('utility_wfc_exchange', 'MPI_IRECV failed', 1)
+      ENDIF
+      !
+      ! Loop over pools and process their requests.
+      !
+      DO ip = 0, npool - 1
+         !
+         IF (ip == my_pool_id) CYCLE  ! skip my own request
+         !
+         IF (ik_request(1, ip) == my_pool_id + 1) THEN
+            ik_local = ik_request(2, ip)
+            !
+            ! ik_local from this pool was requested by pool ip
+            !
+            IF (.NOT. ALLOCATED(evc_send)) ALLOCATE(evc_send(npwx * npol, nbnd))
+            CALL get_buffer(evc_send, nwordwfc, iunwfc, ik_local)
+            !
+            CALL MPI_SEND(evc_send, nwordwfc, MPI_DOUBLE_COMPLEX, ip, 0, inter_pool_comm, ierr)
+            IF (ierr /= 0) CALL errore('utility_wfc_exchange', 'MPI_SEND failed', 1)
+         ENDIF
+      ENDDO
+      !
+      IF (ik_is_remote) THEN
+         ! Block until the receive posted by MPI_IRECV is complete, so evc is ready
+         CALL MPI_WAIT(request, MPI_STATUS_IGNORE, ierr)
+         IF (ierr /= 0) CALL errore('utility_wfc_exchange', 'MPI_WAIT failed', 1)
+      ENDIF
+      !
+      CALL stop_clock('wfc_exchange')
+#endif
+      !
+   !----------------------------------------------------------------------------
+   END SUBROUTINE utility_wfc_exchange
    !----------------------------------------------------------------------------
    !
    !----------------------------------------------------------------------------
@@ -210,6 +266,8 @@ module wannier
       !! For a given k point ik and b vector i_b, compute |u_{n, k+b}>.
       !! Optionally compute becp for k+b (for USPP case).
       !! Do not calculate the excluded bands, using the variable excluded_band.
+      !!
+      !! Collective over inter_pool_comm through utility_setup_wfc_and_pw.
       !!
       !! Uses pre-computed information about b vector: kpb, zerophase, and ig_.
       !!

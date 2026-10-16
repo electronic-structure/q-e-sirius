@@ -354,7 +354,7 @@ inputs_args = ('scf_vdw.in', '1'), ('ppacf_fock.in', '2')
 
 [pp_w90_library/]
 program = PP
-inputs_args = ('si.scf.in', '1'), ('si.pw2wan.in', '3')
+inputs_args = ('si.scf.in', '1'), ('si.pw2wan.in', '3'), ('si.pw2wan.in', '4'), ('si.pw2wan.in', '5'), ('si.pw2wan_low_io.in', '5')
 
 [pp_w90_library_radial/]
 program = PP
@@ -362,7 +362,7 @@ inputs_args = ('si.scf.in', '1'), ('si.pw2wan.in', '3')
 
 [pp_w90_library_nc/]
 program = PP
-inputs_args = ('pb_nc.scf.in', '1'), ('pb_nc.pw2wan.in', '3')
+inputs_args = ('pb_nc.scf.in', '1'), ('pb_nc.pw2wan.in', '3'), ('pb_nc.pw2wan.in', '4'), ('pb_nc.pw2wan.in', '5')
 
 [image_para/]
 program = IMAGE

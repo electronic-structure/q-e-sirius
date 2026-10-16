@@ -1,0 +1,8 @@
+&inputpp
+ outdir   = './out/'
+ prefix   = 'si'
+ seedname = 'si'
+ wan_mode = 'library'
+ disk_io = 'low'
+ write_unk = .false.
+/

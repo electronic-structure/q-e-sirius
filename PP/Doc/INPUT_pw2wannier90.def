@@ -69,6 +69,12 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program pw2wa
                 checked and a mismatch stops the run. The number of
                 projections must equal num_wann, so wannier90's
                 select_projections is not available here.
+
+                In 'library' mode the matrices are handed to wannier90 in memory,
+                so the files are not needed for the run itself. All write_* flags
+                are honoured exactly as in 'standalone' mode and select only which
+                files are written alongside; set @ref write_amn, @ref write_mmn and
+                @ref write_eig to .false. if you do not want them to be written to file.
             }
             default { 'standalone' }
         }
@@ -210,6 +216,13 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program pw2wa
             default { .TRUE. }
         }
 
+        var write_eig -type LOGICAL {
+            info {
+                Set to .false. if the eigenvalue file is not required.
+            }
+            default { .TRUE. }
+        }
+
         var write_spn -type LOGICAL {
             info {
                 Set to .true. to write out the matrix elements of spin operator
@@ -255,6 +268,26 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program pw2wa
                 may be compared directly without rescaling.
             }
             default { .FALSE. }
+        }
+
+        var disk_io -type CHARACTER {
+            default { 'medium' }
+            options {
+                info {
+                    Where the Kohn-Sham wavefunctions are kept after they are
+                    read from the collected files in the save directory.
+                }
+                opt -val 'medium' {
+                    Write them to one prefix.wfcN file per process in outdir
+                    and read them back from there.
+                }
+                opt -val 'low' {
+                    Keep them in memory, which costs about
+                    nbnd * npwx * npol complex numbers per local k point and
+                    process, and avoids the per-k-point file reads that are
+                    slow on parallel filesystems.
+                }
+            }
         }
 
         var write_uHu -type LOGICAL {

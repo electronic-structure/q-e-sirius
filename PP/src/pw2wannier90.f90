@@ -656,7 +656,7 @@ PROGRAM pw2wannier90
   USE klist,      ONLY : nkstot, nks, xk
   USE io_files,   ONLY : prefix, tmp_dir
   USE noncollin_module, ONLY : noncolin
-  USE control_flags,    ONLY : gamma_only
+  USE control_flags,    ONLY : gamma_only, io_level
   USE environment,ONLY : environment_start, environment_end
   USE wannier
   use atproj, only : atom_proj, atom_proj_dir, atom_proj_ext, &
@@ -671,6 +671,7 @@ PROGRAM pw2wannier90
   INTEGER :: ios, ierr
   CHARACTER(len=4) :: spin_component
   CHARACTER(len=256) :: outdir
+  CHARACTER(len=20) :: disk_io
 
   ! these are in wannier module.....-> integer :: ispinw, ikstart, ikstop, iknum
   NAMELIST / inputpp / outdir, prefix, spin_component, wan_mode, &
@@ -689,7 +690,7 @@ PROGRAM pw2wannier90
    ! end change Vitale
        atom_proj, atom_proj_dir, atom_proj_ext, atom_proj_exclude, &
        atom_proj_ortho, atom_proj_frozen, &
-       write_vmn, write_pmn
+       write_vmn, write_pmn, disk_io
   !
   ! initialise environment
   !
@@ -757,6 +758,7 @@ PROGRAM pw2wannier90
      atom_proj_sym = .false.
      write_vmn = .false.
      write_pmn = .false.
+     disk_io = 'medium'
      !
      !     reading the namelist inputpp
      !
@@ -817,6 +819,18 @@ PROGRAM pw2wannier90
   CALL mp_bcast(atom_proj_frozen, ionode_id, world_comm)
   CALL mp_bcast(write_vmn, ionode_id, world_comm)
   CALL mp_bcast(write_pmn, ionode_id, world_comm)
+  CALL mp_bcast(disk_io, ionode_id, world_comm)
+  !
+  ! io_level must be set before read_file: with io_level = 0 the
+  ! wavefunctions stay in memory and no prefix.wfcN file is written.
+  SELECT CASE (TRIM(disk_io))
+  CASE ('low')
+     io_level = 0
+  CASE ('medium')
+     io_level = 1
+  CASE DEFAULT
+     CALL errore('pw2wannier90', 'disk_io must be ''low'' or ''medium'', not '//TRIM(disk_io), 1)
+  END SELECT
   !
   IF (wan_mode /= 'standalone' .AND. wan_mode /= 'library' .AND. &
       wan_mode /= 'wannier2sic') CALL errore('pw2wannier90', &
@@ -868,7 +882,17 @@ PROGRAM pw2wannier90
   ENDIF
   IF (scdm_sigma <= 0._dp) &
     call errore('pw2wannier90','Sigma in the SCDM method must be positive.', 1)
+  ! library mode always builds A from the .win projections: the driver below
+  ! calls compute_amn, not the SCDM or atomic-projector variants
+  IF (wan_mode == 'library') THEN
+     IF (scdm_proj) CALL errore('pw2wannier90', &
+        'SCDM is not supported in library mode, use wan_mode=standalone', 1)
+     IF (atom_proj) CALL errore('pw2wannier90', &
+        'atomic projectors are not supported in library mode, use wan_mode=standalone', 1)
+  ENDIF
+  !
   IF (irr_bz) THEN
+     IF (wan_mode == 'library') CALL errore('pw2wannier90', "irr_bz and library mode are not compatible", 1)
      IF (gamma_only) CALL errore('pw2wannier90', "irr_bz and gamma_only are not compatible", 1)
      IF (npool > 1) CALL errore('pw2wannier90', "irr_bz and pools (-nk > 1) not implemented", 1)
      IF (write_spn) CALL errore('pw2wannier90', "irr_bz and write_spn not implemented", 1)
@@ -920,45 +944,61 @@ PROGRAM pw2wannier90
   WRITE(stdout,*) ' Wannier mode is: ',wan_mode
   WRITE(stdout,*)
   !
-  IF(wan_mode=='standalone') THEN
+  IF(wan_mode=='standalone' .OR. wan_mode=='library') THEN
      !
-     WRITE(stdout,*) ' -----------------'
-     WRITE(stdout,*) ' *** Reading nnkp '
-     WRITE(stdout,*) ' -----------------'
+     IF(wan_mode=='standalone') THEN
+        WRITE(stdout,*) ' -----------------'
+        WRITE(stdout,*) ' *** Reading nnkp '
+        WRITE(stdout,*) ' -----------------'
+        WRITE(stdout,*)
+        CALL read_nnkp
+     ELSE
+        WRITE(stdout,*) ' --------------------'
+        WRITE(stdout,*) ' *** Setting up nnkp '
+        WRITE(stdout,*) ' --------------------'
+        WRITE(stdout,*)
+        CALL setup_nnkp
+        WRITE(stdout,*)
+     ENDIF
+     ! With io_level = 0 read_file left iunwfc open as an in-memory buffer
+     ! and there is no prefix.wfcN file to open.
+     IF (io_level > 0) THEN
+        WRITE(stdout,*) ' Opening pp-files '
+        CALL openfil_pp
+     ENDIF
      WRITE(stdout,*)
-     CALL read_nnkp
-     WRITE(stdout,*) ' Opening pp-files '
-     CALL openfil_pp
+     WRITE(stdout,*) ' Ylm expansion'
      CALL ylm_expansion
      WRITE(stdout,*)
-     WRITE(stdout,*)
-     if(write_dmn)then
+     !
+     IF (write_dmn) THEN
         WRITE(stdout,*) ' ----------------'
         WRITE(stdout,*) ' *** Compute DMN '
         WRITE(stdout,*) ' ----------------'
         WRITE(stdout,*)
         CALL compute_dmn !YN:
         WRITE(stdout,*)
-     end if
-     IF (write_amn) THEN
+     ENDIF
+     !
+     IF (write_amn .OR. wan_mode=='library') THEN
         IF (scdm_proj) THEN
-            WRITE(stdout,*) ' --------------------------'
-            WRITE(stdout,*) ' *** Compute  A with SCDM-k'
-            WRITE(stdout,*) ' --------------------------'
-            WRITE(stdout,*)
-            CALL compute_amn_with_scdm
-         ELSEIF (atom_proj) THEN
-            WRITE(stdout,*) ' -------------------------------------'
-            WRITE(stdout,*) ' *** Compute  A with atomic projectors'
-            WRITE(stdout,*) ' -------------------------------------'
-            WRITE(stdout,*)
-            CALL compute_amn_with_atomproj
+           WRITE(stdout,*) ' --------------------------'
+           WRITE(stdout,*) ' *** Compute  A with SCDM-k'
+           WRITE(stdout,*) ' --------------------------'
+           WRITE(stdout,*)
+           CALL compute_amn_with_scdm
+        ELSEIF (atom_proj) THEN
+           WRITE(stdout,*) ' -------------------------------------'
+           WRITE(stdout,*) ' *** Compute  A with atomic projectors'
+           WRITE(stdout,*) ' -------------------------------------'
+           WRITE(stdout,*)
+           CALL compute_amn_with_atomproj
         ELSE
-            WRITE(stdout,*) ' --------------------------'
-            WRITE(stdout,*) ' *** Compute  A projections'
-            WRITE(stdout,*) ' --------------------------'
-            WRITE(stdout,*)
-            CALL compute_amn
+           WRITE(stdout,*) ' --------------------------'
+           WRITE(stdout,*) ' *** Compute  A projections'
+           WRITE(stdout,*) ' --------------------------'
+           WRITE(stdout,*)
+           CALL compute_amn
         ENDIF
         WRITE(stdout,*)
      ELSE
@@ -967,7 +1007,8 @@ PROGRAM pw2wannier90
         WRITE(stdout,*) ' -----------------------------'
         WRITE(stdout,*)
      ENDIF
-     IF(write_mmn) THEN
+     !
+     IF(write_mmn .OR. wan_mode=='library') THEN
         WRITE(stdout,*) ' ---------------'
         WRITE(stdout,*) ' *** Compute  M '
         WRITE(stdout,*) ' ---------------'
@@ -984,6 +1025,7 @@ PROGRAM pw2wannier90
         WRITE(stdout,*) ' -----------------------------'
         WRITE(stdout,*)
      ENDIF
+     !
      if(noncolin) then
         IF(write_spn) THEN
            WRITE(stdout,*) ' ------------------'
@@ -1005,6 +1047,7 @@ PROGRAM pw2wannier90
         write(stdout,*) '     term  to be computed           '
         write(stdout,*) ' -----------------------------------'
      endif
+     !
      IF(write_uHu.or.write_uIu) THEN
         WRITE(stdout,*) ' ----------------'
         WRITE(stdout,*) ' *** Compute Orb '
@@ -1018,6 +1061,7 @@ PROGRAM pw2wannier90
         WRITE(stdout,*) ' -----------------------------------'
         WRITE(stdout,*)
      ENDIF
+     !
      IF(write_sHu.or.write_sIu) THEN
         WRITE(stdout,*) ' ----------------'
         WRITE(stdout,*) ' *** Compute shc '
@@ -1031,7 +1075,8 @@ PROGRAM pw2wannier90
         WRITE(stdout,*) ' -----------------------------------'
         WRITE(stdout,*)
      ENDIF
-     IF(write_eig) THEN
+     !
+     IF(write_eig .OR. wan_mode=='library') THEN
         WRITE(stdout,*) ' ----------------'
         WRITE(stdout,*) ' *** Write bands '
         WRITE(stdout,*) ' ----------------'
@@ -1044,6 +1089,7 @@ PROGRAM pw2wannier90
         WRITE(stdout,*) ' --------------------------'
         WRITE(stdout,*)
      ENDIF
+     !
      IF(write_unk) THEN
         WRITE(stdout,*) ' --------------------'
         WRITE(stdout,*) ' *** Write plot info '
@@ -1057,6 +1103,7 @@ PROGRAM pw2wannier90
         WRITE(stdout,*) ' -----------------------------'
         WRITE(stdout,*)
      ENDIF
+     !
      IF(write_unkg) THEN
         WRITE(stdout,*) ' --------------------'
         WRITE(stdout,*) ' *** Write parity info '
@@ -1096,45 +1143,17 @@ PROGRAM pw2wannier90
         WRITE(stdout,*) ' -----------------------------------'
         WRITE(stdout,*)
      ENDIF
-     WRITE(stdout,*) ' ------------'
-     WRITE(stdout,*) ' *** Stop pp '
-     WRITE(stdout,*) ' ------------'
-     WRITE(stdout,*)
      !
-  ENDIF
-  !
-  IF(wan_mode=='library') THEN
-     !
-     WRITE(stdout,*) ' Setting up...'
-     CALL setup_nnkp
-     WRITE(stdout,*)
-     WRITE(stdout,*) ' Opening pp-files '
-     CALL openfil_pp
-     WRITE(stdout,*)
-     WRITE(stdout,*) ' Ylm expansion'
-     CALL ylm_expansion
-     WRITE(stdout,*)
-     CALL compute_amn
-     CALL compute_mmn
-     if(noncolin) then
-        IF(write_spn) THEN
-           CALL compute_spin
-        ENDIF
+     IF(wan_mode=='library') THEN
+        WRITE(stdout,*) ' ------------------------------'
+        WRITE(stdout,*) ' *** Running Wannier90 library '
+        WRITE(stdout,*)
+        CALL run_wannier
+        WRITE(stdout,*) ' Wannier90 run finished, see ', TRIM(seedname)//'.wout'
+        WRITE(stdout,*) ' ------------------------------'
+        WRITE(stdout,*)
+        CALL lib_dealloc
      ENDIF
-     IF(write_uHu.or.write_uIu) THEN
-        CALL compute_orb
-     ENDIF
-     CALL write_band
-     IF(write_unk) CALL write_plot
-     IF(write_unkg) THEN
-        CALL write_parity
-     ENDIF
-     WRITE(stdout,*)
-     WRITE(stdout,*) ' Running Wannier90 as a library'
-     CALL run_wannier
-     WRITE(stdout,*) ' Wannier90 run finished, see ', TRIM(seedname)//'.wout'
-     WRITE(stdout,*)
-     CALL lib_dealloc
      !
   ENDIF
   !
@@ -1186,6 +1205,7 @@ SUBROUTINE print_clock_pw2wannier90
   CALL print_clock('scdm_QRCP')
   CALL print_clock('compute_u_kb')
   CALL print_clock('h_psi')
+  CALL print_clock('wfc_exchange')
   !
 END SUBROUTINE print_clock_pw2wannier90
 !
@@ -1206,20 +1226,22 @@ END SUBROUTINE lib_dealloc
 SUBROUTINE setup_nnkp
   !-----------------------------------------------------------------------
   !
-  USE io_global, ONLY : stdout, ionode, ionode_id
+  USE io_global, ONLY : stdout, ionode
   USE kinds,     ONLY : DP
   USE constants, ONLY : eps6, tpi, bohr => BOHR_RADIUS_ANGS
   USE cell_base, ONLY : at, bg, alat
   USE gvect,     ONLY : g, gg
+  USE klist,     ONLY : nks, nkstot
+  USE lsda_mod,  ONLY : lsda, isk
   USE ions_base, ONLY : nat, tau, ityp, atm
   USE mp,        ONLY : mp_bcast, mp_sum
-  USE mp,        ONLY : mp_get_comm_self
   USE w90_library, ONLY : w90_set_comm, w90_input_reader, w90_print_info,      &
-                          w90_get_nn, w90_get_nnkp, w90_get_gkpb, w90_get_proj,&
-                          w90_distribute_kpts
-  USE w90_library_extra, ONLY : input_reader_special, set_kpoint_distribution
-  USE mp_pools,  ONLY : intra_pool_comm
-  USE mp_world,  ONLY : world_comm
+                          w90_get_nn, w90_get_nnkp, w90_get_gkpb, w90_get_proj
+  USE w90_library_extra, ONLY : input_reader_special, set_kpoint_distribution,  &
+                                write_kmesh
+  USE w90_comms, ONLY : mpisize
+  USE mp_pools,  ONLY : intra_pool_comm, inter_pool_comm, me_pool, root_pool,  &
+                        my_pool_id, npool
   USE wvfct,     ONLY : nbnd,npwx
   USE control_flags,    ONLY : gamma_only
   USE noncollin_module, ONLY : noncolin
@@ -1232,7 +1254,9 @@ SUBROUTINE setup_nnkp
   real(DP) :: xnorm, znorm, coseno
   INTEGER  :: exclude_bands(nbnd)
   INTEGER  :: n_proj_found, nexcl
-  INTEGER, ALLOCATABLE :: kpb_(:,:), g_kpb_(:,:,:), dist_k(:)
+  INTEGER, ALLOCATABLE :: dist_k(:)
+  !
+  INTEGER, EXTERNAL :: global_kpoint_index
 
   ! aam: translations between PW2Wannier90 and Wannier90
   ! pw2wannier90   <==>   Wannier90
@@ -1256,8 +1280,6 @@ SUBROUTINE setup_nnkp
 
   ALLOCATE( kpt_latt(3,iknum), stat=ierr)
   IF (ierr /= 0) CALL errore('pw2wannier90', 'Error allocating kpt_latt', 1)
-  ALLOCATE( kpb(iknum,num_nnmax), g_kpb(3,iknum,num_nnmax), stat=ierr)
-  IF (ierr /= 0) CALL errore('pw2wannier90', 'Error allocating kpb/g_kpb', 1)
   ALLOCATE( center_w(3,nbnd), alpha_w(nbnd), l_w(nbnd), &
        mr_w(nbnd), r_w(nbnd), zaxis(3,nbnd), xaxis(3,nbnd), stat=ierr)
        IF (ierr /= 0) CALL errore('pw2wannier90', 'Error allocating center_w/alpha_w/l_w/...', 1)
@@ -1282,7 +1304,9 @@ SUBROUTINE setup_nnkp
 
   WRITE(stdout,'("  - Number of atoms is (",i3,")")') nat
 
-  IF (ionode) THEN
+  ! The library runs on the root rank of each pool, communicating
+  ! over inter_pool_comm.
+  IF (me_pool == root_pool) THEN
      !
      ! Wannier90 v4 has no wannier_setup(). The .win file is the input, read
      ! here by input_reader_special followed by w90_input_reader -- the sequence
@@ -1291,19 +1315,28 @@ SUBROUTINE setup_nnkp
      ! here: w90_input_setopt validates num_wann, which in library mode is only
      ! known once the .win has been read, and input_reader_special is also the
      ! only one of the two that takes the seedname.
-     ! The library is given MPI_COMM_SELF so that it stays serial on this rank,
-     ! as wannier_setup was, and the mp_bcast calls that follow still distribute
-     ! everything it produced. Pools parallelise the A- and M-matrices only;
-     ! compute_amn and compute_mmn gather them here before the library runs.
      !
-     ! TODO: parallelise the wannierisation itself. v4 can run distributed over
-     ! k: give w90_set_comm a real communicator instead of MPI_COMM_SELF, make
-     ! QE's pool k-distribution agree with what w90_distribute_kpts returns, and
-     ! hand w90_set_m_local only the local k-slice of m_mat. That also removes
-     ! the full-size m_mat every rank now holds.
-     OPEN(NEWUNIT=w90out, FILE=TRIM(seedname)//'.wout', STATUS='replace')
-     OPEN(NEWUNIT=w90err, FILE=TRIM(seedname)//'.werr', STATUS='replace')
-     CALL w90_set_comm(w90main, mp_get_comm_self())
+     ! Only ionode holds the .wout/.werr files. Wannier90 writes from rank 0 of
+     ! its communicator only, as wannier90.x itself relies on, but prterr
+     ! flushes both units on every rank, so the other pool roots need a defined
+     ! unit rather than an undefined one.
+     IF (ionode) THEN
+        OPEN(NEWUNIT=w90out, FILE=TRIM(seedname)//'.wout', STATUS='replace')
+        OPEN(NEWUNIT=w90err, FILE=TRIM(seedname)//'.werr', STATUS='replace')
+     ELSE
+        w90out = stdout
+        w90err = stdout
+     ENDIF
+     CALL w90_set_comm(w90main, inter_pool_comm)
+     !
+     ! The internal Wannier90 is built with MPI whenever QE is
+     ! (external/wannier90.cmake, install/make_wannier90.inc.in), but an
+     ! external one linked with -DQE_WANNIER90_INTERNAL=OFF need not be: a
+     ! serial library reports valid_communicator() unconditionally and would
+     ! take this pool's slice of m_mat for the whole matrix. mpisize is 1 there.
+     IF (mpisize(w90main%comm) /= npool) CALL errore('setup_nnkp', &
+        ' the Wannier90 library is not parallel over the pools: rebuild it &
+        &with MPI support, or run with -nk 1', 1)
      !
      CALL input_reader_special(w90main, TRIM(seedname), w90out, w90err, ierr)
      IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in input_reader_special', ierr)
@@ -1327,14 +1360,21 @@ SUBROUTINE setup_nnkp
         ' unit cell in .win does not match the calculation', 1)
      DO ik = 1, iknum
         IF (ANY(ABS(w90main%kpt_latt(:,ik) - kpt_latt(:,ik)) > eps6)) &
-           CALL errore('setup_nnkp', ' k-point in .win does not match the calculation', ik)
+           CALL errore('setup_nnkp', ' k-point in .win does not match the calculation', 1)
      ENDDO
      !
-     ! One rank, so every k-point is local to it
+     ! Hand the library QE's own k-point distribution rather than the one
+     ! w90_distribute_kpts would propose.
+     ! A rank's local order is ascending global index: the block QE gives it.
      ALLOCATE( dist_k(iknum), stat=ierr)
      IF (ierr /= 0) CALL errore('setup_nnkp', 'Error allocating dist_k', 1)
-     CALL w90_distribute_kpts(w90main, iknum, 1, dist_k, w90out, w90err, ierr)
-     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_distribute_kpts', ierr)
+     dist_k(:) = 0
+     DO ik = 1, nks
+        IF (lsda .AND. isk(ik) /= ispinw) CYCLE
+        dist_k(global_kpoint_index(nkstot, ik) - ikstart + 1) = my_pool_id + 1
+     ENDDO
+     CALL mp_sum(dist_k, inter_pool_comm)
+     dist_k(:) = dist_k(:) - 1  ! convert from 1-based to 0-based indices Wannier90 needs
      CALL set_kpoint_distribution(w90main, dist_k, w90out, w90err, ierr)
      IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in set_kpoint_distribution', ierr)
      DEALLOCATE( dist_k)
@@ -1344,25 +1384,20 @@ SUBROUTINE setup_nnkp
      exclude_bands(:) = 0
      IF (ALLOCATED(w90main%exclude_bands)) THEN
         nexcl = SIZE(w90main%exclude_bands)
-        IF (nexcl > nbnd) CALL errore('setup_nnkp',' too many excluded bands',nexcl)
+        IF (nexcl > nbnd) CALL errore('setup_nnkp',' too many excluded bands',1)
         exclude_bands(1:nexcl) = w90main%exclude_bands(:)
      ENDIF
      !
      CALL w90_get_nn(w90main, nnb, w90out, w90err, ierr)
      IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_get_nn', ierr)
-     IF (nnb > num_nnmax) CALL errore('setup_nnkp',' nnb exceeds num_nnmax',nnb)
-     !
-     ! kpb and g_kpb are dimensioned num_nnmax and broadcast at that size, while
-     ! the getters want arrays of exactly nnb neighbours
-     ALLOCATE( kpb_(iknum,nnb), g_kpb_(3,iknum,nnb), stat=ierr)
-     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error allocating kpb_/g_kpb_', 1)
-     CALL w90_get_nnkp(w90main, kpb_, w90out, w90err, ierr)
+     ALLOCATE( kpb(iknum,nnb), g_kpb(3,iknum,nnb), stat=ierr)
+     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error allocating kpb/g_kpb', 1)
+     CALL w90_get_nnkp(w90main, kpb, w90out, w90err, ierr)
      IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_get_nnkp', ierr)
-     CALL w90_get_gkpb(w90main, g_kpb_, w90out, w90err, ierr)
+     CALL write_kmesh(w90main, w90out, w90err, ierr)  ! Write .nnkp file (root only IO inside the subroutine)
+     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in write_kmesh', ierr)
+     CALL w90_get_gkpb(w90main, g_kpb, w90out, w90err, ierr)
      IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_get_gkpb', ierr)
-     kpb(:,1:nnb) = kpb_(:,:)
-     g_kpb(:,:,1:nnb) = g_kpb_(:,:,:)
-     DEALLOCATE( kpb_, g_kpb_)
      !
      ! n_proj_found is pure output here; the arrays only have to be large enough
      CALL w90_get_proj(w90main, n_proj_found, center_w, l_w, mr_w, spin_eig,   &
@@ -1375,7 +1410,7 @@ SUBROUTINE setup_nnkp
      IF (w90main%select_proj%lselproj) CALL errore('setup_nnkp', &
         ' select_projections is not supported in library mode, use wan_mode=standalone', 1)
      IF (n_proj_found /= n_wannier) CALL errore('setup_nnkp', &
-        ' number of projections in .win does not equal num_wann', n_proj_found)
+        ' number of projections in .win does not equal num_wann', 1)
      !
      ! Wannier90 normalises the z and x axes of a projection but not its spin
      ! quantisation axis, so [1,1,1] in the .win arrives here with length sqrt(3).
@@ -1392,21 +1427,26 @@ SUBROUTINE setup_nnkp
      ! w90out and w90err stay open for run_wannier, which closes them
   ENDIF
 
-  CALL mp_bcast(nnb,ionode_id, world_comm)
-  CALL mp_bcast(kpb,ionode_id, world_comm)
-  CALL mp_bcast(g_kpb,ionode_id, world_comm)
-  CALL mp_bcast(num_bands,ionode_id, world_comm)
-  CALL mp_bcast(n_wannier,ionode_id, world_comm)
-  CALL mp_bcast(center_w,ionode_id, world_comm)
-  CALL mp_bcast(l_w,ionode_id, world_comm)
-  CALL mp_bcast(mr_w,ionode_id, world_comm)
-  CALL mp_bcast(r_w,ionode_id, world_comm)
-  CALL mp_bcast(zaxis,ionode_id, world_comm)
-  CALL mp_bcast(xaxis,ionode_id, world_comm)
-  CALL mp_bcast(alpha_w,ionode_id, world_comm)
-  CALL mp_bcast(spin_eig,ionode_id, world_comm)
-  CALL mp_bcast(spin_qaxis,ionode_id, world_comm)
-  CALL mp_bcast(exclude_bands,ionode_id, world_comm)
+  ! every pool root read the same .win, so a broadcast within each pool suffices
+  CALL mp_bcast(nnb, root_pool, intra_pool_comm)
+  IF (.NOT. ALLOCATED(kpb)) THEN
+     ALLOCATE( kpb(iknum,nnb), g_kpb(3,iknum,nnb), stat=ierr)
+     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error allocating kpb/g_kpb', 1)
+  ENDIF
+  CALL mp_bcast(kpb, root_pool, intra_pool_comm)
+  CALL mp_bcast(g_kpb, root_pool, intra_pool_comm)
+  CALL mp_bcast(num_bands, root_pool, intra_pool_comm)
+  CALL mp_bcast(n_wannier, root_pool, intra_pool_comm)
+  CALL mp_bcast(center_w, root_pool, intra_pool_comm)
+  CALL mp_bcast(l_w, root_pool, intra_pool_comm)
+  CALL mp_bcast(mr_w, root_pool, intra_pool_comm)
+  CALL mp_bcast(r_w, root_pool, intra_pool_comm)
+  CALL mp_bcast(zaxis, root_pool, intra_pool_comm)
+  CALL mp_bcast(xaxis, root_pool, intra_pool_comm)
+  CALL mp_bcast(alpha_w, root_pool, intra_pool_comm)
+  CALL mp_bcast(spin_eig, root_pool, intra_pool_comm)
+  CALL mp_bcast(spin_qaxis, root_pool, intra_pool_comm)
+  CALL mp_bcast(exclude_bands, root_pool, intra_pool_comm)
 
   ! Wannier90 v4 spin-expands the projections block. So the number of projections
   ! equals the number of Wannier functions.
@@ -1501,13 +1541,14 @@ END SUBROUTINE setup_nnkp
 SUBROUTINE run_wannier
   !-----------------------------------------------------------------------
   !
-  USE io_global, ONLY : ionode, ionode_id
+  USE io_global, ONLY : ionode
   USE mp,        ONLY : mp_bcast
-  USE mp_world,  ONLY : world_comm
+  USE mp_pools,  ONLY : intra_pool_comm, me_pool, root_pool
   USE w90_library, ONLY : w90_set_m_local, w90_set_eigval, w90_set_u_opt,      &
                           w90_set_u_matrix, w90_disentangle,                   &
                           w90_project_overlap, w90_wannierise, w90_plot,       &
                           w90_get_centres, w90_get_spreads, w90_print_timings
+  USE w90_library_extra, ONLY : write_chkpt
   USE wannier
 
   IMPLICIT NONE
@@ -1527,11 +1568,15 @@ SUBROUTINE run_wannier
   ALLOCATE(wann_spreads(n_wannier), stat=ierr)
   IF (ierr /= 0) CALL errore('pw2wannier90', 'Error allocating wann_spreads', 1)
 
-  IF (ionode) THEN
+  ! The library runs on the root rank of each pool, communicating
+  ! over inter_pool_comm.
+  IF (me_pool == root_pool) THEN
      !
      ! Wannier90 v4 has no wannier_run() either: the minimisation steps are
      ! called individually, on arrays that stay owned here. The setters hand the
-     ! library pointers to them, and the results come back in place.
+     ! library pointers to them, and the results come back in place. Only m_mat
+     ! is distributed; the library keeps eigval, u_mat and u_mat_opt at full
+     ! num_kpts even in parallel, and all-reduces its results over the ranks.
      CALL w90_set_m_local(w90main, m_mat)
      CALL w90_set_eigval(w90main, eigval)
      CALL w90_set_u_opt(w90main, u_mat_opt)
@@ -1546,6 +1591,8 @@ SUBROUTINE run_wannier
      IF (ierr /= 0) CALL errore('run_wannier', 'Error in w90_project_overlap', ierr)
      CALL w90_wannierise(w90main, w90out, w90err, ierr)
      IF (ierr /= 0) CALL errore('run_wannier', 'Error in w90_wannierise', ierr)
+     CALL write_chkpt(w90main, 'postwann', w90out, w90err, ierr)
+     IF (ierr /= 0) CALL errore('run_wannier', 'Error writing the postwann checkpoint', ierr)
      CALL w90_plot(w90main, w90out, w90err, ierr)
      IF (ierr /= 0) CALL errore('run_wannier', 'Error in w90_plot', ierr)
      !
@@ -1561,15 +1608,20 @@ SUBROUTINE run_wannier
      !
      CALL w90_print_timings(w90main, w90out)
      !
-     CLOSE(w90out)
-     CLOSE(w90err, STATUS='DELETE')
+     ! .werr is deleted on success, as wannier90.x does: its presence is the
+     ! signal that the run failed.
+     IF (ionode) THEN
+        CLOSE(w90out)
+        CLOSE(w90err, STATUS='DELETE')
+     ENDIF
   ENDIF
 
-  CALL mp_bcast(u_mat,ionode_id, world_comm)
-  CALL mp_bcast(u_mat_opt,ionode_id, world_comm)
-  CALL mp_bcast(lwindow,ionode_id, world_comm)
-  CALL mp_bcast(wann_centers,ionode_id, world_comm)
-  CALL mp_bcast(wann_spreads,ionode_id, world_comm)
+  ! Broadcast the results from the root of each pool to the rest
+  CALL mp_bcast(u_mat, root_pool, intra_pool_comm)
+  CALL mp_bcast(u_mat_opt, root_pool, intra_pool_comm)
+  CALL mp_bcast(lwindow, root_pool, intra_pool_comm)
+  CALL mp_bcast(wann_centers, root_pool, intra_pool_comm)
+  CALL mp_bcast(wann_spreads, root_pool, intra_pool_comm)
 
   CALL stop_clock('run_wannier')
 
@@ -2183,7 +2235,7 @@ SUBROUTINE compute_dmn
    USE becmod,          ONLY : bec_type, becp, calbec, &
                                allocate_bec_type, deallocate_bec_type
    USE mp_pools,        ONLY : intra_pool_comm, inter_pool_comm, me_pool, root_pool, my_pool_id
-   USE mp,              ONLY : mp_sum, mp_bcast, mp_barrier
+   USE mp,              ONLY : mp_sum, mp_max, mp_bcast, mp_barrier
    USE mp_world,        ONLY : world_comm
    USE noncollin_module,ONLY : noncolin, npol
    USE gvecw,           ONLY : gcutw
@@ -2236,6 +2288,8 @@ SUBROUTINE compute_dmn
    INTEGER :: ikb, jkb, ih, jh, na, nt, ijkb0, ind, nir
    INTEGER :: ikevc, ikpevcq, s, counter, iun_dmn, iun_sym, ig, igp, ip, jp, np, iw, jw
    INTEGER :: ir_start, ir_end
+   INTEGER :: ir_loc, nir_loc_max
+   !! Local irreducible k point index, and its maximum among pools
    INTEGER :: ik_global, isk_global, ipool, ik_local
    COMPLEX(DP), ALLOCATABLE :: phase(:), aux(:), aux2(:), &
                                becp2(:,:), Mkb(:,:), aux_nc(:,:)
@@ -2266,7 +2320,6 @@ SUBROUTINE compute_dmn
    !
    IF (noncolin) CALL errore('compute_dmn', 'Non-collinear not implemented', 1)
    IF (gamma_only) CALL errore('compute_dmn', 'gamma-only not implemented', 1)
-   IF (wan_mode=='library') CALL errore('compute_dmn', 'library mode not implemented', 1)
    !
    CALL start_clock( 'compute_dmn' )
    !
@@ -2670,7 +2723,26 @@ SUBROUTINE compute_dmn
    WRITE(stdout,'(a,i8)') '  DMN(d_matrix_band): nir = ', nir
    WRITE(stdout,'(a,i8)') '  DMN(d_matrix_band): nir in this pool = ', ir_end - ir_start + 1
    !
-   DO ir = ir_start, ir_end
+   ! At each (k, S), if k or S*k is not part of the current k-point pool, it
+   ! communicates with the pool that has it. All pools must participate in
+   ! this communication. Thus, we loop over the maximum number of irreducible
+   ! k points per pool to keep all pools in the loop.
+   !
+   nir_loc_max = ir_end - ir_start + 1
+   CALL mp_max(nir_loc_max, inter_pool_comm)
+   !
+   DO ir_loc = 1, nir_loc_max
+      ir = ir_start + ir_loc - 1
+      !
+      ! No irreducible k point left in this pool: only serve the wavefunctions
+      ! at k and S*k to the other pools.
+      IF (ir > ir_end) THEN
+         DO isym = 0, nsym
+            CALL utility_wfc_exchange() ! only serve the other pools
+         ENDDO
+         CYCLE
+      ENDIF
+      !
       CALL print_progress(ir, ir_end)
       ik_global = ir2ik(ir) ! global index of the ir-th irreducible k point
       !
@@ -2827,7 +2899,7 @@ SUBROUTINE compute_dmn
    !
    WRITE(stdout, *) ' DMN(d_matrix_band) calculated'
    !
-   IF (me_pool == root_pool .AND. wan_mode=='standalone') CLOSE (iun_dmn, STATUS="KEEP")
+   IF (me_pool == root_pool) CLOSE (iun_dmn, STATUS="KEEP")
    !
    CALL mp_barrier(world_comm)
    !
@@ -2869,6 +2941,7 @@ SUBROUTINE compute_mmn
    USE fft_interfaces,  ONLY : fwfft, invfft
    USE klist,           ONLY : nks, nkstot, xk, igk_k, ngk
    USE io_files,        ONLY : nwordwfc, iunwfc
+   USE buffers,         ONLY : get_buffer
    USE gvect,           ONLY : g, ngm, gstart
    USE cell_base,       ONLY : omega, alat, tpiba, at, bg
    USE ions_base,       ONLY : nat, ntyp => nsp, ityp, tau
@@ -2878,9 +2951,8 @@ SUBROUTINE compute_mmn
    USE upf_spinorb,     ONLY : transform_qq_so
    USE becmod,          ONLY : bec_type, becp, calbec, &
                                allocate_bec_type, deallocate_bec_type
-   USE mp_pools,        ONLY : intra_pool_comm, inter_pool_comm, root_pool,     &
-                               my_pool_id, me_pool, npool
-   USE mp,              ONLY : mp_sum, mp_barrier
+   USE mp_pools,        ONLY : intra_pool_comm, inter_pool_comm, root_pool, me_pool
+   USE mp,              ONLY : mp_sum, mp_max, mp_barrier
    USE noncollin_module,ONLY : noncolin, npol, lspinorb
    USE lsda_mod,        ONLY : lsda, isk
    USE gvecw,           ONLY : gcutw
@@ -2892,8 +2964,12 @@ SUBROUTINE compute_mmn
    complex(DP), parameter :: cmplx_i=(0.0_DP,1.0_DP)
    !
    INTEGER :: npw, mmn_tot, ik, ikp, ipol, ib, npwq, i, m, n
+   INTEGER :: nks_max
+   !! Maximum number of local k points among pools
+   LOGICAL :: skip_k
+   !! True if this pool does no work at the current k point
    INTEGER :: ikb, jkb, ih, jh, na, nt, ijkb0
-   INTEGER :: ikevc, ikpevcq, s, counter, ik_g_w90
+   INTEGER :: ikevc, ikpevcq, s, counter, ik_g_w90, ik_loc, nk_local
    COMPLEX(DP), ALLOCATABLE :: phase(:), aux(:), evc_kb_m(:,:), evc_kb(:,:), &
                                Mkb(:,:), aux_nc(:,:)
    COMPLEX(DP), ALLOCATABLE :: evc_k(:, :)
@@ -2936,13 +3012,20 @@ SUBROUTINE compute_mmn
    ENDIF
 
    IF (wan_mode=='library') THEN
-      ALLOCATE(m_mat(num_bands, num_bands, nnb, iknum), stat=ierr)
+      ! m_mat is the only matrix the library takes distributed: it holds just
+      ! this pool's k-points, in ascending global order, which is the local
+      ! ordering implied by the distribution set in setup_nnkp. nk_local may be zero
+      ! -- under LSDA a pool can own only the other spin -- which is supported.
+      IF (lsda) THEN
+         nk_local = COUNT(isk(1:nks) == ispinw)
+      ELSE
+         nk_local = nks
+      ENDIF
+      ALLOCATE(m_mat(num_bands, num_bands, nnb, nk_local), stat=ierr)
       IF (ierr /= 0) CALL errore('pw2wannier90', 'Error allocating m_mat', 1)
-      ! Each pool fills only its own k-points; the rest are summed in below
-      m_mat = (0.0_DP, 0.0_DP)
    ENDIF
 
-   IF (wan_mode=='standalone') THEN
+   IF (write_mmn) THEN
       CALL utility_open_output_file("mmn", .TRUE., iun_mmn)
       IF (ionode) WRITE(iun_mmn, *) num_bands, iknum, nnb
    ENDIF
@@ -3004,18 +3087,41 @@ SUBROUTINE compute_mmn
    !
    WRITE(stdout, '(a,i8)') '  Number of local k points = ', nks
    !
-   DO ik = 1, nks
+   ! At each (k, b), if k+b is not part of the current k-point pool, it
+   ! communicates with the pool that has it. All pools must participate in
+   ! this communication. Thus, we loop over the maximum number of k points
+   ! per pool to keep all pools in the loop.
+   !
+   nks_max = nks
+   CALL mp_max(nks_max, inter_pool_comm)
+   !
+   ik_loc = 0
+   DO ik = 1, nks_max
       !
-      CALL print_progress(ik, nks)
+      IF (ik <= nks) CALL print_progress(ik, nks)
       !
-      IF (lsda .AND. isk(ik) /= ispinw) CYCLE
+      ! No local k point left, or a k point of the other spin: do no work,
+      ! but serve the wavefunctions at k+b to the other pools.
+      IF (ik > nks) THEN
+         skip_k = .TRUE.
+      ELSE
+         skip_k = lsda .AND. isk(ik) /= ispinw
+      ENDIF
       !
+      IF (skip_k) THEN
+         DO ib = 1, nnb
+            CALL utility_wfc_exchange() ! only serve the other pools
+         ENDDO
+         CYCLE
+      ENDIF
+      !
+      ik_loc = ik_loc + 1
       ik_g_w90 = global_kpoint_index(nkstot, ik) - ikstart + 1
       npw = ngk(ik)
       !
       ! Read wavefunctions at k, exclude the excluded bands
       !
-      CALL davcio(evc, 2*nwordwfc, iunwfc, ik, -1 )
+      CALL get_buffer(evc, nwordwfc, iunwfc, ik)
       !
       ! Trim excluded bands from evc
       ibnd_m = 0
@@ -3036,8 +3142,7 @@ SUBROUTINE compute_mmn
       ENDIF
       !
       !
-      !do ib=1,nnb(ik)
-      DO ib=1,nnb
+      DO ib = 1, nnb
          !
          ! Read wavefunction at k+b. If okvan, also compute the product
          ! of beta functions with the wavefunctions.
@@ -3063,7 +3168,7 @@ SUBROUTINE compute_mmn
          !
          ! loops on bands
          !
-         IF (wan_mode=='standalone') THEN
+         IF (write_mmn) THEN
             IF (me_pool == root_pool) WRITE (iun_mmn, '(5i10)') &
                ik_g_w90, kpb(ik_g_w90, ib), (g_kpb(ipol, ik_g_w90, ib), ipol=1,3)
          ENDIF
@@ -3167,35 +3272,32 @@ SUBROUTINE compute_mmn
             ENDDO
          ENDIF
          !
-         IF (wan_mode=='standalone') THEN
+         ! write to file and/or save to m_mat: library mode can do both
+         IF (write_mmn) THEN
             DO n = 1, num_bands
                DO m = 1, num_bands
                   IF (me_pool == root_pool) WRITE (iun_mmn,'(2f18.12)') Mkb(m,n)
                ENDDO
             ENDDO
-         ELSEIF (wan_mode=='library') THEN
-            m_mat(:, :, ib, ik_g_w90) = Mkb(:, :)
-         ELSE
-            CALL errore('compute_mmn',' value of wan_mode not recognised',1)
          ENDIF
+         IF (wan_mode=='library') m_mat(:, :, ib, ik_loc) = Mkb(:, :)
          !
       ENDDO !ib
    ENDDO  !ik
    !
-   IF (me_pool == root_pool .AND. wan_mode=='standalone') CLOSE (iun_mmn, STATUS="KEEP")
+   ! Wannier90 reads a short m_matrix_local as valid, so fail loudly if the
+   ! filled count disagrees with the allocated extent
+   IF (wan_mode=='library' .AND. ik_loc /= nk_local) CALL errore('compute_mmn', &
+      ' local k-point count does not match the allocated m_mat', 1)
    !
-   ! Collect the k-points of the other pools. Ranks of a pool all hold the same
-   ! Mkb (summed over intra_pool_comm above) and each global k belongs to one
-   ! pool only, so this leaves the full m_mat on every rank.
-   !
-   IF (wan_mode=='library') CALL mp_sum(m_mat, inter_pool_comm)
+   IF (me_pool == root_pool .AND. write_mmn) CLOSE (iun_mmn, STATUS="KEEP")
    !
    CALL mp_barrier(world_comm)
    !
    ! If using pool parallelization, concatenate files written by other nodes
-   ! to the main output. Library mode wrote no files to merge.
+   ! to the main output.
    !
-   IF (wan_mode=='standalone') CALL utility_merge_files("mmn", .TRUE.)
+   IF (write_mmn) CALL utility_merge_files("mmn", .TRUE.)
    !
    IF (gamma_only) DEALLOCATE(evc_kb_m)
    DEALLOCATE(Mkb)
@@ -3231,6 +3333,7 @@ SUBROUTINE compute_mmn_ibz
    USE wvfct,           ONLY : nbnd, npwx
    USE control_flags,   ONLY : gamma_only
    USE io_files,        ONLY : nwordwfc, iunwfc
+   USE buffers,         ONLY : get_buffer
    USE wavefunctions,   ONLY : evc, psic
    USE fft_base,        ONLY : dffts
    !USE klist,           ONLY : nkstot, xk, ngk
@@ -3310,7 +3413,7 @@ SUBROUTINE compute_mmn_ibz
       IF( MOD(ik,10) == 0 ) WRITE (stdout,*)
       FLUSH(stdout)
       ikevc1 = ik + ikstart - 1
-      CALL davcio (evc, 2*nwordwfc, iunwfc, ikevc1, -1 )
+      CALL get_buffer(evc, nwordwfc, iunwfc, ikevc1)
       npw = ngk(ik)
       !
       !  USPP
@@ -3326,7 +3429,7 @@ SUBROUTINE compute_mmn_ibz
          CALL kpb_search(ik, ib, ikp, isym, kdiff, skp)
          IF (ionode) WRITE (iun_mmn,'(7i5)') ik, ikp, (nint(kdiff(n)), n=1,3)
          ikevc2 = ikp + ikstart - 1
-         CALL davcio (evc2, 2*nwordwfc, iunwfc, ikevc2, -1 )
+         CALL get_buffer(evc2, nwordwfc, iunwfc, ikevc2)
          CALL rotate_evc(isym, ikp, ik, kdiff, evc2, evc_kb)
          !
          ! USPP
@@ -3600,6 +3703,7 @@ SUBROUTINE compute_mmn_ibz
       USE klist,           ONLY : nkstot, xk, ngk, igk_k
       USE wavefunctions,   ONLY : evc
       USE io_files,        ONLY : nwordwfc, iunwfc
+      USE buffers,         ONLY : get_buffer
       USE wvfct,           ONLY : nbnd, npwx, et
       USE uspp,            ONLY : nkb, vkb, okvan
       USE becmod,          ONLY : bec_type, becp, calbec, &
@@ -3629,7 +3733,7 @@ SUBROUTINE compute_mmn_ibz
       DO ik=1, nkstot
          k = xkc(:,ik)
          npw = ngk(ik)
-         CALL davcio (evc, 2*nwordwfc, iunwfc, ik, -1 )
+         CALL get_buffer(evc, nwordwfc, iunwfc, ik)
          IF (okvan) THEN
             CALL init_us_2(npw, igk_k(1,ik), xk(1,ik), vkb)
             CALL calbec(npw, vkb, evc, becp)
@@ -4297,6 +4401,7 @@ SUBROUTINE compute_spin
    USE fft_interfaces,  ONLY : fwfft, invfft
    USE klist,           ONLY : nkstot, xk, ngk, igk_k, nks
    USE io_files,        ONLY : nwordwfc, iunwfc
+   USE buffers,         ONLY : get_buffer
    USE gvect,           ONLY : g
    USE cell_base,       ONLY : alat, at, bg
    USE ions_base,       ONLY : nat, ntyp => nsp, ityp, tau
@@ -4365,12 +4470,6 @@ SUBROUTINE compute_spin
    ALLOCATE(spn(3, (num_bands*(num_bands+1))/2), stat=ierr)
    IF (ierr /= 0) CALL errore('pw2wannier90', 'Error allocating spn', 1)
    !
-   !ivo
-   ! not sure this is really needed
-   IF (wan_mode=='library') CALL errore('pw2wannier90',&
-        'write_spn not meant to work library mode', 1)
-   !endivo
-   !
    CALL utility_open_output_file("spn", spn_formatted, iun_spn)
    !
    IF (ionode) THEN
@@ -4389,7 +4488,7 @@ SUBROUTINE compute_spin
       !
       IF (lsda .AND. isk(ik) /= ispinw) CYCLE
       !
-      CALL davcio (evc, 2*nwordwfc, iunwfc, ik, -1 )
+      CALL get_buffer(evc, nwordwfc, iunwfc, ik)
       npw = ngk(ik)
       !
       ! Trim excluded bands from evc
@@ -4547,9 +4646,9 @@ SUBROUTINE compute_orb
    !
    USE kinds,           ONLY : DP
    USE io_global,       ONLY : stdout, ionode
-   USE mp,              ONLY : mp_sum, mp_barrier
+   USE mp,              ONLY : mp_sum, mp_max, mp_barrier
    USE mp_world,        ONLY : world_comm
-   USE mp_pools,        ONLY : intra_pool_comm, my_pool_id, me_pool, root_pool
+   USE mp_pools,        ONLY : intra_pool_comm, inter_pool_comm, my_pool_id, me_pool, root_pool
    USE wvfct,           ONLY : npwx, current_k
    USE control_flags,   ONLY : gamma_only
    USE fft_base,        ONLY : dfftp
@@ -4574,6 +4673,10 @@ SUBROUTINE compute_orb
    !
    INTEGER                  :: ik, npw, m, n, ierr
    INTEGER                  :: i_b, i_b1, i_b2
+   INTEGER :: nks_max
+   !! Maximum number of local k points among pools
+   LOGICAL :: skip_k
+   !! True if this pool does no work at the current k point
    COMPLEX(DP), ALLOCATABLE :: evc_b(:, :, :)
    !! Wavefunction at k+b for all b vectors
    COMPLEX(DP), ALLOCATABLE :: evc_b1(:,:)
@@ -4608,12 +4711,6 @@ SUBROUTINE compute_orb
         'write_uHu and write_uIu not yet implemented for gamma_only case',1) !ivo
    IF(okvan) CALL errore('pw2wannier90',&
         'write_uHu and write_uIu not yet implemented with USPP',1) !ivo
-!ivo
-! not sure this is really needed
-   if((write_uhu.or.write_uIu).and.wan_mode=='library')&
-        call errore('pw2wannier90',&
-        'write_uhu, and write_uIu not meant to work library mode',1)
-!endivo
    !
    ALLOCATE(evc_b(npol*npwx, num_bands, nnb), stat=ierr)
    IF (ierr /= 0) CALL errore('pw2wannier90', 'Error allocating evc_b', 1)
@@ -4682,11 +4779,31 @@ SUBROUTINE compute_orb
    !
    WRITE(stdout, '(a,i8)') '  Number of local k points = ', nks
    !
-   DO ik = 1, nks ! loop over k points
+   ! At each (k, b), if k+b is not part of the current k-point pool, it
+   ! communicates with the pool that has it. All pools must participate in
+   ! this communication. Thus, we loop over the maximum number of k points
+   ! per pool to keep all pools in the loop.
+   !
+   nks_max = nks
+   CALL mp_max(nks_max, inter_pool_comm)
+   !
+   DO ik = 1, nks_max ! loop over k points
       !
-      CALL print_progress(ik, nks)
+      IF (ik <= nks) CALL print_progress(ik, nks)
       !
-      IF (lsda .AND. isk(ik) /= ispinw) CYCLE
+      ! No local k point left, or a k point of the other spin: do no work,
+      ! but serve the wavefunctions at k+b to the other pools.
+      IF (ik > nks) THEN
+         skip_k = .TRUE.
+      ELSE
+         skip_k = lsda .AND. isk(ik) /= ispinw
+      ENDIF
+      IF (skip_k) THEN
+         DO i_b = 1, nnb
+            CALL utility_wfc_exchange() ! only serve the other pools
+         ENDDO
+         CYCLE
+      ENDIF
       !
       npw = ngk(ik)
       !
@@ -4853,11 +4970,12 @@ SUBROUTINE compute_shc
    !-----------------------------------------------------------------------
    !
    USE kinds,           ONLY : DP
-   USE mp,              ONLY : mp_sum, mp_barrier
+   USE mp,              ONLY : mp_sum, mp_max, mp_barrier
    USE mp_world,        ONLY : world_comm
-   USE mp_pools,        ONLY : intra_pool_comm, my_pool_id, me_pool, root_pool
+   USE mp_pools,        ONLY : intra_pool_comm, inter_pool_comm, my_pool_id, me_pool, root_pool
    USE io_global,       ONLY : stdout, ionode
    USE io_files,        ONLY : nwordwfc, iunwfc
+   USE buffers,         ONLY : get_buffer
    USE constants,       ONLY : rytoev
    USE fft_base,        ONLY : dfftp
    USE control_flags,   ONLY : gamma_only
@@ -4882,6 +5000,10 @@ SUBROUTINE compute_shc
    COMPLEX(DP), parameter :: cmplx_i = (0.0_DP, 1.0_DP)
    !
    INTEGER :: ik, npw, m, n, ibnd_m, ispol, i_b, ierr
+   INTEGER :: nks_max
+   !! Maximum number of local k points among pools
+   LOGICAL :: skip_k
+   !! True if this pool does no work at the current k point
    COMPLEX(DP) :: sigma_x, sigma_y, sigma_z, cdum1, cdum2
    !
    COMPLEX(DP), ALLOCATABLE :: evc_kb(:, :), H_evc_kb(:, :)
@@ -4904,8 +5026,6 @@ SUBROUTINE compute_shc
    !
    CALL start_clock('compute_shc')
    !
-   IF (wan_mode == 'library') CALL errore('pw2wannier90', &
-      'write_sHu and write_sIu not meant to work with library mode', 1)
    IF (gamma_only) CALL errore('pw2wannier90', &
       'write_sHu and write_sIu not yet implemented for gamma_only case', 1)
    IF (okvan) CALL errore('pw2wannier90', &
@@ -4966,17 +5086,37 @@ SUBROUTINE compute_shc
    WRITE(stdout, *)
    WRITE(stdout, '(a,i8)') '  Number of local k points = ', nks
    !
-   DO ik = 1, nks ! loop over k points
+   ! At each (k, b), if k+b is not part of the current k-point pool, it
+   ! communicates with the pool that has it. All pools must participate in
+   ! this communication. Thus, we loop over the maximum number of k points
+   ! per pool to keep all pools in the loop.
+   !
+   nks_max = nks
+   CALL mp_max(nks_max, inter_pool_comm)
+   !
+   DO ik = 1, nks_max ! loop over k points
       !
-      CALL print_progress(ik, nks)
+      IF (ik <= nks) CALL print_progress(ik, nks)
       !
-      IF (lsda .AND. isk(ik) /= ispinw) CYCLE
+      ! No local k point left, or a k point of the other spin: do no work,
+      ! but serve the wavefunctions at k+b to the other pools.
+      IF (ik > nks) THEN
+         skip_k = .TRUE.
+      ELSE
+         skip_k = lsda .AND. isk(ik) /= ispinw
+      ENDIF
+      IF (skip_k) THEN
+         DO i_b = 1, nnb
+            CALL utility_wfc_exchange() ! only serve the other pools
+         ENDDO
+         CYCLE
+      ENDIF
       !
       npw = ngk(ik)
       !
       ! Read wavefunctions at k, exclude the excluded bands
       !
-      CALL davcio(evc, 2*nwordwfc, iunwfc, ik, -1 )
+      CALL get_buffer(evc, nwordwfc, iunwfc, ik)
       !
       ibnd_m = 0
       DO m = 1, nbnd
@@ -5139,6 +5279,7 @@ SUBROUTINE compute_vmn(add_nonlocal)
    USE wavefunctions,   ONLY : evc
    USE klist,           ONLY : ngk, igk_k, nks, xk
    USE io_files,        ONLY : iunwfc, nwordwfc
+   USE buffers,         ONLY : get_buffer
    USE gvect,           ONLY : g
    USE cell_base,       ONLY : tpiba
    USE uspp,            ONLY : nkb, vkb, okvan
@@ -5256,7 +5397,7 @@ SUBROUTINE compute_vmn(add_nonlocal)
          ndim = npw
       ENDIF
       !
-      CALL davcio(evc, 2*nwordwfc, iunwfc, ik, -1)
+      CALL get_buffer(evc, nwordwfc, iunwfc, ik)
       !
       IF (add_nonlocal) THEN
          CALL init_us_2(npw, igk_k(1,ik), xk(1,ik), vkb)
@@ -5527,6 +5668,7 @@ SUBROUTINE compute_amn
    USE control_flags,   ONLY : gamma_only
    USE wavefunctions,   ONLY : evc
    USE io_files,        ONLY : nwordwfc, iunwfc
+   USE buffers,         ONLY : get_buffer
    USE gvect,           ONLY : g, ngm, gstart
    USE uspp,            ONLY : nkb, vkb, okvan
    USE becmod,          ONLY : bec_type, becp, calbec, &
@@ -5597,7 +5739,7 @@ SUBROUTINE compute_amn
       a_mat = (0.0_DP, 0.0_DP)
    ENDIF
    !
-   IF (wan_mode=='standalone') THEN
+   IF (write_amn) THEN
       IF (irr_bz) THEN
          CALL utility_open_output_file("iamn", .TRUE., iun_amn)
       ELSE
@@ -5621,7 +5763,7 @@ SUBROUTINE compute_amn
       !
       ! Read wavefunctions at k, exclude the excluded bands
       !
-      CALL davcio(evc, 2*nwordwfc, iunwfc, ik, -1 )
+      CALL get_buffer(evc, nwordwfc, iunwfc, ik)
       !
       ibnd1 = 0
       DO ibnd = 1, nbnd
@@ -5742,16 +5884,17 @@ SUBROUTINE compute_amn
       !
       CALL mp_sum(amn, intra_pool_comm)
       !
-      ! Write amn to file or save to a_mat
+      ! Write amn to file and/or save to a_mat: library mode can do both
       !
-      IF (wan_mode == 'standalone') THEN
+      IF (write_amn) THEN
          DO iw = 1, n_proj
             DO ibnd = 1, num_bands
                IF (me_pool == root_pool) WRITE(iun_amn,'(3i10,2f18.12)') &
                   ibnd, iw, ik_g_w90, amn(ibnd, iw)
             ENDDO
          ENDDO
-      ELSEIF (wan_mode=='library') THEN
+      ENDIF
+      IF (wan_mode=='library') THEN
          DO iw = 1, n_proj
             DO ibnd = 1, num_bands
                a_mat(ibnd, iw, ik_g_w90) = amn(ibnd, iw)
@@ -5761,7 +5904,7 @@ SUBROUTINE compute_amn
       !
    ENDDO  ! k-points
    !
-   IF (me_pool == root_pool .AND. wan_mode=='standalone') CLOSE (iun_amn, STATUS="KEEP")
+   IF (me_pool == root_pool .AND. write_amn) CLOSE (iun_amn, STATUS="KEEP")
    !
    ! Collect the k-points of the other pools, as compute_mmn does for m_mat.
    !
@@ -5770,9 +5913,9 @@ SUBROUTINE compute_amn
    CALL mp_barrier(world_comm)
    !
    ! If using pool parallelization, concatenate files written by other nodes
-   ! to the main output. Library mode wrote no files to merge.
+   ! to the main output.
    !
-   IF (wan_mode=='standalone') THEN
+   IF (write_amn) THEN
       IF (irr_bz) THEN
          CALL utility_merge_files("iamn", .TRUE.)
       ELSE
@@ -5810,6 +5953,7 @@ SUBROUTINE compute_amn_with_scdm
    USE control_flags,   ONLY : gamma_only
    USE wavefunctions,   ONLY : evc, psic, psic_nc
    USE io_files,        ONLY : nwordwfc, iunwfc
+   USE buffers,         ONLY : get_buffer
    USE wannier
    USE klist,           ONLY : nkstot, xk, ngk, igk_k, nks
    USE gvect,           ONLY : g, mill
@@ -5949,12 +6093,14 @@ SUBROUTINE compute_amn_with_scdm
    ALLOCATE(nowfc(n_wannier, num_bands), stat=ierr)
    IF (ierr /= 0) CALL errore('pw2wannier90', 'Error allocating nowfc', 1)
    !
-   IF (wan_mode=='library') THEN
-      ALLOCATE(a_mat(num_bands,n_wannier,iknum), stat=ierr)
-      IF (ierr /= 0) CALL errore('pw2wannier90', 'Error allocating a_mat', 1)
-   ENDIF
+   ! a_mat was allocated here but never filled, so library mode would have
+   ! handed the minimisation an uninitialised A. Supporting it needs more than
+   ! that: SCDM has no projections block, so setup_nnkp's w90_get_proj path
+   ! would have to learn about auto_projections first.
+   IF (wan_mode == 'library') CALL errore('compute_amn_with_scdm', &
+      'SCDM is not supported in library mode, use wan_mode=standalone', 1)
    !
-   IF (wan_mode == 'standalone') THEN
+   IF (write_amn) THEN
       ! TODO: append ' with SCDM ' to header
       CALL utility_open_output_file("amn", .TRUE., iun_amn)
       ! CALL date_and_tim( cdate, ctime )
@@ -5984,7 +6130,7 @@ SUBROUTINE compute_amn_with_scdm
    IF (my_pool_id == ipool_gamma) THEN
       !
       ik = ik_gamma_loc
-      CALL davcio(evc, 2*nwordwfc, iunwfc, ik, -1)
+      CALL get_buffer(evc, nwordwfc, iunwfc, ik)
       !
       npw = ngk(ik)
       !
@@ -6182,7 +6328,7 @@ SUBROUTINE compute_amn_with_scdm
       !
       npw = ngk(ik)
       !
-      CALL davcio(evc, 2*nwordwfc, iunwfc, ik, -1)
+      CALL get_buffer(evc, nwordwfc, iunwfc, ik)
       !
       ! Trim excluded bands from evc and et
       evc_k(:, :) = (0.d0, 0.d0)
@@ -6347,6 +6493,7 @@ SUBROUTINE compute_amn_with_atomproj
    USE uspp_init, ONLY : init_us_2
    USE becmod, ONLY: bec_type, becp, calbec, allocate_bec_type, deallocate_bec_type
    USE io_files, ONLY: prefix, restart_dir, tmp_dir, nwordwfc, iunwfc
+   USE buffers,  ONLY: get_buffer
    USE control_flags, ONLY: gamma_only, use_para_diag
    USE pw_restart_new, ONLY: read_collected_wfc
    USE wavefunctions, ONLY: evc
@@ -6724,7 +6871,7 @@ SUBROUTINE compute_amn_with_atomproj
       !
       ! Read wavefunctions at k, exclude the excluded bands
       !
-      CALL davcio(evc, 2*nwordwfc, iunwfc, ik, -1 )
+      CALL get_buffer(evc, nwordwfc, iunwfc, ik)
       !
       ibnd1 = 0
       DO ibnd = 1, nbnd
@@ -7303,7 +7450,7 @@ SUBROUTINE write_band
    CHARACTER(LEN=6), EXTERNAL :: int_to_char
    INTEGER, EXTERNAL :: global_kpoint_index
    !
-   IF (wan_mode == 'standalone') THEN
+   IF (write_eig) THEN
       IF (me_pool == root_pool) THEN
          IF (irr_bz) THEN
             filename = TRIM(seedname) // ".ieig"
@@ -7313,12 +7460,11 @@ SUBROUTINE write_band
          IF (.NOT. ionode) filename = TRIM(filename) // TRIM(int_to_char(my_pool_id+1))
          OPEN(NEWUNIT=iun_band, FILE=TRIM(filename), FORM='FORMATTED', STATUS='REPLACE')
       ENDIF
-   ELSEIF (wan_mode == 'library') THEN
+   ENDIF
+   IF (wan_mode == 'library') THEN
       ALLOCATE(eigval(num_bands, iknum), stat=ierr)
       IF (ierr /= 0) CALL errore('pw2wannier90', 'Error allocating eigval', 1)
       eigval = 0.0_DP
-   ELSE
-      CALL errore('write_band', 'value of wan_mode not recognised', 1)
    ENDIF
    !
    !
@@ -7331,23 +7477,18 @@ SUBROUTINE write_band
       DO ibnd = 1, nbnd
          IF (excluded_band(ibnd)) CYCLE
          ibnd1 = ibnd1 + 1
-         IF (wan_mode == 'standalone') THEN
-            IF (me_pool == root_pool) WRITE (iun_band,'(2i10,f18.12)') ibnd1, ikevc_g, et(ibnd,ik)*rytoev
-         ELSEIF (wan_mode == 'library') THEN
-            eigval(ibnd1,ikevc_g) = et(ibnd,ik)*rytoev
-         ENDIF
+         IF (write_eig .AND. me_pool == root_pool) &
+            WRITE (iun_band,'(2i10,f18.12)') ibnd1, ikevc_g, et(ibnd,ik)*rytoev
+         IF (wan_mode == 'library') eigval(ibnd1,ikevc_g) = et(ibnd,ik)*rytoev
       ENDDO
    ENDDO
    !
-   IF (wan_mode == 'standalone') THEN
-      IF (me_pool == root_pool) CLOSE(iun_band, STATUS="KEEP")
-   ENDIF
+   IF (write_eig .AND. me_pool == root_pool) CLOSE(iun_band, STATUS="KEEP")
    IF (wan_mode == 'library') CALL mp_sum(eigval, inter_pool_comm)
    !
    CALL mp_barrier(world_comm)
    !
-   ! Library mode wrote no files to merge.
-   IF (wan_mode == 'standalone') CALL utility_merge_files("eig", .TRUE.)
+   IF (write_eig) CALL utility_merge_files("eig", .TRUE.)
    !
 END SUBROUTINE write_band
 
@@ -7358,6 +7499,7 @@ SUBROUTINE write_plot
    USE control_flags, ONLY : gamma_only
    USE wavefunctions, ONLY : evc
    USE io_files, ONLY : nwordwfc, iunwfc
+   USE buffers,  ONLY : get_buffer
    USE wannier
    USE klist,           ONLY : nkstot, xk, ngk, igk_k, nks
    USE gvect,           ONLY : g, ngm
@@ -7453,7 +7595,7 @@ SUBROUTINE write_plot
          ENDIF
       ENDIF
       !
-      CALL davcio(evc, 2*nwordwfc, iunwfc, ik, -1 )
+      CALL get_buffer(evc, nwordwfc, iunwfc, ik)
       !
       DO ibnd = 1, nbnd
          IF (excluded_band(ibnd)) CYCLE
@@ -7527,6 +7669,7 @@ SUBROUTINE write_parity
    USE control_flags,        ONLY : gamma_only
    USE wavefunctions,        ONLY : evc
    USE io_files,             ONLY : nwordwfc, iunwfc
+   USE buffers,              ONLY : get_buffer
    USE klist,                ONLY : nkstot, xk, igk_k, ngk, nks
    USE gvect,                ONLY : g, ngm, mill
    USE cell_base,            ONLY : at
@@ -7612,7 +7755,7 @@ SUBROUTINE write_parity
       !
       ! building the evc array corresponding to the Gamma point
       !
-      CALL davcio(evc, 2*nwordwfc, iunwfc, kgamma, -1)
+      CALL get_buffer(evc, nwordwfc, iunwfc, kgamma)
       npw = ngk(kgamma)
       !
       ! Count and identify the G vectors we will be extracting for each cpu.
@@ -7666,6 +7809,7 @@ SUBROUTINE wan2sic
   USE io_global,  ONLY : stdout
   USE kinds, ONLY : DP
   USE io_files, ONLY : iunwfc, nwordwfc, nwordwann
+  USE buffers,  ONLY : get_buffer
   USE gvect, ONLY : g, ngm
   USE wavefunctions, ONLY : evc, psic
   USE wvfct, ONLY : nbnd, npwx
@@ -7702,7 +7846,7 @@ SUBROUTINE wan2sic
   !
   DO ik=1,iknum
      ikevc = ik + ikstart - 1
-     CALL davcio (evc, 2*nwordwfc, iunwfc, ikevc, -1)
+     CALL get_buffer(evc, nwordwfc, iunwfc, ikevc)
      npw = ngk(ik)
      WRITE(stdout,*) 'npw ',npw
      DO iw = 1, n_wannier
