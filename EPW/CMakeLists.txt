@@ -73,7 +73,6 @@ set(sources
     src/global_setups.f90
     src/qe_wrappers.f90
     src/dvqhub.f90
-    src/onemkl_wrappers.f90
     )
 qe_enable_cuda_fortran("${sources}")
 
@@ -95,6 +94,7 @@ target_link_libraries(
             qe_openacc_fortran)
 
 if(QE_ENABLE_ONEAPI)
+    target_sources(qe_epw PRIVATE src/onemkl_wrappers.f90)
     target_link_libraries(qe_epw PRIVATE MKL::sycl)
 endif()
 
