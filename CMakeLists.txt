@@ -1,13 +1,5 @@
-cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
-# CMake < 3.13 cannot install external targets:
-# https://gitlab.kitware.com/cmake/cmake/merge_requests/2152
-
-# CMake < 3.14 generates incorrect dependency graphs with
-# alias targets:
-# https://gitlab.kitware.com/cmake/cmake/merge_requests/2521
-
-# CMake < 3.20 does not support NVHPC compiler id
-# https://cmake.org/cmake/help/latest/release/3.20.html#compilers
+cmake_minimum_required(VERSION 3.25 FATAL_ERROR)
+# CMake < 3.25: Wannier90 v4 requires CMake >= 3.25
 
 if(POLICY CMP0144)
   cmake_policy(SET CMP0144 NEW) # v3.27+ find_package() uses upper-case <PACKAGENAME>_ROOT variables.
@@ -388,9 +380,6 @@ endif(QE_ENABLE_CUDA OR QE_ENABLE_PROFILE_NVTX)
 if(QE_ENABLE_ROCM)
   if(NOT QE_ENABLE_OFFLOAD)
     message(FATAL_ERROR "QE_ENABLE_ROCM=ON requires QE_ENABLE_OFFLOAD=ON")
-  endif()
-  if(CMAKE_VERSION VERSION_LESS 3.21.0)
-    message(FATAL_ERROR "QE_ENABLE_ROCM=ON require CMake 3.21.0 or later")
   endif()
   enable_language(HIP)
   set(CMAKE_HIP_LINKER_PREFERENCE_PROPAGATES 0)

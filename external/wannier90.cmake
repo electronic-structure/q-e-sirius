@@ -6,17 +6,6 @@ qe_install_targets(qe_wannier90)
 if(QE_WANNIER90_INTERNAL)
     message(STATUS "Installing Wannier90 via submodule")
 
-    # Wannier90 v4's own CMake asks for a newer CMake than QE does, and finds
-    # BLAS/LAPACK for itself with find_package(... REQUIRED). Both only bite on
-    # this path, so check them here rather than letting configuration fail
-    # somewhere inside the submodule.
-    if(CMAKE_VERSION VERSION_LESS 3.25)
-        message(FATAL_ERROR
-            "Wannier90 v4 requires CMake >= 3.25 (QE itself requires >= 3.20). "
-            "Upgrade CMake, or build against an external Wannier90 with "
-            "-DQE_WANNIER90_INTERNAL=OFF -DWANNIER90_ROOT=<path>.")
-    endif()
-
     qe_git_submodule_update(external/wannier90)
 
     if(BLA_VENDOR STREQUAL "NVPL")
