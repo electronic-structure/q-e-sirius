@@ -20,7 +20,7 @@ make all
 `make -jN` runs parallel compilation on `N` processors.
 Link to binaries are found in bin/.
 
-Using "CMake" (v.3.14 or later):
+Using "CMake" (v.3.25 or later):
 
 ```
 mkdir ./build
