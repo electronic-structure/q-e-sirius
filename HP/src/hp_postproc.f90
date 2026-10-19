@@ -48,6 +48,7 @@ SUBROUTINE hp_postproc
              ipol,           & ! dummy index running over 3 cartesian coordinates
              nt,             & ! dummy index running over atomic types
              unithub,        & ! unit number
+             unithub_yml,    & ! for YAML output
              unithub2,       & ! unit number
              na_sc,          & ! dummy index
              nath_scbg         ! the size of chi matrix including the background term
@@ -174,6 +175,8 @@ SUBROUTINE alloc_pp
   unithub = find_free_unit()
   filenamehub = trim(prefix) // ".Hubbard_parameters.dat"
   OPEN(unithub, file = filenamehub, form = 'formatted', status = 'unknown')
+  unithub_yml = find_free_unit()
+  OPEN(unithub_yml, file = "hp.yml", form = 'formatted', status = 'unknown')
   !
   RETURN 
   !
@@ -203,6 +206,7 @@ SUBROUTINE dealloc_pp
   DEALLOCATE (Hubbard_matrix)
   !
   CLOSE(unithub)
+  CLOSE(unithub_yml)
   !
   RETURN
   !
@@ -702,6 +706,7 @@ SUBROUTINE calculate_Hubbard_parameters()
   IMPLICIT NONE
   INTEGER :: nt1, nt2
   CHARACTER(len=2) :: Hubbard_manifold
+  CHARACTER(LEN=11) :: atom_label
   CHARACTER(LEN=6), EXTERNAL :: int_to_char
   !
   ! Calculate the matrix of Hubbard parametres: CHI0^{-1} - CHI^{-1}
@@ -733,6 +738,9 @@ SUBROUTINE calculate_Hubbard_parameters()
                                               l_to_spdf(Hubbard_l(nt1),.FALSE.)
         WRITE(unithub,'(7x,i3,6x,i3,3x,a4,4x,i2,4x,i3,9x,a4,7x,a2,3x,f10.4)') &
                 & na, nt1, atm(nt1), spin(na), nt2, atm_new(nt2), Hubbard_manifold, Hubbard_matrix(na,na)
+        WRITE(atom_label,'("atom",I3.3,"-",A)') na, TRIM(atm_new(nt2))
+        WRITE(unithub_yml,'(A,":")')atom_label
+        WRITE(unithub_yml,'(2X,"U:",F12.6)')Hubbard_matrix(na,na)
      ENDIF
   ENDDO
   WRITE(unithub,'(/2x,"=-------------------------------------------------------------------------------=",/)')
@@ -816,6 +824,7 @@ SUBROUTINE write_uv (lflag)
   LOGICAL :: lflag  ! if .true.  then write V to file
                     ! if .false. then do not write V to file
   CHARACTER(len=2) :: Hubbard_manifold, Hubbard_manifold2
+  CHARACTER(LEN=17) :: orb_label
   CHARACTER(LEN=6), EXTERNAL :: int_to_char
   !
   ! Find and open unit to write info
@@ -966,6 +975,15 @@ SUBROUTINE write_uv (lflag)
                             ADJUSTR(atm_new(nt2)), Hubbard_manifold2, &
                             na, auxindex(na,indexord(nb)),         &
                             Hubbard_matrix(na,indexord(nb))
+                   ! write yaml for SIRIUS
+                   IF (na .NE. auxindex(na,indexord(nb))) THEN
+                       WRITE(orb_label,'(A,"-",I3.3,"-",A,"-",I3.3)') &
+                                    TRIM(atm_new(nt)),  na, &
+                                    TRIM(atm_new(nt2)), auxindex(na,indexord(nb))
+                       WRITE(unithub_yml,'(A,":")') TRIM(orb_label)
+                       WRITE(unithub_yml,'(2X,A2,"-",A2":",F12.6)') &
+                                 Hubbard_manifold, Hubbard_manifold2, Hubbard_matrix(na,indexord(nb))
+                   ENDIF
               ENDIF
            ELSE
               ! Print couples only

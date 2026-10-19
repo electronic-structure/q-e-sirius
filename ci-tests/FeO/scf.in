@@ -1,0 +1,52 @@
+&CONTROL
+  calculation = 'scf'
+  etot_conv_thr =   1.0000000000d-05
+  forc_conv_thr =   5.0000000000d-05
+  max_seconds =   1.0260000000d+04
+  outdir = './out/'
+  prefix = 'FeO'
+  pseudo_dir = '.'
+  tprnfor = .true.
+  tstress = .true.
+  verbosity = 'high'
+/
+&SYSTEM
+  degauss =   1.0000000000d-02
+  ecutrho =   1000.0
+  ecutwfc =   250.0
+  ibrav = 0
+  nat = 2
+  nosym = .false.
+  nspin = 2
+  ntyp = 2
+  occupations = 'smearing'
+  smearing = 'cold'
+  starting_magnetization(1) =   3.1250000000d-01
+  starting_magnetization(2) =   1.0000000000d-01
+/
+&ELECTRONS
+  conv_thr =   2.0000000000d-15
+  diagonalization = 'davidson'
+  electron_maxstep = 300
+  mixing_beta =   4.0000000000d-01
+/
+ATOMIC_SPECIES
+Fe     55.845 Fe.upf
+O      15.9994 O.upf
+ATOMIC_POSITIONS angstrom
+Fe           0.0000000000       0.0000000000       0.0000000000
+O            2.1500000000       2.1500000000       2.1500000000
+K_POINTS automatic
+7 7 7 0 0 0
+CELL_PARAMETERS angstrom
+      0.0000000000       2.1500000000       2.1500000000
+      2.1500000000       0.0000000000       2.1500000000
+      2.1500000000       2.1500000000       0.0000000000
+HUBBARD	ortho-atomic
+ V	Fe-3d	Fe-3d	1	1	5.0
+ V	Fe-3d	O-2p	1	28	2.0
+ V	Fe-3d	O-2p	1	24	2.0
+ V	Fe-3d	O-2p	1	22	2.0
+ V	Fe-3d	O-2p	1	12	2.0
+ V	Fe-3d	O-2p	1	10	2.0
+ V	Fe-3d	O-2p	1	6	2.0

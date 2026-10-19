@@ -42,6 +42,7 @@ PROGRAM pwscf
   USE read_input,           ONLY : read_input_file
   USE command_line_options, ONLY : input_file_, command_line, nimage_
   USE upf_utils,            ONLY : matches
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -55,6 +56,9 @@ PROGRAM pwscf
   !! true if running "manypw.x"
   !
   CALL mp_startup( start_images=.TRUE., images_only=.TRUE. )
+#if defined(__SIRIUS)
+  CALL sirius_initialize(call_mpi_init=.false.)
+#endif
   !
   !
   CALL environment_start( 'PWSCF' )

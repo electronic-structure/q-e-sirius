@@ -169,6 +169,9 @@ SUBROUTINE start_clock( label )
   USE mytime,    ONLY : nclock, clock_label, notrunning, no, maxclock, &
                         t0cpu, t0wall, f_wall, f_tcpu
   USE nvtx
+#if defined(__SIRIUS)
+  USE sirius
+#endif
   !
   IMPLICIT NONE
   !
@@ -182,6 +185,10 @@ SUBROUTINE start_clock( label )
   WRITE( stdout,'(I3," depth=",I2," start_clock ",A )') mpime,trace_depth, label ; FLUSH(stdout)
   !WRITE( stdout, '("mpime = ",I2,", TRACE (depth=",I2,") Start: ",A12)') mpime, trace_depth, label
   trace_depth = trace_depth + 1
+#endif
+  !
+#if defined(__SIRIUS)
+  CALL sirius_start_timer(label)
 #endif
   !
   IF ( no .and. ( nclock == 1 ) ) RETURN
@@ -244,6 +251,9 @@ SUBROUTINE stop_clock( label )
   USE mytime,    ONLY : no, nclock, clock_label, cputime, walltime, &
                         notrunning, called, t0cpu, t0wall, f_wall, f_tcpu
   USE nvtx
+#if defined(__SIRIUS)
+  USE sirius
+#endif
   !
   IMPLICIT NONE
   !
@@ -257,6 +267,10 @@ SUBROUTINE stop_clock( label )
   if (trace_depth <= max_print_depth ) &  ! used to gauge the ammount of output
   WRITE( stdout,'(I3," depth=",I2," stop_clock ",A )') mpime, trace_depth, label ; FLUSH(stdout)
   !WRITE( *, '("mpime = ",I2,", TRACE (depth=",I2,") End: ",A12)') mpime, trace_depth, label
+#endif
+  !
+#if defined(__SIRIUS)
+  CALL sirius_stop_timer(label)
 #endif
   !
   IF ( no ) RETURN

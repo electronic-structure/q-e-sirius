@@ -38,6 +38,8 @@ SUBROUTINE screen_coeff ()
   USE symm_base,            ONLY : nsym
   USE cell_base,            ONLY : omega
   !
+  USE mod_sirius
+  !
   IMPLICIT NONE
   ! 
   INTEGER :: iq, nqs, spin_ref, is, ip, iq_ibz
@@ -94,7 +96,11 @@ SUBROUTINE screen_coeff ()
 
   nqs = nqstot
   !
-  IF (nqs == 1) do_real_space = .TRUE. 
+#if defined(__SIRIUS)
+  CALL sirius_initialize(call_mpi_init=.false.)
+#endif
+
+  IF (nqs == 1) do_real_space = .TRUE.
   IF (do_real_space) THEN 
      ALLOCATE ( drhor_scf(dffts%nnr,nspin_mag) ) 
      !!JA drhor_scf = ZERO no needed
@@ -149,6 +155,14 @@ SUBROUTINE screen_coeff ()
     ! ... Retrive the rho_wann_q(r) from buffer in REAL space
     !
     IF (kcw_iverbosity .gt. -1 ) WRITE(stdout,'(8X, "INFO: rhowan_q(r) RETRIEVED"/)') 
+#if defined(__SIRIUS)
+    ! TODO: there were some logic change in KCW related to the new irr_bz flag
+    !       need to test if nscf with sirius works
+    IF ( .not. setup_pw ) THEN
+      CALL clear_sirius()
+      CALL setup_sirius()
+    END IF
+#endif
     !
     ! The NSCF can be run only once for each qpoint if we are not using symmeties
     ! If using symmetry this nneds to be done inside the wannier loop as each wannier 
@@ -157,6 +171,9 @@ SUBROUTINE screen_coeff ()
        CALL kcw_run_nscf(do_band)
        IF (kcw_iverbosity .gt. -1) WRITE(stdout,'(/,8X, "INFO: NSCF calculation DONE",/)')
     ENDIF
+#if defined(__SIRIUS)
+    CALL sirius_create_hamiltonian(gs_handler, h0_handler)
+#endif
     ! 
     IF (.NOT. irr_bz) THEN
        CALL kcw_initialize_ph ( ) 
@@ -396,6 +413,8 @@ SUBROUTINE screen_coeff ()
     WRITE(876,'(i5)') num_wann
   ENDIF
   !
+  !opening a file for the alpha values in yml format
+  OPEN (954, file = 'kcw.yml')
   DO jwann = iorb_start, iorb_end
     !
     iwann = group_alpha(jwann)
@@ -415,6 +434,11 @@ SUBROUTINE screen_coeff ()
     alpha_final(iwann) = alpha
     IF (i_orb == -1) WRITE(876,'(i5, 2(3x, F16.12))') iwann, alpha, REAL(sh(iwann))
     !
+    !filling yml file
+    !
+    WRITE(954,'("iwann",I4.4,":")') iwann
+    WRITE(954,'(2X,"alpha:",F12.6)') alpha
+    !
   ENDDO
   DEALLOCATE(vki_u, sh, vki_r)
   !
@@ -422,6 +446,10 @@ SUBROUTINE screen_coeff ()
   IF ( i_orb == -1 ) CLOSE (876)
   !
   CALL kcw_deallocate_symmetry_arrays()
+#if defined(__SIRIUS)
+  CALL clear_sirius()
+  CALL sirius_finalize(call_mpi_fin=.false.)
+#endif
   !
 9010 FORMAT(/, 8x, "iq =", i4, 3x, "iwann =", i4, 3x, "rPi_q =", 2f15.8, 3x, & 
                "rPi_q_RS =", 2f15.8, 3x, "uPi_q =", 2f15.8, 3x, "Self Hartree =", 2f15.8)

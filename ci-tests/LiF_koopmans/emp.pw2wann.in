@@ -1,0 +1,8 @@
+&inputpp
+ outdir   = './out/'
+ prefix   = 'aiida'
+ seedname = 'wann_emp'
+ wan_mode   =  'standalone'
+ write_unk  = .false.
+ spin_component = 'up'
+/
