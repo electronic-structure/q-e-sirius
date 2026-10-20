@@ -33,6 +33,13 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${qe_BINARY_DIR}/bin
     PATH "Single output directory for building all executables.")
 
 find_package(sirius CONFIG REQUIRED)
+get_target_property(
+    inc_dirs
+    sirius::sirius
+    INTERFACE_INCLUDE_DIRECTORIES
+)
+
+message(STATUS "SIRIUS Fortran module/include directories: ${inc_dirs}")
 
 ###########################################################
 # Build helpers
@@ -78,10 +85,6 @@ include(CMakeDependentOption)
 
 option(QE_ENABLE_SIRIUS
     "enable SIRIUS interface" OFF)
-cmake_dependent_option(QE_ENABLE_OFFLOAD
-    "enable OpenMP offload"
-    OFF "QE_ENABLE_OPENMP" OFF)
-
 option(QE_ENABLE_MPI
     "enable distributed execution support via MPI" ON)
 option(QE_ENABLE_MPI_GPU_AWARE
