@@ -70,9 +70,6 @@ include(CMakeDependentOption)
 
 option(QE_ENABLE_SIRIUS
     "enable SIRIUS interface" OFF)
-cmake_dependent_option(QE_ENABLE_OFFLOAD
-    "enable OpenMP offload"
-    OFF "QE_ENABLE_OPENMP" OFF)
 
 option(QE_ENABLE_MPI
     "enable distributed execution support via MPI" ON)

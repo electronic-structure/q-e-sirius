@@ -318,7 +318,7 @@ if(QE_ENABLE_CUDA)
 endif()
 
 if(QE_ENABLE_SIRIUS)
-    target_link_libraries(qe_pw PRIVATE sirius::sirius)
+    target_link_libraries(qe_pw PUBLIC sirius::sirius)
 endif(QE_ENABLE_SIRIUS)
 
 if ("legacy" IN_LIST QE_ENABLE_PLUGINS) 
