@@ -45,7 +45,7 @@ MODULE control_lr
   !
   ! Parameters controlling DFPT self-consistent iteration
   !
-  INTEGER, PARAMETER :: maxter = 150
+  INTEGER, PARAMETER :: maxter = 500
   !! maximum number of iterations
   LOGICAL :: convt
   !! if TRUE the DFPT has converged

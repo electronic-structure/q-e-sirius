@@ -358,7 +358,7 @@ SUBROUTINE input_sanity_crpa()
   IF (thresh_init_lr <= 0.D0) CALL errore ('hp_readin', ' Wrong thresh_init ', 1)
   !
   ! The CRPA code paths use control_lr's niter_ph and alpha_mix, whose
-  ! maximum size (maxter in control_lr) is smaller than ldaU_hp's maxter.
+  ! maximum size is control_lr's maxter.
   !
   IF (niter_ph < 1 .OR. niter_ph > maxter_lr) &
      CALL errore ('hp_readin', ' Wrong niter_max ', 1)
