@@ -1,0 +1,35 @@
+ &control
+    calculation  = 'scf'
+    prefix       = 'BN'
+    restart_mode = 'from_scratch'
+    pseudo_dir   = '../../pseudo/'
+    outdir       = './temp/'
+ /
+ &system
+    ibrav     = 2
+    celldm(1) = 6.83
+    nat       = 2
+    ntyp      = 2
+    ecutwfc   = 40.0
+    nbnd      = 4
+    nosym     = .true.
+    noinv     = .true.
+    ! Doping: partially occupied active manifold makes cDFPT meaningful
+    tot_charge  = +1.0
+    occupations = 'smearing'
+    smearing    = 'gaussian'
+    degauss     = 0.1d0
+ /
+ &electrons
+    conv_thr        = 1.0d-12
+    mixing_beta     = 0.7
+    diago_full_acc  = .true.
+ /
+ATOMIC_SPECIES
+ B  10.811   B-PBE.upf
+ N  14.0067  N-PBE.upf
+ATOMIC_POSITIONS crystal
+ B  0.125   0.125   0.125
+ N -0.125  -0.125  -0.125
+K_POINTS automatic
+ 2 2 2 0 0 0

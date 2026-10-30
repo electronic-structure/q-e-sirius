@@ -1,0 +1,6 @@
+&inputpp
+   outdir   = './temp/'
+   prefix   = 'BN'
+   seedname = 'BN'
+   wan_mode = 'library'
+/

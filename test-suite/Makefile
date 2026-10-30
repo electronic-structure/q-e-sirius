@@ -177,6 +177,12 @@ clean:
 # Cleaning HP final files
 	@rm -rf hp_*/HP hp_*/*hub* hp_*/*.xml hp_*/*.wfc* hp_*/*.save hp_*/*Hubbard_parameters* \
 		hp_*/*HubbardV* hp_*/*mix* hp_*/*parameters.out hp_*/HUBBARD.dat
+# Cleaning cRPA (hp_crpa_*) files: outdir scratch, Wannier90 chain, Ucrpa outputs.
+# Input files (scf.in, crpa*.in, pw2wan.in, *.win) and benchmarks are kept.
+	@rm -rf hp_crpa_*/temp hp_crpa_*/*.Ucrpa_*.dat hp_crpa_*/*.crpa.q
+	@rm -rf hp_crpa_*/*.amn hp_crpa_*/*.mmn hp_crpa_*/*.eig hp_crpa_*/*.nnkp \
+		hp_crpa_*/*.chk hp_crpa_*/*.chk.fmt hp_crpa_*/*.wout hp_crpa_*/*.werr \
+		hp_crpa_*/*.node_* hp_crpa_*/UNK*
 # Cleaning pw2wannier90 final files
 	@rm -rf pp_*/out pp_*/*.wout pp_*/*.werr pp_*/*.chk pp_*/*.nnkp pp_*/*.amn \
 		pp_*/*.mmn pp_*/*.eig pp_*/*.power pp_*/*.coeff pp_*/*.mat pp_*/*.xyz

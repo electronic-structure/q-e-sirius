@@ -1,0 +1,41 @@
+num_wann  = 5
+num_bands = 6
+exclude_bands = 1-11
+
+! One-shot Wannierization: 5 Mo-d projections on bands 12-17, no frozen window,
+! no disentanglement or localization iterations. Bands 12-17 are separated from
+! bands 11 and 18. Band 12 is needed: on the Gamma-M line the z -> -z even Mo-d
+! state is band 12, 44 meV below band 13 (not degenerate), so bands 13-17 alone
+! have no overlap with one d combination.
+num_iter     = 0
+dis_num_iter = 0
+
+begin atoms_frac
+Mo  0.0000000000  0.0000000000  0.0000000000
+S   0.3333333333 -0.3333333333  0.0919442350
+S   0.3333333333 -0.3333333333 -0.0919442350
+end atoms_frac
+
+begin projections
+Mo: d
+end projections
+
+begin unit_cell_cart
+Bohr
+ 6.020190000000000  0.000000000000000  0.000000000000000
+-3.010095000000000  5.213637475609040  0.000000000000000
+ 0.000000000000000  0.000000000000000 32.125299089400002
+end unit_cell_cart
+
+mp_grid = 3 3 1
+begin kpoints
+  0.000000000000  0.000000000000  0.000000000000
+  0.000000000000  0.333333333333  0.000000000000
+  0.000000000000  0.666666666667  0.000000000000
+  0.333333333333  0.000000000000  0.000000000000
+  0.333333333333  0.333333333333  0.000000000000
+  0.333333333333  0.666666666667  0.000000000000
+  0.666666666667  0.000000000000  0.000000000000
+  0.666666666667  0.333333333333  0.000000000000
+  0.666666666667  0.666666666667  0.000000000000
+end kpoints

@@ -1,0 +1,25 @@
+&INPUTHP
+   method = 'CRPA'
+   prefix = 'BN'
+   outdir = './temp/'
+   niter_max = 100
+   nmix = 12
+/
+&CRPA
+   pert_basis = 'wannier'
+   wannier_seedname = 'BN'
+   wan_dist_thr = 6.d-4
+   wan_dist_thr_mels = 2.5
+   lrpa = .false.
+   tr2 = 1.d-16
+   reduce_io = .true.
+   qplot = .true.
+   ! Constrained DFPT: exclude the active manifold (all 4 bands) from screening
+   cdfpt = .true.
+   cdfpt_active_space = 'bands'
+   cdfpt_bands_min = 1
+   cdfpt_bands_max = 4
+/
+2
+  0.0   0.0   0.0   1
+  0.5  -0.5   0.5   1
