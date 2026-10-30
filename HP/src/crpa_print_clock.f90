@@ -21,6 +21,9 @@ SUBROUTINE crpa_print_clock
   CALL print_clock ('init_us_1')
   CALL print_clock ('newd')
   CALL print_clock ('add_vuspsi')
+  ! Slab-decomposition FFT transpose. print_clock_pw lists only the
+  ! pencil-decomposition names, so this clock is printed here instead.
+  CALL print_clock ('fft_scatter')
   !
   WRITE( stdout, * )
   WRITE( stdout, * )  '    PRINTING TIMING FROM CRPA ROUTINES: '
