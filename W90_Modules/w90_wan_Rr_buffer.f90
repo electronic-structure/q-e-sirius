@@ -39,6 +39,7 @@ MODULE w90_wan_Rr_buffer
     USE kinds,            ONLY : DP
     USE mp,               ONLY : mp_bcast
     USE mp_images,        ONLY : intra_image_comm
+    USE mp_pools,         ONLY : npool, my_pool_id
     USE io_global,        ONLY : stdout, ionode, ionode_id
     USE io_files,         ONLY : prefix
     USE buffers,          ONLY : open_buffer, save_buffer
@@ -63,6 +64,8 @@ MODULE w90_wan_Rr_buffer
     !! logical variable to check file exists in memory
     INTEGER :: iR
     !! Real space lattice vector index
+    INTEGER :: icount
+    !! Loop counter over the R vectors
     INTEGER :: iun
     !! Unit number for writing the Wigner-Seitz grid points
     INTEGER :: ios
@@ -113,13 +116,19 @@ MODULE w90_wan_Rr_buffer
     !
     ALLOCATE(wan_Rr(dffts%nnr, npol, num_wann))
     !
-    DO iR = 1, nR_ws
-      WRITE(stdout, '(I8)', ADVANCE='NO') iR
-      IF (MOD(iR, 10) == 0) WRITE(stdout, '()')
+    DO icount = 1, nR_ws
+      WRITE(stdout, '(I8)', ADVANCE='NO') icount
+      IF (MOD(icount, 10) == 0) WRITE(stdout, '()')
       !
+      ! Each pool starts at a different R vector so that the pool roots have npool
+      ! distinct files in flight. A cold read from a network file system is latency
+      ! bound, so reading the same file in lock-step on all pools leaves a single
+      ! request outstanding, while a file already fetched by another pool is served
+      ! from the page cache.
+      iR = MOD(icount - 1 + my_pool_id * MAX(nR_ws / npool, 1), nR_ws) + 1
       CALL w90_readwrite_wan_Rr(iRlist_ws(:, iR), wan_Rr, -1, tmp_dir_collected)
       CALL save_buffer(wan_Rr, lrwan_r, iuwan_r, iR)
-    ENDDO ! iR
+    ENDDO ! icount
     !
     IF (MOD(nR_ws, 10) /= 0) WRITE(stdout, '()')
     WRITE(stdout, '(5x, A/)') "Done"
