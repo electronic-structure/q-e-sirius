@@ -161,6 +161,8 @@ SUBROUTINE crpa_compute_mel_wannier(dvscf, mel)
    USE apply_dpot_mod,       ONLY : apply_dpot_bands
    USE w90_interface,        ONLY : num_wann
    USE crpacom,              ONLY : dvbare, iuwan, lrwan
+   USE units_lr,             ONLY : lrwfc, iuwfc
+   USE control_lr,           ONLY : lgamma
    !
    IMPLICIT NONE
    !
@@ -225,6 +227,14 @@ SUBROUTINE crpa_compute_mel_wannier(dvscf, mel)
                  mel(:, :, ik), num_wann)
       !
    ENDDO ! ik
+   !
+   ! evc and evq now hold Wannier functions. With nksq == 1 the linear-response
+   ! routines do not reload the KS wavefunctions, so restore them here.
+   !
+   IF (nksq == 1) THEN
+      CALL get_buffer(evc, lrwfc, iuwfc, ikks(1))
+      IF (.NOT. lgamma) CALL get_buffer(evq, lrwfc, iuwfc, ikqs(1))
+   ENDIF
    !
    CALL mp_sum(mel, intra_bgrp_comm)
    !
