@@ -83,9 +83,9 @@ SUBROUTINE dfpt_kernel(code, npert, iter0, lrdvpsi, iudvpsi, dr2, dfpt_data, &
    !------------------------------------------------------------------------------
    !
    USE kinds,                ONLY : DP
-   USE mp_pools,             ONLY : inter_pool_comm
+   USE mp_pools,             ONLY : inter_pool_comm, root_pool
    USE mp_bands,             ONLY : intra_bgrp_comm
-   USE mp,                   ONLY : mp_sum
+   USE mp,                   ONLY : mp_sum, mp_bcast
    USE fft_base,             ONLY : dfftp, dffts
    USE fft_interfaces,       ONLY : fft_interpolate
    USE buffers,              ONLY : get_buffer
@@ -398,6 +398,12 @@ SUBROUTINE dfpt_kernel(code, npert, iter0, lrdvpsi, iudvpsi, dr2, dfpt_data, &
             ENDIF
          ENDDO
       ENDIF
+      !
+      !   dvscftmp differs slightly (~1E-12 relative) between pools. This can make
+      !   the pools disagree on convt when dr2 is close to tr2, so broadcast it to
+      !   make it identical in all pools.
+      !
+      CALL mp_bcast(dvscftmp, root_pool, inter_pool_comm)
       !
       !   And we mix with the old potential: dvscftmp -> dvscfp
       !
