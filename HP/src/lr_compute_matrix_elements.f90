@@ -70,7 +70,7 @@ SUBROUTINE lr_compute_matrix_elements(npert, lrdvpsi, iudvpsi, dvscf, mel)
       IF (lsda) current_spin = isk(ikk)
       !
       CALL get_buffer(evc, lrwfc, iuwfc, ikks(ik))
-      IF (lgamma) CALL get_buffer(evq, lrwfc, iuwfc, ikqs(ik))
+      IF (.NOT. lgamma) CALL get_buffer(evq, lrwfc, iuwfc, ikqs(ik))
       !
       ! Compute dvpsi = dV_tot * psi_k
       !
