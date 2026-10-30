@@ -141,7 +141,7 @@ SUBROUTINE hp_readin()
      ! Read the &CRPA namelist and the optional q-point card;
      ! also sets up the CRPA scratch directories.
      !
-     CALL hp_crpa_readin()
+     CALL crpa_readin()
      !
   ELSE
      !
@@ -347,7 +347,7 @@ SUBROUTINE input_sanity_crpa()
   USE mp_pools,         ONLY : npool
   USE control_lr,       ONLY : tr2_ph, thresh_init_lr => thresh_init, &
                                niter_ph, maxter_lr => maxter
-  USE crpacom,          ONLY : active_bands_min, active_bands_max, wannier_seedname
+  USE crpacom,          ONLY : pert_bands_min, pert_bands_max, wannier_seedname
   USE crpa_pert,        ONLY : pert_basis
   USE constrained_dfpt, ONLY : cdfpt, cdfpt_validate_input
   !
@@ -368,10 +368,10 @@ SUBROUTINE input_sanity_crpa()
   IF (pert_basis == '') CALL errore('hp_readin', 'pert_basis not defined', 1)
   !
   IF (pert_basis == 'bands') THEN
-    IF (active_bands_min < 1) CALL errore('hp_readin', 'active_bands_min is not set', 1)
-    IF (active_bands_max < 1) CALL errore('hp_readin', 'active_bands_max is not set', 1)
-    IF (active_bands_min > active_bands_max) CALL errore('hp_readin', &
-        'active_bands_min cannot be greater than active_bands_max', 1)
+    IF (pert_bands_min < 1) CALL errore('hp_readin', 'pert_bands_min is not set', 1)
+    IF (pert_bands_max < 1) CALL errore('hp_readin', 'pert_bands_max is not set', 1)
+    IF (pert_bands_min > pert_bands_max) CALL errore('hp_readin', &
+        'pert_bands_min cannot be greater than pert_bands_max', 1)
     IF (npool > 1) CALL errore('hp_readin', &
         'pert_basis=bands with pool parallelization (npool > 1) is not implemented', 1)
   ELSEIF (pert_basis == 'wannier') THEN

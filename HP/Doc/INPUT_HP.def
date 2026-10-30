@@ -331,7 +331,7 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program hp.x 
 	}
 
 	var nmix   -type INTEGER {
-	    default { 4 }
+	    default { 12 }
 	    info {
                 Number of iterations used in potential mixing
                 using the modified Broyden method. See:
@@ -431,7 +431,7 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program hp.x 
         }
 
         var pert_basis -type CHARACTER {
-            default { 'bands' }
+            status { REQUIRED }
             options {
                 info {
                     Basis in which the perturbations (and the resulting
@@ -439,7 +439,7 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program hp.x 
                 }
                 opt -val 'bands' {
                     Use products of Bloch bands with band indices from
-                    @ref active_bands_min to @ref active_bands_max as the
+                    @ref pert_bands_min to @ref pert_bands_max as the
                     perturbation basis.
                 }
                 opt -val 'wannier' {
@@ -450,18 +450,18 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program hp.x 
             }
         }
 
-        var active_bands_min -type INTEGER {
+        var pert_bands_min -type INTEGER {
             default { 0 }
-            see { active_bands_max, pert_basis }
+            see { pert_bands_max, pert_basis }
             info {
                 Used only when @ref pert_basis = 'bands'. Minimum band
                 index of the active space that defines the perturbations.
             }
         }
 
-        var active_bands_max -type INTEGER {
+        var pert_bands_max -type INTEGER {
             default { 0 }
-            see { active_bands_min, pert_basis }
+            see { pert_bands_min, pert_basis }
             info {
                 Used only when @ref pert_basis = 'bands'. Maximum band
                 index of the active space that defines the perturbations.
@@ -506,7 +506,7 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program hp.x 
         }
 
         var wan_dist_thr -type REAL {
-            default { 6.D-4 }
+            default { 1.D-4 }
             dimensionality { length }
             units { bohr }
             see { wan_dist_thr_mels }
@@ -515,6 +515,10 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program hp.x 
                 centers of a pair, used to select the perturbations for
                 the self-consistent response calculation. The number of
                 DFPT perturbations is determined by this parameter.
+                Used only when @ref pert_basis = 'wannier'. A small value
+                such as 1.D-4 (with @ref wan_dist_thr_mels at its default)
+                computes only the diagonal (density-density) interactions,
+                provided no two Wannier functions share a center.
             }
         }
 
@@ -664,7 +668,8 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program hp.x 
     card qPointsSpecs {
         label {
             Optional q-point card, read (right after the @b &CRPA namelist)
-            only when @ref qplot = .true.
+            only when @ref qplot = .true. Used only for @ref method = 'CRPA';
+            method = 'LRT' does not read it.
         }
         syntax {
             line {

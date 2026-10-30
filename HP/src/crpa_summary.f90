@@ -22,7 +22,7 @@ SUBROUTINE crpa_summary
   USE funct,            ONLY : write_dft_name
   USE control_lr,       ONLY : ethr_nscf
   USE ldaU,             ONLY : is_hubbard, Hubbard_U, lda_plus_u_kind, Hubbard_V, num_uc
-  USE crpacom,          ONLY : active_bands_min, active_bands_max
+  USE crpacom,          ONLY : pert_bands_min, pert_bands_max
   USE crpa_pert,        ONLY : pert_basis
   USE constrained_dfpt, ONLY : cdfpt, cdfpt_active_space, cdfpt_bands_min, cdfpt_bands_max
 
@@ -99,7 +99,7 @@ SUBROUTINE crpa_summary
   WRITE(stdout, '()')
   WRITE(stdout, '(5x,"Perturbation basis: ",a)') TRIM(pert_basis)
   IF (TRIM(pert_basis) == 'bands') THEN
-     WRITE(stdout, '(5x,5x,"Perturbation bands: ",i5," - ",i5)') active_bands_min, active_bands_max
+     WRITE(stdout, '(5x,5x,"Perturbation bands: ",i5," - ",i5)') pert_bands_min, pert_bands_max
   ENDIF
   WRITE(stdout, '()')
   !

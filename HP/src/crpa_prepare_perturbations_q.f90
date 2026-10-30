@@ -17,8 +17,8 @@ SUBROUTINE crpa_prepare_perturbations_q(iq)
   !
   USE io_global,         ONLY : stdout
   USE qpoint,            ONLY : nksqtot
-  USE crpacom,           ONLY : v_coul_bare, v_coul_scrd, wan_dist_thr, active_bands_min, &
-                                active_bands_max, wan_dist_thr_mels
+  USE crpacom,           ONLY : v_coul_bare, v_coul_scrd, wan_dist_thr, pert_bands_min, &
+                                pert_bands_max, wan_dist_thr_mels
   USE crpa_pert,         ONLY : pert_basis, npert_tot, nmels_tot, pert_nbnd, pert_ibnd_max, &
                                 pert_ibnd_min, pert_iwlist, pert_jwlist, pert_Rlist, &
                                 mels_iwlist, mels_jwlist, mels_Rlist
@@ -31,8 +31,8 @@ SUBROUTINE crpa_prepare_perturbations_q(iq)
   !
   IF (pert_basis == 'bands') THEN
     !
-    pert_ibnd_max = active_bands_max
-    pert_ibnd_min = active_bands_min
+    pert_ibnd_max = pert_bands_max
+    pert_ibnd_min = pert_bands_min
     pert_nbnd = pert_ibnd_max - pert_ibnd_min + 1
     !
     npert_tot = pert_nbnd * pert_nbnd * nksqtot

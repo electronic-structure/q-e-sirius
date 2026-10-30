@@ -52,7 +52,7 @@ PROGRAM hp_main
   ! Dispatch to the CRPA driver
   !
   IF (TRIM(method) == 'CRPA') THEN
-     CALL hp_crpa_run()
+     CALL crpa_run()
      GO TO 104
   ENDIF
   !

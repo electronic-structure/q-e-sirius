@@ -49,9 +49,9 @@ MODULE crpacom
   ! Definition of perturbation basis (for CRPA)
   ! NOTE: For constrained DFPT active space, see LR_Modules/constrained_dfpt.f90
   !
-  INTEGER :: active_bands_max
+  INTEGER :: pert_bands_max
   !! For pert_basis == 'bands': Maximum band index for perturbations
-  INTEGER :: active_bands_min
+  INTEGER :: pert_bands_min
   !! For pert_basis == 'bands': Minimum band index for perturbations
   !
   REAL(DP), ALLOCATABLE :: ns(:)
@@ -115,7 +115,7 @@ MODULE crpa_pert
   USE kinds, ONLY : DP
   !
   CHARACTER(LEN=256) :: pert_basis
-  !! = 'bands' : use product of bands with indices from active_bands_min to active_bands_max
+  !! = 'bands' : use product of bands with indices from pert_bands_min to pert_bands_max
   !! = 'wannier' : use product of Wannier functions
   !
   INTEGER :: npert_tot

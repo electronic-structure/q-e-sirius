@@ -6,12 +6,12 @@
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
 !-----------------------------------------------------------------------
-SUBROUTINE hp_crpa_run()
+SUBROUTINE crpa_run()
   !-----------------------------------------------------------------------
   !
   ! Driver of the CRPA calculation (hp.x with method = 'CRPA').
   !
-  ! Input has already been read (hp_readin -> hp_crpa_readin) and the
+  ! Input has already been read (hp_readin -> crpa_readin) and the
   ! stop condition initialized in hp_main. MPI startup, the preamble,
   ! citations and the environment are also handled by hp_main; this
   ! routine performs the CRPA solver's own initialization, the q-point
@@ -92,4 +92,4 @@ SUBROUTINE hp_crpa_run()
   !
   RETURN
   !
-END SUBROUTINE hp_crpa_run
+END SUBROUTINE crpa_run

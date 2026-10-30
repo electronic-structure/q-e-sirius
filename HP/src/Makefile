@@ -43,9 +43,9 @@ lr_compute_matrix_elements.o \
 hp_allocate_q.o \
 hp_bcast_input.o \
 hpcom.o \
-hp_crpa_bcast_input.o \
-hp_crpa_readin.o \
-hp_crpa_run.o \
+crpa_bcast_input.o \
+crpa_readin.o \
+crpa_run.o \
 hp_clean_q.o \
 hp_close_q.o \
 hp_calc_chi.o \

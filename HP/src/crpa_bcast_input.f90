@@ -7,7 +7,7 @@
 !
 !
 !-----------------------------------------------------------------------
-SUBROUTINE hp_crpa_bcast_input ( )
+SUBROUTINE crpa_bcast_input ( )
   !-----------------------------------------------------------------------
   !
   ! In this routine the first processor sends the CRPA input parameters
@@ -23,7 +23,7 @@ SUBROUTINE hp_crpa_bcast_input ( )
   USE qpoint,           ONLY : nq1, nq2, nq3, start_q, last_q
   USE constrained_dfpt, ONLY : cdfpt, cdfpt_active_space, cdfpt_bands_min, cdfpt_bands_max
   USE crpacom,          ONLY : wannier_seedname, wan_dist_thr, wan_dist_thr_mels, &
-                               active_bands_min, active_bands_max, &
+                               pert_bands_min, pert_bands_max, &
                                folder_wan_Rr, write_wan_Rr, w_freq
   USE crpa_pert,        ONLY : pert_basis
   USE crpa_qpoints,     ONLY : qplot
@@ -77,9 +77,9 @@ SUBROUTINE hp_crpa_bcast_input ( )
   !
   ! CRPA perturbation basis parameters (from crpacom)
   CALL mp_bcast (pert_basis,       meta_ionode_id, world_comm)
-  CALL mp_bcast (active_bands_min, meta_ionode_id, world_comm)
-  CALL mp_bcast (active_bands_max, meta_ionode_id, world_comm)
+  CALL mp_bcast (pert_bands_min,   meta_ionode_id, world_comm)
+  CALL mp_bcast (pert_bands_max,   meta_ionode_id, world_comm)
   !
   RETURN
   !
-END SUBROUTINE hp_crpa_bcast_input
+END SUBROUTINE crpa_bcast_input

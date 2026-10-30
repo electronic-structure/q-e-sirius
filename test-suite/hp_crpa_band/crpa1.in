@@ -8,8 +8,8 @@
 /
 &CRPA
    pert_basis = 'bands'
-   active_bands_min = 1
-   active_bands_max = 4
+   pert_bands_min = 1
+   pert_bands_max = 4
    lrpa = .false.
    tr2 = 1.d-16
    reduce_io = .true.

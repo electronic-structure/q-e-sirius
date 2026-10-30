@@ -7,7 +7,7 @@
 !
 !
 !----------------------------------------------------------------------------
-SUBROUTINE hp_crpa_readin()
+SUBROUTINE crpa_readin()
   !----------------------------------------------------------------------------
   !
   !  This routine reads the CRPA-specific input (the &CRPA namelist and,
@@ -31,7 +31,7 @@ SUBROUTINE hp_crpa_readin()
                                niter_max_hp => niter_max,                       &
                                thresh_init_hp => thresh_init,                   &
                                tmp_dir_hp, tmp_dir_save
-  USE crpacom,          ONLY : wannier_seedname, active_bands_min, active_bands_max, &
+  USE crpacom,          ONLY : wannier_seedname, pert_bands_min, pert_bands_max, &
                                wan_dist_thr, wan_dist_thr_mels, folder_wan_Rr,  &
                                write_wan_Rr, w_freq
   USE crpa_pert,        ONLY : pert_basis
@@ -60,7 +60,7 @@ SUBROUTINE hp_crpa_readin()
   !
   ! wan_dist_thr: Wannier function distance threshold for computing self-consistent response.
   !           The number of DFPT perturbations is determined by this parameter.
-  !           (Default: 6.D-4 bohr)
+  !           (Default: 1.D-4 bohr)
   ! wan_dist_thr_mels: Wannier function distance threshold for computing matrix elements.
   !                 This parameter can be much larger than wan_dist_thr, still does not affect
   !                 computational cost much because they only affect the matrix element
@@ -77,7 +77,7 @@ SUBROUTINE hp_crpa_readin()
   !                (Default: .true.)
   ! w_freq : Complex frequency value for finite-frequency DFPT. (Default: 0 (static DFPT))
   !
-  NAMELIST / CRPA / pert_basis, active_bands_min, active_bands_max,          &
+  NAMELIST / CRPA / pert_basis, pert_bands_min, pert_bands_max,              &
                     wannier_seedname, folder_wan_Rr, write_wan_Rr,           &
                     wan_dist_thr, wan_dist_thr_mels, tr2, lrpa, w_freq,      &
                     diagonalization, conv_thr_nscf, reduce_io,               &
@@ -96,12 +96,12 @@ SUBROUTINE hp_crpa_readin()
   cdfpt_active_space = ''
   cdfpt_bands_min    = 0
   cdfpt_bands_max    = 0
-  pert_basis         = 'bands'
-  active_bands_min   = 0
-  active_bands_max   = 0
+  pert_basis         = ''
+  pert_bands_min     = 0
+  pert_bands_max     = 0
   reduce_io          = .FALSE.
   lrpa               = .FALSE.   ! Needed in dv_of_drho
-  wan_dist_thr       = 6.D-4
+  wan_dist_thr       = 1.D-4
   wan_dist_thr_mels  = -999.0
   w_freq             = (0.d0, 0.d0)
   qplot              = .FALSE.
@@ -118,9 +118,9 @@ SUBROUTINE hp_crpa_readin()
       BACKSPACE(5)
       READ(5, '(A512)', IOSTAT = ios2) line
     ENDIF
-    IF (ios2 /= 0) CALL errore('hp_crpa_readin', 'Could not find namelist &crpa', 2)
+    IF (ios2 /= 0) CALL errore('crpa_readin', 'Could not find namelist &crpa', 2)
     IF (ios /= 0) THEN
-      CALL errore('hp_crpa_readin', 'Bad line in namelist &crpa: "' &
+      CALL errore('crpa_readin', 'Bad line in namelist &crpa: "' &
                  & //TRIM(line)//'" (error could be in the previous line)', 1)
     ENDIF
   ENDIF ! meta_ionode
@@ -133,7 +133,7 @@ SUBROUTINE hp_crpa_readin()
   CASE ('cg')
     isolve = 1
   CASE DEFAULT
-    CALL errore('hp_crpa_readin','diagonalization '//trim(diagonalization)//' not implemented',1)
+    CALL errore('crpa_readin','diagonalization '//trim(diagonalization)//' not implemented',1)
   END SELECT
   !
   ! The names of the lrcom variables have the _ph suffix, so we copy to them and use.
@@ -163,7 +163,7 @@ SUBROUTINE hp_crpa_readin()
   !
   ! Broadcast input parameters over all processors
   !
-  CALL hp_crpa_bcast_input()
+  CALL crpa_bcast_input()
   !
   ! If qplot, read and broadcast q points
   !
@@ -175,7 +175,7 @@ SUBROUTINE hp_crpa_readin()
     !
     CALL mp_bcast(nqaux, meta_ionode_id, world_comm )
     CALL mp_bcast(ios, meta_ionode_id, world_comm )
-    CALL errore ('hp_crpa_readin', 'reading nq', ABS (ios) )
+    CALL errore ('crpa_readin', 'reading nq', ABS (ios) )
     !
     ALLOCATE(xqaux(3,nqaux))
     ALLOCATE(wqaux(nqaux))
@@ -185,7 +185,7 @@ SUBROUTINE hp_crpa_readin()
       ENDDO
     ENDIF
     CALL mp_bcast(ios, meta_ionode_id, world_comm )
-    CALL errore ('hp_crpa_readin', 'reading xq', ABS (ios) )
+    CALL errore ('crpa_readin', 'reading xq', ABS (ios) )
     CALL mp_bcast(xqaux, meta_ionode_id, world_comm )
     CALL mp_bcast(wqaux, meta_ionode_id, world_comm )
     !
@@ -225,4 +225,4 @@ SUBROUTINE hp_crpa_readin()
   !
   RETURN
   !
-END SUBROUTINE hp_crpa_readin
+END SUBROUTINE crpa_readin
