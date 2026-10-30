@@ -15,12 +15,14 @@ subroutine crpa_init()
   USE ions_base,     ONLY : nat, ityp, ntyp => nsp
   USE io_global,     ONLY : stdout
   USE lsda_mod,      ONLY : nspin
-  USE ldaU,          ONLY : Hubbard_lmax, is_hubbard
+  USE ldaU,          ONLY : Hubbard_lmax, is_hubbard, lda_plus_u
   USE qpoint,        ONLY : nq1, nq2, nq3
   USE crpacom,       ONLY : chi0, chi, nqsh
   USE ldaU_hp,       ONLY : code
   USE uspp,          ONLY : okvan
   USE paw_variables, ONLY : okpaw
+  USE symm_base,     ONLY : nosym
+  USE control_flags, ONLY : noinv
                            !  determine_num_pert_only
                            !  perturbed_atom, todo_atom
   !
@@ -33,6 +35,16 @@ subroutine crpa_init()
      'CRPA is not implemented for ultrasoft pseudopotentials', 1)
   IF (okpaw) CALL errore('crpa_init', &
      'CRPA is not implemented for PAW pseudopotentials', 1)
+  IF (lda_plus_u) CALL errore('crpa_init', &
+     'CRPA is not implemented for DFT+Hubbard', 1)
+  !
+  ! The response is symmetrized assuming a totally symmetric perturbation, which a
+  ! Wannier/band pair density is not. Require the pw.x run to disable symmetry.
+  !
+  IF (.NOT. nosym) CALL errore('crpa_init', &
+     'CRPA requires nosym = .true. in the pw.x calculation', 1)
+  IF (.NOT. noinv) CALL errore('crpa_init', &
+     'CRPA requires noinv = .true. in the pw.x calculation', 1)
   !
 !   ALLOCATE (todo_atom(nat))
 !   ALLOCATE (perturbed_atom(nat))
