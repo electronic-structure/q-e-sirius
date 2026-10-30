@@ -23,6 +23,7 @@ subroutine crpa_init()
   USE paw_variables, ONLY : okpaw
   USE symm_base,     ONLY : nosym
   USE control_flags, ONLY : noinv
+  USE noncollin_module, ONLY : noncolin
                            !  determine_num_pert_only
                            !  perturbed_atom, todo_atom
   !
@@ -37,6 +38,10 @@ subroutine crpa_init()
      'CRPA is not implemented for PAW pseudopotentials', 1)
   IF (lda_plus_u) CALL errore('crpa_init', &
      'CRPA is not implemented for DFT+Hubbard', 1)
+  IF (noncolin) CALL errore('crpa_init', &
+     'CRPA is not implemented for noncollinear or spin-orbit calculations', 1)
+  IF (nspin == 2) CALL errore('crpa_init', &
+     'CRPA is not implemented for spin-polarized (LSDA) calculations', 1)
   !
   ! The response is symmetrized assuming a totally symmetric perturbation, which a
   ! Wannier/band pair density is not. Require the pw.x run to disable symmetry.

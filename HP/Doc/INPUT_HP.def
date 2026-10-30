@@ -557,12 +557,14 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program hp.x 
             }
         }
 
-        var w_freq -type COMPLEX {
+        var w_freq_eV -type COMPLEX {
             default { (0.d0, 0.d0) }
+            dimensionality { energy }
+            units { eV }
             info {
                 Complex frequency at which the finite-frequency DFPT
-                response is evaluated. The default (0,0) corresponds to
-                the static response.
+                response is evaluated, in eV. The default (0,0) corresponds
+                to the static response. Not available with @ref cdfpt.
             }
         }
 
@@ -610,6 +612,7 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program hp.x 
                 "active space" is subtracted from the full susceptibility,
                 so that the screening from the active states is excluded.
                 The active space is specified by @ref cdfpt_active_space.
+                Static DFPT only (@ref w_freq_eV = 0).
             }
         }
 

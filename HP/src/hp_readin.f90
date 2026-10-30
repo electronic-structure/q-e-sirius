@@ -347,7 +347,7 @@ SUBROUTINE input_sanity_crpa()
   USE mp_pools,         ONLY : npool
   USE control_lr,       ONLY : tr2_ph, thresh_init_lr => thresh_init, &
                                niter_ph, maxter_lr => maxter
-  USE crpacom,          ONLY : pert_bands_min, pert_bands_max, wannier_seedname
+  USE crpacom,          ONLY : pert_bands_min, pert_bands_max, wannier_seedname, w_freq
   USE crpa_pert,        ONLY : pert_basis
   USE constrained_dfpt, ONLY : cdfpt, cdfpt_validate_input
   !
@@ -383,6 +383,12 @@ SUBROUTINE input_sanity_crpa()
   ! Validate constrained DFPT parameters
   !
   IF (cdfpt) CALL cdfpt_validate_input()
+  !
+  ! cdfpt_subtract_active_wfc is called only in the static sternheimer_kernel.
+  ! dfpt_kernel uses sternheimer_kernel_freq when |w_freq| > 1.d-10.
+  !
+  IF (cdfpt .AND. ABS(w_freq) > 1.d-10) CALL errore('hp_readin', &
+     'cdfpt is implemented only for static DFPT (w_freq_eV = 0)', 1)
   !
   RETURN
   !

@@ -16,6 +16,7 @@ SUBROUTINE crpa_readin()
   !  broadcast, and before read_file().
   !
   USE kinds,            ONLY : DP
+  USE constants,        ONLY : RYTOEV
   USE io_global,        ONLY : meta_ionode, meta_ionode_id
   USE mp,               ONLY : mp_bcast
   USE mp_world,         ONLY : world_comm
@@ -55,6 +56,8 @@ SUBROUTINE crpa_readin()
   INTEGER :: nqaux, iq, ipol
   !
   REAL(DP) :: tr2
+  COMPLEX(DP) :: w_freq_eV
+  !! Input frequency for finite-frequency DFPT, in eV
   !
   CHARACTER(LEN=256), EXTERNAL :: trimcheck
   !
@@ -75,11 +78,11 @@ SUBROUTINE crpa_readin()
   !                If .false. use the existing files in folder_wan_Rr. In this case,
   !                prefix.wan_Rr.xxx and prefix.wan_R.dat files must exist inside folder_wan_Rr.
   !                (Default: .true.)
-  ! w_freq : Complex frequency value for finite-frequency DFPT. (Default: 0 (static DFPT))
+  ! w_freq_eV : Complex frequency for finite-frequency DFPT, in eV. (Default: 0 (static DFPT))
   !
   NAMELIST / CRPA / pert_basis, pert_bands_min, pert_bands_max,              &
                     wannier_seedname, folder_wan_Rr, write_wan_Rr,           &
-                    wan_dist_thr, wan_dist_thr_mels, tr2, lrpa, w_freq,      &
+                    wan_dist_thr, wan_dist_thr_mels, tr2, lrpa, w_freq_eV,   &
                     diagonalization, conv_thr_nscf, reduce_io,               &
                     cdfpt, cdfpt_active_space, cdfpt_bands_min, cdfpt_bands_max, &
                     qplot
@@ -103,7 +106,7 @@ SUBROUTINE crpa_readin()
   lrpa               = .FALSE.   ! Needed in dv_of_drho
   wan_dist_thr       = 1.D-4
   wan_dist_thr_mels  = -999.0
-  w_freq             = (0.d0, 0.d0)
+  w_freq_eV          = (0.d0, 0.d0)
   qplot              = .FALSE.
   !
   ! Reading the namelist &CRPA from the input unit already opened by
@@ -141,6 +144,7 @@ SUBROUTINE crpa_readin()
   ! &INPUTHP into ldaU_hp; the CRPA code paths use the control_lr copies.
   !
   tr2_ph = tr2
+  w_freq = w_freq_eV / RYTOEV
   nmix_ph = nmix_hp
   niter_ph = niter_max_hp
   alpha_mix(1:maxter) = alpha_mix_hp(1:maxter)

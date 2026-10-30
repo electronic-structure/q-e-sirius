@@ -44,7 +44,7 @@ MODULE crpacom
   !! Threshold for the calculation of chi
   !
   COMPLEX(DP) :: w_freq
-  !! Frequency value for finite-frequency DFPT. (Default: 0 (static DFPT))
+  !! Complex frequency for finite-frequency DFPT, in Ry: input w_freq_eV / RYTOEV. 0 means static DFPT.
   !
   ! Definition of perturbation basis (for CRPA)
   ! NOTE: For constrained DFPT active space, see LR_Modules/constrained_dfpt.f90
