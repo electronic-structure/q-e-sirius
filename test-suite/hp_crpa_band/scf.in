@@ -11,6 +11,7 @@
     nat       = 2
     ntyp      = 1
     ecutwfc   = 40.0
+    ecutrho   = 200.0  ! for testing different dffts and dfftp
     nbnd      = 4
     nosym     = .true.
     noinv     = .true.

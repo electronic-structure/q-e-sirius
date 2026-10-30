@@ -1,5 +1,5 @@
 
-     Program PW2WANNIER v.8.0dev starts on 30Oct2026 at 14:25:58 
+     Program PW2WANNIER v.8.0dev starts on 30Oct2026 at 18:26: 5 
 
      This program is part of the open-source Quantum ESPRESSO suite
      for quantum simulation of materials; please cite
@@ -14,7 +14,7 @@
 
      MPI processes distributed on     1 nodes
      K-points division:     npool     =       4
-     1479940 MiB available memory on the printing compute node when the environment starts
+     1527808 MiB available memory on the printing compute node when the environment starts
 
 
      Reading nscf_save data
@@ -33,7 +33,7 @@
      G-vector sticks info
      --------------------
      sticks:   dense  smooth     PW     G-vecs:    dense   smooth      PW
-     Sum         253     253     61                 2637     2637     331
+     Sum         313     253     61                 3647     2637     331
 
      Using Slab Decomposition
 
@@ -98,6 +98,14 @@
   *** Parity info is not printed 
   -----------------------------
 
+  -----------------------------------
+  *** Velocity terms are not computed 
+  -----------------------------------
+
+  -----------------------------------
+  *** Momentum terms are not computed 
+  -----------------------------------
+
   ------------------------------
   *** Running Wannier90 library 
 
@@ -105,25 +113,26 @@
   ------------------------------
 
 
-     init_pw2wan  :      0.02s CPU      0.03s WALL (       1 calls)
-     compute_amn  :      0.01s CPU      0.01s WALL (       1 calls)
+     init_pw2wan  :      0.02s CPU      0.04s WALL (       1 calls)
+     compute_amn  :      0.01s CPU      0.02s WALL (       1 calls)
      compute_mmn  :      0.00s CPU      0.01s WALL (       1 calls)
      run_wannier  :      0.00s CPU      0.00s WALL (       1 calls)
 
      Internal routines:
+     init_tab_gf  :      0.01s CPU      0.01s WALL (       1 calls)
+     guiding_fn   :      0.00s CPU      0.00s WALL (       1 calls)
      compute_u_kb :      0.00s CPU      0.00s WALL (       8 calls)
+     wfc_exchange :      0.00s CPU      0.00s WALL (       8 calls)
 
-     PW2WANNIER   :      0.04s CPU      0.08s WALL
+     PW2WANNIER   :      0.05s CPU      0.07s WALL
 
 
-   This run was terminated on:  14:25:58  30Oct2026            
+   This run was terminated on:  18:26: 5  30Oct2026            
 
 =------------------------------------------------------------------------------=
    JOB DONE.
 =------------------------------------------------------------------------------=
 
-Note: no parallel distribution provided (option distk missing)
-Note: all k-points handled by MPI rank 0
 
              +---------------------------------------------------+
              |                                                   |
@@ -139,6 +148,7 @@ Note: all k-points handled by MPI rank 0
              |  Wannier90 Developer Group:                       |
              |    Giovanni Pizzi    (Paul Scherrer Institute)    |
              |    Valerio Vitale    (University of Trieste)      |
+             |    Jerome Jackson    (STFC Daresbury Laboratory)  |
              |    David Vanderbilt  (Rutgers University)         |
              |    Nicola Marzari    (EPFL)                       |
              |    Ivo Souza         (Universidad del Pais Vasco) |
@@ -176,7 +186,7 @@ Note: all k-points handled by MPI rank 0
              |        The Wannier90 Developer Group and          |
              |        individual contributors                    |
              |                                                   |
-             |      Release: 4.0.3        27th July    2026      |
+             |      Release: 4.0.3   5 October 2026              |
              |                                                   |
              | This program is free software; you can            |
              | redistribute it and/or modify it under the terms  |
@@ -195,7 +205,7 @@ Note: all k-points handled by MPI rank 0
              | Inc., 675 Mass Ave, Cambridge, MA 02139, USA.     |
              |                                                   |
              +---------------------------------------------------+
-             |    Execution started on 30Oct2026 at 14:25:58     |
+             |    Execution started on 30Oct2026 at 18:26:05     |
              +---------------------------------------------------+
  
  ******************************************************************************
@@ -344,26 +354,26 @@ Note: all k-points handled by MPI rank 0
 
  ------------------------------------------------------------------------------
  Initial State
-  WF centre and spread    1  ( -0.443415,  0.443415,  0.443415 )     0.23152518
-  WF centre and spread    2  (  0.443415,  0.443415, -0.443415 )     0.23152518
-  WF centre and spread    3  ( -0.443415, -0.443415, -0.443415 )     0.23152518
-  WF centre and spread    4  (  0.443415, -0.443415,  0.443415 )     0.23152518
-  Sum of centres and spreads (  0.000000,  0.000000,  0.000000 )     0.92610070
+  WF centre and spread    1  ( -0.443415,  0.443415,  0.443415 )     0.23152499
+  WF centre and spread    2  (  0.443415,  0.443415, -0.443415 )     0.23152499
+  WF centre and spread    3  ( -0.443415, -0.443415, -0.443415 )     0.23152499
+  WF centre and spread    4  (  0.443415, -0.443415,  0.443415 )     0.23152499
+  Sum of centres and spreads ( -0.000000, -0.000000,  0.000000 )     0.92609997
 
-      0     0.926E+00     0.0000000000        0.9261007035       0.00  <-- CONV
-        O_D=      0.0000000 O_OD=      0.0203760 O_TOT=      0.9261007 <-- SPRD
+      0     0.926E+00     0.0000000000        0.9260999661       0.00  <-- CONV
+        O_D=      0.0000000 O_OD=      0.0203757 O_TOT=      0.9261000 <-- SPRD
  ------------------------------------------------------------------------------
  Final State
-  WF centre and spread    1  ( -0.443415,  0.443415,  0.443415 )     0.23152518
-  WF centre and spread    2  (  0.443415,  0.443415, -0.443415 )     0.23152518
-  WF centre and spread    3  ( -0.443415, -0.443415, -0.443415 )     0.23152518
-  WF centre and spread    4  (  0.443415, -0.443415,  0.443415 )     0.23152518
-  Sum of centres and spreads (  0.000000,  0.000000,  0.000000 )     0.92610070
+  WF centre and spread    1  ( -0.443415,  0.443415,  0.443415 )     0.23152499
+  WF centre and spread    2  (  0.443415,  0.443415, -0.443415 )     0.23152499
+  WF centre and spread    3  ( -0.443415, -0.443415, -0.443415 )     0.23152499
+  WF centre and spread    4  (  0.443415, -0.443415,  0.443415 )     0.23152499
+  Sum of centres and spreads ( -0.000000, -0.000000,  0.000000 )     0.92609997
 
-         Spreads (Ang^2)       Omega I      =     0.905724724
+         Spreads (Ang^2)       Omega I      =     0.905724223
         ================       Omega D      =     0.000000000
-                               Omega OD     =     0.020375979
-    Final Spread (Ang^2)       Omega Total  =     0.926100704
+                               Omega OD     =     0.020375743
+    Final Spread (Ang^2)       Omega Total  =     0.926099966
  ------------------------------------------------------------------------------
 
  Writing checkpoint file diam.chk... done

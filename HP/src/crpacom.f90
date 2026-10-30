@@ -95,7 +95,7 @@ MODULE crpacom
   !! Screened coulomb matrix elements. (ipert, jpert).
   !!
   COMPLEX(DP), ALLOCATABLE :: dvbare(:, :)
-  !! Bare perturbing potential
+  !! Bare perturbing potential on the smooth grid (dffts)
   !
   INTEGER :: iuwan
   !! Unit for reading and writing the Wannier functions

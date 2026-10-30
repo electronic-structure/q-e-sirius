@@ -1,5 +1,5 @@
 
-     Program HP v.8.0dev starts on 30Oct2026 at 17:17:10 
+     Program HP v.8.0dev starts on 30Oct2026 at 18:26: 6 
 
      This program is part of the open-source Quantum ESPRESSO suite
      for quantum simulation of materials; please cite
@@ -14,7 +14,7 @@
 
      MPI processes distributed on     1 nodes
      K-points division:     npool     =       4
-     1526573 MiB available memory on the printing compute node when the environment starts
+     1527558 MiB available memory on the printing compute node when the environment starts
 
 
      =---------------------------------------------------------------------------=
@@ -41,7 +41,7 @@
      G-vector sticks info
      --------------------
      sticks:   dense  smooth     PW     G-vecs:    dense   smooth      PW
-     Sum         253     253     61                 2637     2637     331
+     Sum         313     253     61                 3647     2637     331
 
      Using Slab Decomposition
 
@@ -56,7 +56,7 @@
      number of atoms/cell      =             2
      number of atomic types    =             1
      kinetic-energy cut-off    =         40.00 (Ry)
-     charge density cut-off    =        160.00 (Ry)
+     charge density cut-off    =        200.00 (Ry)
      conv. thresh. for NSCF    =       1.0E-11
      Input Hubbard parameters (in eV):
 
@@ -89,7 +89,7 @@
      ========================================
      Reading Wannier90 checkpoint file
      Opening file diam.chk
-     written on 30Oct2026 at 17:17:09
+     written on 30Oct2026 at 18:26:05
      Number of bands :       4
      Number of excluded bands :       0
      Excluded bands :     none.
@@ -105,10 +105,10 @@
      wannier_spreads: read.
      Completed reading Wannier90 checkpoint file
      Wannier centers (alat) and spreads (alat^2)
-        -0.1249999999    0.1249999999    0.1249999999    0.0183991123
-         0.1249999999    0.1249999999   -0.1249999999    0.0183991123
-        -0.1249999999   -0.1249999999   -0.1249999999    0.0183991123
-         0.1249999999   -0.1249999999    0.1249999999    0.0183991123
+        -0.1249999999    0.1249999999    0.1249999999    0.0183990976
+         0.1249999999    0.1249999999   -0.1249999999    0.0183990976
+        -0.1249999999   -0.1249999999   -0.1249999999    0.0183990976
+         0.1249999999   -0.1249999999    0.1249999999    0.0183990976
      Writing real-space Wannier functions in collected form
      Selected bands :    1,    2,    3,    4.
 
@@ -146,7 +146,8 @@
 
      No symmetry (except the identity)!
 
-     G cutoff =  182.1207  (   2637 G-vectors)     FFT grid: ( 20, 20, 20)
+     G cutoff =  227.6509  (   3647 G-vectors)     FFT grid: ( 24, 24, 24)
+     G cutoff =  182.1207  (   2637 G-vectors)  smooth grid: ( 20, 20, 20)
 
      Number of k (and k+q if q/=0) points =     1
 
@@ -162,7 +163,7 @@
 
 
      Total time spent up to now is:
-     HP           :      0.04s CPU      0.10s WALL
+     HP           :      0.04s CPU      0.07s WALL
 
 
      Wannier function pairs for perturbation
@@ -188,100 +189,100 @@
 
       q point #   1   Perturbation #  1
      iw =      1 , jw =      1 , R (crystal) =      0     0     0
-     Sum of drho (normalized to 1) =     1.0000000000E+00    3.5054612969E-34
+     Sum of drho (normalized to 1) =     1.0000000000E+00    1.3411001218E-32
 
       iter #   1 total cpu time :     0.1 secs   av.it.:  17.0
-      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  6.700E-08
+      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.878E-08
 
       iter #   2 total cpu time :     0.1 secs   av.it.:  16.0
-      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.534E-08
+      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.467E-08
 
       iter #   3 total cpu time :     0.1 secs   av.it.:  16.0
-      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.776E-11
+      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.028E-11
 
       iter #   4 total cpu time :     0.1 secs   av.it.:  15.0
-      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.585E-12
+      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  9.176E-13
 
       iter #   5 total cpu time :     0.1 secs   av.it.:  14.0
-      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.088E-14
+      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.209E-14
 
       iter #   6 total cpu time :     0.1 secs   av.it.:  14.0
-      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  8.998E-17
+      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  5.208E-17
 
       q point #   1   Perturbation #  2
      iw =      2 , jw =      2 , R (crystal) =      0     0     0
-     Sum of drho (normalized to 1) =     1.0000000000E+00    8.9970152881E-35
+     Sum of drho (normalized to 1) =     1.0000000000E+00   -9.8338599189E-33
 
-      iter #   1 total cpu time :     0.2 secs   av.it.:  17.0
-      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.169E-07
+      iter #   1 total cpu time :     0.1 secs   av.it.:  17.0
+      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  6.768E-08
 
-      iter #   2 total cpu time :     0.2 secs   av.it.:  16.0
-      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  6.350E-08
+      iter #   2 total cpu time :     0.1 secs   av.it.:  16.0
+      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.675E-08
 
-      iter #   3 total cpu time :     0.2 secs   av.it.:  16.0
-      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.479E-09
+      iter #   3 total cpu time :     0.1 secs   av.it.:  16.0
+      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.435E-09
 
       iter #   4 total cpu time :     0.2 secs   av.it.:  16.0
-      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.325E-12
+      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.346E-12
 
       iter #   5 total cpu time :     0.2 secs   av.it.:  15.0
-      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.524E-13
+      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.460E-13
 
       iter #   6 total cpu time :     0.2 secs   av.it.:  14.0
-      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.677E-15
+      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  9.711E-16
 
       iter #   7 total cpu time :     0.2 secs   av.it.:  13.0
-      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.808E-17
+      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.625E-17
 
       q point #   1   Perturbation #  3
      iw =      3 , jw =      3 , R (crystal) =      0     0     0
-     Sum of drho (normalized to 1) =     1.0000000000E+00   -9.5572996827E-35
+     Sum of drho (normalized to 1) =     1.0000000000E+00    6.6622223925E-33
 
       iter #   1 total cpu time :     0.2 secs   av.it.:  17.0
-      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.169E-07
+      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  6.768E-08
 
       iter #   2 total cpu time :     0.2 secs   av.it.:  16.0
-      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  6.350E-08
+      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.675E-08
 
       iter #   3 total cpu time :     0.2 secs   av.it.:  16.0
-      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.479E-09
+      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.435E-09
 
       iter #   4 total cpu time :     0.2 secs   av.it.:  16.0
-      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.325E-12
+      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.346E-12
 
       iter #   5 total cpu time :     0.2 secs   av.it.:  15.0
-      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.524E-13
+      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.460E-13
 
       iter #   6 total cpu time :     0.2 secs   av.it.:  14.0
-      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.677E-15
+      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  9.712E-16
 
-      iter #   7 total cpu time :     0.3 secs   av.it.:  13.0
-      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.808E-17
+      iter #   7 total cpu time :     0.2 secs   av.it.:  13.0
+      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.625E-17
 
       q point #   1   Perturbation #  4
      iw =      4 , jw =      4 , R (crystal) =      0     0     0
-     Sum of drho (normalized to 1) =     1.0000000000E+00   -2.2742130199E-34
+     Sum of drho (normalized to 1) =     1.0000000000E+00   -6.3873401458E-33
 
-      iter #   1 total cpu time :     0.3 secs   av.it.:  17.0
-      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.169E-07
+      iter #   1 total cpu time :     0.2 secs   av.it.:  17.0
+      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  6.768E-08
 
       iter #   2 total cpu time :     0.3 secs   av.it.:  16.0
-      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  6.350E-08
+      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.675E-08
 
       iter #   3 total cpu time :     0.3 secs   av.it.:  16.0
-      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.479E-09
+      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.435E-09
 
       iter #   4 total cpu time :     0.3 secs   av.it.:  16.0
-      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.325E-12
+      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.346E-12
 
       iter #   5 total cpu time :     0.3 secs   av.it.:  15.0
-      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.524E-13
+      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.460E-13
 
       iter #   6 total cpu time :     0.3 secs   av.it.:  14.0
-      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.677E-15
+      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  9.712E-16
 
       iter #   7 total cpu time :     0.3 secs   av.it.:  13.0
-      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.808E-17
+      thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.625E-17
       
       =--------------------------------------------=
              CONVERGENCE HAS BEEN REACHED
@@ -291,22 +292,22 @@
      Done writing Coulomb matrix elements to file
 
      cRPA on-site density-density interaction V_iijj (eV) at q=   1
-     cRPA-V-IIJJ q=   1  i=   1  j=   1  bare=     3.710262927  scrd=     2.717001763  bare_im=     0.000000000  scrd_im=     0.000000000
-     cRPA-V-IIJJ q=   1  i=   2  j=   1  bare=    -0.501062675  scrd=    -0.511964521  bare_im=    -0.000000000  scrd_im=    -0.000000000
-     cRPA-V-IIJJ q=   1  i=   3  j=   1  bare=    -0.501062675  scrd=    -0.511964521  bare_im=    -0.000000000  scrd_im=     0.000000000
-     cRPA-V-IIJJ q=   1  i=   4  j=   1  bare=    -0.501062675  scrd=    -0.511964521  bare_im=     0.000000000  scrd_im=    -0.000000000
-     cRPA-V-IIJJ q=   1  i=   1  j=   2  bare=    -0.501062675  scrd=    -0.511969450  bare_im=    -0.000000000  scrd_im=     0.000000000
-     cRPA-V-IIJJ q=   1  i=   2  j=   2  bare=     3.710262927  scrd=     2.716992773  bare_im=     0.000000000  scrd_im=     0.000000000
-     cRPA-V-IIJJ q=   1  i=   3  j=   2  bare=    -0.501062675  scrd=    -0.511970520  bare_im=    -0.000000000  scrd_im=    -0.000000000
-     cRPA-V-IIJJ q=   1  i=   4  j=   2  bare=    -0.501062675  scrd=    -0.511970520  bare_im=     0.000000000  scrd_im=     0.000000000
-     cRPA-V-IIJJ q=   1  i=   1  j=   3  bare=    -0.501062675  scrd=    -0.511970539  bare_im=    -0.000000000  scrd_im=    -0.000000000
-     cRPA-V-IIJJ q=   1  i=   2  j=   3  bare=    -0.501062675  scrd=    -0.511969466  bare_im=     0.000000000  scrd_im=     0.000000000
-     cRPA-V-IIJJ q=   1  i=   3  j=   3  bare=     3.710262927  scrd=     2.716992760  bare_im=    -0.000000000  scrd_im=    -0.000000000
-     cRPA-V-IIJJ q=   1  i=   4  j=   3  bare=    -0.501062675  scrd=    -0.511970532  bare_im=     0.000000000  scrd_im=    -0.000000000
-     cRPA-V-IIJJ q=   1  i=   1  j=   4  bare=    -0.501062675  scrd=    -0.511970532  bare_im=    -0.000000000  scrd_im=     0.000000000
-     cRPA-V-IIJJ q=   1  i=   2  j=   4  bare=    -0.501062675  scrd=    -0.511970539  bare_im=    -0.000000000  scrd_im=    -0.000000000
-     cRPA-V-IIJJ q=   1  i=   3  j=   4  bare=    -0.501062675  scrd=    -0.511969466  bare_im=     0.000000000  scrd_im=     0.000000000
-     cRPA-V-IIJJ q=   1  i=   4  j=   4  bare=     3.710262927  scrd=     2.716992760  bare_im=     0.000000000  scrd_im=    -0.000000000
+     cRPA-V-IIJJ q=   1  i=   1  j=   1  bare=     3.710471184  scrd=     2.717154565  bare_im=    -0.000000000  scrd_im=     0.000000000
+     cRPA-V-IIJJ q=   1  i=   2  j=   1  bare=    -0.501054204  scrd=    -0.511958874  bare_im=     0.000000000  scrd_im=    -0.000000000
+     cRPA-V-IIJJ q=   1  i=   3  j=   1  bare=    -0.501054204  scrd=    -0.511958874  bare_im=     0.000000000  scrd_im=     0.000000000
+     cRPA-V-IIJJ q=   1  i=   4  j=   1  bare=    -0.501054204  scrd=    -0.511958874  bare_im=     0.000000000  scrd_im=     0.000000000
+     cRPA-V-IIJJ q=   1  i=   1  j=   2  bare=    -0.501054204  scrd=    -0.511963808  bare_im=     0.000000000  scrd_im=     0.000000000
+     cRPA-V-IIJJ q=   1  i=   2  j=   2  bare=     3.710471184  scrd=     2.717145574  bare_im=     0.000000000  scrd_im=    -0.000000000
+     cRPA-V-IIJJ q=   1  i=   3  j=   2  bare=    -0.501054204  scrd=    -0.511964877  bare_im=     0.000000000  scrd_im=     0.000000000
+     cRPA-V-IIJJ q=   1  i=   4  j=   2  bare=    -0.501054204  scrd=    -0.511964877  bare_im=    -0.000000000  scrd_im=    -0.000000000
+     cRPA-V-IIJJ q=   1  i=   1  j=   3  bare=    -0.501054204  scrd=    -0.511964896  bare_im=     0.000000000  scrd_im=    -0.000000000
+     cRPA-V-IIJJ q=   1  i=   2  j=   3  bare=    -0.501054204  scrd=    -0.511963823  bare_im=    -0.000000000  scrd_im=     0.000000000
+     cRPA-V-IIJJ q=   1  i=   3  j=   3  bare=     3.710471184  scrd=     2.717145561  bare_im=     0.000000000  scrd_im=     0.000000000
+     cRPA-V-IIJJ q=   1  i=   4  j=   3  bare=    -0.501054204  scrd=    -0.511964889  bare_im=     0.000000000  scrd_im=     0.000000000
+     cRPA-V-IIJJ q=   1  i=   1  j=   4  bare=    -0.501054204  scrd=    -0.511964889  bare_im=     0.000000000  scrd_im=     0.000000000
+     cRPA-V-IIJJ q=   1  i=   2  j=   4  bare=    -0.501054204  scrd=    -0.511964896  bare_im=    -0.000000000  scrd_im=     0.000000000
+     cRPA-V-IIJJ q=   1  i=   3  j=   4  bare=    -0.501054204  scrd=    -0.511963823  bare_im=     0.000000000  scrd_im=     0.000000000
+     cRPA-V-IIJJ q=   1  i=   4  j=   4  bare=     3.710471184  scrd=     2.717145561  bare_im=     0.000000000  scrd_im=    -0.000000000
 
      PRINTING TIMING FROM PWSCF ROUTINES: 
 
@@ -328,14 +329,16 @@
 
      Called by h_psi:
      h_psi:calbec :      0.00s CPU      0.00s WALL (     440 calls)
-     vloc_psi     :      0.12s CPU      0.14s WALL (     440 calls)
+     vloc_psi     :      0.13s CPU      0.14s WALL (     440 calls)
      add_vuspsi   :      0.00s CPU      0.00s WALL (     440 calls)
 
      General routines
      calbec       :      0.00s CPU      0.00s WALL (     440 calls)
-     fft          :      0.01s CPU      0.02s WALL (      96 calls)
-     fftw         :      0.13s CPU      0.15s WALL (    3996 calls)
-     davcio       :      0.00s CPU      0.02s WALL (      64 calls)
+     fft          :      0.01s CPU      0.02s WALL (     159 calls)
+     ffts         :      0.00s CPU      0.00s WALL (      63 calls)
+     fftw         :      0.14s CPU      0.15s WALL (    3992 calls)
+     interpolate  :      0.01s CPU      0.01s WALL (      63 calls)
+     davcio       :      0.00s CPU      0.00s WALL (      64 calls)
 
      Parallel routines
 
@@ -347,35 +350,35 @@
 
      crpa_setup_q :      0.00s CPU      0.00s WALL (       1 calls)
      crpa_init_q  :      0.00s CPU      0.00s WALL (       1 calls)
-     crpa_solve_l :      0.18s CPU      0.21s WALL (       1 calls)
-     crpa_postpro :      0.00s CPU      0.00s WALL (       1 calls)
+     crpa_solve_l :      0.20s CPU      0.22s WALL (       1 calls)
+     crpa_postpro :      0.00s CPU      0.01s WALL (       1 calls)
 
      PRINTING TIMING FROM Wannier90 INTERFACE ROUTINES: 
 
      w90_interpol :      0.00s CPU      0.00s WALL (       1 calls)
 
-     w90_readwrit :      0.00s CPU      0.02s WALL (      16 calls)
+     w90_readwrit :      0.00s CPU      0.00s WALL (      16 calls)
      w90_mult_iqr :      0.00s CPU      0.00s WALL (       8 calls)
      w90_shift_wf :      0.00s CPU      0.00s WALL (       8 calls)
 
      PRINTING TIMING FROM LR MODULE: 
 
      sth_kernel   :      0.16s CPU      0.18s WALL (      27 calls)
-     apply_dpot_b :      0.01s CPU      0.02s WALL (      43 calls)
+     apply_dpot_b :      0.01s CPU      0.01s WALL (      43 calls)
      ortho        :      0.00s CPU      0.00s WALL (      27 calls)
      cgsolve      :      0.14s CPU      0.16s WALL (      27 calls)
      ch_psi       :      0.14s CPU      0.16s WALL (     440 calls)
      incdrhoscf   :      0.01s CPU      0.01s WALL (      27 calls)
-     dv_of_drho   :      0.00s CPU      0.00s WALL (      31 calls)
-     mix_pot      :      0.00s CPU      0.01s WALL (      27 calls)
+     dv_of_drho   :      0.01s CPU      0.01s WALL (      31 calls)
+     mix_pot      :      0.01s CPU      0.01s WALL (      27 calls)
      setup_dmuxc  :      0.00s CPU      0.00s WALL (       1 calls)
      setup_nbnd_o :      0.00s CPU      0.00s WALL (       1 calls)
      cft_wave     :      0.01s CPU      0.01s WALL (     344 calls)
 
-     HP           :      0.22s CPU      0.31s WALL
+     HP           :      0.23s CPU      0.30s WALL
 
 
-   This run was terminated on:  17:17:11  30Oct2026            
+   This run was terminated on:  18:26: 6  30Oct2026            
 
 =------------------------------------------------------------------------------=
    JOB DONE.

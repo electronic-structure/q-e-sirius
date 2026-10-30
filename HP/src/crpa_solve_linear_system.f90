@@ -17,6 +17,7 @@ SUBROUTINE crpa_solve_linear_system (iq)
    USE kinds,                ONLY : DP
    USE io_global,            ONLY : stdout
    USE fft_base,             ONLY : dfftp, dffts
+   USE fft_interfaces,       ONLY : fft_interpolate
    USE buffers,              ONLY : save_buffer, get_buffer
    USE ions_base,            ONLY : nat
    USE wavefunctions,        ONLY : evc
@@ -56,6 +57,9 @@ SUBROUTINE crpa_solve_linear_system (iq)
    TYPE(dfpt_data_type) :: dfpt_data
    !! Data that describes linear response quantities
    !
+   COMPLEX(DP), ALLOCATABLE :: dvbarep(:, :)
+   !! Bare perturbing potential on the dense grid
+   !
    INTEGER :: ik, ikk,    & ! counter on k points
       ndim,       &
       is,         & ! counter on spin polarizations
@@ -74,7 +78,8 @@ SUBROUTINE crpa_solve_linear_system (iq)
    ! Allocate arrays for the SCF density/potential
    !
    CALL allocate_dfpt_data(dfpt_data, 1)
-   ALLOCATE (dvbare(dfftp%nnr, nspin_mag))
+   ALLOCATE (dvbarep(dfftp%nnr, nspin_mag))
+   ALLOCATE (dvbare(dffts%nnr, nspin_mag))
    !
    ! USPP-specific allocations
    !
@@ -91,9 +96,19 @@ SUBROUTINE crpa_solve_linear_system (iq)
       !
       WRITE(stdout,'(/6x,"q point #",i4,3x,"Perturbation #",i3)') iq, ipert
       !
-      CALL crpa_compute_perturbation_q(ipert, dvbare, dfpt_data)
+      CALL crpa_compute_perturbation_q(ipert, dvbarep, dfpt_data)
       !
-      CALL dv_of_drho(dvbare)
+      CALL dv_of_drho(dvbarep)
+      !
+      ! apply_dpot_bands takes the potential on the smooth grid
+      !
+      IF (doublegrid) THEN
+         DO is = 1, nspin_mag
+            CALL fft_interpolate(dfftp, dvbarep(:, is), dffts, dvbare(:, is))
+         ENDDO
+      ELSE
+         dvbare = dvbarep
+      ENDIF
       !
       ! Compute dV_bare * psi and write to buffer iubar
       !
@@ -158,6 +173,7 @@ SUBROUTINE crpa_solve_linear_system (iq)
    CALL deallocate_dfpt_data(dfpt_data)
    CALL deallocate_bec_type_acc (becp)
    DEALLOCATE(dvbare)
+   DEALLOCATE(dvbarep)
    !
    WRITE( stdout,*) "     "
    WRITE( stdout,*) "     =--------------------------------------------="
