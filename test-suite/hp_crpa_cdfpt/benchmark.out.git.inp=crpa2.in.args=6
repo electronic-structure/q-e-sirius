@@ -1,5 +1,5 @@
 
-     Program HP v.8.0dev starts on 30Oct2026 at 12:47:41 
+     Program HP v.8.0dev starts on 30Oct2026 at 17:17:14 
 
      This program is part of the open-source Quantum ESPRESSO suite
      for quantum simulation of materials; please cite
@@ -14,7 +14,7 @@
 
      MPI processes distributed on     1 nodes
      K-points division:     npool     =       4
-     1481778 MiB available memory on the printing compute node when the environment starts
+     1525978 MiB available memory on the printing compute node when the environment starts
 
 
      =---------------------------------------------------------------------------=
@@ -94,7 +94,7 @@
      ========================================
      Reading Wannier90 checkpoint file
      Opening file BN.chk
-     written on 30Oct2026 at 12:47:36
+     written on 30Oct2026 at 17:17:09
      Number of bands :       4
      Number of excluded bands :       0
      Excluded bands :     none.
@@ -110,10 +110,10 @@
      wannier_spreads: read.
      Completed reading Wannier90 checkpoint file
      Wannier centers (alat) and spreads (alat^2)
-         0.1771156526   -0.0728843462   -0.0728843451    0.0417885198
-         0.1771156542   -0.1771156542   -0.1771156548    0.0417885199
-         0.0728843462   -0.0728843459   -0.1771156532    0.0417885206
-         0.0728843464   -0.1771156538   -0.0728843472    0.0417885202
+         0.1771157418   -0.0728842570   -0.0728842558    0.0417885256
+         0.1771157435   -0.1771157434   -0.1771157441    0.0417885257
+         0.0728842569   -0.0728842567   -0.1771157425    0.0417885264
+         0.0728842571   -0.1771157431   -0.0728842580    0.0417885260
      Writing real-space Wannier functions in collected form
      Selected bands :    1,    2,    3,    4.
 
@@ -212,7 +212,7 @@ Possibly too few bands at point    2   0.50000  -0.50000   0.50000
 
 
      Total time spent up to now is:
-     HP           :      0.27s CPU      0.33s WALL
+     HP           :      0.28s CPU      0.35s WALL
 
 
      Wannier function pairs for perturbation
@@ -229,20 +229,20 @@ Possibly too few bands at point    2   0.50000  -0.50000   0.50000
      Distance cutoff (bohr) :     2.500000
      cRPA-WFPAIRS mels npairs=    16
      cRPA-WFPAIR mels idx=    1  iw=   1  jw=   1  R=   0   0   0  dist=    0.00000000
-     cRPA-WFPAIR mels idx=    2  iw=   2  jw=   1  R=   0   0   0  dist=    1.00677841
-     cRPA-WFPAIR mels idx=    3  iw=   3  jw=   1  R=   0   0   0  dist=    1.00677839
-     cRPA-WFPAIR mels idx=    4  iw=   4  jw=   1  R=   0   0   0  dist=    1.00677839
-     cRPA-WFPAIR mels idx=    5  iw=   1  jw=   2  R=   0   0   0  dist=    1.00677841
+     cRPA-WFPAIR mels idx=    2  iw=   2  jw=   1  R=   0   0   0  dist=    1.00678013
+     cRPA-WFPAIR mels idx=    3  iw=   3  jw=   1  R=   0   0   0  dist=    1.00678012
+     cRPA-WFPAIR mels idx=    4  iw=   4  jw=   1  R=   0   0   0  dist=    1.00678011
+     cRPA-WFPAIR mels idx=    5  iw=   1  jw=   2  R=   0   0   0  dist=    1.00678013
      cRPA-WFPAIR mels idx=    6  iw=   2  jw=   2  R=   0   0   0  dist=    0.00000000
-     cRPA-WFPAIR mels idx=    7  iw=   3  jw=   2  R=   0   0   0  dist=    1.00677840
-     cRPA-WFPAIR mels idx=    8  iw=   4  jw=   2  R=   0   0   0  dist=    1.00677840
-     cRPA-WFPAIR mels idx=    9  iw=   1  jw=   3  R=   0   0   0  dist=    1.00677839
-     cRPA-WFPAIR mels idx=   10  iw=   2  jw=   3  R=   0   0   0  dist=    1.00677840
+     cRPA-WFPAIR mels idx=    7  iw=   3  jw=   2  R=   0   0   0  dist=    1.00678013
+     cRPA-WFPAIR mels idx=    8  iw=   4  jw=   2  R=   0   0   0  dist=    1.00678012
+     cRPA-WFPAIR mels idx=    9  iw=   1  jw=   3  R=   0   0   0  dist=    1.00678012
+     cRPA-WFPAIR mels idx=   10  iw=   2  jw=   3  R=   0   0   0  dist=    1.00678013
      cRPA-WFPAIR mels idx=   11  iw=   3  jw=   3  R=   0   0   0  dist=    0.00000000
-     cRPA-WFPAIR mels idx=   12  iw=   4  jw=   3  R=   0   0   0  dist=    1.00677839
-     cRPA-WFPAIR mels idx=   13  iw=   1  jw=   4  R=   0   0   0  dist=    1.00677839
-     cRPA-WFPAIR mels idx=   14  iw=   2  jw=   4  R=   0   0   0  dist=    1.00677840
-     cRPA-WFPAIR mels idx=   15  iw=   3  jw=   4  R=   0   0   0  dist=    1.00677839
+     cRPA-WFPAIR mels idx=   12  iw=   4  jw=   3  R=   0   0   0  dist=    1.00678011
+     cRPA-WFPAIR mels idx=   13  iw=   1  jw=   4  R=   0   0   0  dist=    1.00678011
+     cRPA-WFPAIR mels idx=   14  iw=   2  jw=   4  R=   0   0   0  dist=    1.00678012
+     cRPA-WFPAIR mels idx=   15  iw=   3  jw=   4  R=   0   0   0  dist=    1.00678011
      cRPA-WFPAIR mels idx=   16  iw=   4  jw=   4  R=   0   0   0  dist=    0.00000000
       =--------------------------------------------=
                  SOLVE THE LINEAR SYSTEM
@@ -250,7 +250,7 @@ Possibly too few bands at point    2   0.50000  -0.50000   0.50000
 
       q point #   1   Perturbation #  1
      iw =      1 , jw =      1 , R (crystal) =      0     0     0
-     Sum of drho (normalized to 1) =     1.0000000000E+00    6.0131574345E-20
+     Sum of drho (normalized to 1) =     1.0000000000E+00   -3.2624683445E-20
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02     6.8023E-11
 
@@ -264,12 +264,12 @@ Possibly too few bands at point    2   0.50000  -0.50000   0.50000
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02     2.6456E-11
 
-      iter #   3 total cpu time :     0.4 secs   av.it.:  25.4
+      iter #   3 total cpu time :     0.4 secs   av.it.:  25.2
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.297E-08
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02     2.6442E-11
 
-      iter #   4 total cpu time :     0.4 secs   av.it.:  25.2
+      iter #   4 total cpu time :     0.5 secs   av.it.:  25.1
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  7.223E-10
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02     2.6990E-11
@@ -279,7 +279,7 @@ Possibly too few bands at point    2   0.50000  -0.50000   0.50000
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02     2.7202E-11
 
-      iter #   6 total cpu time :     0.5 secs   av.it.:  24.0
+      iter #   6 total cpu time :     0.5 secs   av.it.:  23.9
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.894E-12
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02     2.7099E-11
@@ -294,12 +294,12 @@ Possibly too few bands at point    2   0.50000  -0.50000   0.50000
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02     2.7099E-11
 
-      iter #   9 total cpu time :     0.5 secs   av.it.:  22.2
+      iter #   9 total cpu time :     0.6 secs   av.it.:  22.2
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.283E-17
 
       q point #   1   Perturbation #  2
      iw =      2 , jw =      2 , R (crystal) =      0     0     0
-     Sum of drho (normalized to 1) =     1.0000000000E+00   -1.3653476408E-19
+     Sum of drho (normalized to 1) =     1.0000000000E+00    1.4219035699E-19
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02     4.6758E-11
 
@@ -318,7 +318,7 @@ Possibly too few bands at point    2   0.50000  -0.50000   0.50000
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02     1.7884E-11
 
-      iter #   4 total cpu time :     0.6 secs   av.it.:  25.6
+      iter #   4 total cpu time :     0.7 secs   av.it.:  25.8
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.680E-08
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02     1.0679E-11
@@ -338,12 +338,12 @@ Possibly too few bands at point    2   0.50000  -0.50000   0.50000
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02     1.1666E-11
 
-      iter #   8 total cpu time :     0.7 secs   av.it.:  22.1
+      iter #   8 total cpu time :     0.8 secs   av.it.:  22.1
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.601E-13
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02     1.1648E-11
 
-      iter #   9 total cpu time :     0.8 secs   av.it.:  22.6
+      iter #   9 total cpu time :     0.8 secs   av.it.:  22.8
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.082E-16
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02     1.1648E-11
@@ -358,11 +358,11 @@ Possibly too few bands at point    2   0.50000  -0.50000   0.50000
 
       q point #   1   Perturbation #  3
      iw =      3 , jw =      3 , R (crystal) =      0     0     0
-     Sum of drho (normalized to 1) =     1.0000000000E+00   -2.0487022245E-19
+     Sum of drho (normalized to 1) =     1.0000000000E+00    1.7350426545E-19
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02    -5.2450E-11
 
-      iter #   1 total cpu time :     0.8 secs   av.it.:  25.6
+      iter #   1 total cpu time :     0.9 secs   av.it.:  25.6
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.005E-06
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02    -8.9330E-11
@@ -382,7 +382,7 @@ Possibly too few bands at point    2   0.50000  -0.50000   0.50000
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02    -6.0333E-11
 
-      iter #   5 total cpu time :     0.9 secs   av.it.:  25.2
+      iter #   5 total cpu time :     1.0 secs   av.it.:  25.4
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.580E-09
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02    -6.0753E-11
@@ -402,12 +402,12 @@ Possibly too few bands at point    2   0.50000  -0.50000   0.50000
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02    -5.9904E-11
 
-      iter #   9 total cpu time :     1.0 secs   av.it.:  22.5
+      iter #   9 total cpu time :     1.1 secs   av.it.:  22.5
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.079E-16
 
-     Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02    -5.9904E-11
+     Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02    -5.9905E-11
 
-      iter #  10 total cpu time :     1.0 secs   av.it.:  21.1
+      iter #  10 total cpu time :     1.1 secs   av.it.:  21.1
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.346E-16
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02    -5.9904E-11
@@ -417,7 +417,7 @@ Possibly too few bands at point    2   0.50000  -0.50000   0.50000
 
       q point #   1   Perturbation #  4
      iw =      4 , jw =      4 , R (crystal) =      0     0     0
-     Sum of drho (normalized to 1) =     1.0000000000E+00    1.0185803039E-19
+     Sum of drho (normalized to 1) =     1.0000000000E+00    3.2931850842E-20
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02     4.1806E-11
 
@@ -426,17 +426,17 @@ Possibly too few bands at point    2   0.50000  -0.50000   0.50000
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02     1.3402E-11
 
-      iter #   2 total cpu time :     1.1 secs   av.it.:  25.9
+      iter #   2 total cpu time :     1.2 secs   av.it.:  25.9
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.991E-07
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02     1.4045E-11
 
-      iter #   3 total cpu time :     1.1 secs   av.it.:  25.4
+      iter #   3 total cpu time :     1.2 secs   av.it.:  25.4
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.230E-07
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02     1.0789E-11
 
-      iter #   4 total cpu time :     1.2 secs   av.it.:  25.8
+      iter #   4 total cpu time :     1.2 secs   av.it.:  25.9
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.680E-08
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02     6.4054E-12
@@ -451,10 +451,10 @@ Possibly too few bands at point    2   0.50000  -0.50000   0.50000
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02     8.3814E-12
 
-      iter #   7 total cpu time :     1.2 secs   av.it.:  23.2
+      iter #   7 total cpu time :     1.3 secs   av.it.:  23.2
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  4.766E-13
 
-     Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02     8.3795E-12
+     Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02     8.3796E-12
 
       iter #   8 total cpu time :     1.3 secs   av.it.:  22.2
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.601E-13
@@ -471,7 +471,7 @@ Possibly too few bands at point    2   0.50000  -0.50000   0.50000
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.8901E-02     8.3662E-12
 
-      iter #  11 total cpu time :     1.3 secs   av.it.:  21.5
+      iter #  11 total cpu time :     1.4 secs   av.it.:  21.5
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.286E-17
       
       =--------------------------------------------=
@@ -482,22 +482,22 @@ Possibly too few bands at point    2   0.50000  -0.50000   0.50000
      Done writing Coulomb matrix elements to file
 
      cRPA on-site density-density interaction V_iijj (eV) at q=   1
-     cRPA-V-IIJJ q=   1  i=   1  j=   1  bare=     2.420841344  scrd=     1.978052856
-     cRPA-V-IIJJ q=   1  i=   2  j=   1  bare=     0.789720893  scrd=     0.792594402
-     cRPA-V-IIJJ q=   1  i=   3  j=   1  bare=     0.789720898  scrd=     0.792594450
-     cRPA-V-IIJJ q=   1  i=   4  j=   1  bare=     0.789720892  scrd=     0.792594405
-     cRPA-V-IIJJ q=   1  i=   1  j=   2  bare=     0.789720893  scrd=     0.792587457
-     cRPA-V-IIJJ q=   1  i=   2  j=   2  bare=     2.420841327  scrd=     1.978047097
-     cRPA-V-IIJJ q=   1  i=   3  j=   2  bare=     0.789720880  scrd=     0.792587858
-     cRPA-V-IIJJ q=   1  i=   4  j=   2  bare=     0.789720889  scrd=     0.792587824
-     cRPA-V-IIJJ q=   1  i=   1  j=   3  bare=     0.789720898  scrd=     0.792587838
-     cRPA-V-IIJJ q=   1  i=   2  j=   3  bare=     0.789720880  scrd=     0.792587446
-     cRPA-V-IIJJ q=   1  i=   3  j=   3  bare=     2.420841230  scrd=     1.978047074
-     cRPA-V-IIJJ q=   1  i=   4  j=   3  bare=     0.789720879  scrd=     0.792587826
-     cRPA-V-IIJJ q=   1  i=   1  j=   4  bare=     0.789720892  scrd=     0.792587827
-     cRPA-V-IIJJ q=   1  i=   2  j=   4  bare=     0.789720889  scrd=     0.792587819
-     cRPA-V-IIJJ q=   1  i=   3  j=   4  bare=     0.789720879  scrd=     0.792587487
-     cRPA-V-IIJJ q=   1  i=   4  j=   4  bare=     2.420841301  scrd=     1.978047081
+     cRPA-V-IIJJ q=   1  i=   1  j=   1  bare=     2.420842955  scrd=     1.978053970  bare_im=     0.000000000  scrd_im=    -0.000000001
+     cRPA-V-IIJJ q=   1  i=   2  j=   1  bare=     0.789720356  scrd=     0.792594031  bare_im=    -0.000000000  scrd_im=    -0.000000002
+     cRPA-V-IIJJ q=   1  i=   3  j=   1  bare=     0.789720361  scrd=     0.792594079  bare_im=    -0.000000000  scrd_im=     0.000000002
+     cRPA-V-IIJJ q=   1  i=   4  j=   1  bare=     0.789720354  scrd=     0.792594034  bare_im=     0.000000000  scrd_im=    -0.000000001
+     cRPA-V-IIJJ q=   1  i=   1  j=   2  bare=     0.789720356  scrd=     0.792587086  bare_im=     0.000000000  scrd_im=     0.000000001
+     cRPA-V-IIJJ q=   1  i=   2  j=   2  bare=     2.420842939  scrd=     1.978048211  bare_im=     0.000000000  scrd_im=    -0.000000000
+     cRPA-V-IIJJ q=   1  i=   3  j=   2  bare=     0.789720343  scrd=     0.792587486  bare_im=     0.000000000  scrd_im=     0.000000002
+     cRPA-V-IIJJ q=   1  i=   4  j=   2  bare=     0.789720352  scrd=     0.792587452  bare_im=     0.000000000  scrd_im=    -0.000000003
+     cRPA-V-IIJJ q=   1  i=   1  j=   3  bare=     0.789720361  scrd=     0.792587467  bare_im=     0.000000000  scrd_im=    -0.000000001
+     cRPA-V-IIJJ q=   1  i=   2  j=   3  bare=     0.789720343  scrd=     0.792587075  bare_im=     0.000000000  scrd_im=    -0.000000000
+     cRPA-V-IIJJ q=   1  i=   3  j=   3  bare=     2.420842842  scrd=     1.978048188  bare_im=     0.000000000  scrd_im=     0.000000001
+     cRPA-V-IIJJ q=   1  i=   4  j=   3  bare=     0.789720342  scrd=     0.792587454  bare_im=    -0.000000000  scrd_im=     0.000000004
+     cRPA-V-IIJJ q=   1  i=   1  j=   4  bare=     0.789720354  scrd=     0.792587456  bare_im=     0.000000000  scrd_im=    -0.000000000
+     cRPA-V-IIJJ q=   1  i=   2  j=   4  bare=     0.789720352  scrd=     0.792587447  bare_im=     0.000000000  scrd_im=     0.000000002
+     cRPA-V-IIJJ q=   1  i=   3  j=   4  bare=     0.789720342  scrd=     0.792587116  bare_im=     0.000000000  scrd_im=    -0.000000002
+     cRPA-V-IIJJ q=   1  i=   4  j=   4  bare=     2.420842913  scrd=     1.978048195  bare_im=    -0.000000000  scrd_im=    -0.000000001
 
 
      =-------------------------------------------------------------=
@@ -758,7 +758,7 @@ Possibly too few bands at point    4   1.00000  -1.00000   1.00000
 
 
      Total time spent up to now is:
-     HP           :      1.24s CPU      1.40s WALL
+     HP           :      1.25s CPU      1.43s WALL
 
 
      Wannier function pairs for perturbation
@@ -774,41 +774,41 @@ Possibly too few bands at point    4   1.00000  -1.00000   1.00000
 
       q point #   2   Perturbation #  1
      iw =      1 , jw =      1 , R (crystal) =      0     0     0
-     Sum of drho (normalized to 1) =     6.8039031116E-01   -3.8367808386E-01
+     Sum of drho (normalized to 1) =     6.8039002793E-01   -3.8367842870E-01
 
-      iter #   1 total cpu time :     1.4 secs   av.it.:  26.4
+      iter #   1 total cpu time :     1.5 secs   av.it.:  26.5
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  7.430E-06
 
-      iter #   2 total cpu time :     1.5 secs   av.it.:  25.9
+      iter #   2 total cpu time :     1.5 secs   av.it.:  25.8
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  9.695E-07
 
       iter #   3 total cpu time :     1.5 secs   av.it.:  25.8
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.308E-08
 
-      iter #   4 total cpu time :     1.5 secs   av.it.:  25.0
+      iter #   4 total cpu time :     1.5 secs   av.it.:  25.2
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  6.053E-10
 
       iter #   5 total cpu time :     1.5 secs   av.it.:  24.6
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  6.110E-12
 
-      iter #   6 total cpu time :     1.5 secs   av.it.:  23.9
+      iter #   6 total cpu time :     1.6 secs   av.it.:  23.8
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.956E-12
 
-      iter #   7 total cpu time :     1.6 secs   av.it.:  23.9
+      iter #   7 total cpu time :     1.6 secs   av.it.:  23.8
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.824E-14
 
-      iter #   8 total cpu time :     1.6 secs   av.it.:  23.0
+      iter #   8 total cpu time :     1.6 secs   av.it.:  22.9
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.333E-15
 
       iter #   9 total cpu time :     1.6 secs   av.it.:  22.4
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.690E-16
 
-      iter #  10 total cpu time :     1.6 secs   av.it.:  22.2
+      iter #  10 total cpu time :     1.7 secs   av.it.:  22.2
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.793E-18
 
       q point #   2   Perturbation #  2
      iw =      2 , jw =      2 , R (crystal) =      0     0     0
-     Sum of drho (normalized to 1) =     6.8039031009E-01   -3.8367808469E-01
+     Sum of drho (normalized to 1) =     6.8039002685E-01   -3.8367842953E-01
 
       iter #   1 total cpu time :     1.7 secs   av.it.:  26.4
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.091E-06
@@ -819,22 +819,22 @@ Possibly too few bands at point    4   1.00000  -1.00000   1.00000
       iter #   3 total cpu time :     1.7 secs   av.it.:  25.4
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.392E-07
 
-      iter #   4 total cpu time :     1.7 secs   av.it.:  25.6
+      iter #   4 total cpu time :     1.8 secs   av.it.:  25.6
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.468E-09
 
-      iter #   5 total cpu time :     1.8 secs   av.it.:  25.0
+      iter #   5 total cpu time :     1.8 secs   av.it.:  24.9
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.968E-09
 
-      iter #   6 total cpu time :     1.8 secs   av.it.:  24.9
+      iter #   6 total cpu time :     1.8 secs   av.it.:  24.8
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.798E-10
 
       iter #   7 total cpu time :     1.8 secs   av.it.:  24.4
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.547E-13
 
-      iter #   8 total cpu time :     1.8 secs   av.it.:  23.6
+      iter #   8 total cpu time :     1.9 secs   av.it.:  23.5
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.311E-13
 
-      iter #   9 total cpu time :     1.8 secs   av.it.:  23.2
+      iter #   9 total cpu time :     1.9 secs   av.it.:  23.4
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.023E-14
 
       iter #  10 total cpu time :     1.9 secs   av.it.:  23.2
@@ -848,21 +848,21 @@ Possibly too few bands at point    4   1.00000  -1.00000   1.00000
 
       q point #   2   Perturbation #  3
      iw =      3 , jw =      3 , R (crystal) =      0     0     0
-     Sum of drho (normalized to 1) =     7.1916920894E-01    1.0268656732E-01
+     Sum of drho (normalized to 1) =     7.1916903058E-01    1.0268698612E-01
 
-      iter #   1 total cpu time :     1.9 secs   av.it.:  26.0
+      iter #   1 total cpu time :     2.0 secs   av.it.:  25.9
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.963E-06
 
       iter #   2 total cpu time :     2.0 secs   av.it.:  26.1
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.011E-06
 
-      iter #   3 total cpu time :     2.0 secs   av.it.:  25.2
+      iter #   3 total cpu time :     2.0 secs   av.it.:  25.4
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  5.227E-07
 
       iter #   4 total cpu time :     2.0 secs   av.it.:  25.5
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  9.500E-09
 
-      iter #   5 total cpu time :     2.0 secs   av.it.:  24.9
+      iter #   5 total cpu time :     2.1 secs   av.it.:  25.0
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.940E-10
 
       iter #   6 total cpu time :     2.1 secs   av.it.:  24.4
@@ -871,13 +871,13 @@ Possibly too few bands at point    4   1.00000  -1.00000   1.00000
       iter #   7 total cpu time :     2.1 secs   av.it.:  24.4
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.321E-11
 
-      iter #   8 total cpu time :     2.1 secs   av.it.:  24.1
+      iter #   8 total cpu time :     2.1 secs   av.it.:  24.0
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.826E-13
 
-      iter #   9 total cpu time :     2.1 secs   av.it.:  23.4
+      iter #   9 total cpu time :     2.2 secs   av.it.:  23.4
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  5.792E-13
 
-      iter #  10 total cpu time :     2.1 secs   av.it.:  23.2
+      iter #  10 total cpu time :     2.2 secs   av.it.:  23.4
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  5.598E-14
 
       iter #  11 total cpu time :     2.2 secs   av.it.:  23.2
@@ -891,21 +891,21 @@ Possibly too few bands at point    4   1.00000  -1.00000   1.00000
 
       q point #   2   Perturbation #  4
      iw =      4 , jw =      4 , R (crystal) =      0     0     0
-     Sum of drho (normalized to 1) =     6.8039030971E-01   -3.8367808076E-01
+     Sum of drho (normalized to 1) =     6.8039002647E-01   -3.8367842560E-01
 
-      iter #   1 total cpu time :     2.2 secs   av.it.:  26.4
+      iter #   1 total cpu time :     2.3 secs   av.it.:  26.5
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  4.200E-06
 
-      iter #   2 total cpu time :     2.3 secs   av.it.:  26.1
+      iter #   2 total cpu time :     2.3 secs   av.it.:  26.2
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.723E-06
 
       iter #   3 total cpu time :     2.3 secs   av.it.:  25.6
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  4.291E-07
 
-      iter #   4 total cpu time :     2.3 secs   av.it.:  25.8
+      iter #   4 total cpu time :     2.3 secs   av.it.:  25.6
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.247E-09
 
-      iter #   5 total cpu time :     2.3 secs   av.it.:  24.9
+      iter #   5 total cpu time :     2.4 secs   av.it.:  24.9
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.272E-10
 
       iter #   6 total cpu time :     2.4 secs   av.it.:  24.4
@@ -914,13 +914,13 @@ Possibly too few bands at point    4   1.00000  -1.00000   1.00000
       iter #   7 total cpu time :     2.4 secs   av.it.:  24.4
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.451E-11
 
-      iter #   8 total cpu time :     2.4 secs   av.it.:  23.5
+      iter #   8 total cpu time :     2.4 secs   av.it.:  23.8
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.449E-13
 
-      iter #   9 total cpu time :     2.4 secs   av.it.:  23.5
+      iter #   9 total cpu time :     2.5 secs   av.it.:  23.5
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.960E-13
 
-      iter #  10 total cpu time :     2.4 secs   av.it.:  23.4
+      iter #  10 total cpu time :     2.5 secs   av.it.:  23.4
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  4.080E-14
 
       iter #  11 total cpu time :     2.5 secs   av.it.:  23.4
@@ -940,26 +940,26 @@ Possibly too few bands at point    4   1.00000  -1.00000   1.00000
      Done writing Coulomb matrix elements to file
 
      cRPA on-site density-density interaction V_iijj (eV) at q=   2
-     cRPA-V-IIJJ q=   2  i=   1  j=   1  bare=    10.163011016  scrd=     5.551531488
-     cRPA-V-IIJJ q=   2  i=   2  j=   1  bare=     8.546141187  scrd=     4.397578704
-     cRPA-V-IIJJ q=   2  i=   3  j=   1  bare=     7.059192281  scrd=     3.731935500
-     cRPA-V-IIJJ q=   2  i=   4  j=   1  bare=     8.546141168  scrd=     4.397578692
-     cRPA-V-IIJJ q=   2  i=   1  j=   2  bare=     8.546141187  scrd=     4.397573680
-     cRPA-V-IIJJ q=   2  i=   2  j=   2  bare=    10.163010974  scrd=     5.551526844
-     cRPA-V-IIJJ q=   2  i=   3  j=   2  bare=     7.059192253  scrd=     3.731931553
-     cRPA-V-IIJJ q=   2  i=   4  j=   2  bare=     8.546141158  scrd=     4.397573701
-     cRPA-V-IIJJ q=   2  i=   1  j=   3  bare=     7.059192281  scrd=     3.731928949
-     cRPA-V-IIJJ q=   2  i=   2  j=   3  bare=     7.059192253  scrd=     3.731928552
-     cRPA-V-IIJJ q=   2  i=   3  j=   3  bare=     9.268707695  scrd=     4.930847540
-     cRPA-V-IIJJ q=   2  i=   4  j=   3  bare=     7.059192257  scrd=     3.731928938
-     cRPA-V-IIJJ q=   2  i=   1  j=   4  bare=     8.546141168  scrd=     4.397576427
-     cRPA-V-IIJJ q=   2  i=   2  j=   4  bare=     8.546141158  scrd=     4.397576426
-     cRPA-V-IIJJ q=   2  i=   3  j=   4  bare=     7.059192257  scrd=     3.731931627
-     cRPA-V-IIJJ q=   2  i=   4  j=   4  bare=    10.163010916  scrd=     5.551529413
+     cRPA-V-IIJJ q=   2  i=   1  j=   1  bare=    10.163010064  scrd=     5.551531241  bare_im=     0.000000000  scrd_im=    -0.000000000
+     cRPA-V-IIJJ q=   2  i=   2  j=   1  bare=     8.546137511  scrd=     4.397576629  bare_im=     0.000000000  scrd_im=    -0.000000000
+     cRPA-V-IIJJ q=   2  i=   3  j=   1  bare=     7.059186772  scrd=     3.731932159  bare_im=     0.000000030  scrd_im=     0.000000214
+     cRPA-V-IIJJ q=   2  i=   4  j=   1  bare=     8.546137492  scrd=     4.397576617  bare_im=     0.000000000  scrd_im=    -0.000000000
+     cRPA-V-IIJJ q=   2  i=   1  j=   2  bare=     8.546137511  scrd=     4.397571604  bare_im=    -0.000000000  scrd_im=    -0.000000000
+     cRPA-V-IIJJ q=   2  i=   2  j=   2  bare=    10.163010021  scrd=     5.551526596  bare_im=     0.000000000  scrd_im=    -0.000000000
+     cRPA-V-IIJJ q=   2  i=   3  j=   2  bare=     7.059186744  scrd=     3.731928213  bare_im=     0.000000030  scrd_im=     0.000000214
+     cRPA-V-IIJJ q=   2  i=   4  j=   2  bare=     8.546137483  scrd=     4.397571625  bare_im=     0.000000000  scrd_im=    -0.000000000
+     cRPA-V-IIJJ q=   2  i=   1  j=   3  bare=     7.059186772  scrd=     3.731925608  bare_im=    -0.000000030  scrd_im=    -0.000000214
+     cRPA-V-IIJJ q=   2  i=   2  j=   3  bare=     7.059186744  scrd=     3.731925211  bare_im=    -0.000000030  scrd_im=    -0.000000214
+     cRPA-V-IIJJ q=   2  i=   3  j=   3  bare=     9.268707306  scrd=     4.930845880  bare_im=     0.000000000  scrd_im=     0.000000000
+     cRPA-V-IIJJ q=   2  i=   4  j=   3  bare=     7.059186748  scrd=     3.731925597  bare_im=    -0.000000030  scrd_im=    -0.000000214
+     cRPA-V-IIJJ q=   2  i=   1  j=   4  bare=     8.546137492  scrd=     4.397574351  bare_im=    -0.000000000  scrd_im=    -0.000000000
+     cRPA-V-IIJJ q=   2  i=   2  j=   4  bare=     8.546137483  scrd=     4.397574351  bare_im=    -0.000000000  scrd_im=    -0.000000000
+     cRPA-V-IIJJ q=   2  i=   3  j=   4  bare=     7.059186748  scrd=     3.731928286  bare_im=     0.000000030  scrd_im=     0.000000214
+     cRPA-V-IIJJ q=   2  i=   4  j=   4  bare=    10.163009963  scrd=     5.551529165  bare_im=     0.000000000  scrd_im=    -0.000000000
 
      PRINTING TIMING FROM PWSCF ROUTINES: 
 
-     init_run     :      0.01s CPU      0.02s WALL (       1 calls)
+     init_run     :      0.02s CPU      0.02s WALL (       1 calls)
      electrons    :      0.02s CPU      0.03s WALL (       1 calls)
 
      Called by init_run:
@@ -986,7 +986,7 @@ Possibly too few bands at point    4   1.00000  -1.00000   1.00000
      cegterg:over :      0.00s CPU      0.00s WALL (      44 calls)
      cegterg:upda :      0.00s CPU      0.00s WALL (      44 calls)
      cegterg:last :      0.00s CPU      0.00s WALL (      16 calls)
-     h_psi        :      1.58s CPU      1.71s WALL (    5298 calls)
+     h_psi        :      1.59s CPU      1.71s WALL (    5298 calls)
      g_psi        :      0.00s CPU      0.00s WALL (      44 calls)
 
      Called by h_psi:
@@ -996,9 +996,9 @@ Possibly too few bands at point    4   1.00000  -1.00000   1.00000
 
      General routines
      calbec       :      0.05s CPU      0.06s WALL (    5306 calls)
-     fft          :      0.04s CPU      0.06s WALL (    1190 calls)
+     fft          :      0.04s CPU      0.07s WALL (    1190 calls)
      ffts         :      0.00s CPU      0.00s WALL (      32 calls)
-     fftw         :      1.43s CPU      1.56s WALL (   41094 calls)
+     fftw         :      1.44s CPU      1.56s WALL (   41094 calls)
      davcio       :      0.00s CPU      0.01s WALL (     256 calls)
 
      Parallel routines
@@ -1011,7 +1011,7 @@ Possibly too few bands at point    4   1.00000  -1.00000   1.00000
 
      crpa_setup_q :      0.01s CPU      0.01s WALL (       2 calls)
      crpa_init_q  :      0.01s CPU      0.01s WALL (       2 calls)
-     crpa_solve_l :      1.93s CPU      2.11s WALL (       2 calls)
+     crpa_solve_l :      1.95s CPU      2.12s WALL (       2 calls)
      ef_shift     :      0.00s CPU      0.00s WALL (      42 calls)
      crpa_run_nsc :      0.04s CPU      0.05s WALL (       1 calls)
      crpa_postpro :      0.00s CPU      0.00s WALL (       2 calls)
@@ -1026,11 +1026,11 @@ Possibly too few bands at point    4   1.00000  -1.00000   1.00000
 
      PRINTING TIMING FROM LR MODULE: 
 
-     sth_kernel   :      1.80s CPU      1.96s WALL (      90 calls)
-     apply_dpot_b :      0.07s CPU      0.09s WALL (     244 calls)
+     sth_kernel   :      1.81s CPU      1.96s WALL (      90 calls)
+     apply_dpot_b :      0.08s CPU      0.09s WALL (     244 calls)
      ortho        :      0.00s CPU      0.00s WALL (     180 calls)
-     cgsolve      :      1.68s CPU      1.82s WALL (     180 calls)
-     ch_psi       :      1.66s CPU      1.80s WALL (    5246 calls)
+     cgsolve      :      1.69s CPU      1.82s WALL (     180 calls)
+     ch_psi       :      1.66s CPU      1.79s WALL (    5246 calls)
      incdrhoscf   :      0.05s CPU      0.06s WALL (     180 calls)
      dv_of_drho   :      0.06s CPU      0.07s WALL (      98 calls)
      mix_pot      :      0.02s CPU      0.02s WALL (      90 calls)
@@ -1039,10 +1039,10 @@ Possibly too few bands at point    4   1.00000  -1.00000   1.00000
      setup_nbnd_o :      0.00s CPU      0.00s WALL (       2 calls)
      cft_wave     :      0.07s CPU      0.08s WALL (    1952 calls)
 
-     HP           :      2.25s CPU      2.51s WALL
+     HP           :      2.28s CPU      2.54s WALL
 
 
-   This run was terminated on:  12:47:43  30Oct2026            
+   This run was terminated on:  17:17:16  30Oct2026            
 
 =------------------------------------------------------------------------------=
    JOB DONE.

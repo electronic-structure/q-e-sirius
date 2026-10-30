@@ -159,7 +159,7 @@ END SUBROUTINE write_coulomb_wannier
 !
 SUBROUTINE print_interaction_bands(iq)
    !
-   ! Pair-diagonal trace T = (1/(Nk N^2)) sum_k sum_ij Re V_(ij,k),(ij,k) with
+   ! Pair-diagonal trace T = (1/(Nk N^2)) sum_k sum_ij V_(ij,k),(ij,k) with
    ! rho_(ij,k) = psi_(i,k+q) psi_(j,k)^*. This trace is invariant under a
    ! gauge transformation psi_k -> psi_k U(k). Individual elements, and
    ! sum_ij V_(ii,k),(jj,k) at q /= 0, are not. Useful for testing where we
@@ -173,19 +173,20 @@ SUBROUTINE print_interaction_bands(iq)
    INTEGER, INTENT(IN) :: iq
    !! index of the q point
    INTEGER :: ip
-   REAL(DP) :: v_trace_bare, v_trace_scrd
+   COMPLEX(DP) :: v_trace_bare, v_trace_scrd
    !
-   v_trace_bare = 0.0_DP
-   v_trace_scrd = 0.0_DP
+   v_trace_bare = (0.0_DP, 0.0_DP)
+   v_trace_scrd = (0.0_DP, 0.0_DP)
    DO ip = 1, npert_tot
-      v_trace_bare = v_trace_bare + REAL(v_coul_bare(ip, ip), KIND = DP)
-      v_trace_scrd = v_trace_scrd + REAL(v_coul_scrd(ip, ip), KIND = DP)
+      v_trace_bare = v_trace_bare + v_coul_bare(ip, ip)
+      v_trace_scrd = v_trace_scrd + v_coul_scrd(ip, ip)
    ENDDO
    v_trace_bare = v_trace_bare / npert_tot * RYTOEV
    v_trace_scrd = v_trace_scrd / npert_tot * RYTOEV
    !
-   WRITE(stdout, '(5x, "cRPA-U-TRACE q=", I4, "  bare=", F16.9, "  scrd=", F16.9)') &
-      iq, v_trace_bare, v_trace_scrd
+   WRITE(stdout, '(5x, "cRPA-U-TRACE q=", I4, "  bare=", F16.9, "  scrd=", F16.9, &
+      &"  bare_im=", F16.9, "  scrd_im=", F16.9)') iq, REAL(v_trace_bare, KIND = DP), &
+      REAL(v_trace_scrd, KIND = DP), AIMAG(v_trace_bare), AIMAG(v_trace_scrd)
    !
 END SUBROUTINE print_interaction_bands
 !
@@ -214,10 +215,13 @@ SUBROUTINE print_interaction_wannier(iq)
       DO ip1 = 1, nmels_tot
          IF (mels_iwlist(ip1) /= mels_jwlist(ip1)) CYCLE
          IF (ANY(mels_Rlist(:, ip1) /= 0)) CYCLE
-         WRITE(stdout, '(5x, "cRPA-V-IIJJ q=", I4, "  i=", I4, "  j=", I4, "  bare=", F16.9, "  scrd=", F16.9)') &
+         WRITE(stdout, '(5x, "cRPA-V-IIJJ q=", I4, "  i=", I4, "  j=", I4, "  bare=", F16.9, "  scrd=", F16.9, &
+            &"  bare_im=", F16.9, "  scrd_im=", F16.9)') &
             iq, mels_iwlist(ip1), pert_iwlist(ip2), &
             REAL(v_coul_bare(ip1, ip2), KIND = DP) * RYTOEV, &
-            REAL(v_coul_scrd(ip1, ip2), KIND = DP) * RYTOEV
+            REAL(v_coul_scrd(ip1, ip2), KIND = DP) * RYTOEV, &
+            AIMAG(v_coul_bare(ip1, ip2)) * RYTOEV, &
+            AIMAG(v_coul_scrd(ip1, ip2)) * RYTOEV
       ENDDO
    ENDDO
    !

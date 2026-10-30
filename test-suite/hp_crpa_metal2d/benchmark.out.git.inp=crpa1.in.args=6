@@ -1,5 +1,5 @@
 
-     Program HP v.8.0dev starts on 30Oct2026 at 15:43:46 
+     Program HP v.8.0dev starts on 30Oct2026 at 17:17:12 
 
      This program is part of the open-source Quantum ESPRESSO suite
      for quantum simulation of materials; please cite
@@ -14,7 +14,7 @@
 
      MPI processes distributed on     1 nodes
      K-points division:     npool     =       4
-     1529518 MiB available memory on the printing compute node when the environment starts
+     1527009 MiB available memory on the printing compute node when the environment starts
 
 
      =---------------------------------------------------------------------------=
@@ -99,7 +99,7 @@
      ========================================
      Reading Wannier90 checkpoint file
      Opening file MoS2.chk
-     written on 30Oct2026 at 15:43:45
+     written on 30Oct2026 at 17:17:11
      Number of bands :       6
      Number of excluded bands :      11
      Excluded bands :    1,    2,    3,    4,    5,    6,    7,    8,    9,   10,   11.
@@ -219,7 +219,7 @@
 
 
      Total time spent up to now is:
-     HP           :      0.99s CPU      1.12s WALL
+     HP           :      1.02s CPU      1.17s WALL
 
 
      Wannier function pairs for perturbation
@@ -261,22 +261,22 @@
 
      Pert. #  1: Fermi energy shift (Ry) =     1.0501E+00    -3.1281E-09
 
-      iter #   3 total cpu time :     5.1 secs   av.it.:  47.6
+      iter #   3 total cpu time :     5.2 secs   av.it.:  47.6
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.550E-05
 
      Pert. #  1: Fermi energy shift (Ry) =     7.3672E-02     4.7153E-09
 
-      iter #   4 total cpu time :     6.4 secs   av.it.:  46.9
+      iter #   4 total cpu time :     6.5 secs   av.it.:  46.9
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  7.925E-08
 
      Pert. #  1: Fermi energy shift (Ry) =    -3.3673E-03    -1.2958E-08
 
-      iter #   5 total cpu time :     7.6 secs   av.it.:  45.1
+      iter #   5 total cpu time :     7.7 secs   av.it.:  45.1
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  6.298E-08
 
      Pert. #  1: Fermi energy shift (Ry) =    -5.7989E-03    -3.7439E-09
 
-      iter #   6 total cpu time :     8.8 secs   av.it.:  43.1
+      iter #   6 total cpu time :     8.9 secs   av.it.:  43.1
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.674E-08
 
      Pert. #  1: Fermi energy shift (Ry) =    -1.2611E-02     2.4811E-08
@@ -286,7 +286,7 @@
 
      Pert. #  1: Fermi energy shift (Ry) =    -1.1114E-02    -1.0946E-07
 
-      iter #   8 total cpu time :    11.2 secs   av.it.:  40.3
+      iter #   8 total cpu time :    11.3 secs   av.it.:  40.3
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.844E-11
 
      Pert. #  1: Fermi energy shift (Ry) =    -1.0442E-02     2.9233E-07
@@ -296,32 +296,32 @@
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.9916E-03    -1.0970E-06
 
-      iter #  10 total cpu time :    13.3 secs   av.it.:  37.0
+      iter #  10 total cpu time :    13.4 secs   av.it.:  37.0
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.905E-13
 
      Pert. #  1: Fermi energy shift (Ry) =    -1.0045E-02     5.1301E-06
 
-      iter #  11 total cpu time :    14.3 secs   av.it.:  35.1
+      iter #  11 total cpu time :    14.4 secs   av.it.:  35.1
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.759E-14
 
      Pert. #  1: Fermi energy shift (Ry) =    -1.0056E-02    -8.4221E-07
 
-      iter #  12 total cpu time :    15.2 secs   av.it.:  33.4
+      iter #  12 total cpu time :    15.3 secs   av.it.:  33.4
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  4.828E-15
 
      Pert. #  1: Fermi energy shift (Ry) =    -1.0060E-02    -5.7109E-07
 
-      iter #  13 total cpu time :    16.2 secs   av.it.:  32.4
+      iter #  13 total cpu time :    16.3 secs   av.it.:  32.4
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  9.235E-15
 
      Pert. #  1: Fermi energy shift (Ry) =    -1.0062E-02     1.7187E-08
 
-      iter #  14 total cpu time :    17.1 secs   av.it.:  32.1
+      iter #  14 total cpu time :    17.2 secs   av.it.:  32.1
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.227E-16
 
      Pert. #  1: Fermi energy shift (Ry) =    -1.0064E-02     2.8460E-10
 
-      iter #  15 total cpu time :    18.0 secs   av.it.:  30.6
+      iter #  15 total cpu time :    18.1 secs   av.it.:  30.6
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.037E-18
 
       q point #   1   Perturbation #  2
@@ -330,77 +330,77 @@
 
      Pert. #  1: Fermi energy shift (Ry) =     1.9673E+00    -1.5800E-11
 
-      iter #   1 total cpu time :    19.3 secs   av.it.:  49.0
+      iter #   1 total cpu time :    19.4 secs   av.it.:  49.0
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  5.085E-05
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.4600E-01    -1.9377E-10
 
-      iter #   2 total cpu time :    20.7 secs   av.it.:  50.2
+      iter #   2 total cpu time :    20.8 secs   av.it.:  50.2
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.517E-04
 
      Pert. #  1: Fermi energy shift (Ry) =    -2.9940E-01    -1.8806E-09
 
-      iter #   3 total cpu time :    22.0 secs   av.it.:  49.0
+      iter #   3 total cpu time :    22.1 secs   av.it.:  49.0
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.532E-05
 
      Pert. #  1: Fermi energy shift (Ry) =    -1.2894E-01     6.5397E-10
 
-      iter #   4 total cpu time :    23.3 secs   av.it.:  47.8
+      iter #   4 total cpu time :    23.4 secs   av.it.:  47.8
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.626E-06
 
      Pert. #  1: Fermi energy shift (Ry) =    -4.9061E-02    -4.2755E-09
 
-      iter #   5 total cpu time :    24.5 secs   av.it.:  47.7
+      iter #   5 total cpu time :    24.7 secs   av.it.:  47.7
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  4.138E-07
 
      Pert. #  1: Fermi energy shift (Ry) =    -3.6506E-02    -1.1750E-09
 
-      iter #   6 total cpu time :    25.8 secs   av.it.:  45.3
+      iter #   6 total cpu time :    25.9 secs   av.it.:  45.3
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.060E-07
 
      Pert. #  1: Fermi energy shift (Ry) =    -8.9998E-03     6.6544E-09
 
-      iter #   7 total cpu time :    27.0 secs   av.it.:  46.2
+      iter #   7 total cpu time :    27.2 secs   av.it.:  46.2
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.636E-09
 
      Pert. #  1: Fermi energy shift (Ry) =    -3.8802E-03    -1.7833E-08
 
-      iter #   8 total cpu time :    28.2 secs   av.it.:  43.0
+      iter #   8 total cpu time :    28.3 secs   av.it.:  43.0
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  4.383E-11
 
      Pert. #  1: Fermi energy shift (Ry) =    -3.3459E-03     5.8854E-08
 
-      iter #   9 total cpu time :    29.2 secs   av.it.:  40.1
+      iter #   9 total cpu time :    29.4 secs   av.it.:  40.1
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.215E-11
 
      Pert. #  1: Fermi energy shift (Ry) =    -3.5796E-03    -2.0646E-07
 
-      iter #  10 total cpu time :    30.3 secs   av.it.:  39.2
+      iter #  10 total cpu time :    30.4 secs   av.it.:  39.2
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.682E-13
 
      Pert. #  1: Fermi energy shift (Ry) =    -3.6499E-03     5.5807E-07
 
-      iter #  11 total cpu time :    31.3 secs   av.it.:  37.9
+      iter #  11 total cpu time :    31.4 secs   av.it.:  37.9
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.452E-13
 
      Pert. #  1: Fermi energy shift (Ry) =    -3.7029E-03    -2.1180E-06
 
-      iter #  12 total cpu time :    32.3 secs   av.it.:  36.9
+      iter #  12 total cpu time :    32.4 secs   av.it.:  36.9
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  4.515E-14
 
      Pert. #  1: Fermi energy shift (Ry) =    -3.7191E-03    -1.3887E-07
 
-      iter #  13 total cpu time :    33.2 secs   av.it.:  36.1
+      iter #  13 total cpu time :    33.4 secs   av.it.:  36.1
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  7.996E-15
 
      Pert. #  1: Fermi energy shift (Ry) =    -3.7223E-03     2.3025E-07
 
-      iter #  14 total cpu time :    34.2 secs   av.it.:  34.1
+      iter #  14 total cpu time :    34.3 secs   av.it.:  34.1
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.381E-15
 
      Pert. #  1: Fermi energy shift (Ry) =    -3.7264E-03    -2.2195E-09
 
-      iter #  15 total cpu time :    35.1 secs   av.it.:  34.1
+      iter #  15 total cpu time :    35.2 secs   av.it.:  34.1
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.459E-18
 
       q point #   1   Perturbation #  3
@@ -409,77 +409,77 @@
 
      Pert. #  1: Fermi energy shift (Ry) =     1.9673E+00    -1.9206E-11
 
-      iter #   1 total cpu time :    36.5 secs   av.it.:  48.7
+      iter #   1 total cpu time :    36.6 secs   av.it.:  48.7
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  5.214E-05
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.2543E-01    -1.6834E-10
 
-      iter #   2 total cpu time :    37.8 secs   av.it.:  49.6
+      iter #   2 total cpu time :    38.0 secs   av.it.:  49.6
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.270E-04
 
      Pert. #  1: Fermi energy shift (Ry) =    -2.7892E-01    -7.2734E-10
 
-      iter #   3 total cpu time :    39.1 secs   av.it.:  49.2
+      iter #   3 total cpu time :    39.3 secs   av.it.:  49.2
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.939E-05
 
      Pert. #  1: Fermi energy shift (Ry) =    -1.3342E-01     1.5970E-09
 
-      iter #   4 total cpu time :    40.4 secs   av.it.:  47.9
+      iter #   4 total cpu time :    40.6 secs   av.it.:  47.9
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.431E-06
 
      Pert. #  1: Fermi energy shift (Ry) =    -4.4170E-02    -3.9250E-09
 
-      iter #   5 total cpu time :    41.7 secs   av.it.:  48.0
+      iter #   5 total cpu time :    41.9 secs   av.it.:  48.0
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.678E-07
 
      Pert. #  1: Fermi energy shift (Ry) =    -3.2170E-02    -8.3498E-10
 
-      iter #   6 total cpu time :    42.9 secs   av.it.:  45.9
+      iter #   6 total cpu time :    43.1 secs   av.it.:  45.9
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.204E-07
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.9501E-03     6.9813E-09
 
-      iter #   7 total cpu time :    44.1 secs   av.it.:  46.1
+      iter #   7 total cpu time :    44.3 secs   av.it.:  46.1
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.474E-09
 
      Pert. #  1: Fermi energy shift (Ry) =    -4.8319E-03    -1.9448E-08
 
-      iter #   8 total cpu time :    45.3 secs   av.it.:  43.1
+      iter #   8 total cpu time :    45.5 secs   av.it.:  43.1
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.784E-11
 
      Pert. #  1: Fermi energy shift (Ry) =    -3.8827E-03     5.4538E-08
 
-      iter #   9 total cpu time :    46.4 secs   av.it.:  40.2
+      iter #   9 total cpu time :    46.5 secs   av.it.:  40.2
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.081E-12
 
      Pert. #  1: Fermi energy shift (Ry) =    -3.7146E-03    -2.1713E-07
 
-      iter #  10 total cpu time :    47.4 secs   av.it.:  39.0
+      iter #  10 total cpu time :    47.6 secs   av.it.:  39.0
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.391E-13
 
      Pert. #  1: Fermi energy shift (Ry) =    -3.6899E-03     5.1721E-07
 
-      iter #  11 total cpu time :    48.4 secs   av.it.:  37.4
+      iter #  11 total cpu time :    48.6 secs   av.it.:  37.4
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  6.109E-14
 
      Pert. #  1: Fermi energy shift (Ry) =    -3.7127E-03    -1.7866E-06
 
-      iter #  12 total cpu time :    49.4 secs   av.it.:  36.7
+      iter #  12 total cpu time :    49.6 secs   av.it.:  36.7
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.146E-14
 
      Pert. #  1: Fermi energy shift (Ry) =    -3.7221E-03    -2.3684E-07
 
-      iter #  13 total cpu time :    50.3 secs   av.it.:  35.9
+      iter #  13 total cpu time :    50.5 secs   av.it.:  35.9
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.618E-15
 
      Pert. #  1: Fermi energy shift (Ry) =    -3.7237E-03     9.4637E-08
 
-      iter #  14 total cpu time :    51.2 secs   av.it.:  34.1
+      iter #  14 total cpu time :    51.4 secs   av.it.:  34.1
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.514E-16
 
      Pert. #  1: Fermi energy shift (Ry) =    -3.7258E-03    -3.2256E-09
 
-      iter #  15 total cpu time :    52.1 secs   av.it.:  33.4
+      iter #  15 total cpu time :    52.3 secs   av.it.:  33.4
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  7.732E-18
 
       q point #   1   Perturbation #  4
@@ -488,72 +488,72 @@
 
      Pert. #  1: Fermi energy shift (Ry) =     2.0073E+00    -2.0297E-11
 
-      iter #   1 total cpu time :    53.5 secs   av.it.:  48.3
+      iter #   1 total cpu time :    53.7 secs   av.it.:  48.3
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  6.377E-05
 
      Pert. #  1: Fermi energy shift (Ry) =    -9.7991E-01    -2.6731E-10
 
-      iter #   2 total cpu time :    54.8 secs   av.it.:  50.2
+      iter #   2 total cpu time :    55.1 secs   av.it.:  50.2
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.721E-04
 
      Pert. #  1: Fermi energy shift (Ry) =    -2.7228E-01    -4.0897E-10
 
-      iter #   3 total cpu time :    56.2 secs   av.it.:  49.0
+      iter #   3 total cpu time :    56.4 secs   av.it.:  49.0
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.846E-05
 
      Pert. #  1: Fermi energy shift (Ry) =    -1.2865E-01     2.0314E-09
 
-      iter #   4 total cpu time :    57.4 secs   av.it.:  47.4
+      iter #   4 total cpu time :    57.7 secs   av.it.:  47.4
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.196E-06
 
      Pert. #  1: Fermi energy shift (Ry) =    -3.5938E-02    -4.4783E-09
 
-      iter #   5 total cpu time :    58.7 secs   av.it.:  48.0
+      iter #   5 total cpu time :    59.0 secs   av.it.:  48.0
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.802E-07
 
      Pert. #  1: Fermi energy shift (Ry) =    -2.4191E-02    -9.0466E-10
 
-      iter #   6 total cpu time :    59.9 secs   av.it.:  45.8
+      iter #   6 total cpu time :    60.2 secs   av.it.:  45.8
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  6.840E-08
 
      Pert. #  1: Fermi energy shift (Ry) =    -5.0400E-03     7.8931E-09
 
-      iter #   7 total cpu time :    61.2 secs   av.it.:  45.9
+      iter #   7 total cpu time :    61.4 secs   av.it.:  45.9
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.145E-10
 
      Pert. #  1: Fermi energy shift (Ry) =    -2.2018E-03    -2.1807E-08
 
-      iter #   8 total cpu time :    62.3 secs   av.it.:  42.2
+      iter #   8 total cpu time :    62.5 secs   av.it.:  42.2
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.621E-12
 
      Pert. #  1: Fermi energy shift (Ry) =    -1.7191E-03     6.2097E-08
 
-      iter #   9 total cpu time :    63.4 secs   av.it.:  40.1
+      iter #   9 total cpu time :    63.6 secs   av.it.:  40.1
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.101E-11
 
      Pert. #  1: Fermi energy shift (Ry) =    -1.3193E-03    -2.7685E-07
 
-      iter #  10 total cpu time :    64.4 secs   av.it.:  39.0
+      iter #  10 total cpu time :    64.7 secs   av.it.:  39.0
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  4.438E-15
 
      Pert. #  1: Fermi energy shift (Ry) =    -1.3148E-03     6.0388E-07
 
-      iter #  11 total cpu time :    65.4 secs   av.it.:  36.1
+      iter #  11 total cpu time :    65.6 secs   av.it.:  36.1
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  9.276E-14
 
      Pert. #  1: Fermi energy shift (Ry) =    -1.3412E-03    -1.8371E-06
 
-      iter #  12 total cpu time :    66.3 secs   av.it.:  36.7
+      iter #  12 total cpu time :    66.6 secs   av.it.:  36.7
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.602E-14
 
      Pert. #  1: Fermi energy shift (Ry) =    -1.3540E-03    -2.7878E-07
 
-      iter #  13 total cpu time :    67.3 secs   av.it.:  36.1
+      iter #  13 total cpu time :    67.6 secs   av.it.:  36.1
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.332E-15
 
      Pert. #  1: Fermi energy shift (Ry) =    -1.3556E-03     3.3332E-08
 
-      iter #  14 total cpu time :    68.2 secs   av.it.:  33.3
+      iter #  14 total cpu time :    68.5 secs   av.it.:  33.3
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  7.788E-17
 
       q point #   1   Perturbation #  5
@@ -562,77 +562,77 @@
 
      Pert. #  1: Fermi energy shift (Ry) =     2.0073E+00    -1.7761E-11
 
-      iter #   1 total cpu time :    69.6 secs   av.it.:  48.6
+      iter #   1 total cpu time :    69.8 secs   av.it.:  48.6
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  6.225E-05
 
      Pert. #  1: Fermi energy shift (Ry) =    -1.0079E+00    -2.6791E-10
 
-      iter #   2 total cpu time :    70.9 secs   av.it.:  49.6
+      iter #   2 total cpu time :    71.2 secs   av.it.:  49.6
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.931E-04
 
      Pert. #  1: Fermi energy shift (Ry) =    -3.0093E-01    -1.7875E-08
 
-      iter #   3 total cpu time :    72.2 secs   av.it.:  49.0
+      iter #   3 total cpu time :    72.5 secs   av.it.:  49.0
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.358E-05
 
      Pert. #  1: Fermi energy shift (Ry) =    -1.3955E-01    -1.3845E-08
 
-      iter #   4 total cpu time :    73.5 secs   av.it.:  47.4
+      iter #   4 total cpu time :    73.8 secs   av.it.:  47.4
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.995E-06
 
      Pert. #  1: Fermi energy shift (Ry) =    -4.3987E-02    -1.4459E-08
 
-      iter #   5 total cpu time :    74.8 secs   av.it.:  47.7
+      iter #   5 total cpu time :    75.1 secs   av.it.:  47.7
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.995E-07
 
      Pert. #  1: Fermi energy shift (Ry) =    -3.1488E-02    -9.6165E-09
 
-      iter #   6 total cpu time :    76.0 secs   av.it.:  45.1
+      iter #   6 total cpu time :    76.3 secs   av.it.:  45.1
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.360E-07
 
      Pert. #  1: Fermi energy shift (Ry) =    -8.4101E-03     2.0227E-09
 
-      iter #   7 total cpu time :    77.2 secs   av.it.:  46.0
+      iter #   7 total cpu time :    77.5 secs   av.it.:  46.0
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.101E-09
 
      Pert. #  1: Fermi energy shift (Ry) =    -2.6638E-03    -2.3232E-08
 
-      iter #   8 total cpu time :    78.4 secs   av.it.:  43.1
+      iter #   8 total cpu time :    78.7 secs   av.it.:  43.1
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.603E-11
 
      Pert. #  1: Fermi energy shift (Ry) =    -1.4970E-03     5.7413E-08
 
-      iter #   9 total cpu time :    79.5 secs   av.it.:  40.2
+      iter #   9 total cpu time :    79.8 secs   av.it.:  40.2
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  8.394E-13
 
      Pert. #  1: Fermi energy shift (Ry) =    -1.3790E-03    -2.0198E-07
 
-      iter #  10 total cpu time :    80.5 secs   av.it.:  38.2
+      iter #  10 total cpu time :    80.8 secs   av.it.:  38.2
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.659E-13
 
      Pert. #  1: Fermi energy shift (Ry) =    -1.3382E-03     5.5157E-07
 
-      iter #  11 total cpu time :    81.5 secs   av.it.:  37.2
+      iter #  11 total cpu time :    81.8 secs   av.it.:  37.2
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.062E-14
 
      Pert. #  1: Fermi energy shift (Ry) =    -1.3471E-03    -1.4808E-06
 
-      iter #  12 total cpu time :    82.4 secs   av.it.:  36.1
+      iter #  12 total cpu time :    82.7 secs   av.it.:  36.1
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  5.095E-15
 
      Pert. #  1: Fermi energy shift (Ry) =    -1.3538E-03    -2.2590E-07
 
-      iter #  13 total cpu time :    83.4 secs   av.it.:  35.6
+      iter #  13 total cpu time :    83.7 secs   av.it.:  35.6
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.232E-15
 
      Pert. #  1: Fermi energy shift (Ry) =    -1.3550E-03     7.2537E-08
 
-      iter #  14 total cpu time :    84.3 secs   av.it.:  34.1
+      iter #  14 total cpu time :    84.6 secs   av.it.:  34.1
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.489E-16
 
      Pert. #  1: Fermi energy shift (Ry) =    -1.3566E-03    -1.4386E-09
 
-      iter #  15 total cpu time :    85.2 secs   av.it.:  33.1
+      iter #  15 total cpu time :    85.5 secs   av.it.:  33.1
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  4.376E-18
       
       =--------------------------------------------=
@@ -643,31 +643,31 @@
      Done writing Coulomb matrix elements to file
 
      cRPA on-site density-density interaction V_iijj (eV) at q=   1
-     cRPA-V-IIJJ q=   1  i=   1  j=   1  bare=    31.412524145  scrd=     0.715983199
-     cRPA-V-IIJJ q=   1  i=   2  j=   1  bare=    30.423304523  scrd=     0.586997301
-     cRPA-V-IIJJ q=   1  i=   3  j=   1  bare=    30.423304536  scrd=     0.586997301
-     cRPA-V-IIJJ q=   1  i=   4  j=   1  bare=    30.967847954  scrd=     0.436818866
-     cRPA-V-IIJJ q=   1  i=   5  j=   1  bare=    30.967848157  scrd=     0.436818872
-     cRPA-V-IIJJ q=   1  i=   1  j=   2  bare=    30.423304523  scrd=     0.587000005
-     cRPA-V-IIJJ q=   1  i=   2  j=   2  bare=    29.872174457  scrd=     0.675774843
-     cRPA-V-IIJJ q=   1  i=   3  j=   2  bare=    29.623785016  scrd=     0.512053533
-     cRPA-V-IIJJ q=   1  i=   4  j=   2  bare=    30.275130270  scrd=     0.477621116
-     cRPA-V-IIJJ q=   1  i=   5  j=   2  bare=    30.284601940  scrd=     0.489476096
-     cRPA-V-IIJJ q=   1  i=   1  j=   3  bare=    30.423304536  scrd=     0.587001107
-     cRPA-V-IIJJ q=   1  i=   2  j=   3  bare=    29.623785016  scrd=     0.512052908
-     cRPA-V-IIJJ q=   1  i=   3  j=   3  bare=    29.872174486  scrd=     0.675774897
-     cRPA-V-IIJJ q=   1  i=   4  j=   3  bare=    30.284601778  scrd=     0.489474828
-     cRPA-V-IIJJ q=   1  i=   5  j=   3  bare=    30.275130466  scrd=     0.477620110
-     cRPA-V-IIJJ q=   1  i=   1  j=   4  bare=    30.967847954  scrd=     0.436826145
-     cRPA-V-IIJJ q=   1  i=   2  j=   4  bare=    30.275130270  scrd=     0.477623700
-     cRPA-V-IIJJ q=   1  i=   3  j=   4  bare=    30.284601778  scrd=     0.489475355
-     cRPA-V-IIJJ q=   1  i=   4  j=   4  bare=    31.305671852  scrd=     0.632446573
-     cRPA-V-IIJJ q=   1  i=   5  j=   4  bare=    31.256591093  scrd=     0.592837793
-     cRPA-V-IIJJ q=   1  i=   1  j=   5  bare=    30.967848157  scrd=     0.436823544
-     cRPA-V-IIJJ q=   1  i=   2  j=   5  bare=    30.284601940  scrd=     0.489477076
-     cRPA-V-IIJJ q=   1  i=   3  j=   5  bare=    30.275130466  scrd=     0.477622330
-     cRPA-V-IIJJ q=   1  i=   4  j=   5  bare=    31.256591093  scrd=     0.592837523
-     cRPA-V-IIJJ q=   1  i=   5  j=   5  bare=    31.305672264  scrd=     0.632446145
+     cRPA-V-IIJJ q=   1  i=   1  j=   1  bare=    31.412524145  scrd=     0.715983199  bare_im=    -0.000000000  scrd_im=     0.000000003
+     cRPA-V-IIJJ q=   1  i=   2  j=   1  bare=    30.423304523  scrd=     0.586997301  bare_im=    -0.000000000  scrd_im=     0.000000002
+     cRPA-V-IIJJ q=   1  i=   3  j=   1  bare=    30.423304536  scrd=     0.586997301  bare_im=    -0.000000000  scrd_im=     0.000000002
+     cRPA-V-IIJJ q=   1  i=   4  j=   1  bare=    30.967847954  scrd=     0.436818866  bare_im=    -0.000000000  scrd_im=     0.000000002
+     cRPA-V-IIJJ q=   1  i=   5  j=   1  bare=    30.967848157  scrd=     0.436818872  bare_im=    -0.000000000  scrd_im=     0.000000003
+     cRPA-V-IIJJ q=   1  i=   1  j=   2  bare=    30.423304523  scrd=     0.587000005  bare_im=     0.000000000  scrd_im=    -0.000000019
+     cRPA-V-IIJJ q=   1  i=   2  j=   2  bare=    29.872174457  scrd=     0.675774843  bare_im=     0.000000000  scrd_im=    -0.000000013
+     cRPA-V-IIJJ q=   1  i=   3  j=   2  bare=    29.623785016  scrd=     0.512053533  bare_im=     0.000000000  scrd_im=    -0.000000013
+     cRPA-V-IIJJ q=   1  i=   4  j=   2  bare=    30.275130270  scrd=     0.477621116  bare_im=     0.000000000  scrd_im=    -0.000000018
+     cRPA-V-IIJJ q=   1  i=   5  j=   2  bare=    30.284601940  scrd=     0.489476096  bare_im=     0.000000000  scrd_im=    -0.000000018
+     cRPA-V-IIJJ q=   1  i=   1  j=   3  bare=    30.423304536  scrd=     0.587001107  bare_im=    -0.000000000  scrd_im=    -0.000000029
+     cRPA-V-IIJJ q=   1  i=   2  j=   3  bare=    29.623785016  scrd=     0.512052908  bare_im=    -0.000000000  scrd_im=    -0.000000019
+     cRPA-V-IIJJ q=   1  i=   3  j=   3  bare=    29.872174486  scrd=     0.675774897  bare_im=    -0.000000000  scrd_im=    -0.000000020
+     cRPA-V-IIJJ q=   1  i=   4  j=   3  bare=    30.284601778  scrd=     0.489474828  bare_im=     0.000000000  scrd_im=    -0.000000026
+     cRPA-V-IIJJ q=   1  i=   5  j=   3  bare=    30.275130466  scrd=     0.477620110  bare_im=     0.000000000  scrd_im=    -0.000000026
+     cRPA-V-IIJJ q=   1  i=   1  j=   4  bare=    30.967847954  scrd=     0.436826145  bare_im=    -0.000000000  scrd_im=     0.000000300
+     cRPA-V-IIJJ q=   1  i=   2  j=   4  bare=    30.275130270  scrd=     0.477623700  bare_im=    -0.000000000  scrd_im=     0.000000203
+     cRPA-V-IIJJ q=   1  i=   3  j=   4  bare=    30.284601778  scrd=     0.489475355  bare_im=    -0.000000000  scrd_im=     0.000000203
+     cRPA-V-IIJJ q=   1  i=   4  j=   4  bare=    31.305671852  scrd=     0.632446573  bare_im=     0.000000000  scrd_im=     0.000000272
+     cRPA-V-IIJJ q=   1  i=   5  j=   4  bare=    31.256591093  scrd=     0.592837793  bare_im=     0.000000000  scrd_im=     0.000000273
+     cRPA-V-IIJJ q=   1  i=   1  j=   5  bare=    30.967848157  scrd=     0.436823544  bare_im=    -0.000000000  scrd_im=    -0.000000012
+     cRPA-V-IIJJ q=   1  i=   2  j=   5  bare=    30.284601940  scrd=     0.489477076  bare_im=    -0.000000000  scrd_im=    -0.000000008
+     cRPA-V-IIJJ q=   1  i=   3  j=   5  bare=    30.275130466  scrd=     0.477622330  bare_im=    -0.000000000  scrd_im=    -0.000000008
+     cRPA-V-IIJJ q=   1  i=   4  j=   5  bare=    31.256591093  scrd=     0.592837523  bare_im=    -0.000000000  scrd_im=    -0.000000011
+     cRPA-V-IIJJ q=   1  i=   5  j=   5  bare=    31.305672264  scrd=     0.632446145  bare_im=    -0.000000000  scrd_im=    -0.000000011
 
 
      =-------------------------------------------------------------=
@@ -987,7 +987,7 @@
 
 
      Total time spent up to now is:
-     HP           :   1m25.71s CPU   1m27.04s WALL
+     HP           :   1m25.97s CPU   1m27.35s WALL
 
 
      Wannier function pairs for perturbation
@@ -1005,182 +1005,182 @@
      iw =      1 , jw =      1 , R (crystal) =      0     0     0
      Sum of drho (normalized to 1) =     5.6159422064E-01    4.4941738853E-09
 
-      iter #   1 total cpu time :    88.4 secs   av.it.:  48.3
+      iter #   1 total cpu time :    88.7 secs   av.it.:  48.3
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.641E-06
 
-      iter #   2 total cpu time :    89.8 secs   av.it.:  49.2
+      iter #   2 total cpu time :    90.1 secs   av.it.:  49.2
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  5.519E-06
 
-      iter #   3 total cpu time :    91.2 secs   av.it.:  48.3
+      iter #   3 total cpu time :    91.5 secs   av.it.:  48.3
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  5.030E-11
 
-      iter #   4 total cpu time :    92.3 secs   av.it.:  41.3
+      iter #   4 total cpu time :    92.6 secs   av.it.:  41.3
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  9.807E-12
 
-      iter #   5 total cpu time :    93.5 secs   av.it.:  41.4
+      iter #   5 total cpu time :    93.8 secs   av.it.:  41.4
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.246E-13
 
-      iter #   6 total cpu time :    94.6 secs   av.it.:  37.9
+      iter #   6 total cpu time :    94.9 secs   av.it.:  37.9
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.484E-15
 
-      iter #   7 total cpu time :    95.6 secs   av.it.:  35.2
+      iter #   7 total cpu time :    95.9 secs   av.it.:  35.2
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  4.148E-16
 
-      iter #   8 total cpu time :    96.6 secs   av.it.:  35.3
+      iter #   8 total cpu time :    96.9 secs   av.it.:  35.3
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.054E-17
 
       q point #   2   Perturbation #  2
      iw =      2 , jw =      2 , R (crystal) =      0     0     0
      Sum of drho (normalized to 1) =     5.4200300956E-01    6.8681072361E-02
 
-      iter #   1 total cpu time :    98.0 secs   av.it.:  49.8
+      iter #   1 total cpu time :    98.4 secs   av.it.:  49.8
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.432E-06
 
-      iter #   2 total cpu time :    99.4 secs   av.it.:  51.1
+      iter #   2 total cpu time :    99.8 secs   av.it.:  51.1
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  9.838E-06
 
-      iter #   3 total cpu time :   100.8 secs   av.it.:  49.6
+      iter #   3 total cpu time :   101.2 secs   av.it.:  49.6
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.048E-06
 
-      iter #   4 total cpu time :   102.1 secs   av.it.:  48.7
+      iter #   4 total cpu time :   102.5 secs   av.it.:  48.7
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  8.430E-08
 
-      iter #   5 total cpu time :   103.5 secs   av.it.:  47.6
+      iter #   5 total cpu time :   103.8 secs   av.it.:  47.6
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  5.380E-10
 
-      iter #   6 total cpu time :   104.7 secs   av.it.:  44.0
+      iter #   6 total cpu time :   105.1 secs   av.it.:  44.0
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  8.860E-11
 
-      iter #   7 total cpu time :   105.9 secs   av.it.:  43.3
+      iter #   7 total cpu time :   106.3 secs   av.it.:  43.3
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  6.503E-13
 
-      iter #   8 total cpu time :   107.0 secs   av.it.:  40.8
+      iter #   8 total cpu time :   107.4 secs   av.it.:  40.8
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.996E-15
 
-      iter #   9 total cpu time :   108.1 secs   av.it.:  39.2
+      iter #   9 total cpu time :   108.5 secs   av.it.:  39.2
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.159E-15
 
-      iter #  10 total cpu time :   109.2 secs   av.it.:  38.8
+      iter #  10 total cpu time :   109.6 secs   av.it.:  38.8
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  5.570E-15
 
-      iter #  11 total cpu time :   110.3 secs   av.it.:  37.9
+      iter #  11 total cpu time :   110.7 secs   av.it.:  37.9
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  7.279E-16
 
-      iter #  12 total cpu time :   111.3 secs   av.it.:  36.7
+      iter #  12 total cpu time :   111.7 secs   av.it.:  36.7
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  4.672E-17
 
       q point #   2   Perturbation #  3
      iw =      3 , jw =      3 , R (crystal) =      0     0     0
      Sum of drho (normalized to 1) =     3.5909002695E-01   -6.8681076545E-02
 
-      iter #   1 total cpu time :   112.7 secs   av.it.:  49.8
+      iter #   1 total cpu time :   113.1 secs   av.it.:  49.8
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.524E-06
 
-      iter #   2 total cpu time :   114.1 secs   av.it.:  50.6
+      iter #   2 total cpu time :   114.5 secs   av.it.:  50.6
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  8.750E-06
 
-      iter #   3 total cpu time :   115.5 secs   av.it.:  49.6
+      iter #   3 total cpu time :   115.9 secs   av.it.:  49.6
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  7.018E-07
 
-      iter #   4 total cpu time :   116.9 secs   av.it.:  48.8
+      iter #   4 total cpu time :   117.3 secs   av.it.:  48.8
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.161E-09
 
-      iter #   5 total cpu time :   118.1 secs   av.it.:  46.0
+      iter #   5 total cpu time :   118.6 secs   av.it.:  46.0
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.461E-09
 
-      iter #   6 total cpu time :   119.4 secs   av.it.:  45.8
+      iter #   6 total cpu time :   119.8 secs   av.it.:  45.8
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  6.132E-10
 
-      iter #   7 total cpu time :   120.7 secs   av.it.:  44.0
+      iter #   7 total cpu time :   121.1 secs   av.it.:  44.0
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  9.947E-12
 
-      iter #   8 total cpu time :   121.8 secs   av.it.:  42.1
+      iter #   8 total cpu time :   122.3 secs   av.it.:  42.1
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  6.971E-14
 
-      iter #   9 total cpu time :   122.9 secs   av.it.:  40.0
+      iter #   9 total cpu time :   123.4 secs   av.it.:  40.0
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.733E-14
 
-      iter #  10 total cpu time :   124.0 secs   av.it.:  38.9
+      iter #  10 total cpu time :   124.5 secs   av.it.:  38.9
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.051E-15
 
-      iter #  11 total cpu time :   125.1 secs   av.it.:  37.7
+      iter #  11 total cpu time :   125.5 secs   av.it.:  37.7
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  4.043E-17
 
       q point #   2   Perturbation #  4
      iw =      4 , jw =      4 , R (crystal) =      0     0     0
      Sum of drho (normalized to 1) =     3.4673321128E-01    6.2212240895E-02
 
-      iter #   1 total cpu time :   126.5 secs   av.it.:  49.8
+      iter #   1 total cpu time :   127.0 secs   av.it.:  49.8
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.197E-06
 
-      iter #   2 total cpu time :   127.9 secs   av.it.:  50.6
+      iter #   2 total cpu time :   128.4 secs   av.it.:  50.6
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  7.887E-06
 
-      iter #   3 total cpu time :   129.3 secs   av.it.:  49.6
+      iter #   3 total cpu time :   129.7 secs   av.it.:  49.6
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  7.873E-07
 
-      iter #   4 total cpu time :   130.6 secs   av.it.:  49.6
+      iter #   4 total cpu time :   131.1 secs   av.it.:  49.6
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  4.811E-08
 
-      iter #   5 total cpu time :   132.0 secs   av.it.:  47.7
+      iter #   5 total cpu time :   132.4 secs   av.it.:  47.7
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  8.850E-09
 
-      iter #   6 total cpu time :   133.3 secs   av.it.:  46.8
+      iter #   6 total cpu time :   133.7 secs   av.it.:  46.8
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  6.107E-10
 
-      iter #   7 total cpu time :   134.5 secs   av.it.:  44.0
+      iter #   7 total cpu time :   135.0 secs   av.it.:  44.0
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  5.363E-12
 
-      iter #   8 total cpu time :   135.7 secs   av.it.:  41.9
+      iter #   8 total cpu time :   136.1 secs   av.it.:  41.9
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  7.306E-13
 
-      iter #   9 total cpu time :   136.8 secs   av.it.:  40.8
+      iter #   9 total cpu time :   137.3 secs   av.it.:  40.8
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.252E-14
 
-      iter #  10 total cpu time :   137.9 secs   av.it.:  39.0
+      iter #  10 total cpu time :   138.4 secs   av.it.:  39.0
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  5.370E-15
 
-      iter #  11 total cpu time :   139.0 secs   av.it.:  37.8
+      iter #  11 total cpu time :   139.5 secs   av.it.:  37.8
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  2.947E-17
 
       q point #   2   Perturbation #  5
      iw =      5 , jw =      5 , R (crystal) =      0     0     0
      Sum of drho (normalized to 1) =     3.5397290697E-01   -6.2212213561E-02
 
-      iter #   1 total cpu time :   140.4 secs   av.it.:  49.7
+      iter #   1 total cpu time :   140.9 secs   av.it.:  49.7
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.232E-06
 
-      iter #   2 total cpu time :   141.8 secs   av.it.:  50.2
+      iter #   2 total cpu time :   142.3 secs   av.it.:  50.2
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  7.420E-06
 
-      iter #   3 total cpu time :   143.1 secs   av.it.:  49.3
+      iter #   3 total cpu time :   143.7 secs   av.it.:  49.3
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  6.263E-07
 
-      iter #   4 total cpu time :   144.5 secs   av.it.:  48.6
+      iter #   4 total cpu time :   145.0 secs   av.it.:  48.6
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.664E-09
 
-      iter #   5 total cpu time :   145.8 secs   av.it.:  45.9
+      iter #   5 total cpu time :   146.3 secs   av.it.:  45.9
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.280E-10
 
-      iter #   6 total cpu time :   147.0 secs   av.it.:  44.4
+      iter #   6 total cpu time :   147.5 secs   av.it.:  44.4
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.117E-10
 
-      iter #   7 total cpu time :   148.2 secs   av.it.:  43.1
+      iter #   7 total cpu time :   148.7 secs   av.it.:  43.1
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  8.918E-13
 
-      iter #   8 total cpu time :   149.3 secs   av.it.:  40.1
+      iter #   8 total cpu time :   149.8 secs   av.it.:  40.1
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.611E-13
 
-      iter #   9 total cpu time :   150.5 secs   av.it.:  39.8
+      iter #   9 total cpu time :   151.0 secs   av.it.:  39.8
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  3.855E-14
 
-      iter #  10 total cpu time :   151.5 secs   av.it.:  38.8
+      iter #  10 total cpu time :   152.1 secs   av.it.:  38.8
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.080E-14
 
-      iter #  11 total cpu time :   152.6 secs   av.it.:  37.2
+      iter #  11 total cpu time :   153.1 secs   av.it.:  37.2
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  1.622E-16
 
-      iter #  12 total cpu time :   153.6 secs   av.it.:  35.7
+      iter #  12 total cpu time :   154.1 secs   av.it.:  35.7
       thresh= 1.000E-14 alpha_mix =  0.300 |ddv_scf|^2 =  6.247E-17
       
       =--------------------------------------------=
@@ -1191,31 +1191,31 @@
      Done writing Coulomb matrix elements to file
 
      cRPA on-site density-density interaction V_iijj (eV) at q=   2
-     cRPA-V-IIJJ q=   2  i=   1  j=   1  bare=     3.590689061  scrd=     0.566923067
-     cRPA-V-IIJJ q=   2  i=   2  j=   1  bare=     2.919746831  scrd=     0.396717102
-     cRPA-V-IIJJ q=   2  i=   3  j=   1  bare=     2.919746827  scrd=     0.396717028
-     cRPA-V-IIJJ q=   2  i=   4  j=   1  bare=     2.440850908  scrd=     0.211996841
-     cRPA-V-IIJJ q=   2  i=   5  j=   1  bare=     2.440851077  scrd=     0.211996908
-     cRPA-V-IIJJ q=   2  i=   1  j=   2  bare=     2.919746831  scrd=     0.396729250
-     cRPA-V-IIJJ q=   2  i=   2  j=   2  bare=     2.702171856  scrd=     0.433626291
-     cRPA-V-IIJJ q=   2  i=   3  j=   2  bare=     2.211200979  scrd=     0.224163307
-     cRPA-V-IIJJ q=   2  i=   4  j=   2  bare=     2.161087256  scrd=     0.226382023
-     cRPA-V-IIJJ q=   2  i=   5  j=   2  bare=     2.147879760  scrd=     0.231985604
-     cRPA-V-IIJJ q=   2  i=   1  j=   3  bare=     2.919746827  scrd=     0.396726708
-     cRPA-V-IIJJ q=   2  i=   2  j=   3  bare=     2.211200979  scrd=     0.224157864
-     cRPA-V-IIJJ q=   2  i=   3  j=   3  bare=     2.702171754  scrd=     0.433627865
-     cRPA-V-IIJJ q=   2  i=   4  j=   3  bare=     2.147879671  scrd=     0.231982563
-     cRPA-V-IIJJ q=   2  i=   5  j=   3  bare=     2.161087321  scrd=     0.226380107
-     cRPA-V-IIJJ q=   2  i=   1  j=   4  bare=     2.440850908  scrd=     0.211987847
-     cRPA-V-IIJJ q=   2  i=   2  j=   4  bare=     2.161087256  scrd=     0.226363109
-     cRPA-V-IIJJ q=   2  i=   3  j=   4  bare=     2.147879671  scrd=     0.231963663
-     cRPA-V-IIJJ q=   2  i=   4  j=   4  bare=     2.272723892  scrd=     0.380600769
-     cRPA-V-IIJJ q=   2  i=   5  j=   4  bare=     2.200600414  scrd=     0.333627554
-     cRPA-V-IIJJ q=   2  i=   1  j=   5  bare=     2.440851077  scrd=     0.212007100
-     cRPA-V-IIJJ q=   2  i=   2  j=   5  bare=     2.147879760  scrd=     0.231988964
-     cRPA-V-IIJJ q=   2  i=   3  j=   5  bare=     2.161087321  scrd=     0.226383711
-     cRPA-V-IIJJ q=   2  i=   4  j=   5  bare=     2.200600414  scrd=     0.333647169
-     cRPA-V-IIJJ q=   2  i=   5  j=   5  bare=     2.272724075  scrd=     0.380614448
+     cRPA-V-IIJJ q=   2  i=   1  j=   1  bare=     3.590689061  scrd=     0.566923067  bare_im=    -0.000000000  scrd_im=     0.000000000
+     cRPA-V-IIJJ q=   2  i=   2  j=   1  bare=     2.919746831  scrd=     0.396717102  bare_im=     0.000000008  scrd_im=    -0.000000109
+     cRPA-V-IIJJ q=   2  i=   3  j=   1  bare=     2.919746827  scrd=     0.396717028  bare_im=    -0.000000006  scrd_im=     0.000000112
+     cRPA-V-IIJJ q=   2  i=   4  j=   1  bare=     2.440850908  scrd=     0.211996841  bare_im=     0.000000033  scrd_im=     0.000000001
+     cRPA-V-IIJJ q=   2  i=   5  j=   1  bare=     2.440851077  scrd=     0.211996908  bare_im=    -0.000000055  scrd_im=    -0.000000005
+     cRPA-V-IIJJ q=   2  i=   1  j=   2  bare=     2.919746831  scrd=     0.396729250  bare_im=    -0.000000008  scrd_im=     0.000000054
+     cRPA-V-IIJJ q=   2  i=   2  j=   2  bare=     2.702171856  scrd=     0.433626291  bare_im=    -0.000000000  scrd_im=     0.000000000
+     cRPA-V-IIJJ q=   2  i=   3  j=   2  bare=     2.211200979  scrd=     0.224163307  bare_im=    -0.000000070  scrd_im=     0.000000039
+     cRPA-V-IIJJ q=   2  i=   4  j=   2  bare=     2.161087256  scrd=     0.226382023  bare_im=    -0.000000020  scrd_im=     0.000000018
+     cRPA-V-IIJJ q=   2  i=   5  j=   2  bare=     2.147879760  scrd=     0.231985604  bare_im=    -0.000000105  scrd_im=    -0.000000038
+     cRPA-V-IIJJ q=   2  i=   1  j=   3  bare=     2.919746827  scrd=     0.396726708  bare_im=     0.000000006  scrd_im=    -0.000000057
+     cRPA-V-IIJJ q=   2  i=   2  j=   3  bare=     2.211200979  scrd=     0.224157864  bare_im=     0.000000070  scrd_im=    -0.000000039
+     cRPA-V-IIJJ q=   2  i=   3  j=   3  bare=     2.702171754  scrd=     0.433627865  bare_im=    -0.000000000  scrd_im=    -0.000000000
+     cRPA-V-IIJJ q=   2  i=   4  j=   3  bare=     2.147879671  scrd=     0.231982563  bare_im=     0.000000104  scrd_im=     0.000000030
+     cRPA-V-IIJJ q=   2  i=   5  j=   3  bare=     2.161087321  scrd=     0.226380107  bare_im=    -0.000000006  scrd_im=    -0.000000011
+     cRPA-V-IIJJ q=   2  i=   1  j=   4  bare=     2.440850908  scrd=     0.211987847  bare_im=    -0.000000033  scrd_im=    -0.000000013
+     cRPA-V-IIJJ q=   2  i=   2  j=   4  bare=     2.161087256  scrd=     0.226363109  bare_im=     0.000000020  scrd_im=    -0.000000018
+     cRPA-V-IIJJ q=   2  i=   3  j=   4  bare=     2.147879671  scrd=     0.231963663  bare_im=    -0.000000104  scrd_im=    -0.000000030
+     cRPA-V-IIJJ q=   2  i=   4  j=   4  bare=     2.272723892  scrd=     0.380600769  bare_im=    -0.000000000  scrd_im=     0.000000000
+     cRPA-V-IIJJ q=   2  i=   5  j=   4  bare=     2.200600414  scrd=     0.333627554  bare_im=    -0.000000037  scrd_im=     0.000000010
+     cRPA-V-IIJJ q=   2  i=   1  j=   5  bare=     2.440851077  scrd=     0.212007100  bare_im=     0.000000055  scrd_im=     0.000000017
+     cRPA-V-IIJJ q=   2  i=   2  j=   5  bare=     2.147879760  scrd=     0.231988964  bare_im=     0.000000105  scrd_im=     0.000000038
+     cRPA-V-IIJJ q=   2  i=   3  j=   5  bare=     2.161087321  scrd=     0.226383711  bare_im=     0.000000006  scrd_im=     0.000000011
+     cRPA-V-IIJJ q=   2  i=   4  j=   5  bare=     2.200600414  scrd=     0.333647169  bare_im=     0.000000037  scrd_im=    -0.000000010
+     cRPA-V-IIJJ q=   2  i=   5  j=   5  bare=     2.272724075  scrd=     0.380614448  bare_im=    -0.000000000  scrd_im=     0.000000000
 
      PRINTING TIMING FROM PWSCF ROUTINES: 
 
@@ -1246,63 +1246,63 @@
      cegterg:over :      0.09s CPU      0.09s WALL (     156 calls)
      cegterg:upda :      0.05s CPU      0.05s WALL (     156 calls)
      cegterg:last :      0.03s CPU      0.03s WALL (      41 calls)
-     h_psi        :    137.25s CPU    138.84s WALL (   23423 calls)
+     h_psi        :    137.62s CPU    139.26s WALL (   23423 calls)
      g_psi        :      0.01s CPU      0.01s WALL (     156 calls)
 
      Called by h_psi:
-     h_psi:calbec :      9.08s CPU      9.18s WALL (   23423 calls)
-     vloc_psi     :    118.86s CPU    120.25s WALL (   23423 calls)
-     add_vuspsi   :      8.97s CPU      9.08s WALL (   23423 calls)
+     h_psi:calbec :      9.10s CPU      9.20s WALL (   23423 calls)
+     vloc_psi     :    119.22s CPU    120.66s WALL (   23423 calls)
+     add_vuspsi   :      8.96s CPU      9.07s WALL (   23423 calls)
 
      General routines
-     calbec       :      9.03s CPU      9.14s WALL (   23438 calls)
-     fft          :      0.44s CPU      0.47s WALL (    1694 calls)
+     calbec       :      9.05s CPU      9.17s WALL (   23438 calls)
+     fft          :      0.45s CPU      0.48s WALL (    1694 calls)
      ffts         :      0.05s CPU      0.05s WALL (     190 calls)
-     fftw         :    117.35s CPU    118.77s WALL (  441472 calls)
+     fftw         :    117.79s CPU    119.26s WALL (  441472 calls)
      davcio       :      0.01s CPU      0.03s WALL (     320 calls)
 
      Parallel routines
 
      init_vloc    :      0.04s CPU      0.04s WALL (       2 calls)
      init_us_1    :      0.00s CPU      0.00s WALL (       2 calls)
-     add_vuspsi   :      8.97s CPU      9.08s WALL (   23423 calls)
+     add_vuspsi   :      8.96s CPU      9.07s WALL (   23423 calls)
 
      PRINTING TIMING FROM CRPA ROUTINES: 
 
-     crpa_setup_q :      0.05s CPU      0.06s WALL (       2 calls)
+     crpa_setup_q :      0.04s CPU      0.06s WALL (       2 calls)
      crpa_init_q  :      0.11s CPU      0.12s WALL (       2 calls)
-     crpa_solve_l :    148.76s CPU    150.69s WALL (       2 calls)
+     crpa_solve_l :    149.17s CPU    151.15s WALL (       2 calls)
      ef_shift     :      0.04s CPU      0.05s WALL (      74 calls)
      crpa_run_nsc :      1.64s CPU      1.69s WALL (       1 calls)
-     crpa_postpro :      0.00s CPU      0.00s WALL (       2 calls)
+     crpa_postpro :      0.00s CPU      0.01s WALL (       2 calls)
 
      PRINTING TIMING FROM Wannier90 INTERFACE ROUTINES: 
 
      w90_interpol :      0.11s CPU      0.12s WALL (       9 calls)
 
-     w90_readwrit :      0.03s CPU      0.07s WALL (      64 calls)
-     w90_mult_iqr :      0.03s CPU      0.04s WALL (      60 calls)
+     w90_readwrit :      0.03s CPU      0.06s WALL (      64 calls)
+     w90_mult_iqr :      0.04s CPU      0.04s WALL (      60 calls)
      w90_shift_wf :      0.00s CPU      0.00s WALL (      60 calls)
 
      PRINTING TIMING FROM LR MODULE: 
 
-     sth_kernel   :    147.15s CPU    148.91s WALL (     128 calls)
-     apply_dpot_b :      3.17s CPU      3.21s WALL (     504 calls)
-     ortho        :      0.09s CPU      0.10s WALL (     384 calls)
-     cgsolve      :    141.42s CPU    143.10s WALL (     384 calls)
-     ch_psi       :    139.81s CPU    141.45s WALL (   23249 calls)
-     incdrhoscf   :      2.77s CPU      2.81s WALL (     384 calls)
-     dv_of_drho   :      0.56s CPU      0.60s WALL (     138 calls)
-     mix_pot      :      0.13s CPU      0.18s WALL (     128 calls)
+     sth_kernel   :    147.55s CPU    149.36s WALL (     128 calls)
+     apply_dpot_b :      3.19s CPU      3.24s WALL (     504 calls)
+     ortho        :      0.09s CPU      0.09s WALL (     384 calls)
+     cgsolve      :    141.79s CPU    143.52s WALL (     384 calls)
+     ch_psi       :    140.19s CPU    141.87s WALL (   23249 calls)
+     incdrhoscf   :      2.78s CPU      2.82s WALL (     384 calls)
+     dv_of_drho   :      0.56s CPU      0.61s WALL (     138 calls)
+     mix_pot      :      0.12s CPU      0.18s WALL (     128 calls)
      setup_dgc    :      0.04s CPU      0.05s WALL (       2 calls)
      setup_dmuxc  :      0.01s CPU      0.01s WALL (       2 calls)
      setup_nbnd_o :      0.00s CPU      0.00s WALL (       2 calls)
-     cft_wave     :      3.06s CPU      3.10s WALL (   11188 calls)
+     cft_wave     :      3.08s CPU      3.12s WALL (   11188 calls)
 
-     HP           :   2m31.48s CPU   2m33.63s WALL
+     HP           :   2m31.92s CPU   2m34.14s WALL
 
 
-   This run was terminated on:  15:46:20  30Oct2026            
+   This run was terminated on:  17:19:47  30Oct2026            
 
 =------------------------------------------------------------------------------=
    JOB DONE.

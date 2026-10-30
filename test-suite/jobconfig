@@ -343,7 +343,7 @@ inputs_args = ('scf.in', '1'), ('crpa1.in', '5')
 
 [hp_crpa_wann/]
 program = HP
-inputs_args = ('scf.in', '1'), ('pw2wan.in', '7'), ('crpa1.in', '6'), ('crpa2.in', '6')
+inputs_args = ('scf.in', '1'), ('pw2wan.in', '7'), ('crpa1.in', '6'), ('crpa2.in', '6'), ('crpa3.in', '6')
 
 [hp_crpa_wann_gamma/]
 program = HP

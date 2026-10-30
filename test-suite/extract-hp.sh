@@ -81,16 +81,20 @@ fi
 # whitespace token, so its value is the next token (I4/F16.9 space-padded).
 #
 # Band basis: gauge-invariant pair-diagonal trace, one line per q point.
-#   "     cRPA-U-TRACE q=   1  bare=     0.965796362  scrd=     0.668629601"
+#   "     cRPA-U-TRACE q=   1  bare=     0.965796362  scrd=     0.668629601  bare_im=     0.000000000  scrd_im=     0.000000000"
 awk '/cRPA-U-TRACE/ {
-        q=""; b=""; s="";
+        q=""; b=""; s=""; bi=""; si="";
         for (i=1;i<=NF;i++) {
-            if ($i=="q=")    q=$(i+1);
-            if ($i=="bare=") b=$(i+1);
-            if ($i=="scrd=") s=$(i+1);
+            if ($i=="q=")       q=$(i+1);
+            if ($i=="bare=")    b=$(i+1);
+            if ($i=="scrd=")    s=$(i+1);
+            if ($i=="bare_im=") bi=$(i+1);
+            if ($i=="scrd_im=") si=$(i+1);
         }
         print "utrace_bare_q" q; print b;
         print "utrace_scrd_q" q; print s;
+        print "utrace_bare_im_q" q; print bi;
+        print "utrace_scrd_im_q" q; print si;
      }' $fname
 
 # Wannier pair lists (perturbation + matrix-element), printed once by
@@ -114,16 +118,20 @@ awk '/cRPA-WFPAIR / {
      }' $fname
 
 # Wannier basis: full on-site density-density matrix, one line per (q,i,j).
-#   "     cRPA-V-IIJJ q=   1  i=   1  j=   1  bare=   2.520237691  scrd=   1.717595732"
+#   "     cRPA-V-IIJJ q=   1  i=   1  j=   1  bare=   2.520237691  scrd=   1.717595732  bare_im=   0.000000000  scrd_im=   0.000000000"
 awk '/cRPA-V-IIJJ/ {
-        q=""; ii=""; jj=""; b=""; s="";
+        q=""; ii=""; jj=""; b=""; s=""; bi=""; si="";
         for (i=1;i<=NF;i++) {
-            if ($i=="q=")    q=$(i+1);
-            if ($i=="i=")    ii=$(i+1);
-            if ($i=="j=")    jj=$(i+1);
-            if ($i=="bare=") b=$(i+1);
-            if ($i=="scrd=") s=$(i+1);
+            if ($i=="q=")       q=$(i+1);
+            if ($i=="i=")       ii=$(i+1);
+            if ($i=="j=")       jj=$(i+1);
+            if ($i=="bare=")    b=$(i+1);
+            if ($i=="scrd=")    s=$(i+1);
+            if ($i=="bare_im=") bi=$(i+1);
+            if ($i=="scrd_im=") si=$(i+1);
         }
         print "viijj_bare_q" q "_" ii "_" jj; print b;
         print "viijj_scrd_q" q "_" ii "_" jj; print s;
+        print "viijj_bare_im_q" q "_" ii "_" jj; print bi;
+        print "viijj_scrd_im_q" q "_" ii "_" jj; print si;
      }' $fname
