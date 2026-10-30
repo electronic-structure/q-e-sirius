@@ -54,7 +54,7 @@ SUBROUTINE crpa_postprocess_coulomb(iq)
       ! Print a compact, gauge-robust summary of the interaction to stdout
       ! (for regression testing). Wannier: the full on-site (R=0) density-
       ! density matrix V_iijj (gauge-fixed by projection-only Wannier).
-      ! Bands: only the subspace-averaged U is gauge invariant.
+      ! Bands: the pair-diagonal trace (cRPA-U-TRACE), which is gauge invariant.
       !
       IF (pert_basis == 'bands') THEN
          CALL print_interaction_bands(iq)
@@ -159,40 +159,33 @@ END SUBROUTINE write_coulomb_wannier
 !
 SUBROUTINE print_interaction_bands(iq)
    !
-   ! Subspace-averaged interaction U_avg = (1/(Nk N^2)) sum_k sum_ij V_iijj,
-   ! where the (i,i;j,j) band-density block is taken diagonal in k. Averaging
-   ! over the complete active band manifold makes it invariant under the
-   ! residual gauge freedom of degenerate bands (individual V_iijj are not).
+   ! Pair-diagonal trace T = (1/(Nk N^2)) sum_k sum_ij Re V_(ij,k),(ij,k) with
+   ! rho_(ij,k) = psi_(i,k+q) psi_(j,k)^*. This trace is invariant under a
+   ! gauge transformation psi_k -> psi_k U(k). Individual elements, and
+   ! sum_ij V_(ii,k),(jj,k) at q /= 0, are not. Useful for testing where we
+   ! need gauge invariant quantities to compare with reference numbers.
    !
    USE constants,     ONLY : RYTOEV
-   USE crpa_pert,     ONLY : npert_tot, pert_nbnd
+   USE crpa_pert,     ONLY : npert_tot
    !
    IMPLICIT NONE
    !
    INTEGER, INTENT(IN) :: iq
    !! index of the q point
-   INTEGER :: nk, ik, i, j, ip1, ip2, nblk
-   REAL(DP) :: u_bare, u_scrd
+   INTEGER :: ip
+   REAL(DP) :: v_trace_bare, v_trace_scrd
    !
-   nk = npert_tot / (pert_nbnd * pert_nbnd)
-   u_bare = 0.0_DP
-   u_scrd = 0.0_DP
-   DO ik = 1, nk
-      DO j = 1, pert_nbnd
-         ip2 = (ik - 1) * pert_nbnd * pert_nbnd + (j - 1) * pert_nbnd + j
-         DO i = 1, pert_nbnd
-            ip1 = (ik - 1) * pert_nbnd * pert_nbnd + (i - 1) * pert_nbnd + i
-            u_bare = u_bare + REAL(v_coul_bare(ip1, ip2), KIND = DP)
-            u_scrd = u_scrd + REAL(v_coul_scrd(ip1, ip2), KIND = DP)
-         ENDDO
-      ENDDO
+   v_trace_bare = 0.0_DP
+   v_trace_scrd = 0.0_DP
+   DO ip = 1, npert_tot
+      v_trace_bare = v_trace_bare + REAL(v_coul_bare(ip, ip), KIND = DP)
+      v_trace_scrd = v_trace_scrd + REAL(v_coul_scrd(ip, ip), KIND = DP)
    ENDDO
-   nblk = nk * pert_nbnd * pert_nbnd
-   u_bare = u_bare / nblk * RYTOEV
-   u_scrd = u_scrd / nblk * RYTOEV
+   v_trace_bare = v_trace_bare / npert_tot * RYTOEV
+   v_trace_scrd = v_trace_scrd / npert_tot * RYTOEV
    !
-   WRITE(stdout, '(5x, "cRPA-U-AVG q=", I4, "  bare=", F16.9, "  scrd=", F16.9)') &
-      iq, u_bare, u_scrd
+   WRITE(stdout, '(5x, "cRPA-U-TRACE q=", I4, "  bare=", F16.9, "  scrd=", F16.9)') &
+      iq, v_trace_bare, v_trace_scrd
    !
 END SUBROUTINE print_interaction_bands
 !
