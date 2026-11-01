@@ -329,6 +329,10 @@ inputs_args = ('au.scf.in', '1'), ('au.hp.in', '3'), ('au.scf.in', '2'), ('au.hp
 program = HP
 inputs_args = ('bn.scf.in', '1'), ('bn.hp.in', '3'), ('bn.scf.in', '2'), ('bn.hp.in', '4')
 
+[hp_soc_U_us_magn_gamma/]
+program = HP
+inputs_args = ('bn.scf.in', '1'), ('bn.hp.in', '3')
+
 [hp_soc_UV_paw_magn/]
 program = HP
 inputs_args = ('bn.scf.in', '1'), ('bn.hp.in', '3'), ('bn.scf.in', '2'), ('bn.hp.in', '4')
