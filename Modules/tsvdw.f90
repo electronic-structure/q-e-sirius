@@ -96,13 +96,16 @@ REAL(DP), DIMENSION(:), ALLOCATABLE, PRIVATE :: dpfree       !free atomic static
 REAL(DP), DIMENSION(:), ALLOCATABLE, PRIVATE :: R0free       !free atomic vdW radius for each atomic species
 REAL(DP), DIMENSION(:), ALLOCATABLE, PRIVATE :: C6AAfree     !free atomic homonuclear C6 coefficient for each atomic species
 REAL(DP), DIMENSION(:), ALLOCATABLE, PRIVATE :: veff         !effective atomic volumes for each atom in the simulation cell
+REAL(DP), DIMENSION(:), ALLOCATABLE, PRIVATE :: neff         !effective atomic volumes for each atom in the simulation cell
 !GSz
+!REAL(DP), DIMENSION(:), ALLOCATABLE, PUBLIC :: neff_pub      !effective atomic charge for each atom in the simulation cell
 REAL(DP), DIMENSION(:), ALLOCATABLE, PUBLIC :: veff_pub         !effective atomic volumes for each atom in the simulation cell
 REAL(DP), DIMENSION(:), ALLOCATABLE, PRIVATE :: dpeff        !effective atomic static dipole polarizability for each atom in the simulation cell
 REAL(DP), DIMENSION(:), ALLOCATABLE, PRIVATE :: R0eff        !effective atomic vdW radius for each atom in the simulation cell
 REAL(DP), DIMENSION(:), ALLOCATABLE, PRIVATE :: C6AAeff      !effective atomic homonuclear C6 coefficient for each atom in the simulation cell
 REAL(DP), DIMENSION(:), ALLOCATABLE, PRIVATE :: rhosad       !molecular pro-density (superposition of atomic densities) on real-space mesh
 REAL(DP), DIMENSION(:), ALLOCATABLE, PRIVATE :: rhotot       !molecular charge density on real-space mesh
+REAL(DP), DIMENSION(:,:), ALLOCATABLE, PRIVATE:: dneffAdn    !the local copy of the atomic density
 REAL(DP), DIMENSION(:,:), ALLOCATABLE, PRIVATE:: dveffAdn    !the local copy of the TS-vdW wavefunction forces (dispersion potential)
 REAL(DP), DIMENSION(:,:), ALLOCATABLE, PRIVATE :: spgrd      !linear equispaced grid for each atomic species
 REAL(DP), DIMENSION(:,:), ALLOCATABLE, PRIVATE :: sprho      !atomic pseudo-density for each atomic species
@@ -1086,7 +1089,7 @@ PRIVATE :: GetVdWParam
   !
   INTEGER :: ia,ias,Ntmp,Ntmpr,Npts,Nptsr,ir1,ir2,ir3,Ndim,Nints,off1,off1r,ioff,boff,iq,ir
   REAL(DP) :: spcutA,spdA,dq(3),dqA(3),dqAs(3),dk1,rhoA
-  REAL(DP), ALLOCATABLE :: dqAmic(:,:,:),dveffAdntmp(:,:,:)
+  REAL(DP), ALLOCATABLE :: dqAmic(:,:,:),dveffAdntmp(:,:,:),dneffAdntmp(:,:,:)
   !
   CALL start_clock('tsvdw_screen')
   !
@@ -1120,6 +1123,10 @@ PRIVATE :: GetVdWParam
   !
   ALLOCATE(rhosad(nr1*nr2*nr3)); rhosad=0.0_DP
   !
+  ! Initialization of dnA/dn(r)...
+  !
+  ALLOCATE(dneffAdn(Ntmp,Ndim)); dneffAdn=0.0_DP
+  !
   ! Initialization of dVA/dn(r)...
   !
   ALLOCATE(dveffAdn(Ntmp,Ndim)); dveffAdn=0.0_DP
@@ -1148,6 +1155,7 @@ PRIVATE :: GetVdWParam
     !
     ALLOCATE(dqAmic(nr1,nr2,nr3)); dqAmic=0.0_DP
     ALLOCATE(dveffAdntmp(nr1,nr2,nr3)); dveffAdntmp=0.0_DP
+    ALLOCATE(dneffAdntmp(nr1,nr2,nr3)); dneffAdntmp=0.0_DP
     !
 !$omp parallel do private(dq,dqA,dqAs,ir,dk1,rhoA,off1,ioff,boff,off1r)
     DO ir1=1,nr1
@@ -1207,6 +1215,10 @@ PRIVATE :: GetVdWParam
             off1=ir1+(ir2-1)*nr1+(ir3-1)*nr1*nr2    !global offset [nr1,nr2,nr3]
             rhosad(off1)=rhosad(off1)+rhoA
             !
+            ! Form numerator of dnA/dn(r) only...
+            !
+            dneffAdntmp(ir1,ir2,ir3)=rhoA
+            !
             ! Form numerator of dVA/dn(r) only...
             !
             dveffAdntmp(ir1,ir2,ir3)=dqAmic(ir1,ir2,ir3)**(3.0_DP)*rhoA
@@ -1251,6 +1263,7 @@ PRIVATE :: GetVdWParam
             somegaA(Npts,3,iproc)=ir3
             !
             dveffAdn(Npts,iproc)=dveffAdntmp(ir1,ir2,ir3)
+            dneffAdn(Npts,iproc)=dneffAdntmp(ir1,ir2,ir3)
             !
             ! On reduced grid only, form screened somegaAr ... 
             !
@@ -1279,6 +1292,7 @@ PRIVATE :: GetVdWParam
     !
     IF (ALLOCATED(dqAmic))    DEALLOCATE(dqAmic)
     IF (ALLOCATED(dveffAdntmp))    DEALLOCATE(dveffAdntmp)
+    IF (ALLOCATED(dneffAdntmp))    DEALLOCATE(dneffAdntmp)
     ! 
   END DO ! iproc
   !
@@ -1337,14 +1351,16 @@ PRIVATE :: GetVdWParam
   ! Local variables
   !
   INTEGER :: ia,iq,off1
-  REAL(DP) :: normr, veff_ia
+  REAL(DP) :: normr, veff_ia, neff_ia
   !
   CALL start_clock('tsvdw_veff')
   !
   ! Initialization of effective volume...
   !
+  ALLOCATE(neff(nat)); neff=0.0_DP
   ALLOCATE(veff(nat)); veff=0.0_DP
   IF(.NOT. ALLOCATED(veff_pub)) ALLOCATE(veff_pub(nat)); veff_pub=0.0_DP
+!  IF(.NOT. ALLOCATED(neff_pub)) ALLOCATE(neff_pub(nat)); neff_pub=0.0_DP
   !
   ! Normalization factor for veff integral...
   !
@@ -1358,9 +1374,31 @@ PRIVATE :: GetVdWParam
     !
     ia=me+nproc_image*(iproc-1)
     veff_ia=0.0_DP
+    neff_ia=0.0_DP
     !
     ! Loop over points in the (pre-screened) spherical atomic integration domain...
     !
+!$omp parallel do private(off1),reduction(+:neff_ia)
+    DO iq=1,NsomegaA(ia)
+      !
+      ! Compute neff integrand 
+      !
+      !        neff(A) = INT [rhoA(|r-rA|)*rhotot(r)/rhosad(r)]
+      !
+      !
+      off1=somegaA(iq,1,iproc)+(somegaA(iq,2,iproc)-1)*nr1+(somegaA(iq,3,iproc)-1)*nr1*nr2    !global offset [nr1,nr2,nr3]
+      dneffAdn(iq,iproc)=dneffAdn(iq,iproc)/rhosad(off1)
+      !
+      ! Increment veff...
+      !
+      IF ((MOD(somegaA(iq,1,iproc),2).EQ.1).AND.(MOD(somegaA(iq,2,iproc),2).EQ.1).AND.(MOD(somegaA(iq,3,iproc),2).EQ.1))  THEN
+        !
+        neff_ia=neff_ia+(dneffAdn(iq,iproc)*(rhotot(off1)-rhosad(off1)))
+        !
+      END IF
+      !
+    END DO !iq
+!$omp end parallel do 
 !$omp parallel do private(off1),reduction(+:veff_ia)
     DO iq=1,NsomegaA(ia)
       !
@@ -1387,15 +1425,21 @@ PRIVATE :: GetVdWParam
     ! Apply final normalization to veff integral...
     !
     veff(ia)=normr*veff_ia
+    !!write(*,*)"norm",normr
+    neff(ia)=normr*neff_ia
     !
   END DO !iproc
   !
   ! Collect veff over all processors and broadcast...
   !
   CALL mp_sum(veff,intra_image_comm)
+  CALL mp_sum(neff,intra_image_comm)
+  !!write(*,*)"charges or populations", neff
   !
   VefftsvdW = veff
   veff_pub=veff
+  neff = -neff
+  !neff_pub=-neff
   !
   CALL stop_clock('tsvdw_veff')
   !
@@ -2266,6 +2310,14 @@ PRIVATE :: GetVdWParam
   !! Deallocate all arrays specific to \texttt{tsvdw\_calculate}.
   !
   IMPLICIT NONE
+  INTEGER :: ia
+  !
+  WRITE(stdout,*)
+  WRITE(stdout,'(3X,"Atom and Hirshfeld charge")')
+  WRITE(stdout,'(3X,"-------------------------")')
+  DO ia=1,nat
+    WRITE(stdout,'(5X,A3,X,F6.3)') atm(ityp(ia)),neff(ia)
+  END DO
   !
   ! Deallocate tsvdw_calculate specific arrays...
   !
@@ -2273,6 +2325,7 @@ PRIVATE :: GetVdWParam
   IF (ALLOCATED(rhosad))      DEALLOCATE(rhosad)
   IF (ALLOCATED(rhotot))      DEALLOCATE(rhotot)
   IF (ALLOCATED(veff))        DEALLOCATE(veff)
+  IF (ALLOCATED(neff))        DEALLOCATE(neff)
   IF (ALLOCATED(dpeff))       DEALLOCATE(dpeff)
   IF (ALLOCATED(R0eff))       DEALLOCATE(R0eff)
   IF (ALLOCATED(C6AAeff))     DEALLOCATE(C6AAeff)
@@ -2293,6 +2346,7 @@ PRIVATE :: GetVdWParam
   IF (ALLOCATED(npair))       DEALLOCATE(npair)
   IF (ALLOCATED(pair))        DEALLOCATE(pair)
   IF (ALLOCATED(dveffAdn))    DEALLOCATE(dveffAdn)
+  IF (ALLOCATED(dneffAdn))    DEALLOCATE(dneffAdn)
   IF (ALLOCATED(predveffAdn)) DEALLOCATE(predveffAdn)
   !
   RETURN
@@ -2307,7 +2361,7 @@ PRIVATE :: GetVdWParam
   !! Deallocate module-specific arrays.
   !
   IMPLICIT NONE
-  !
+  ! 
   IF (ALLOCATED(UtsvdW))   DEALLOCATE(UtsvdW)
   IF (ALLOCATED(FtsvdW))   DEALLOCATE(FtsvdW)
   IF (ALLOCATED(HtsvdW))   DEALLOCATE(HtsvdW)
