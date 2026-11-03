@@ -1,0 +1,7 @@
+&inputpp
+ outdir   = './out/'
+ prefix   = 'si'
+ seedname = 'si'
+ wan_mode = 'standalone'
+ write_unk = .false.
+/

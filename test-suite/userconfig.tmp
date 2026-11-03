@@ -227,7 +227,11 @@ tolerance = ( (1.0e-5, 1.0e-4, 'e1') ,
               (1.0e-3, None,   'omegad') ,
               (1.0e-3, None,   'omegaod') ,
               (1.0e-3, None,   'omegatot') ,
-              (1.0e-3, None,   'disomegai') )
+              (1.0e-3, None,   'disomegai') ,
+              (1.0e-3, None,   'nntot') ,
+              (1.0e-4, None,   'eig') ,
+              (1.0e-5, None,   'pspec') ,
+              (1.0e-5, None,   'gcoeff') )
 skip_program = grep
 skip_args = 'not present in this version'
 

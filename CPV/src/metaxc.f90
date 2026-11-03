@@ -43,7 +43,7 @@ SUBROUTINE tpssmeta(nnr, nspin,grho,rho,kedtau,etxc)
     implicit none
     !
     INTEGER :: np
-    REAL(DP), ALLOCATABLE :: sx(:), v1x(:,:), v2x(:,:), v3x(:,:), &
+    REAL(DP), ALLOCATABLE :: sx(:), v1x(:,:), v2x(:,:), v3x(:,:), lapl(:,:), &
                              sc(:), v1c(:,:), v2c(:,:,:), v3c(:,:)
     !
     np=1
@@ -51,12 +51,14 @@ SUBROUTINE tpssmeta(nnr, nspin,grho,rho,kedtau,etxc)
     !
     allocate( sx(nnr), v1x(nnr,nspin), v2x(nnr,nspin),    v3x(nnr,nspin) )
     allocate( sc(nnr), v1c(nnr,nspin), v2c(np,nnr,nspin), v3c(nnr,nspin) )
+    allocate( lapl(nnr,nspin) )
+    lapl = 0.0_dp
     !
     if (nspin==1) then
       !
       call xclib_set_threshold( 'mgga', epsr, epsg, epsr )
       !
-      call xc_metagcx( nnr, 1, np, rho, grho, kedtau, sx, sc, &
+      call xc_metagcx( nnr, 1, np, rho, grho, kedtau, lapl, sx, sc, &
                        v1x, v2x, v3x, v1c, v2c, v3c )
       !
       rho(:,1) = v1x(:,1) + v1c(:,1)
@@ -70,7 +72,7 @@ SUBROUTINE tpssmeta(nnr, nspin,grho,rho,kedtau,etxc)
       !
       call xclib_set_threshold( 'mgga', epsr )
       !
-      call xc_metagcx( nnr, 2, np, rho, grho, kedtau, sx, sc, &
+      call xc_metagcx( nnr, 2, np, rho, grho, kedtau, lapl, sx, sc, &
                        v1x, v2x, v3x, v1c, v2c, v3c )
       !
       rho(:,1) = v1x(:,1) + v1c(:,1)
@@ -91,6 +93,7 @@ SUBROUTINE tpssmeta(nnr, nspin,grho,rho,kedtau,etxc)
     !
     deallocate( sx, v1x, v2x, v3x )
     deallocate( sc, v1c, v2c, v3c )
+    deallocate( lapl )
     !
     !
     return

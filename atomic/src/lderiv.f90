@@ -20,7 +20,8 @@ SUBROUTINE lderiv
   USE mp,        ONLY : mp_bcast
   USE ld1_parameters, ONLY : nwfsx
   USE ld1inc,    ONLY : file_logder, grid, vpot, rel, nspin, nld, zed, &
-                        npte, deld, eminld, emaxld, rlderiv
+                        npte, deld, eminld, emaxld, rlderiv, cau_fact
+  USE atomic_radial, ONLY : lschps
 
   IMPLICIT NONE
 
@@ -88,7 +89,7 @@ SUBROUTINE lderiv
            IF (rel == 1) THEN
               nin = ikrld+5
               CALL lschps (3, zed, thrdum, grid, nin, 1, lam, e, &
-                   vpot(1,is), aux, nstop )
+                   vpot(1,is), aux, nstop, cau_fact )
            ELSEIF (rel == 2) THEN
               CALL dir_outward(ndmx,ikrld+5,lam,j,e,grid%dx,&
                    aux_dir,grid%r,grid%rab,vpot(1,is))

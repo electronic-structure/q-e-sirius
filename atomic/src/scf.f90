@@ -19,7 +19,9 @@ SUBROUTINE scf(ic)
   USE ld1inc, ONLY : grid, zed, psi, isic, vpot, vh, vxt, rho, iter, &
                      lsd, rel, latt, enne, beta, nspin, tr2, eps0, &
                      nwf, nn, ll, jj, enl, oc, isw, core_state, frozen_core, &
-                     tau, vtau, vsic, vsicnew, vhn1, egc, relpert, noscf
+                     tau, vtau, vsic, vsicnew, vhn1, egc, relpert, noscf, &
+                     cau_fact
+  USE atomic_radial, ONLY : ascheq, lschps
   IMPLICIT NONE
 
   INTEGER, INTENT(in) :: ic
@@ -63,7 +65,7 @@ SUBROUTINE scf(ic)
                          enl(n), vnew(1,is), vtaunew, psi(1,1,n), nstop)
                  ELSE
                     CALL lschps (1, zed, thresh, grid, nin, nn(n), ll(n),&
-                         enl(n), vnew(1,is), psi(1,1,n), nstop)
+                         enl(n), vnew(1,is), psi(1,1,n), nstop, cau_fact)
                  END IF
                  IF (nstop>0.and.oc(n)<1.e-10_DP) nstop=0
               ELSEIF (rel == 2) THEN

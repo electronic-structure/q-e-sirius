@@ -19,6 +19,7 @@ subroutine lderivps
   use io_global, only : stdout
   use mp,        only : mp_bcast
   use radial_grids, only: series
+  use atomic_radial, only: start_scheq
   use ld1_parameters, only : nwfsx
   use ld1inc,    only : grid, nld, nbeta, nspin, rel, ikk, file_logderps, &
                         betas, ddd, qq, lls, jjs, pseudotype, vpstot, vnl, &

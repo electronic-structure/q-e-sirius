@@ -1,0 +1,36 @@
+num_wann = 4
+num_iter = 200
+num_print_cycles = 50
+
+write_u_matrices = .true.
+write_xyz = .true.
+translate_home_cell = .false.
+
+begin unit_cell_cart
+bohr
+-5.13125  0.00000  5.13125
+ 0.00000  5.13125  5.13125
+-5.13125  5.13125  0.00000
+end unit_cell_cart
+
+begin atoms_frac
+Si 0.00 0.00 0.00
+Si 0.25 0.25 0.25
+end atoms_frac
+
+begin projections
+f=0.25,0.25,0.25:sp3
+end projections
+
+mp_grid : 2 2 2
+
+begin kpoints
+0.0 0.0 0.0
+0.0 0.0 0.5
+0.0 0.5 0.0
+0.0 0.5 0.5
+0.5 0.0 0.0
+0.5 0.0 0.5
+0.5 0.5 0.0
+0.5 0.5 0.5
+end kpoints

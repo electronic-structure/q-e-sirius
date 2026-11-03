@@ -57,6 +57,7 @@ vasp_read_chgcar_mod.o \
 vasp_xml_module.o \
 wannier_proj.o \
 wannier_enrg.o \
+wannier_decompose.o \
 work_function.o \
 write_p_avg.o \
 write_proj.o \

@@ -51,6 +51,7 @@ SUBROUTINE init_run()
   USE cell_nose,                ONLY : xnhh0, xnhhm, vnhh
   USE xc_lib,                   ONLY : xclib_dft_is_libxc, xclib_init_libxc
   USE xc_lib,                   ONLY : xclib_dft_is
+  USE funct,                    ONLY : dft_is_ctb09
   USE metagga_cp,               ONLY : crosstaus, dkedtaus, gradwfc
   !
   USE efcalc,                   ONLY : clear_nbeg
@@ -96,6 +97,11 @@ SUBROUTINE init_run()
   CHARACTER(LEN=256) :: dirname
   REAL(DP)           :: a1(3), a2(3), a3(3)
   LOGICAL            :: ftest
+  !
+  LOGICAL, PARAMETER :: domag = .FALSE.
+  !! CP does not support the magnetization of the noncollinear case
+  LOGICAL, PARAMETER :: lapl_provided = .FALSE.
+  !! CP does not compute the laplacian of the density
   !
 #if defined (__ENVIRON)
   REAL(DP) :: at_scaled(3, 3)
@@ -187,7 +193,7 @@ SUBROUTINE init_run()
   !=======================================================================
   !     Initialization of the libxc
   !=======================================================================
-  IF (xclib_dft_is_libxc('ANY')) CALL xclib_init_libxc( nspin, .FALSE. )
+  IF (xclib_dft_is_libxc('ANY')) CALL xclib_init_libxc( nspin, domag, lapl_provided )
   !=======================================================================
   !     Initialization of the exact exchange code (exx_module)
   !=======================================================================
@@ -230,6 +236,10 @@ SUBROUTINE init_run()
   !
   ALLOCATE( vkb( ngw, nkb ) )
   !$acc enter data create(vkb(1:ngw,1:nkb))
+  !
+  IF ( dft_is_ctb09() ) &
+     CALL errore( ' init_run ', 'CTB09 not implemented for CP: the mixing &
+                  &parameter c is only computed in PW', 1 )
   !
   IF ( xclib_dft_is('meta') .AND. tens ) &
      CALL errore( ' init_run ', 'ensemble_dft not implemented for metaGGA', 1 )

@@ -31,7 +31,8 @@ inputs_args = ('lsda.in', ''), ('lsda-2.in', ''), ('lsda-cg.in', ''), ('lsda-mix
 
 [pw_libxc/]
 program = PW
-inputs_args = ('lda_pol_atom-lsda.in', ''), ('gga_unpol_atom-pbe.in', ''), ('hyb_gga_unpol_hse-si111.in', ''), ('mgga_unpol_metaGGA.in', '')
+inputs_args = ('lda_pol_atom-lsda.in', ''), ('gga_unpol_atom-pbe.in', ''), ('hyb_gga_unpol_hse-si111.in', ''), ('mgga_unpol_metaGGA.in', ''), ('mgga_unpol_TB09.in', ''), ('mgga_unpol_CTB09.in', ''), ('mgga_unpol_CTB09-nscf.in', '')
+
 
 [pw_metal/]
 program = PW
@@ -328,6 +329,10 @@ inputs_args = ('au.scf.in', '1'), ('au.hp.in', '3'), ('au.scf.in', '2'), ('au.hp
 program = HP
 inputs_args = ('bn.scf.in', '1'), ('bn.hp.in', '3'), ('bn.scf.in', '2'), ('bn.hp.in', '4')
 
+[hp_soc_U_us_magn_gamma/]
+program = HP
+inputs_args = ('bn.scf.in', '1'), ('bn.hp.in', '3')
+
 [hp_soc_UV_paw_magn/]
 program = HP
 inputs_args = ('bn.scf.in', '1'), ('bn.hp.in', '3'), ('bn.scf.in', '2'), ('bn.hp.in', '4')
@@ -355,6 +360,10 @@ inputs_args = ('scf_vdw.in', '1'), ('ppacf_fock.in', '2')
 [pp_w90_library/]
 program = PP
 inputs_args = ('si.scf.in', '1'), ('si.pw2wan.in', '3'), ('si.pw2wan.in', '4'), ('si.pw2wan.in', '5'), ('si.pw2wan_low_io.in', '5')
+
+[pp_w90_decompose/]
+program = PP
+inputs_args = ('si.scf.in', '1'), ('si.win', '7'), ('si.pw2wan.in', '9'), ('si.win', '8'), ('si.decompose.in', '6'), ('si.decompose_low_io.in', '6')
 
 [pp_w90_library_radial/]
 program = PP

@@ -126,9 +126,13 @@ PROGRAM xclib_test
   !---------- XC-input vars ------------------
   REAL(DP), ALLOCATABLE :: rho(:,:), rho_tz(:,:)
   REAL(DP), ALLOCATABLE :: grho(:,:,:), grh(:,:,:)
-  REAL(DP), ALLOCATABLE :: tau(:,:)
+  REAL(DP), ALLOCATABLE :: tau(:,:), lapl(:,:)
   REAL(DP) :: grho2(2), grho_ud
   REAL(DP) :: rhoi(2), grhoi(3,2), taui(2)
+  !
+  LOGICAL, PARAMETER :: domag = .FALSE.
+  LOGICAL, PARAMETER :: lapl_provided = .FALSE.
+  !! the test compares functionals at a zero density laplacian
   !
   !--------- set1 vars --------------------------
   REAL(DP), ALLOCATABLE :: ex1(:), ec1(:)
@@ -582,7 +586,7 @@ PROGRAM xclib_test
     id_vec(5) = imeta1  ;  id_vec(6) = imetac1
     !
 #if defined(__LIBXC)
-    IF (xclib_dft_is_libxc( 'ANY' )) CALL xclib_init_libxc( ns, .FALSE. )
+    IF (xclib_dft_is_libxc( 'ANY' )) CALL xclib_init_libxc( ns, domag, lapl_provided )
     !
     IF ( igcc1==428 .AND. is_libxc(4) ) THEN
 !    IF ( igcx1==426 .AND. is_libxc(3) ) THEN
@@ -752,7 +756,7 @@ PROGRAM xclib_test
     !
     ALLOCATE( rho(nnr,ns), rho_tz(nnr,ns) )
     IF ( GGA .OR. MGGA ) ALLOCATE( grho(3,nnr,ns) )
-    IF ( MGGA ) ALLOCATE( tau(nnr,ns) )
+    IF ( MGGA ) ALLOCATE( tau(nnr,ns), lapl(nnr,ns) )
     !
     ! ... dft1 output arrays
     !
@@ -909,7 +913,10 @@ PROGRAM xclib_test
     !
     rho  = 0.0_DP
     IF ( GGA .OR. MGGA ) grho = 0.0_DP
-    IF ( MGGA ) tau = 0.0_DP
+    IF ( MGGA ) THEN
+      tau = 0.0_DP
+      lapl = 0.0_DP
+    ENDIF
     !
     DO ii = 1, nnr
        !
@@ -1109,7 +1116,7 @@ PROGRAM xclib_test
     !
     IF ( MGGA ) THEN
        IF (mype==root) time(5) = get_wall_time()
-       CALL xc_metagcx( nnr, ns, np, rho, grho, tau, ex1, ec1, v1x1, &
+       CALL xc_metagcx( nnr, ns, np, rho, grho, tau, lapl, ex1, ec1, v1x1, &
                         v2x1, v3x1, v1c1, v2cm1, v3c1 )
        IF (mype==root) time(6) = get_wall_time()
        v2c1 = v2cm1(1,:,:)
@@ -1436,7 +1443,7 @@ PROGRAM xclib_test
     DEALLOCATE( rho, rho_tz )
     !
     IF ( GGA .OR. MGGA ) DEALLOCATE( grho )
-    IF ( MGGA ) DEALLOCATE( tau )
+    IF ( MGGA ) DEALLOCATE( tau, lapl )
     !
     ! ... set1 output arrays
     !

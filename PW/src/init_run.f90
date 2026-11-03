@@ -61,6 +61,9 @@ SUBROUTINE init_run()
   IMPLICIT NONE
   INTEGER :: ierr
   !
+  LOGICAL, PARAMETER :: lapl_provided = .TRUE.
+  !! PW computes the laplacian of the density when the functional needs it
+  !
 #if defined (__ENVIRON)
   REAL(DP) :: at_scaled(3, 3)
   REAL(DP) :: gcutm_scaled
@@ -160,7 +163,7 @@ SUBROUTINE init_run()
   CALL allocate_wfc_k()
   CALL openfil()
   !
-  IF (xclib_dft_is_libxc('ANY')) CALL xclib_init_libxc( nspin, domag )
+  IF (xclib_dft_is_libxc('ANY')) CALL xclib_init_libxc( nspin, domag, lapl_provided )
   IF (dft_has_finite_size_correction()) &
        CALL xclib_set_finite_size_volume(REAL(omega*nk1*nk2*nk3))
   IF ( xclib_dft_is('hybrid') ) THEN

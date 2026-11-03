@@ -40,6 +40,7 @@ set(src_pp
     src/vasp_xml_module.f90
     src/wannier_proj.f90
     src/wannier_enrg.f90
+    src/wannier_decompose.f90
     src/work_function.f90
     src/write_p_avg.f90
     src/write_io_header.f90

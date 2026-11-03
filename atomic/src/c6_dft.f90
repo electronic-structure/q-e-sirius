@@ -15,6 +15,7 @@ subroutine c6_dft (mesh, zed, grid)
    use ld1inc,     only : lsd, nwf, oc, nn, ll, isw, psi, enl, vpot,vxt,vh, &
                           enne, latt, rho
    use radial_grids, only: radial_grid_type, ndmx
+   use atomic_radial, only: ascheq
    !
    implicit none
    !

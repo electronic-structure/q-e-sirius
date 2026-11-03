@@ -659,6 +659,7 @@ PROGRAM pw2wannier90
   USE control_flags,    ONLY : gamma_only, io_level
   USE environment,ONLY : environment_start, environment_end
   USE wannier
+  USE wannier_decompose, ONLY : compute_decompose
   use atproj, only : atom_proj, atom_proj_dir, atom_proj_ext, &
                      atom_proj_exclude, atom_proj_ortho, atom_proj_sym, &
                      atom_proj_frozen
@@ -690,7 +691,9 @@ PROGRAM pw2wannier90
    ! end change Vitale
        atom_proj, atom_proj_dir, atom_proj_ext, atom_proj_exclude, &
        atom_proj_ortho, atom_proj_frozen, &
-       write_vmn, write_pmn, disk_io
+       write_vmn, write_pmn, &
+       decompose_n_max, decompose_l_max, decompose_r_min, decompose_r_max, &
+       decompose_centres_file, disk_io
   !
   ! initialise environment
   !
@@ -758,6 +761,11 @@ PROGRAM pw2wannier90
      atom_proj_sym = .false.
      write_vmn = .false.
      write_pmn = .false.
+     decompose_n_max = 6
+     decompose_l_max = 6
+     decompose_r_min = 0.5_dp
+     decompose_r_max = 4.0_dp
+     decompose_centres_file = ''
      disk_io = 'medium'
      !
      !     reading the namelist inputpp
@@ -819,6 +827,11 @@ PROGRAM pw2wannier90
   CALL mp_bcast(atom_proj_frozen, ionode_id, world_comm)
   CALL mp_bcast(write_vmn, ionode_id, world_comm)
   CALL mp_bcast(write_pmn, ionode_id, world_comm)
+  CALL mp_bcast(decompose_n_max, ionode_id, world_comm)
+  CALL mp_bcast(decompose_l_max, ionode_id, world_comm)
+  CALL mp_bcast(decompose_r_min, ionode_id, world_comm)
+  CALL mp_bcast(decompose_r_max, ionode_id, world_comm)
+  CALL mp_bcast(decompose_centres_file, ionode_id, world_comm)
   CALL mp_bcast(disk_io, ionode_id, world_comm)
   !
   ! io_level must be set before read_file: with io_level = 0 the
@@ -833,8 +846,8 @@ PROGRAM pw2wannier90
   END SELECT
   !
   IF (wan_mode /= 'standalone' .AND. wan_mode /= 'library' .AND. &
-      wan_mode /= 'wannier2sic') CALL errore('pw2wannier90', &
-      'wan_mode must be standalone, library or wannier2sic, not '//TRIM(wan_mode), 1)
+      wan_mode /= 'wannier2sic' .AND. wan_mode /= 'decompose') CALL errore('pw2wannier90', &
+      'wan_mode must be standalone, library, wannier2sic or decompose, not '//TRIM(wan_mode), 1)
   !
   ! Check: bands distribution not implemented
   IF (nbgrp > 1) CALL errore('pw2wannier90', 'bands (-nb) not implemented', nbgrp)
@@ -895,6 +908,8 @@ PROGRAM pw2wannier90
      IF (wan_mode == 'library') CALL errore('pw2wannier90', "irr_bz and library mode are not compatible", 1)
      IF (gamma_only) CALL errore('pw2wannier90', "irr_bz and gamma_only are not compatible", 1)
      IF (npool > 1) CALL errore('pw2wannier90', "irr_bz and pools (-nk > 1) not implemented", 1)
+     IF (nspin == 2) CALL errore('pw2wannier90', "irr_bz and spin-polarized (nspin=2) not implemented", 1)
+     IF (atom_proj) CALL errore('pw2wannier90', "irr_bz and atom_proj not implemented", 1)
      IF (write_spn) CALL errore('pw2wannier90', "irr_bz and write_spn not implemented", 1)
      IF (write_unk) CALL errore('pw2wannier90', "irr_bz and write_unk not implemented", 1)
      IF (write_uHu) CALL errore('pw2wannier90', "irr_bz and write_uHu not implemented", 1)
@@ -1164,6 +1179,25 @@ PROGRAM pw2wannier90
      !
   ENDIF
   !
+  IF(wan_mode=='decompose') THEN
+     !
+     ! Post-wannierization mode: reads back the wannier90 U matrices and
+     ! centres, then decomposes the Wannier-function densities in
+     ! reciprocal space (see compute_decompose).
+     !
+     WRITE(stdout,*) ' --------------------------------------'
+     WRITE(stdout,*) ' *** Wannier-density decomposition mode'
+     WRITE(stdout,*) ' --------------------------------------'
+     WRITE(stdout,*)
+     CALL read_nnkp
+     IF (io_level > 0) THEN
+        WRITE(stdout,*) ' Opening pp-files '
+        CALL openfil_pp
+     ENDIF
+     CALL compute_decompose
+     !
+  ENDIF
+  !
   CALL print_clock_pw2wannier90()
   !
   CALL mp_barrier(world_comm)
@@ -1197,6 +1231,7 @@ SUBROUTINE print_clock_pw2wannier90
   CALL print_clock('write_unk')
   CALL print_clock('write_parity')
   CALL print_clock('run_wannier')
+  CALL print_clock('compute_dcp')
   !
   WRITE(stdout, '(/5x, "Internal routines:")')
   CALL print_clock('atomproj_wfc')
@@ -6001,7 +6036,7 @@ SUBROUTINE compute_amn_with_scdm
 #if defined(__SCALAPACK_QRCP)
    REAL(DP) :: tmp_rwork(2)
    INTEGER :: lrwork, context, nprow, npcol, myrow, mycol, descG(9)
-   INTEGER :: nblocks, rem, nblocks_loc, rem_loc=0, ibl
+   INTEGER :: nblocks, rem, nblocks_loc, rem_loc=0, ibl, ioff, nelem
    INTEGER, ALLOCATABLE :: piv_p(:)
 #endif
    !
@@ -6039,8 +6074,9 @@ SUBROUTINE compute_amn_with_scdm
    ! Dimensions of the process grid
    nprow = 1
    npcol = nproc_pool
-   ! Initialization of a default BLACS context and the processes grid
-   call blacs_get( -1, 0, context )
+   ! BLACS grid over the pool: the system context is the pool communicator, so
+   ! the grid column index is me_pool in whichever pool holds Gamma.
+   context = intra_pool_comm
    call blacs_gridinit( context, 'Row-major', nprow, npcol )
    call blacs_gridinfo( context, nprow, npcol, myrow, mycol )
    call descinit(descG, num_bands, npol*nrtot, minmn, minmn, 0, 0, context, max(1,minmn), info)
@@ -6110,9 +6146,9 @@ SUBROUTINE compute_amn_with_scdm
       ENDIF
    ENDIF
    !
-   !vv: Find Gamma-point index in the list of k-vectors
+   !vv: Find Gamma-point index in the list of k-vectors of spin channel ispinw
    gamma_idx = -1
-   DO ik = 1, nkstot
+   DO ik = ikstart, ikstop
       IF (ALL(ABS(xk_all(:, ik)) < 1.D-8)) THEN
          gamma_idx = ik
          EXIT
@@ -6154,6 +6190,7 @@ SUBROUTINE compute_amn_with_scdm
             CALL invfft('Wave', psic_nc(:,1), dffts)
             CALL invfft('Wave', psic_nc(:,2), dffts)
             !
+            psic_all(:, :) = (0.0_DP, 0.0_DP)
 #if defined(__MPI)
             CALL gather_grid(dffts, psic_nc(:, 1), psic_all(:, 1))
             CALL gather_grid(dffts, psic_nc(:, 2), psic_all(:, 2))
@@ -6183,16 +6220,21 @@ SUBROUTINE compute_amn_with_scdm
          !
          ! vv: Gamma only
          ! vv: Build Psi_k = Unk * focc
+         ! gather_grid fills psic_1d only on root_pool; bcast norm_psi to avoid 0/0
          norm_psi = SQRT(SUM( ABS(psic_1d)**2 ))
-#if defined(__SCALAPACK_QRCP)
          CALL mp_bcast(norm_psi, root_pool, intra_pool_comm)
+#if defined(__SCALAPACK_QRCP)
          CALL mp_bcast(psic_1d, root_pool, intra_pool_comm)
+         ! The last global block may be shorter than minmn; zero-pad it.
          DO ibl = 0, nblocks_loc-1
-            psi_gamma(minmn*ibl+1:minmn*(ibl+1), ibnd) = &
-               psic_1d(minmn*(ibl*nproc_pool+me_pool)+1:minmn*(ibl*nproc_pool+me_pool+1)) * (focc / norm_psi)
+            ioff = minmn * (ibl*nproc_pool + me_pool)
+            nelem = MIN(minmn, npol*nrtot - ioff)
+            psi_gamma(minmn*ibl+1:minmn*ibl+nelem, ibnd) = &
+               psic_1d(ioff+1:ioff+nelem) * (focc / norm_psi)
+            psi_gamma(minmn*ibl+nelem+1:minmn*(ibl+1), ibnd) = (0.0_DP, 0.0_DP)
          ENDDO
 #else
-         psi_gamma(1:nrtot, ibnd) = psic_1d(1:nrtot) * (focc / norm_psi)
+         psi_gamma(1:npol*nrtot, ibnd) = psic_1d(1:npol*nrtot) * (focc / norm_psi)
 #endif
          !
       ENDDO
@@ -6263,6 +6305,10 @@ SUBROUTINE compute_amn_with_scdm
    CALL mp_bcast(info, ipool_gamma, inter_pool_comm)
    CALL mp_bcast(piv, ipool_gamma, inter_pool_comm)
    IF (info /= 0) CALL errore('compute_amn', 'Error in computing the QR factorization', 1)
+   !
+#if defined(__SCALAPACK_QRCP)
+   call blacs_gridexit( context )
+#endif
    !
    CALL stop_clock('scdm_QRCP')
    !
@@ -7662,8 +7708,8 @@ SUBROUTINE write_plot
 END SUBROUTINE write_plot
 
 SUBROUTINE write_parity
-   USE mp_pools,             ONLY : intra_pool_comm, me_pool, root_pool, nproc_pool
-   USE mp,                   ONLY : mp_sum
+   USE mp_pools,             ONLY : intra_pool_comm, inter_pool_comm, me_pool, root_pool, nproc_pool
+   USE mp,                   ONLY : mp_sum, mp_max
    USE io_global,            ONLY : stdout, ionode
    USE wvfct,                ONLY : nbnd
    USE control_flags,        ONLY : gamma_only
@@ -7679,7 +7725,7 @@ SUBROUTINE write_parity
    !
    IMPLICIT NONE
    !
-   INTEGER :: npw, ibnd, ig, kgamma, ik, i, ig_target, num_G, ierr
+   INTEGER :: npw, ibnd, ig, kgamma, kgamma_any, ik, i, ig_target, num_G, ierr
    !!
    INTEGER :: g_target(3, 32)
    !! List of G vectors to find
@@ -7735,9 +7781,12 @@ SUBROUTINE write_parity
             kgamma = ik
             EXIT
          ENDIF
-         IF (ik == ikstop) CALL errore('write_parity',&
-              ' parity calculation may only be performed at the gamma point',1)
       ENDDO
+      ! kgamma is pool-local: -1 on pools without Gamma
+      kgamma_any = kgamma
+      CALL mp_max(kgamma_any, inter_pool_comm)
+      IF (kgamma_any == -1) CALL errore('write_parity',&
+           ' parity calculation may only be performed at the gamma point',1)
    ELSE
       ! NP: spin unpolarized or "up" component of spin
       IF (ispinw == 0 .OR. ispinw == 1) THEN

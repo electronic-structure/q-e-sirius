@@ -792,9 +792,9 @@ CONTAINS
          ! d(phi)/d(d2) = (x01x12 * n1*x01 - n1*s012 * x01 x r1)
          !                 / DENOM
          !
-         inv_den = 1.0_DP / (x01x12 ** 2 + n1*s012 ** 2)
+         inv_den = 1.0_DP / (x01x12 ** 2 + (n1*s012) ** 2)
          d0phi(:) = (x01x12 * n1*x12 - n1*s012 * cross(r1,x12)) * inv_den
-         d1phi(:) = (x01x12 * (n1*x20 + d1/n1 * s012) - n1*s012 * (cross(r2,x01) + cross(x12,r0))) * inv_den
+         d1phi(:) = (x01x12 * (n1*x20 + r1/n1 * s012) - n1*s012 * (cross(r2,x01) + cross(x12,r0))) * inv_den
          d2phi(:) = (x01x12 * n1*x01 - n1*s012 * cross(x01,r1)) * inv_den
          !
          dg(:,ia0) = d0phi*360.0_DP/tpi

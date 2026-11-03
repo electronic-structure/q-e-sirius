@@ -30,6 +30,7 @@ MODULE dft_setting_routines
             xclib_get_finite_size_cell_volume, &
             get_screening_parameter, get_gau_parameter
   PUBLIC :: xclib_dft_is, xclib_dft_is_libxc, xclib_init_libxc,  &
+            xclib_dft_needs_laplacian,                           &
             start_exx, stop_exx, dft_has_finite_size_correction, &
             exx_is_active, igcc_is_lyp, xclib_reset_dft, dft_force_hybrid, &
             xclib_finalize_libxc
@@ -982,6 +983,34 @@ CONTAINS
      !
   END FUNCTION
   !
+  !--------------------------------------------------------------------
+  FUNCTION xclib_dft_needs_laplacian()
+     !-----------------------------------------------------------------
+     !! TRUE if one of the MGGA terms of the current functional depends
+     !! on the laplacian of the density (Libxc flag
+     !! XC_FLAGS_NEEDS_LAPLACIAN). Callers that are able to provide the
+     !! laplacian can use it to decide whether it has to be computed.
+     !
+#if defined(__LIBXC)
+     USE dft_setting_params,  ONLY: is_libxc, libxc_flags
+#endif
+     !
+     IMPLICIT NONE
+     !
+     LOGICAL :: xclib_dft_needs_laplacian
+     !
+     xclib_dft_needs_laplacian = .FALSE.
+     !
+#if defined(__LIBXC)
+     IF ( is_libxc(5) ) xclib_dft_needs_laplacian = libxc_flags(5,15) == 1
+     IF ( is_libxc(6) ) xclib_dft_needs_laplacian = xclib_dft_needs_laplacian &
+                                                    .OR. libxc_flags(6,15) == 1
+#endif
+     !
+     RETURN
+     !
+  END FUNCTION
+  !
   !-----------------------------------------------------------------------
   SUBROUTINE xclib_reset_dft()
     !---------------------------------------------------------------------
@@ -1109,7 +1138,7 @@ CONTAINS
   END SUBROUTINE xclib_get_finite_size_cell_volume
   !
   !--------------------------------------------------------------------------
-  SUBROUTINE xclib_init_libxc( xclib_nspin, domag )
+  SUBROUTINE xclib_init_libxc( xclib_nspin, domag, lapl_provided )
     !------------------------------------------------------------------------
     !! Initialize Libxc functionals, if present.
     USE dft_setting_params,  ONLY: iexch, icorr, igcx, igcc, imeta, imetac,   &
@@ -1124,8 +1153,11 @@ CONTAINS
 #endif
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: xclib_nspin
-    LOGICAL, INTENT(IN) :: domag
     !! 1: unpolarized case; 2: polarized
+    LOGICAL, INTENT(IN) :: domag
+    !! TRUE if total magnetization is present (only used when nspin=4)
+    LOGICAL, INTENT(IN) :: lapl_provided
+    !! TRUE if the caller passes the density laplacian to \(\texttt{xc_metagcx}\)
     INTEGER :: i, ii, iid, iexx, iscr, ip, nspin0, iflag, family
     INTEGER :: id_vec(6), flags_tot, nflags
     !
@@ -1217,10 +1249,14 @@ CONTAINS
           IF ( libxc_flags(iid,14) == 1 ) &
             WRITE(stdout,'(4X,"WARNING: libxc functional with ID ",I4," is still ", &
                       &/4X,"in development.")' ) id_vec(iid)
-          IF ( libxc_flags(iid,15) == 1 ) &
+          IF ( libxc_flags(iid,15) == 1 .AND. .NOT. lapl_provided ) &
             WRITE(stdout,'(/5X,"WARNING: libxc functional with ID ",I4," depends on",  &
                           &/5X," the laplacian of the density, which is currently set",&
                           &/5X," to zero.")' ) id_vec(iid)
+          IF ( libxc_flags(iid,15) == 1 .AND. libxc_flags(iid,0) == 1 ) &
+            WRITE(stdout,'(/5X,"WARNING: libxc functional with ID ",I4," depends on",  &
+                          &/5X," the laplacian of the density: the dE/d(lapl rho) term",&
+                          &/5X," of the potential is neglected.")' ) id_vec(iid)
         ENDIF
       ENDIF  
     ENDDO

@@ -13,7 +13,8 @@ SUBROUTINE set_psi_in(ik,l,j,e,psi_out,psi_out_rel)
   !
   USE kinds, ONLY : dp
   USE radial_grids, ONLY : ndmx
-  USE ld1inc, ONLY : grid, rel, zed, vpot
+  USE ld1inc, ONLY : grid, rel, zed, vpot, cau_fact
+  USE atomic_radial, ONLY : lschps
   IMPLICIT NONE
   INTEGER :: l, ik    ! input: angular momentum and index of the cut-off radius
   REAL(DP) :: e, j    ! input: energy and total angular momentum
@@ -26,7 +27,8 @@ SUBROUTINE set_psi_in(ik,l,j,e,psi_out,psi_out_rel)
   psi_out_rel=0.0_DP
   IF (rel == 1) THEN
      n =  grid%mesh
-     CALL lschps (3, zed, thrdum, grid, n, 1, l, e, vpot, psi_out, nstop )
+     CALL lschps (3, zed, thrdum, grid, n, 1, l, e, vpot, psi_out, nstop, &
+          cau_fact )
   ELSEIF (rel == 2) THEN
      CALL dir_outward (ndmx, grid%mesh, l, j, e, grid%dx, psi_dir, &
           grid%r, grid%rab, vpot )

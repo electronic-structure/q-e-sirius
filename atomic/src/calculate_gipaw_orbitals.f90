@@ -14,7 +14,8 @@ SUBROUTINE calculate_gipaw_orbitals
        wfc_ae_recon, wfc_ps_recon, nspin, nwftsc, lltsc, enltsc, &
        nwfs, eltsc, el, nwf, enl, rel, vpot, nbeta, pseudotype, &
        vpstot, nstoaets, enlts, vnl, lls, betas, ddd, qq, jjs, els, &
-       rcutus, ikk, nwfts, verbosity
+       rcutus, ikk, nwfts, verbosity, cau_fact
+  USE atomic_radial,  ONLY : lschps
   USE io_global,     ONLY : stdout
   USE kinds,         ONLY : dp
   USE radial_grids,  ONLY : ndmx, series
@@ -128,7 +129,7 @@ SUBROUTINE calculate_gipaw_orbitals
            !
            IF (rel == 1) THEN
               CALL lschps(3, zed, thrdum, grid, outer_r_radial_index, &
-                   1, lam, e, vpot(1,is), aux, nstop)
+                   1, lam, e, vpot(1,is), aux, nstop, cau_fact)
            ELSEIF (rel == 2) THEN
               CALL dir_outward(ndmx,outer_r_radial_index,lam,j,e,grid%dx,&
                    aux_dir,grid%r,grid%rab,vpot(1,is))

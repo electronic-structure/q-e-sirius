@@ -848,10 +848,17 @@ SUBROUTINE read_ns()
   END IF
   !
   IF (lda_plus_u_kind.EQ.0) THEN
-     IF ( ionode ) THEN
-        READ( UNIT = iunocc, FMT = *, iostat = ierr ) rho%ns
-     END IF
-     CALL mp_bcast(rho%ns_nc, ionode_id, intra_image_comm)
+     IF (noncolin) THEN
+        IF ( ionode ) THEN
+           READ( UNIT = iunocc, FMT = *, iostat = ierr ) rho%ns_nc
+        END IF
+        CALL mp_bcast(rho%ns_nc, ionode_id, intra_image_comm)
+     ELSE
+        IF ( ionode ) THEN
+           READ( UNIT = iunocc, FMT = *, iostat = ierr ) rho%ns
+        END IF
+        CALL mp_bcast(rho%ns, ionode_id, intra_image_comm)
+     ENDIF
      IF (hub_back) THEN
         IF ( ionode ) THEN
            READ( UNIT = iunocc, FMT = * , iostat = ierr) rho%nsb

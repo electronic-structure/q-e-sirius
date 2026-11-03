@@ -37,6 +37,7 @@ MODULE funct
   PUBLIC :: get_nonlocc_name
   PUBLIC :: get_inlc
   PUBLIC :: dft_is_nonlocc
+  PUBLIC :: dft_is_ctb09
   ! driver subroutine computing XC non local
   PUBLIC  :: nlc
   ! XC non local index
@@ -72,6 +73,7 @@ MODULE funct
   !              "tpss"  = "sla+pw+tpss+tpss"  = TPSS Meta-GGA
   !              "m06l"  = "nox+noc+m6lx+m6lc" = M06L Meta-GGA
   !              "tb09"  = "sla+pw+tb09+tb09"  = TB09 Meta-GGA
+  !              "ctb09" = "tb09" + c from rho  = TB09 with self-consistent c
   !              "pbe0"  = "pb0x+pw+pb0x+pbc"  = PBE0
   !              "b86bx" = "pb0x+pw+b86x+pbc"  = B86bPBE hybrid
   !              "bhahlyp"="pb0x+pw+b88x+blyp" = Becke half-and-half LYP
@@ -382,6 +384,11 @@ CONTAINS
     ! ----------------------------------------------
     !
     SELECT CASE( TRIM(dftout) )
+    ! special case : CTB09 = TB09 with c computed from the density
+    CASE( 'CTB09' )
+       CALL xclib_set_dft_from_name( 'TB09' )
+       dft_defined = .TRUE.
+       inlc = 0
     ! special case : case BEEF (default: BEEF-vdW-DF2)
     CASE('BEEF', 'BEEF-VDW')
        IF (LEN_TRIM(dftout) == 4) THEN
@@ -693,6 +700,15 @@ CONTAINS
   !-----------------------------------------------------------------------
   !
   !-----------------------------------------------------------------------
+  FUNCTION dft_is_ctb09()
+    !! TRUE if dft is CTB09.
+    LOGICAL :: dft_is_ctb09
+    dft_is_ctb09 = ( TRIM(dft) == 'CTB09' )
+    RETURN
+  END FUNCTION dft_is_ctb09
+  !-----------------------------------------------------------------------
+  !
+  !-----------------------------------------------------------------------
   SUBROUTINE set_dft_from_indices( iexch_, icorr_, igcx_, igcc_, imeta_, inlc_ )
      !--------------------------------------------------------------------
      !! Set dft functional from the IDs of each term - OBSOLESCENT:
@@ -782,6 +798,11 @@ CONTAINS
     !
     IF (inlc == 0) THEN
       shortname = xclib_get_dft_short()
+      !
+      ! ... CTB09 has the same XC indices as TB09 and would otherwise lose its
+      ! ... name when written to file and read back
+      !
+      IF ( TRIM(dft) == 'CTB09' ) shortname = 'CTB09'
     ELSE
       !
       iexch  = xclib_get_id( 'LDA', 'EXCH' )

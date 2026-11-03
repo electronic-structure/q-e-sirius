@@ -49,40 +49,19 @@ END subroutine read_wannier
   USE control_kcw,          ONLY : unimatrx, seedname, has_disentangle, &
                                    unimatrx_opt, num_wann, kcw_iverbosity
   USE mp_global,            ONLY : intra_image_comm
-  USE mp,                   ONLY : mp_bcast
-  USE io_global,            ONLY : ionode, ionode_id
-  USE klist,                ONLY : nkstot, xk
-  USE cell_base,            ONLY : bg
-  USE lsda_mod,             ONLY : nspin
-  USE noncollin_module,      ONLY : npol, nspin_lsda, nspin_gga, nspin_mag
-  USE wvfct,                ONLY : nbnd
   USE io_global,            ONLY : stdout
+  USE klist,                ONLY : nkstot, xk
+  USE lsda_mod,             ONLY : nspin
+  USE wvfct,                ONLY : nbnd
+  USE wannier90_readback,   ONLY : w90rb_read_umat
   !
   IMPLICIT NONE 
   !
-  ! Local Variable
-  !
-  INTEGER :: ik
-  ! ... the kpoint index
-  !
-  INTEGER :: num_wann_file, num_kpoint_file, num_ks_file
-  ! ... the manifold space
-  !
-  REAL (DP) xk_file(3,nkstot), check
-  ! ... The unitary matrix elemnts 
-  !
-  CHARACTER (len=256) :: u_file, u_dis_file, dum
-  ! ... the name of the file containing the U matrix
-  !
-  INTEGER i, j, nkstot_eff
-  ! 
-  INTEGER ierr
+  INTEGER :: i, nkstot_eff, nrows, ncols
   !
   !! Here and in W90 We treat always one spin component at the time.
   !! While in PWscf nkstot contain k point for spin up (the first nkstot/nspin 
   !! and spin down (the last nkstot.nspin). See also rotate_ks
-  !
-  num_wann = 0
   !
   IF (nspin == 4) THEN
       nkstot_eff = nkstot
@@ -92,148 +71,36 @@ END subroutine read_wannier
       nkstot_eff = nkstot/nspin
   ENDIF
   !
-  u_file=TRIM( seedname ) // '_u.mat'
+  ! ... The unitary matrix
   !
-  ! ... The U matrix for empty states 
+  CALL w90rb_read_umat (TRIM(seedname)//'_u.mat', xk(:,1:nkstot_eff), intra_image_comm, &
+                        unimatrx, nrows, num_wann)
+  !
+  ! ... The Optimal subspace Matrix (if any)
   !
   IF (has_disentangle) THEN
      !
-     u_dis_file=TRIM( seedname ) // '_u_dis.mat'
-     !! The Optimal subspace Matrix 
+     CALL w90rb_read_umat (TRIM(seedname)//'_u_dis.mat', xk(:,1:nkstot_eff), intra_image_comm, &
+                           unimatrx_opt, nrows, ncols)
      !
-     IF (ionode) THEN
-        !
-        OPEN (UNIT = 1002, FILE = u_dis_file, FORM = 'formatted', STATUS = 'old', IOSTAT=ierr )
-        ! 
-        IF (ierr /= 0 ) call errore('rotate_orbitals', 'Error while reading Optimal unitary matrix', abs (ierr) )
-        !
-        READ (1002,*) dum
-        READ (1002,*) num_kpoint_file, num_wann_file, num_ks_file
-        !
-        IF (num_kpoint_file /= nkstot_eff) &
-              CALL errore('read_wannier', 'Mismatch in num_kpoints input vs U Optimal matrix', nkstot_eff)
-        !
-        IF (num_wann_file /= num_wann .AND. num_wann /= 0) &
-              CALL errore ('read_wannier', 'Mismatch in num_wann from input vs from U Optimal matrix', 1)
-        !
-        IF (num_ks_file /=  nbnd ) &
-             CALL errore ('read_wannier', 'Mismatch between num KS state from PW and Wann90', 1)
-        !
-     ENDIF
+     IF (ncols /= num_wann) &
+           CALL errore ('read_wannier', 'Mismatch in num_wann from U vs U Optimal matrix', 1)
+     IF (nrows /=  nbnd ) &
+          CALL errore ('read_wannier', 'Mismatch between num KS state from PW and Wann90', 1)
+     !
+  ELSE
+     !
+     ! ... If no disentangle than the U-opt is a square matrix of dimension num_wan x num_wann
+     ! ... set it to the identity (in apply_u_mat we anyway apply both Ui_opt and U)
+     !
+     ALLOCATE (unimatrx_opt(num_wann, num_wann, nkstot_eff))
+     unimatrx_opt = CMPLX(0.D0, 0.D0, kind=DP)
+     DO i = 1, num_wann; unimatrx_opt(i,i,:) = CMPLX(1.D0, 0.D0, kind = DP); ENDDO
      !
   ENDIF
   !
-  IF (ionode) THEN 
-     !
-     OPEN (UNIT = 1001, FILE =u_file, FORM = 'formatted', STATUS = 'old', IOSTAT=ierr )
-     ! 
-     IF (ierr /= 0 ) call errore('rotate_orbitals', 'reading Empty states unitary matrix', abs (ierr) )
-     !
-     READ (1001,*) dum 
-     READ (1001,*) num_kpoint_file, num_wann_file, num_wann_file
-     !
-     IF (num_kpoint_file /= nkstot_eff) &
-              CALL errore('read_wannier', 'Mismatch in num_kpoints input vs U Empty matrix', nkstot_eff)
-        !
-     IF (num_wann_file /= num_wann .AND. num_wann /= 0) &
-           CALL errore ('read_wannier', 'Mismatch in num_wann from input vs from U Empty matrix', 1)
-     ! 
-     num_wann = num_wann_file
-     !! Store the numebr of wannier in a global variable
-     !
-  ENDIF
-  !
-  CALL mp_bcast( num_wann, ionode_id, intra_image_comm )
-  CALL mp_bcast( num_ks_file, ionode_id, intra_image_comm )
-  !
-  ALLOCATE ( unimatrx( num_wann, num_wann, nkstot_eff) )
-  IF ( .NOT. has_disentangle) num_ks_file = num_wann
-  ALLOCATE (unimatrx_opt(num_ks_file,num_wann,nkstot_eff))
-  !
-  unimatrx = CMPLX(0.D0, 0.D0, kind=DP)
-  unimatrx_opt = CMPLX(0.D0, 0.D0, kind=DP)
-  !
-  IF (ionode) THEN
-    !
-    IF (has_disentangle) THEN 
-      !
-      DO ik = 1, nkstot_eff
-        ! 
-        READ (1002, *) xk_file(1,ik), xk_file(2,ik), xk_file(3,ik)
-        READ (1002,'(f15.10,sp,f15.10)') ((unimatrx_opt(i,j,ik),i=1,num_ks_file),j=1,num_wann)
-        !
-      ENDDO 
-      !
-      ! ... transform the kpoints read from U file in cartesian coordinates 
-      CALL cryst_to_cart(nkstot_eff, xk_file, bg, 1)
-      !
-      check = 0.D0
-      DO ik=1, nkstot_eff
-        check=check+(sum(xk_file(:,ik)-xk(:,ik)))
-      ENDDO
-      IF (check .gt. 1.D-06) CALL errore('read_wannier','Mismatch between Kpoints',1)
-      !
-    ELSE
-      !
-      ! ... If no disentangle than the U-opt is a square matrix of dimension num_wan x num_wann 
-      ! ... set it to the identity (in apply_u_mat we anyway apply both Ui_opt and U)
-      !
-      DO ik = 1, nkstot_eff
-        DO i=1, num_wann; unimatrx_opt(i,i,:) = CMPLX(1.D0, 0.D0, kind = DP); ENDDO
-      ENDDO
-    ENDIF
-    !
-  ENDIF
-  !
-  CALL mp_bcast( unimatrx_opt, ionode_id, intra_image_comm )
   if ( kcw_iverbosity .gt. 1) WRITE(stdout,'(/,5X, "INFO: Optimal Matrix READ")') 
-  !
-  IF (ionode) THEN   
-    !
-    DO ik = 1, nkstot_eff
-      !
-      READ (1001, *) xk_file(1,ik), xk_file(2,ik), xk_file(3,ik)
-      READ (1001,'(f15.10,sp,f15.10)') ((unimatrx(i,j,ik),i=1,num_wann),j=1,num_wann)
-      !
-    ENDDO
-    !
-    ! ... transform the kpoints read from U file in cartesian coordinates 
-    CALL cryst_to_cart(nkstot_eff, xk_file, bg, 1)
-    !
-    check = 0.D0
-    DO ik=1, nkstot_eff
-      check=check+(sum(xk_file(:,ik)-xk(:,ik)))
-    ENDDO
-    IF (check .gt. 1.D-06) CALL errore('read_wannier','Mismatch between Kpoints',1)
-    !
-  ENDIF
-  !
-  CALL mp_bcast( unimatrx, ionode_id, intra_image_comm )
-  !
-  CLOSE (1001)
-  CLOSE (1002)
-  !
   if (kcw_iverbosity .gt. 1) WRITE(stdout,'(/,5X, "INFO: total number of Wannier functions", i5)') num_wann
-  !
-#if defined (DEBUG)
-  ! WRITE
-  DO ik =1, nkstot_eff
-    WRITE (*, *) xk_file(1,ik), xk_file(2,ik), xk_file(3,ik)
-    DO i=1,num_ks_file
-       WRITE (*,'(10(f8.4,sp,f8.4))') (unimatrx_opt(i,j,ik),j=1,num_wann)
-    ENDDO
-    WRITE(*,*)
-  ENDDO
-  !
-  DO ik =1, nkstot_eff
-    WRITE (*, *) xk_file(1,ik), xk_file(2,ik), xk_file(3,ik)
-    DO i = 1, num_wann
-       WRITE (*,'(10(f8.4,sp,f8.4))') (unimatrx(i,j,ik),j=1,num_wann)
-    ENDDO
-    WRITE(*,*)
-  ENDDO
-  !
-#endif
   !
   RETURN
   !
@@ -249,47 +116,23 @@ END subroutine read_wannier_unique_manifold
                                    has_disentangle, have_empty, num_wann_emp, & 
                                    unimatrx_opt, num_wann, kcw_iverbosity, spin_component
   USE mp_global,            ONLY : intra_image_comm
-  USE mp,                   ONLY : mp_bcast
-  USE io_global,            ONLY : ionode, ionode_id
-  USE klist,                ONLY : nkstot, xk, nelec, nelup, neldw
-  USE cell_base,            ONLY : bg
-  USE lsda_mod,             ONLY : nspin
-  USE noncollin_module,     ONLY : npol, nspin_lsda, nspin_gga, nspin_mag
-  USE wvfct,                ONLY : nbnd
   USE io_global,            ONLY : stdout
-  !
-  ! Local Variable
+  USE klist,                ONLY : nkstot, xk, nelec, nelup, neldw
+  USE lsda_mod,             ONLY : nspin
+  USE wvfct,                ONLY : nbnd
+  USE wannier90_readback,   ONLY : w90rb_read_umat
   !
   IMPLICIT NONE
-  !
-  INTEGER :: ik 
-  ! ... the kpoint index
-  !
-  INTEGER :: num_wann_file, num_kpoint_file, num_ks_file
-  ! ... the manifold space
-  !
-  REAL (DP) U_re, U_im, xk_file(3,nkstot), check
-  ! ... The unitary matrix elemnts 
-  !
-  CHARACTER (len=256) :: u_file, u_dis_file, dum
-  ! ... the name of the file containing the U matrix
-  !
-  INTEGER i, j, norb_occ, nkstot_eff, norb_emp
-  ! 
-  INTEGER ierr
   !
   COMPLEX(DP), ALLOCATABLE :: unimatrx_occ(:,:,:)
   COMPLEX(DP), ALLOCATABLE :: unimatrx_emp(:,:,:)
   COMPLEX(DP), ALLOCATABLE :: unimatrx_emp_opt(:,:,:)
-  INTEGER ieff, jeff, nbnd_pw
+  INTEGER :: i, j, nkstot_eff, nbnd_pw, num_ks_file, nrows, ncols
+  INTEGER :: ieff, jeff
   !
-
-  !OLD nkstot_eff = nkstot/nspin
   !! Here and in W90 We treat always one spin component at the time.
   !! While in PWscf nkstot contain k point for spin up (the first nkstot/nspin 
   !! and spin down (the last nkstot.nspin). See also rotate_ks
-  !
-  u_file=TRIM( seedname ) // '_u.mat'
   !
   IF (nspin == 4) THEN
       nkstot_eff = nkstot
@@ -303,66 +146,19 @@ END subroutine read_wannier_unique_manifold
       nbnd_pw= nint(nelec) / 2
   ENDIF 
   !
-  IF (ionode) THEN
-     !
-     OPEN (UNIT = 1001, FILE = u_file, FORM = 'formatted', STATUS = 'old', IOSTAT=ierr )
-     ! 
-     IF (ierr /= 0 ) call errore('rotate_orbitals', 'Error while reading unitary matrix', abs (ierr) )
-     !
-     READ (1001,*) dum
-     READ (1001,*) num_kpoint_file, num_wann_file, num_wann_file
-     !
-     IF (num_kpoint_file /= nkstot_eff) & 
-              CALL errore('read_wannier', 'Mismatch in num_kpoints input vs U matrix', nkstot_eff)
-     !
-     IF (num_wann_file /= num_wann_occ .AND. num_wann_occ /= 0) &
-              CALL errore ('read_wannier', 'Mismatch in num_wann from input vs from U matrix', 1)
-     !
-     num_wann_occ = num_wann_file
-     !! Store the number of occupied wannier in a  global variable
-     !
-     IF (num_wann_occ /= nbnd_pw) & 
-          CALL errore ('read_wannier', 'Mismatch between  num occ bands and num wann', 1)
-     !
-  ENDIF
-  !
-  CALL mp_bcast( num_wann_occ, ionode_id, intra_image_comm )
-  norb_occ = num_wann_occ ! Store the total number of occupied states
-  ALLOCATE (unimatrx_occ(num_wann_occ, num_wann_occ, nkstot_eff))
+  !#### In the case occupied and empty manifolds are treated separately
+  !#### we assume an insulating systems and NO disentanglement for occupied manifold
   !  
-  IF ( ionode ) THEN
-    !
-    check = 0.D0 
-    DO ik = 1, nkstot_eff
-    !
-    !#### In the case occupied and empty manifolds are treated separately
-    !#### we assume an insulating systems and NO disentanglement for occupied manifold
-      ! 
-      READ (1001, *) xk_file(1,ik), xk_file(2,ik), xk_file(3,ik)
-      !
-      DO i = 1, num_wann_occ
-        DO j = 1, num_wann_occ
-          READ (1001,*) U_re, U_im
-          unimatrx_occ(j,i,ik)=CMPLX(U_re, U_im, kind=DP)
-        ENDDO
-      ENDDO
-      !
-    ENDDO 
-    !
-    ! ... transform the kpoints read from U file in cartesian coordinates 
-    CALL cryst_to_cart(nkstot_eff, xk_file, bg, 1)
-    !
-    check = 0.D0
-    DO ik=1, nkstot_eff
-      check=check+(sum(xk_file(:,ik)-xk(:,ik)))
-    ENDDO 
-    IF (check .gt. 1.D-06) CALL errore('read_wannier','Mismatch between Kpoints',1)
-    !
-  ENDIF
+  CALL w90rb_read_umat (TRIM(seedname)//'_u.mat', xk(:,1:nkstot_eff), intra_image_comm, &
+                        unimatrx_occ, nrows, ncols)
   !
-  CALL mp_bcast( unimatrx_occ, ionode_id, intra_image_comm )
+  IF (ncols /= num_wann_occ .AND. num_wann_occ /= 0) &
+           CALL errore ('read_wannier', 'Mismatch in num_wann from input vs from U matrix', 1)
+  num_wann_occ = ncols
+  !! Store the number of occupied wannier in a global variable
   !
-  CLOSE (1001) 
+  IF (num_wann_occ /= nbnd_pw) &
+       CALL errore ('read_wannier', 'Mismatch between  num occ bands and num wann', 1)
   !
   num_wann = num_wann_occ
   if (.NOT. have_empty .AND. kcw_iverbosity .gt. 1) WRITE(stdout,'(/,5X, "INFO: total number of Wannier functions", i5)') num_wann
@@ -391,116 +187,34 @@ END subroutine read_wannier_unique_manifold
   !
   ! ... read unitary matrix empty states ...
   !
-  u_file=TRIM( seedname ) // '_emp_u.mat'
+  CALL w90rb_read_umat (TRIM(seedname)//'_emp_u.mat', xk(:,1:nkstot_eff), intra_image_comm, &
+                        unimatrx_emp, nrows, ncols)
   !
-  ! ... The U matrix for empty states 
+  IF (ncols /= num_wann_emp .AND. num_wann_emp /= 0) &
+        CALL errore ('read_wannier', 'Mismatch in num_wann from input vs from U Empty matrix', 1)
+  num_wann_emp = ncols
+  !! Store the numebr of empty wannier in a global variable
+  !
+  ! ... The optimal subspace matrix for the empty states (if any)
+  !
   IF (has_disentangle) THEN
      !
-     u_dis_file=TRIM( seedname ) // '_emp_u_dis.mat'
-     !! The Optimal subspace Matrix 
+     CALL w90rb_read_umat (TRIM(seedname)//'_emp_u_dis.mat', xk(:,1:nkstot_eff), intra_image_comm, &
+                           unimatrx_emp_opt, nrows, ncols)
+     num_ks_file = nrows
      !
-     IF (ionode) THEN
-        !
-        OPEN (UNIT = 1002, FILE = u_dis_file, FORM = 'formatted', STATUS = 'old', IOSTAT=ierr )
-        ! 
-        IF (ierr /= 0 ) call errore('rotate_orbitals', 'Error while reading Optimal unitary matrix', abs (ierr) )
-        !
-        READ (1002,*) dum
-        READ (1002,*) num_kpoint_file, num_wann_file, num_ks_file
-        !
-        IF (num_kpoint_file /= nkstot_eff) &
-              CALL errore('read_wannier', 'Mismatch in num_kpoints input vs U Optimal matrix', nkstot_eff)
-        !
-        IF (num_wann_file /= num_wann_emp .AND. num_wann_emp /= 0) &
-              CALL errore ('read_wannier', 'Mismatch in num_wann from input vs from U Optimal matrix', 1)
-        !
-        IF (num_ks_file /= ( nbnd - num_wann_occ ) ) &
-             CALL errore ('read_wannier', 'Mismatch between num empty bands and num empty wann', 1)
-        !
-     ENDIF
+     IF (ncols /= num_wann_emp) &
+           CALL errore ('read_wannier', 'Mismatch in num_wann from U Empty vs U Optimal matrix', 1)
+     IF (num_ks_file /= ( nbnd - num_wann_occ ) ) &
+          CALL errore ('read_wannier', 'Mismatch between num empty bands and num empty wann', 1)
      !
-  ENDIF
-  !
-  IF (ionode) THEN 
+  ELSE
      !
-     OPEN (UNIT = 1001, FILE =u_file, FORM = 'formatted', STATUS = 'old', IOSTAT=ierr )
-     ! 
-     IF (ierr /= 0 ) call errore('rotate_orbitals', 'reading Empty states unitary matrix', abs (ierr) )
+     num_ks_file = num_wann_emp
      !
-     READ (1001,*) dum 
-     READ (1001,*) num_kpoint_file, num_wann_file, num_wann_file
-     !
-     IF (num_kpoint_file /= nkstot_eff) &
-              CALL errore('read_wannier', 'Mismatch in num_kpoints input vs U Empty matrix', nkstot_eff)
-        !
-     IF (num_wann_file /= num_wann_emp .AND. num_wann_emp /= 0) &
-           CALL errore ('read_wannier', 'Mismatch in num_wann from input vs from U Empty matrix', 1)
-     ! 
-     num_wann_emp = num_wann_file
-     !! Store the numebr of empty wannier in a global variable
-     !
-  ENDIF
-  !
-  CALL mp_bcast( num_wann_emp, ionode_id, intra_image_comm )
-  CALL mp_bcast( num_ks_file, ionode_id, intra_image_comm )
-  norb_emp = num_wann_emp ! store the total numebr of empty variational orbitals
-  !
-  ALLOCATE ( unimatrx_emp( num_wann_emp, num_wann_emp, nkstot_eff) )
-  IF (has_disentangle) ALLOCATE (unimatrx_emp_opt(num_ks_file,num_wann_emp,nkstot_eff))
-  !
-  IF (has_disentangle) THEN 
-    !
-    IF (ionode) THEN
-      !
-      DO ik = 1, nkstot_eff
-        ! 
-        READ (1002, *) xk_file(1,ik), xk_file(2,ik), xk_file(3,ik)
-        READ (1002,'(f15.10,sp,f15.10)') ((unimatrx_emp_opt(i,j,ik),i=1,num_ks_file),j=1,num_wann_emp)
-        !
-      ENDDO 
-      !
-      ! ... transform the kpoints read from U file in cartesian coordinates 
-      CALL cryst_to_cart(nkstot_eff, xk_file, bg, 1)
-      !
-      check = 0.D0
-      DO ik=1, nkstot_eff
-        check=check+(sum(xk_file(:,ik)-xk(:,ik)))
-      ENDDO
-      IF (check .gt. 1.D-06) CALL errore('read_wannier','Mismatch between Kpoints',1)
-      !
-    ENDIF
-    !
-    !WRITE(*,*) unimatrx_emp_opt
-    CALL mp_bcast( unimatrx_emp_opt, ionode_id, intra_image_comm )
-    !
   ENDIF
   !
   if ( kcw_iverbosity .gt. 1) WRITE(stdout,'(/,5X, "INFO: Optimal Matrix READ")') 
-  !
-  IF (ionode) THEN   
-    !
-    DO ik = 1, nkstot_eff
-      !
-      READ (1001, *) xk_file(1,ik), xk_file(2,ik), xk_file(3,ik)
-      READ (1001,'(f15.10,sp,f15.10)') ((unimatrx_emp(i,j,ik),i=1,num_wann_emp),j=1,num_wann_emp)
-      !
-    ENDDO
-    !
-    ! ... transform the kpoints read from U file in cartesian coordinates 
-    CALL cryst_to_cart(nkstot_eff, xk_file, bg, 1)
-    !
-    check = 0.D0
-    DO ik=1, nkstot_eff
-      check=check+(sum(xk_file(:,ik)-xk(:,ik)))
-    ENDDO
-    IF (check .gt. 1.D-06) CALL errore('read_wannier','Mismatch between Kpoints',1)
-    !
-  ENDIF
-  !
-  CALL mp_bcast( unimatrx_emp, ionode_id, intra_image_comm )
-  !
-  CLOSE (1001)
-  CLOSE (1002)
   !
   num_wann = num_wann_occ + num_wann_emp
   if (kcw_iverbosity .gt. 1) WRITE(stdout,'(/,5X, "INFO: total number of Wannier functions", i5)') num_wann
@@ -556,29 +270,9 @@ END subroutine read_wannier_unique_manifold
     !
   ENDDO
   !
+  DEALLOCATE (unimatrx_occ)
   DEALLOCATE (unimatrx_emp)
   IF (has_disentangle) DEALLOCATE (unimatrx_emp_opt )
-  !
-
-#if defined (DEBUG)
-  ! WRITE
-  DO ik =1, nkstot_eff
-    WRITE (*, *) xk_file(1,ik), xk_file(2,ik), xk_file(3,ik)
-    DO i=1,nbnd
-       WRITE (*,'(10(f8.4,sp,f8.4))') (unimatrx_opt(j,i,ik),j=1,num_wann)
-    ENDDO
-    WRITE(*,*)
-  ENDDO
-  !
-  DO ik =1, nkstot_eff
-    WRITE (*, *) xk_file(1,ik), xk_file(2,ik), xk_file(3,ik)
-    DO i = 1, num_wann
-       WRITE (*,'(10(f8.4,sp,f8.4))') (unimatrx(j,i,ik),j=1,num_wann)
-    ENDDO
-    WRITE(*,*)
-  ENDDO
-  !
-#endif
   !
   RETURN
   !

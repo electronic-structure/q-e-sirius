@@ -179,7 +179,7 @@ clean:
 		hp_*/*HubbardV* hp_*/*mix* hp_*/*parameters.out hp_*/HUBBARD.dat
 # Cleaning pw2wannier90 final files
 	@rm -rf pp_*/out pp_*/*.wout pp_*/*.werr pp_*/*.chk pp_*/*.nnkp pp_*/*.amn \
-		pp_*/*.mmn pp_*/*.eig
+		pp_*/*.mmn pp_*/*.eig pp_*/*.power pp_*/*.coeff pp_*/*.mat pp_*/*.xyz
 # Cleaning KCW final files
 	@rm -rf	kcw_*/out kcw_*/*.nnkp kcw_*/*.wout kcw_*/*.amn kcw_*/*.mmn kcw_*/*.eig kcw_*/*band* kcw_*/*chk \
                 kcw_*/*.dat kcw_*/*.xyz kcw_*/*.mat 

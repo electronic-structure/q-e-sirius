@@ -158,6 +158,8 @@ SUBROUTINE pseudo_iosys()
   USE io_files,         ONLY : psfile, pseudo_dir
   USE ions_base,        ONLY : nsp
   USE read_pseudo_mod,  ONLY : readpp
+  USE ctb09,            ONLY : ae_correction
+  USE funct,            ONLY : dft_is_ctb09
   !
   IMPLICIT NONE
   REAL(dp) :: ecutwfc_pp, ecutrho_pp
@@ -174,6 +176,13 @@ SUBROUTINE pseudo_iosys()
   ! ... returns values read from PP files into ecutwfc_pp, ecutrho_pp
   !
   CALL readpp ( input_dft, .FALSE., ecutwfc_pp, ecutrho_pp )
+  !
+  ! ... CTB09 averages |grad rho|/rho, a quantity dominated by the core
+  ! ... region that a pseudo density does not have. The all-electron
+  ! ... correction to that average is a property of each pseudopotential
+  ! ... alone, so it is computed once, here, from the file just read
+  !
+  IF ( dft_is_ctb09() ) CALL ae_correction ( )
   !
   CALL set_cutoff ( ecutwfc, ecutrho, ecutwfc_pp, ecutrho_pp, &
        nr1,nr2,nr3, nr1s,nr2s,nr3s )

@@ -123,8 +123,8 @@ SUBROUTINE hp_dnsq (lmetq0, iter, conv_root, dnsq)
         !
         IF (lsda) current_spin = isk (ikk)
         !
-        ! Read unperturbed KS wfc's psi(k)
-        IF (nksq.GT.1) CALL get_buffer (evc, lrwfc, iuwfc, ikmk)
+        ! Read unperturbed KS wfc's: psi(k) for isolv = 1, time-reversed psi for isolv = 2
+        IF (nksq > 1 .OR. nsolv == 2) CALL get_buffer (evc, lrwfc, iuwfc, ikmk)
         !
         ! Read atomic wfc's : S(k)*phi(k) and S(k+q)*phi(k+q) 
         CALL get_buffer (swfcatomk, nwordwfcU, iuatswfc, ikk)

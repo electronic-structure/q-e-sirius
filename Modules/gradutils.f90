@@ -607,6 +607,85 @@ SUBROUTINE fft_laplacian( dfft, a, gg, lapla )
 END SUBROUTINE fft_laplacian
 !
 !--------------------------------------------------------------------
+SUBROUTINE fft_laplacian_g2r( dfft, a, gg, lapla )
+  !--------------------------------------------------------------------
+  !! Calculates \(\text{lapla} = \nabla^2(a)\) - like
+  !! \(\textrm{fft_laplacian}\), but with \({\bf a(G)}\) instead of
+  !! \({\bf a(r)}\), so that the forward FFT is not needed.
+  !
+  USE kinds,          ONLY : DP
+  USE cell_base,      ONLY : tpiba2
+  USE fft_types,      ONLY : fft_type_descriptor
+  USE fft_interfaces, ONLY : invfft
+  !
+  IMPLICIT NONE
+  !
+  TYPE(fft_type_descriptor),INTENT(IN) :: dfft
+  !! FFT descriptor
+  COMPLEX(DP), INTENT(IN) :: a(dfft%ngm)
+  !! a(G), a complex function in G-space
+  REAL(DP), INTENT(IN) :: gg(dfft%ngm)
+  !! Square modules of G-vectors, in \( (2\pi/a)^2 \) units
+  REAL(DP), INTENT(OUT) :: lapla(dfft%nnr)
+  !! \(\text{lapla}(:)=\nabla^2(a)\), real, on the real-space FFT grid
+  !
+  ! ... local variables
+  !
+  INTEGER :: n
+  COMPLEX(DP), ALLOCATABLE :: laux(:)
+  !
+  !
+  !$acc data present_or_copyin( a, gg ) present_or_copyout( lapla )
+  !
+  ALLOCATE( laux( dfft%nnr ) )
+  !$acc data create( laux )
+  !
+  !$acc parallel loop
+  DO n = 1, dfft%nnr
+     laux(n) = (0.0_dp,0.0_dp)
+  ENDDO
+  !
+  ! ... multiply a(G) by -G^2 to get the laplacian in G-space
+  !
+  !$acc parallel loop present( dfft, dfft%nl )
+  DO n = 1, dfft%ngm
+     laux(dfft%nl(n)) = -gg(n)*a(n)
+  ENDDO
+  !
+  IF ( dfft%lgamma ) THEN
+     !
+     ! ... fill lapla(-G) = lapla*(G)
+     !
+     !$acc parallel loop present( dfft, dfft%nl, dfft%nlm )
+     DO n = 1, dfft%ngm
+        laux(dfft%nlm(n)) = CONJG( laux(dfft%nl(n)) )
+     ENDDO
+     !
+  ENDIF
+  !
+  ! ... bring back to R-space, (\lapl a)(r) ...
+  !
+  !$acc host_data use_device( laux )
+  CALL invfft( 'Rho', laux, dfft )
+  !$acc end host_data
+  !
+  ! ... add the missing factor (2\pi/a)^2 in G
+  !
+  !$acc parallel loop
+  DO n = 1, dfft%nnr
+     lapla(n) = tpiba2 * REAL( laux(n), kind=DP )
+  ENDDO
+  !
+  !$acc end data
+  DEALLOCATE( laux )
+  !
+  !$acc end data
+  !
+  RETURN
+  !
+END SUBROUTINE fft_laplacian_g2r
+!
+!--------------------------------------------------------------------
 ! Routines computing hessian via FFT
 !--------------------------------------------------------------------
 !

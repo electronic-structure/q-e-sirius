@@ -68,6 +68,12 @@ WannierHam_example:
     This example shows how to generate a model Hamiltonian in a
     Wannier functions basis, using pw.x and wannier_ham.x.
 
+wannier_decompose_example:
+    This example shows how to use pw2wannier90.x with wan_mode='decompose'
+    to decompose Wannier-function densities onto an orthonormalized
+    Gaussian-radial x real-spherical-harmonic basis, entirely in
+    reciprocal space, for the valence bands of silicon.
+
 MolDos_example:
     This example calculates the projection of the density of states of
     a system, containing a molecule, on the molecular orbitals of the

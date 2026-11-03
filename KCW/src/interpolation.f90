@@ -321,90 +321,44 @@ CONTAINS
     ! ...  file print out by Wannier90, fold them into the R=0 primitive
     ! ...  cell and gives them in output (in crystal units)
     !
-    USE io_global,            ONLY : ionode
     USE cell_base,            ONLY : alat, bg
     USE constants,            ONLY : BOHR_RADIUS_ANGS
     USE control_kcw,          ONLY : seedname, have_empty, num_wann_occ, num_wann_emp, &
                                      centers, use_ws_distance, l_unique_manifold
-    USE io_global,            ONLY : ionode_id
-    USE mp,                   ONLY : mp_bcast
     USE mp_global,            ONLY : intra_image_comm
-
-    !
+    USE wannier90_readback,   ONLY : w90rb_read_centres_xyz
     !
     IMPLICIT NONE
     !
-    LOGICAL :: exst
-    LOGICAL :: check_emp=.FALSE.
-    INTEGER :: n, line, nlines
-    CHARACTER(LEN=268) :: filename
-    CHARACTER(LEN=256) :: input_line
+    LOGICAL :: found
+    INTEGER :: n, nlines
     !
+    if ( l_unique_manifold ) then
+      nlines = num_wann_occ + num_wann_emp
+    else
+      nlines = num_wann_occ
+    end if
     !
-    IF ( ionode ) THEN
+    CALL w90rb_read_centres_xyz ( trim(seedname)//'_centres.xyz', nlines, &
+                                  centers(:,1:nlines), intra_image_comm, found )
+    IF ( .not. found ) THEN
+      CALL infomsg('read_wannier_centers','WARNING: centres.xyz NOT FOUND, disabling WS distance')
+      use_ws_distance = .false.
+    ENDIF
+    !
+    IF ( use_ws_distance .and. have_empty .and. .not. l_unique_manifold ) THEN
       !
-      filename = trim(seedname)//'_centres.xyz'
-      if ( l_unique_manifold ) then
-        nlines = num_wann_occ + num_wann_emp
-      else
-        nlines = num_wann_occ
-      end if
-      !
-50    INQUIRE( file=filename, exist=exst )
-      !
-      IF ( .not. exst .and. .not. check_emp ) THEN 
-        CALL infomsg('read_wannier_centers','WARNING: centres.xyz NOT FOUND, disabling WS distance')
-        use_ws_distance = .false.
-      ENDIF
-      !
-      IF ( .not. exst .and. check_emp ) THEN 
+      CALL w90rb_read_centres_xyz ( trim(seedname)//'_emp_centres.xyz', num_wann_emp, &
+                                    centers(:,num_wann_occ+1:num_wann_occ+num_wann_emp), &
+                                    intra_image_comm, found )
+      IF ( .not. found ) THEN
         CALL infomsg('read_wannier_centers','WARNING: emp_centres.xyz NOT FOUND, disabling WS distance')
         use_ws_distance = .false.
-      ENDIF
-      !
-      !
-      IF (use_ws_distance) THEN
-        !
-        OPEN( 100, file=filename, form='formatted', status='old' )
-        !
-        READ( 100, *, end=10, err=20 )    ! skip 1st line
-        READ( 100, *, end=10, err=20 )    ! skip 2nd line
-        !
-        DO n = 1, nlines
-          !
-          READ( 100, '(a256)', end=10, err=20 ) input_line
-          !
-          IF ( input_line(1:1) .ne. 'X' ) CALL errore( 'read_wannier_centers', &
-                  'X must precede each Wannier center line', 1 )
-          !
-          line = n
-          IF ( check_emp ) line = n + num_wann_occ
-          READ( input_line(2:), *, end=10, err=20 ) centers(:,line)
-          !
-        ENDDO
-        !
-        READ( 100, * ) input_line
-        IF ( input_line(1:1) == 'X' ) CALL errore( 'read_wannier_centers', &
-                'Missing some center! Check num_wann', 1 )
-        !
-        CLOSE( 100 )
-        !
-        IF ( have_empty .and. .not. check_emp .and. .not. l_unique_manifold) THEN
-          !
-          filename = trim(seedname)//'_emp_centres.xyz'
-          nlines = num_wann_emp
-          check_emp = .TRUE.
-          GO TO 50
-          !
-        ENDIF
-        !
       ENDIF
       !      
     ENDIF
     !
     centers = centers / ( alat * BOHR_RADIUS_ANGS )     ! alat always in BOHR ??? (TO BE CHECKED)
-    call mp_bcast ( centers, ionode_id, intra_image_comm ) 
-    call mp_bcast ( use_ws_distance, ionode_id, intra_image_comm ) 
     !
     DO n = 1, num_wann_occ+num_wann_emp
       !
@@ -413,10 +367,6 @@ CONTAINS
     ENDDO
     !
     RETURN
-    !
-10  CALL errore ( 'read_wannier_centers', 'end of file while reading', 1 ) 
-20  CALL errore ( 'read_wannier_centers', 'error while reading', 1 ) 
-    !
     !
   END SUBROUTINE read_wannier_centers 
   !

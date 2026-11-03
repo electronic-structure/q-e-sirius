@@ -14,6 +14,7 @@ subroutine c6_tfvw (mesh, zed, grid, rho_input)
    use constants,  only : e2, pi, fpi, BOHR_RADIUS_ANGS
    use ld1inc,     only : lsd, nwf, oc, ll
    use radial_grids, only: radial_grid_type
+   use atomic_radial, only: ascheq
    !
    implicit none
    !

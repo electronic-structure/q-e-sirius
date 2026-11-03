@@ -1,5 +1,6 @@
 set(src_modules
     additional_kpoints.f90 
+    atomic_radial.f90
     atomic_wfc_mod.f90
     autopilot.f90 
     ions_nose.f90
@@ -78,6 +79,7 @@ set(src_modules
     version.f90 
     wannier_gw.f90
     wannier_new.f90 
+    wannier90_readback.f90
     wavefunctions.f90 
     ws_base.f90 
     xc_vdW_DF.f90 

@@ -22,6 +22,7 @@ subroutine compute_solution(lam,jam,e,mesh,ndm,grid,vpot,y,beta,ddd,&
   use io_global, only : stdout
   use kinds, only : DP
   use radial_grids, only: radial_grid_type, series
+  use atomic_radial, only: start_scheq
 
   implicit none
 

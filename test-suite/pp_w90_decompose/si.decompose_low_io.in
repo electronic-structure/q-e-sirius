@@ -1,0 +1,12 @@
+&inputpp
+ outdir   = './out/'
+ prefix   = 'si'
+ seedname = 'si'
+ wan_mode = 'decompose'
+ disk_io = 'low'
+ decompose_n_max = 3
+ decompose_l_max = 3
+ decompose_r_min = 0.5
+ decompose_r_max = 2.5
+ decompose_centres_file = 'centres.dat'
+/

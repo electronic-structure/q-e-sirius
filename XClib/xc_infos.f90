@@ -46,6 +46,10 @@ PROGRAM xc_infos
   LOGICAL :: is_libxc(6)
   CHARACTER(LEN=80) :: name_check
   !
+  LOGICAL, PARAMETER :: domag = .FALSE.
+  LOGICAL, PARAMETER :: lapl_provided = .FALSE.
+  !! this program only prints functional infos, it does not compute anything
+  !
   dft = 'none'
   !
   WRITE (*,'(/,1x,a)', ADVANCE='no') "Insert DFT name:  "
@@ -110,7 +114,7 @@ PROGRAM xc_infos
   CALL xclib_set_auxiliary_flags( .FALSE. )
   !
 #if defined(__LIBXC)
-  IF (xclib_dft_is_libxc('ANY')) CALL xclib_init_libxc( 1, .FALSE. )
+  IF (xclib_dft_is_libxc('ANY')) CALL xclib_init_libxc( 1, domag, lapl_provided )
 #endif
   !
   DO i = 1, 6
@@ -260,8 +264,7 @@ PROGRAM xc_infos
                       &/4X,"in development.")' ) idx
       IF ( libxc_flags(i,15) == 1 ) &
         WRITE(stdout,'(4X,"[w15] libxc functional with ID ",I4," depends on", &
-                      &/4X," the laplacian of the density, which is currently set",&
-                      &/4X," to zero.")' ) idx
+                      &/4X," the laplacian of the density.")' ) idx
       IF ( ALL(libxc_flags(i,0:2)==1) .AND. libxc_flags(i,14)==0 .AND. libxc_flags(i,15)==0 ) &
         WRITE(stdout, '(4X,"NONE")')
       !

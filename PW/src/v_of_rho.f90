@@ -126,14 +126,16 @@ SUBROUTINE v_xc_meta( rho, rho_core, rhog_core, tau_core, etxc, vtxc, v, kedtaur
   USE constants,        ONLY : e2, eps8
   USE io_global,        ONLY : stdout
   USE fft_base,         ONLY : dfftp
-  USE gvect,            ONLY : g, ngm
+  USE gvect,            ONLY : g, gg, ngm
   USE lsda_mod,         ONLY : nspin
   USE cell_base,        ONLY : omega
-  USE funct,            ONLY : dft_is_nonlocc, nlc
+  USE funct,            ONLY : dft_is_nonlocc, nlc, dft_is_ctb09
   USE scf,              ONLY : scf_type
-  USE xc_lib,           ONLY : xc_metagcx, xclib_get_ID
+  USE xc_lib,           ONLY : xc_metagcx, xclib_get_ID, xclib_dft_needs_laplacian, &
+                               set_libxc_ext_param
   USE mp,               ONLY : mp_sum
   USE mp_bands,         ONLY : intra_bgrp_comm
+  USE ctb09,            ONLY : tb09_c
   !
   IMPLICIT NONE
   !
@@ -159,7 +161,7 @@ SUBROUTINE v_xc_meta( rho, rho_core, rhog_core, tau_core, etxc, vtxc, v, kedtaur
   REAL(DP) :: zeta, rh, sgn_is
   REAL(DP) :: etxc0, vtxc0
   INTEGER  :: k, ipol, is, np, dfftp_nnr
-  LOGICAL  :: lda_gga_terms
+  LOGICAL  :: lda_gga_terms, needs_lapl
   !
   REAL(DP), ALLOCATABLE :: ex(:), ec(:), v0(:,:)
   REAL(DP), ALLOCATABLE :: v1x(:,:), v2x(:,:), v3x(:,:)
@@ -170,7 +172,8 @@ SUBROUTINE v_xc_meta( rho, rho_core, rhog_core, tau_core, etxc, vtxc, v, kedtaur
   REAL(DP), DIMENSION(3) :: grhoup, grhodw
   !
   REAL(DP), ALLOCATABLE :: h(:,:,:), dh(:)
-  REAL(DP), ALLOCATABLE :: rho_updw(:,:), rhotot(:,:), grho(:,:,:), tau(:,:)
+  REAL(DP), ALLOCATABLE :: rho_updw(:,:), rhotot(:,:), grho(:,:,:), tau(:,:), &
+                           lapl(:,:)
   COMPLEX(DP), ALLOCATABLE :: rhogsum(:)
   REAL(DP), PARAMETER :: eps12 = 1.0d-12, zero=0._dp
   !
@@ -183,13 +186,14 @@ SUBROUTINE v_xc_meta( rho, rho_core, rhog_core, tau_core, etxc, vtxc, v, kedtaur
   np = 1
   IF (nspin==2) np=3
   dfftp_nnr = dfftp%nnr !to avoid unnecessary copies in acc loop
+  needs_lapl = xclib_dft_needs_laplacian()
   !
   !$acc data copyin( rho ) copyout( kedtaur, v )
   !
   ALLOCATE( grho(3,dfftp%nnr,nspin) )
   ALLOCATE( h(3,dfftp%nnr,nspin) )
-  ALLOCATE( rhogsum(ngm), tau(dfftp%nnr,nspin) )
-  !$acc data create( tau, grho, h )
+  ALLOCATE( rhogsum(ngm), tau(dfftp%nnr,nspin), lapl(dfftp%nnr,nspin) )
+  !$acc data create( tau, lapl, grho, h )
   !
   ALLOCATE( ex(dfftp%nnr), ec(dfftp%nnr) )
   ALLOCATE( v1x(dfftp%nnr,nspin), v2x(dfftp%nnr,nspin)   , v3x(dfftp%nnr,nspin) )
@@ -210,6 +214,17 @@ SUBROUTINE v_xc_meta( rho, rho_core, rhog_core, tau_core, etxc, vtxc, v, kedtaur
      !
      CALL fft_gradient_g2r( dfftp, rhogsum, g, grho(:,:,is) ) 
      !
+     ! ... the laplacian is only needed by some Libxc metaGGA functionals
+     !
+     IF ( needs_lapl ) THEN
+       CALL fft_laplacian_g2r( dfftp, rhogsum, gg, lapl(:,is) )
+     ELSE
+       !$acc parallel loop
+       DO k = 1, dfftp_nnr
+         lapl(k,is) = 0.0_DP
+       ENDDO
+     ENDIF
+     !
   ENDDO
   !
   !$acc parallel loop collapse(2) present(rho)
@@ -225,6 +240,13 @@ SUBROUTINE v_xc_meta( rho, rho_core, rhog_core, tau_core, etxc, vtxc, v, kedtaur
   !$acc end data
   DEALLOCATE( rhogsum )
   !
+  ! ... the TB09 mixing parameter is a functional of the density and has to
+  ! ... be recomputed here, before the functional is evaluated
+  !
+  IF ( dft_is_ctb09() ) &
+    CALL set_libxc_ext_param( 5, 0, tb09_c( dfftp_nnr, nspin, rho%of_r(:,1), &
+                                            rho_core, grho ) )
+  !
   !$acc data copyin( rho%of_r )
   !$acc data create( ex, ec, v1x, v2x, v3x, v1c, v2c, v3c )
   IF (nspin == 1) THEN
@@ -236,7 +258,7 @@ SUBROUTINE v_xc_meta( rho, rho_core, rhog_core, tau_core, etxc, vtxc, v, kedtaur
       rhotot(k,1) = rho%of_r(k,1) + rho_core(k)
     ENDDO
     !
-    CALL xc_metagcx( dfftp_nnr, 1, np, rhotot, grho, tau, ex, ec, &
+    CALL xc_metagcx( dfftp_nnr, 1, np, rhotot, grho, tau, lapl, ex, ec, &
                      v1x, v2x, v3x, v1c, v2c, v3c, gpu_args_=.TRUE. )
     !
     !$acc parallel loop reduction(+:etxc,vtxc,rhoneg1,rhoneg2) present(rho)
@@ -272,7 +294,7 @@ SUBROUTINE v_xc_meta( rho, rho_core, rhog_core, tau_core, etxc, vtxc, v, kedtaur
         rho_updw(k,2) = ( rho%of_r(k,1) - rho%of_r(k,2) ) * 0.5d0 + fac*rho_core(k)
     ENDDO
     !
-    CALL xc_metagcx( dfftp_nnr, 2, np, rho_updw, grho, tau, ex, ec, &
+    CALL xc_metagcx( dfftp_nnr, 2, np, rho_updw, grho, tau, lapl, ex, ec, &
                      v1x, v2x, v3x, v1c, v2c, v3c, gpu_args_=.TRUE. )
     !
     ! ... first term of the gradient correction : D(rho*Exc)/D(rho)
@@ -373,7 +395,7 @@ SUBROUTINE v_xc_meta( rho, rho_core, rhog_core, tau_core, etxc, vtxc, v, kedtaur
     DEALLOCATE(v0)
   ENDIF
   !
-  DEALLOCATE( tau, grho )
+  DEALLOCATE( tau, lapl, grho )
   DEALLOCATE( h )
   !
   CALL stop_clock( 'v_xc_meta' )

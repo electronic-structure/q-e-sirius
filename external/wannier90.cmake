@@ -8,19 +8,6 @@ if(QE_WANNIER90_INTERNAL)
 
     qe_git_submodule_update(external/wannier90)
 
-    if(BLA_VENDOR STREQUAL "NVPL")
-        # Wannier90 v4's own CMakeLists.txt finds BLAS/LAPACK for itself with
-        # find_package(BLAS/LAPACK REQUIRED), which know nothing about NVPL as
-        # a BLA_VENDOR and would otherwise fail or silently link a different
-        # BLAS/LAPACK than the rest of QE. Shadow those two stock Find modules,
-        # for this add_subdirectory() only, with ones that hand Wannier90 the
-        # same NVPL targets QE itself resolved above. Saved/restored around
-        # add_subdirectory(wannier90) so the shim doesn't leak into the other
-        # external/ plugins (mbd, d3q, pw2qmcpack, qe-gipaw) processed after it.
-        set(_qe_wannier90_saved_module_path ${CMAKE_MODULE_PATH})
-        list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/cmake/nvpl_wannier90")
-    endif()
-
     set(WANNIER90_SHARED_LIBS ${BUILD_SHARED_LIBS})
     # Wannier90's own install rules must run so that Wannier90_lib/Wannier90_post
     # end up in an export set; otherwise qe_wannier90 (which INTERFACE-links them)
@@ -47,11 +34,6 @@ if(QE_WANNIER90_INTERNAL)
         set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/wannier90/src/disentangle.F90
             TARGET_DIRECTORY Wannier90_lib
             PROPERTIES COMPILE_OPTIONS "-Mnoinline")
-    endif()
-
-    if(BLA_VENDOR STREQUAL "NVPL")
-        set(CMAKE_MODULE_PATH ${_qe_wannier90_saved_module_path})
-        unset(_qe_wannier90_saved_module_path)
     endif()
 
     target_link_libraries(qe_wannier90 INTERFACE Wannier90::wannier90)

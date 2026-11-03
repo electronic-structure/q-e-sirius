@@ -55,6 +55,10 @@ module wannier
    character(LEN=15)     :: scdm_entanglement
    real(DP)              :: scdm_mu, scdm_sigma
    ! vv: End SCDM keywords
+   ! Wannier-density decomposition (wan_mode = 'decompose')
+   integer               :: decompose_n_max, decompose_l_max
+   real(DP)              :: decompose_r_min, decompose_r_max ! Angstrom
+   character(LEN=256)    :: decompose_centres_file ! optional group-density centres
    ! input data from nnkp file
    real(DP), allocatable :: center_w(:,:)     ! center_w(3,n_wannier)
    integer,  allocatable :: spin_eig(:)

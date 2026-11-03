@@ -51,6 +51,7 @@ SUBROUTINE clean_pw( lflag )
   !
   USE london_module,        ONLY : dealloca_london
   USE xdm_module,           ONLY : cleanup_xdm
+  USE ctb09,                ONLY : ae_deallocate
   USE constraints_module,   ONLY : deallocate_constraint
   USE realus,               ONLY : deallocate_realsp
   USE pseudo_types,         ONLY : deallocate_pseudo_upf
@@ -117,6 +118,7 @@ SUBROUTINE clean_pw( lflag )
      !
      CALL dealloca_london()
      CALL cleanup_xdm()
+     CALL ae_deallocate()
      CALL dftd3_clean()
      CALL deallocate_constraint()
      CALL deallocate_tetra()

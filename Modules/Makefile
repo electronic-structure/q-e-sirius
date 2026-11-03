@@ -11,6 +11,7 @@ MODFLAGS=$(BASEMOD_FLAGS)
 
 MODULES = \
 additional_kpoints.o \
+atomic_radial.o \
 atomic_wfc_mod.o \
 autopilot.o \
 ions_nose.o \
@@ -89,6 +90,7 @@ mbdlib.o\
 version.o \
 wannier_gw.o\
 wannier_new.o \
+wannier90_readback.o \
 wavefunctions.o \
 ws_base.o \
 xc_vdW_DF.o \

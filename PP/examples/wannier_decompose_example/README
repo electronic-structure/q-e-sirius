@@ -1,0 +1,37 @@
+This example shows how to use pw2wannier90.x with wan_mode = 'decompose'
+to decompose Wannier-function densities onto an orthonormalized basis of
+Gaussian radial functions times real spherical harmonics (Himanen et al.,
+Comput. Phys. Commun. 247, 106949 (2020)), entirely in reciprocal space.
+
+The workflow is:
+
+1. A self-consistent calculation for bulk silicon (pw.x).
+2. A non-self-consistent calculation on a uniform, symmetry-unfolded
+   2x2x2 k-point grid (pw.x).
+3. The wannier90.x preprocessing step (wannier90.x -pp si) to generate
+   the si.nnkp file.
+4. pw2wannier90.x in the default mode to compute the projection (amn),
+   overlap (mmn) and eigenvalue (eig) files.
+5. wannier90.x to obtain maximally-localised Wannier functions for the
+   four valence bands. The keywords write_u_matrices = .true. and
+   write_xyz = .true. are required: they produce the gauge matrices
+   (si_u.mat) and the Wannier centres (si_centres.xyz) that the
+   decomposition reads back.
+6. pw2wannier90.x with wan_mode = 'decompose', which writes one
+   si_NNNNN.coeff (expansion coefficients) and one si_NNNNN.power
+   (rotationally-invariant power spectrum) file per Wannier function.
+   A group-density decomposition about externally supplied centres is
+   also demonstrated (decompose_centres_file), producing
+   si_gc_NNNNN.coeff files.
+
+No UNK files are written at any point: the projection integrals are
+evaluated analytically from the plane-wave coefficients of the Wannier
+densities, so there is no real-space grid and no truncation radius.
+
+The wannier90.x run must keep translate_home_cell = .false., and an outer
+disentanglement window must include the lowest band at every k point
+(leave out low-lying bands with exclude_bands instead of dis_win_min).
+
+The decomposition currently requires norm-conserving pseudopotentials,
+a collinear (or unpolarized) calculation, no Gamma-point tricks and no
+pool parallelism.

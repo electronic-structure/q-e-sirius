@@ -12,12 +12,14 @@ SUBROUTINE stres_gradcorr( rho, rho_core, rhog_core, nspin, domag, &
   !----------------------------------------------------------------------------
   !
   USE kinds,            ONLY: DP
-  USE xc_lib,           ONLY: xclib_dft_is, xclib_get_id, xc_gcx, xc_metagcx
+  USE xc_lib,           ONLY: xclib_dft_is, xclib_get_id, xc_gcx, xc_metagcx, &
+                              xclib_dft_needs_laplacian
   USE scf,              ONLY: scf_type, tau_core
   USE mp_bands,         ONLY: intra_bgrp_comm
   USE mp,               ONLY: mp_sum
   USE fft_types,        ONLY: fft_type_descriptor
   USE fft_rho,          ONLY: rho_r2g
+  USE gvect,            ONLY: gg
   !
   IMPLICIT NONE
   !
@@ -36,7 +38,7 @@ SUBROUTINE stres_gradcorr( rho, rho_core, rhog_core, nspin, domag, &
   INTEGER :: k, l, m, ipol, ir, ig, is, nspin0, np, ispin
   INTEGER :: nr1, nr2, nr3, nrxx, ngm
   REAL(DP), ALLOCATABLE :: grho(:,:,:), grho2(:,:), rhoaux(:,:), &
-                           segni(:), taue2(:,:)
+                           segni(:), taue2(:,:), lapl(:,:)
   COMPLEX(DP), ALLOCATABLE :: rhogaux(:,:)
   !
   REAL(DP), ALLOCATABLE :: sx(:), sc(:)
@@ -49,9 +51,11 @@ SUBROUTINE stres_gradcorr( rho, rho_core, rhog_core, nspin, domag, &
   REAL(DP) :: sigma_gc11, sigma_gc31, sigma_gc21, &
               sigma_gc32, sigma_gc22, sigma_gc33
   REAL(DP) :: sigma_gradcorr(3,3)
+  LOGICAL :: needs_lapl
   !
   IF ( .NOT. xclib_dft_is('gradient') .AND. .NOT. xclib_dft_is('meta') ) RETURN
   !
+  needs_lapl = xclib_dft_needs_laplacian()
   !
   !$acc data present_or_copyin( rho, rho%of_r, rho%of_g, rho_core, rhog_core, g, tau_core )
   !
@@ -74,8 +78,9 @@ SUBROUTINE stres_gradcorr( rho, rho_core, rhog_core, nspin, domag, &
   ALLOCATE( grho(3,nrxx,nspin0) )
   ALLOCATE( rhoaux(nrxx,nspin0) )
   ALLOCATE( rhogaux(ngm,nspin0) )
+  ALLOCATE( lapl(nrxx,nspin0) )
   IF (xclib_dft_is('meta')) ALLOCATE( taue2(dfft%nnr,nspin) )
-  !$acc data create( grho, rhoaux )
+  !$acc data create( grho, rhoaux, lapl )
   !$acc data create( rhogaux )
   !
   ! calculate the gradient of rho+rhocore in real space
@@ -123,6 +128,14 @@ SUBROUTINE stres_gradcorr( rho, rho_core, rhog_core, nspin, domag, &
   !
   DO is = 1, nspin0
     CALL fft_gradient_g2r( dfft, rhogaux(:,is), g, grho(:,:,is) )
+    IF ( needs_lapl ) THEN
+      CALL fft_laplacian_g2r( dfft, rhogaux(:,is), gg, lapl(:,is) )
+    ELSE
+      !$acc parallel loop
+      DO k = 1, nrxx
+        lapl(k,is) = 0.0_DP
+      ENDDO
+    ENDIF
   ENDDO
   !
   !$acc end data
@@ -157,7 +170,7 @@ SUBROUTINE stres_gradcorr( rho, rho_core, rhog_core, nspin, domag, &
         DO k = 1, nrxx
           taue2(k,1) = rho%kin_r(k,1) / e2  + tau_core(k)
         ENDDO
-        CALL xc_metagcx( nrxx, 1, np, rhoaux, grho, taue2, sx, sc, &
+        CALL xc_metagcx( nrxx, 1, np, rhoaux, grho, taue2, lapl, sx, sc, &
                          v1x, v2x, v3x, v1c, v2cm, v3c, gpu_args_=.TRUE. )
         !$acc parallel loop
         DO k = 1, nrxx
@@ -199,7 +212,7 @@ SUBROUTINE stres_gradcorr( rho, rho_core, rhog_core, nspin, domag, &
               taue2(k,ispin) = rho%kin_r(k,ispin) / e2 + 0.5_DP * tau_core(k)
            END DO
         ENDDO
-        CALL xc_metagcx( nrxx, nspin0, np, rhoaux, grho, taue2, sx, sc, &
+        CALL xc_metagcx( nrxx, nspin0, np, rhoaux, grho, taue2, lapl, sx, sc, &
                          v1x, v2x, v3x, v1c, v2cm, v3c, gpu_args_=.TRUE. )
         !
         ! ... sigma_gc_{alpha,beta} = sum_sigma (v2x*grad_rho(alpha,sigma)
@@ -285,7 +298,7 @@ SUBROUTINE stres_gradcorr( rho, rho_core, rhog_core, nspin, domag, &
   DEALLOCATE( v1c, v2c )
   DEALLOCATE( v1x, v2x )
   DEALLOCATE( grho, grho2  )
-  DEALLOCATE( rhoaux )
+  DEALLOCATE( rhoaux, lapl )
   IF (xclib_dft_is('meta')) DEALLOCATE( taue2, v2cm, v3x, v3c )
   !
   DO l = 1, 3

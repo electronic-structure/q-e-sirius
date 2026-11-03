@@ -19,6 +19,7 @@ subroutine ascheqps ( nam, lam, jam, e0, mesh, ndm, grid, vpot, thresh,&
   use io_global, only : stdout
   use kinds, only : DP
   use radial_grids, only: radial_grid_type, series
+  use atomic_radial, only: start_scheq
 
   implicit none
 

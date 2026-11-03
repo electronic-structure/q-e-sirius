@@ -12,10 +12,11 @@ nat             = 4
 ntyp            = 3
 ecutwfc         = 40
 input_dft       = 'pbe0'
-nbnd            = 12
+nbnd            = 50
 /
 &electrons
 diago_full_acc = .true.
+conv_thr = 1.d-10
 /
 &ions
 /

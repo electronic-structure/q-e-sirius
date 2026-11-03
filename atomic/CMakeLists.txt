@@ -1,7 +1,6 @@
 set(sources
     src/add_exchange.f90
     src/all_electron.f90
-    src/ascheq.f90
     src/ascheqps.f90
     src/ascheqps_drv.f90
     src/c6_dft.f90
@@ -76,7 +75,6 @@ set(sources
     src/sic_correction.f90
     src/starting_potential.f90
     src/start_potps.f90
-    src/start_scheq.f90
     src/test_bessel.f90
     src/trou.f90
     src/vdpack.f90

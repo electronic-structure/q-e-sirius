@@ -81,7 +81,7 @@ SUBROUTINE  partialdos (Emin, Emax, DeltaE, kresolveddos, filpdos)
   current_spin = 1
   ie_delta = 5 * degauss / DeltaE + 1
 
-  IF ( ltetra .AND. tetra_type == 1 .OR. tetra_type == 2 ) THEN
+  IF ( ltetra .AND. (tetra_type == 1 .OR. tetra_type == 2) ) THEN
      !
      ! Tetrahedron method
      !

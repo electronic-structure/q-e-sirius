@@ -18,6 +18,7 @@
 !
       use kinds, only : DP
       use radial_grids, only: radial_grid_type, series
+      use atomic_radial, only: start_scheq
       implicit none
       type(radial_grid_type), intent(in):: grid
       integer :: &

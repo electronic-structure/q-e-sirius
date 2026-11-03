@@ -358,11 +358,11 @@ SUBROUTINE compute_scf( fii, lii, stat  )
       !
       CALL electrons()
       !
-      CALL punch( 'all' )
-      !
       ! ... scf convergence is checked here
       !
       IF ( .NOT.conv_elec ) THEN
+         !
+         CALL punch( 'all' )
          !
          istat = 1
          !
@@ -382,6 +382,8 @@ SUBROUTINE compute_scf( fii, lii, stat  )
       ! ... self-consistent forces
       !
       CALL forces()
+      !
+      CALL punch( 'all' )
       !
       ! ... energy is converted from rydberg to hartree
       !

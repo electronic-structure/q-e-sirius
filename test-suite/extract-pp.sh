@@ -30,6 +30,15 @@ omegaod=`grep 'Omega OD ' $fname | tail -1 | awk '{print $NF}'`
 omegatot=`grep 'Omega Total' $fname | tail -1 | awk '{print $NF}'`
 disomegai=`grep 'Final Omega_I' $fname | tail -1 | awk '{print $3}'`
 
+# Standalone Wannier90 chain: number of nearest neighbours from the .nnkp
+# file, and the eigenvalues appended from the .eig file
+nntot=`sed -n '/begin nnkpts/{n;p;}' $fname | awk '{print $1}'`
+eig=`grep '^EIG ' $fname | awk '{print $2}'`
+
+# PW2WANNIER90 with wan_mode='decompose': power spectra, from the appended .power files
+pspec=`grep '^POWER ' $fname | awk '{print $2}'`
+gcoeff=`grep '^GCOEFF ' $fname | awk '{print $2}'`
+
 if test "$e1" != ""; then
         echo e1
         echo $e1
@@ -89,4 +98,20 @@ fi
 if test "$disomegai" != ""; then
         echo disomegai
         echo $disomegai
+fi
+if test "$nntot" != ""; then
+        echo nntot
+        echo $nntot
+fi
+if test "$eig" != ""; then
+        echo eig
+        echo "$eig"
+fi
+if test "$pspec" != ""; then
+        echo pspec
+        echo "$pspec"
+fi
+if test "$gcoeff" != ""; then
+        echo gcoeff
+        echo "$gcoeff"
 fi

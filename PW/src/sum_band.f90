@@ -436,7 +436,6 @@ SUBROUTINE sum_band()
        ! polaron calculation
        REAL(DP), ALLOCATABLE :: rho_p(:)
        COMPLEX(DP), ALLOCATABLE :: psic_p(:)
-       !$acc declare device_resident(rho_p, psic_p)
        INTEGER :: ierr
        INTEGER :: i, j, group_size, hm_vec(3)
        REAL(DP) :: kplusgi
@@ -448,7 +447,8 @@ SUBROUTINE sum_band()
        !
        IF(sic) THEN
           ALLOCATE(rho_p(dffts%nnr))
-          ALLOCATE(psic_p(dffts%nnr*2)) ! why *2?
+          ALLOCATE(psic_p(dffts%nnr))
+          !$acc enter data create(rho_p, psic_p)
           !$acc kernels
           rho_p=0.0_dp
           !$acc end kernels
@@ -602,6 +602,7 @@ SUBROUTINE sum_band()
        !
        IF(sic .and. pol_type == 'h') THEN
           wg_p = 1.0 - wg_p
+          !$acc exit data delete(psic_p,rho_p)
           DEALLOCATE(psic_p)
           DEALLOCATE(rho_p)
        END IF

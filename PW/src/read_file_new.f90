@@ -231,7 +231,7 @@ SUBROUTINE post_xml_init (  )
   USE paw_init,             ONLY : paw_init_onecenter, allocate_paw_internals
   USE paw_onecenter,        ONLY : paw_potential
   USE dfunct,               ONLY : newd
-  USE funct,                ONLY : get_dft_name
+  USE funct,                ONLY : get_dft_name, dft_is_ctb09
   USE ldaU,                 ONLY : lda_plus_u, eth, init_hubbard, Hubbard_projectors, &
                                    lda_plus_u_kind
   USE esm,                  ONLY : do_comp_esm, esm_init
@@ -267,6 +267,7 @@ SUBROUTINE post_xml_init (  )
   USE atwfc_mod,            ONLY : init_tab_atwfc
   USE beta_mod,             ONLY : init_tab_beta
   USE klist,                ONLY : qnorm
+  USE ctb09,                ONLY : ae_correction
   !
   USE tsvdw_module,         ONLY : tsvdw_initialize
   USE xc_lib,               ONLY : xclib_dft_is
@@ -276,9 +277,12 @@ SUBROUTINE post_xml_init (  )
   CHARACTER(LEN=37) :: dft_name
   INTEGER :: ierr
   !
+  LOGICAL, PARAMETER :: lapl_provided = .TRUE.
+  !! PW computes the laplacian of the density when the functional needs it
+  !
   ! ... initialize Libxc if needed
   !
-  IF (xclib_dft_is_libxc('ANY')) CALL xclib_init_libxc( nspin, domag )
+  IF (xclib_dft_is_libxc('ANY')) CALL xclib_init_libxc( nspin, domag, lapl_provided )
   !
   ! ... set G cutoffs and cell factor (FIXME: from setup.f90?)
   !
@@ -297,6 +301,11 @@ SUBROUTINE post_xml_init (  )
   !
   dft_name = get_dft_name ()
   CALL readpp ( dft_name )
+  !
+  ! ... the CTB09 all-electron correction, as in pseudo_iosys: a restarted
+  ! ... run never goes through that path, and must not lose it
+  !
+  IF ( dft_is_ctb09() ) CALL ae_correction ( )
   !
   ! ... misc PP initialization (from setup.f90)
   !

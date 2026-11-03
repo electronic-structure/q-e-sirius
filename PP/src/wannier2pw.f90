@@ -168,7 +168,6 @@ SUBROUTINE wannier2hubbard ()
    USE mp_world,                   ONLY : world_comm
    USE mp,                         ONLY : mp_bcast
    USE ldaU,                       ONLY : nwfcU, wfcU
-   USE cell_base,                  ONLY : bg
    USE klist,                      ONLY : nks, nkstot, xk, ngk
    USE io_files,                   ONLY : nwordwfcU, iunhub, &
                                           diropn, prefix, restart_dir
@@ -179,6 +178,7 @@ SUBROUTINE wannier2hubbard ()
    USE wavefunctions,              ONLY : evc
    USE lsda_mod,                   ONLY : lsda, isk
    USE pw_restart_new,             ONLY : read_collected_wfc
+   USE wannier90_readback,         ONLY : w90rb_read_umat
    !
    IMPLICIT NONE
    !
@@ -186,15 +186,11 @@ SUBROUTINE wannier2hubbard ()
    !
    COMPLEX(DP), ALLOCATABLE :: u_matrix(:,:,:), u_dis(:,:,:), pp(:,:,:)
    ! U gauge matrix, disentanglement matrix and projector matrix (product of the two)
-   REAL(DP), ALLOCATABLE :: kpt_latt(:,:)
-   ! k points coordinates
-   REAL(DP) :: U_re, U_im, diff
    !string for the filenames for umat and udis
    CHARACTER(LEN=500) :: filename_umat, filename_udis
-   INTEGER :: i, j, k, ig, matunit, matunit2, ierr, ierr2, &
+   INTEGER :: i, j, k, ig, &
       ik,          & ! dummy index to number k points
       ik2,         & ! dummy index to number k points
-      iknum_,      & ! total number of k points
       n_wannier,   & ! number of Wannier functions
       n_dis_bands, & ! number of bands to be disentangled
       npw,         & ! number of plane waves
@@ -211,7 +207,7 @@ SUBROUTINE wannier2hubbard ()
    !    n_wannier           num_wann
    !    num_bands           num_bands
    !    nat                 num_atoms
-   !    iknum_              num_kpts
+   !    iknum               num_kpts
    !
    WRITE( stdout, '(/5x,79("="))')
    WRITE( stdout, '(/5x,"Please cite this paper, which describes the Wannier90 to DFT+Hubbard interface,")' )
@@ -256,26 +252,22 @@ SUBROUTINE wannier2hubbard ()
          WRITE( stdout, '(/5x,"Udis file does not exist")')
       ENDIF
       !
-      OPEN(NEWUNIT=matunit, FILE=TRIM(seedname)//'_u.mat', &
-          FORM='formatted', STATUS = 'old', IOSTAT=ierr)
-      IF (ierr /= 0 ) CALL errore('wannier2hubbard', &
-         'Error opening'//TRIM(seedname)//'_u.mat', ABS(ierr) )
-      READ(matunit,*) ! skip one line which contains the header
-      READ(matunit,*) iknum_, n_wannier, n_wannier
-      !
-      IF (udis_exists) THEN
-         ! The disentanglement case
-         OPEN(NEWUNIT=matunit2, FILE=TRIM(seedname)//'_u_dis.mat', &
-            FORM='formatted', STATUS = 'old', IOSTAT=ierr2)
-         IF (ierr2 /= 0 ) CALL errore('wannier2hubbard', &
-            'Error opening'//TRIM(seedname)//'_u_dis.mat', ABS(ierr2) )
-         READ(matunit2,*) ! skip one line which contains the header
-         READ(matunit2,*) iknum_, n_wannier, n_dis_bands
-      ELSE
-         ! No disentanglement
-         ! n_wannier is the same as the number of bands without disenatnglement
-         n_dis_bands = n_wannier
-      ENDIF
+   ENDIF
+   !
+   CALL mp_bcast (udis_exists, ionode_id, world_comm)
+   !
+   ! Without disentanglement n_dis_bands = n_wannier (U is square)
+   CALL w90rb_read_umat (TRIM(seedname)//'_u.mat', xk(:,1:iknum), world_comm, &
+                         u_matrix, n_dis_bands, n_wannier)
+   IF (udis_exists) THEN
+      ! The disentanglement case
+      CALL w90rb_read_umat (TRIM(seedname)//'_u_dis.mat', xk(:,1:iknum), world_comm, &
+                            u_dis, n_dis_bands, n_wannier)
+      IF (n_wannier /= SIZE(u_matrix,1)) CALL errore('wannier2hubbard', &
+         'Mismatch in the number of WFs: U matrix vs Udis matrix', 1)
+   ENDIF
+   !
+   IF (ionode) THEN
       !
       ! Write a summary
       WRITE( stdout, '(/,5(5x,A,5x,I8,/))')                         &
@@ -285,18 +277,12 @@ SUBROUTINE wannier2hubbard ()
          'total number of Kohn-Sham bands             ', nbnd,      &
          'number of Kohn-Sham bands used to build WFs ', n_dis_bands
       !
-      ! Check on the number of k points
-      IF (iknum_ /= iknum) CALL errore('wannier2hubbard', &
-         'Mismatch in the number of k points: Input vs U matrix', 1)
       ! Check on the number of Wannier functions
       IF (n_wannier < nwfcU) CALL errore('wannier2hubbard', &
          'Too few Wannier functions: n_wannier < nwfcU', 1)
       !
    ENDIF
    !
-   CALL mp_bcast (n_wannier, ionode_id, world_comm)
-   CALL mp_bcast (n_dis_bands, ionode_id, world_comm)
-   ! 
    ! Checks on exclude_ks_bands
    IF ( exclude_ks_bands < 0 ) CALL errore ('wannier2hubbard', &
             & 'exclude_ks_bands cannot be negative',1)
@@ -313,58 +299,19 @@ SUBROUTINE wannier2hubbard ()
             & 'Mismatch in the number of bands',1)
    ENDIF
    !
-   ! Read the U matrices on the IO rank
-   ALLOCATE (kpt_latt(3,iknum))
-   ALLOCATE (u_matrix(n_wannier,n_wannier,iknum))
    ALLOCATE (pp(n_dis_bands,n_wannier,iknum))
-   IF (udis_exists) ALLOCATE (u_dis(n_dis_bands,n_wannier,iknum))
+   DO ik = 1, iknum
+      IF (udis_exists) THEN
+         ! Disentanglement case
+         pp(:,:,ik) = MATMUL(u_dis(:,:,ik),u_matrix(:,:,ik))
+      ELSE
+         ! No disentanglement
+         pp(:,:,ik) = u_matrix(:,:,ik)
+      ENDIF
+   ENDDO
    !
-   IF ( ionode ) THEN
-      DO ik = 1, iknum
-         READ(matunit,*)                ! skip one empty line
-         READ(matunit,*) kpt_latt(:,ik) ! read the k point coordinates (crystal)
-         DO j = 1, n_wannier
-            DO i = 1, n_wannier
-               READ(matunit,*) U_re, U_im
-               u_matrix(i,j,ik) = CMPLX(U_re, U_im, kind=DP)
-            ENDDO
-         ENDDO
-         IF (udis_exists) THEN
-            ! Disentanglement case
-            READ(matunit2,*)                ! skip one empty line
-            READ(matunit2,*) kpt_latt(:,ik) ! read the k point coordinates (crystal)
-            DO j = 1, n_wannier
-               DO i = 1, n_dis_bands
-                  READ(matunit2,*) U_re, U_im
-                  u_dis(i,j,ik) = CMPLX(U_re, U_im, kind=DP)
-               ENDDO
-            ENDDO
-            pp(:,:,ik) = MATMUL(u_dis(:,:,ik),u_matrix(:,:,ik))
-         ELSE
-            ! No disentanglement
-            pp(:,:,ik) = u_matrix(:,:,ik)
-         ENDIF
-      ENDDO
-      !
-      ! Transform k points from crystal to cartesian coordinates
-      CALL cryst_to_cart(iknum, kpt_latt, bg, 1)
-      diff = 0.0d0
-      DO ik = 1, iknum
-         diff = diff + (SUM(kpt_latt(:,ik)-xk(:,ik)))
-      ENDDO
-      IF (diff.GT.1.D-06) CALL errore('wannier2hubbard', &
-         'Mismatch between k points',1)
-      !
-      CLOSE( UNIT=matunit, STATUS='keep' )
-      IF (udis_exists) CLOSE( UNIT=matunit2, STATUS='keep' )
-      !
-   ENDIF
-   !
-   DEALLOCATE (kpt_latt)
    DEALLOCATE (u_matrix)
    IF (udis_exists) DEALLOCATE (u_dis)
-   !
-   CALL mp_bcast (pp, ionode_id, world_comm)
    !
    ! Various checks
    !

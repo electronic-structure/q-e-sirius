@@ -12,6 +12,9 @@ New in 8.0 version
   * pw2wannier90: wan_mode='library' uses Wannier90 v4 and runs the
     Wannierization in parallel
   * EPW: Wannierization uses Wannier90 v4 and runs in parallel
+  * pw2wannier90: new wan_mode='decompose', projecting Wannier-function
+    densities onto Gaussian radial functions times real spherical harmonics
+    (Edward Linscott)
   * ...
 
 Fixed in 7.6.1 version(s)
@@ -34,8 +37,18 @@ Fixed in 7.6.1 version(s)
     EELS and Berry phase calculations with USPP. Also in compute_qq*: missing
     initialization for norm-conserving PPs could leads to unpredictable Berry
     phases if US and NC PPs are mixed (see !2941, courtesy Ikenna Odinaka)
+  * Meta-GGA with Libxc: the xc energy density and potentials were set to
+    zero where |grad rho|^2 <= grho2_threshold_mgga, e.g. at atoms on FFT grid
+    points (issue #903, courtesy Derk Joester). Fixed for nspin=1 and nspin=2,
+    so that the two give the same results for a non-magnetic system. The
+    kinetic energy density is now tested against tau_threshold_mgga and not
+    against rho_threshold_mgga. The internal TPSS and M06L functionals are
+    not yet corrected
   * Too small thresholds for rho and grho2 in meta-GGA lead to numerical noise 
     (Pietro Delugas)
+  * Meta-GGA stress was wrong for ecutrho > 4*ecutwfc and depended on the
+    parallelization: kinetic-energy-density terms on the dense grid were
+    used as if on the smooth grid (issue #882, courtesy Derk Joester)
   * Symmetrization error in noncolinear magnetic phonon calculations
     See !2931, courtesy Seung-Ju Hong
     
@@ -57,7 +70,12 @@ New in 7.6.1 version(s)
   * XML schema qes_260928: exx_lr_fraction and CAM, magnetization mixing
     parameters, cp.x STATUS units (backward compatible)
   * DFT+U+V, 'ortho-atomic' DFT+U speedup: see !2905, courtesy Moritz Gubler
-
+  * XClib: xc_metagcx has a new argument for the Laplacian of the density
+    and xclib_init_libxc a new logical argument (lapl_provided); codes
+    calling XClib directly must be updated (see !2925, courtesy Sasha Fonari)
+  * New CTB09 functional (input_dft='ctb09', needs Libxc): TB09 with the
+    parameter c computed self-consistently from the density, with a correction
+    from the all-electron atom (see !2926, !2929, courtesy Sasha Fonari)
 Fixed in 7.6 version:
   * Stress for meta-GGA functionals was broken (Marc Slot, Pietro Delugas) 
   * pw2wannier90: Fix gamma_only bug in write_plot (Jae-Mo Lihm)

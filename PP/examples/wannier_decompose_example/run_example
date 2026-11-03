@@ -1,0 +1,259 @@
+#!/bin/sh
+
+# run from directory where this script is
+cd `dirname $0`
+EXAMPLE_DIR=`pwd`
+
+# check whether echo has the -e option
+if test "`echo -e`" = "-e" ; then ECHO=echo ; else ECHO="echo -e" ; fi
+
+$ECHO
+$ECHO "$EXAMPLE_DIR : starting"
+$ECHO
+$ECHO "This example shows how to use pw2wannier90.x with wan_mode='decompose'"
+$ECHO "to decompose Wannier-function densities onto a Gaussian-radial x"
+$ECHO "real-spherical-harmonic basis in reciprocal space, for the valence"
+$ECHO "bands of silicon."
+
+# set the needed environment variables
+. ../../../environment_variables
+
+# required executables and pseudopotentials
+BIN_LIST="pw.x pw2wannier90.x"
+PSEUDO_LIST="Si.pz-vbc.UPF"
+
+$ECHO
+$ECHO "  executables directory: $BIN_DIR"
+$ECHO "  pseudo directory:      $PSEUDO_DIR"
+$ECHO "  temporary directory:   $TMP_DIR"
+$ECHO "  checking that needed directories and files exist...\c"
+
+# check for directories
+for DIR in "$BIN_DIR" "$PSEUDO_DIR" ; do
+    if test ! -d $DIR ; then
+        $ECHO
+        $ECHO "ERROR: $DIR not existent or not a directory"
+        $ECHO "Aborting"
+        exit 1
+    fi
+done
+for DIR in "$TMP_DIR" "$EXAMPLE_DIR/results" ; do
+    if test ! -d $DIR ; then
+        mkdir $DIR
+    fi
+done
+cd $EXAMPLE_DIR/results
+
+# check for executables
+for FILE in $BIN_LIST ; do
+    if test ! -x $BIN_DIR/$FILE ; then
+        $ECHO
+        $ECHO "ERROR: $BIN_DIR/$FILE not existent or not executable"
+        $ECHO "Aborting"
+        exit 1
+    fi
+done
+
+# check for wannier90 executable
+if test ! -x "$BIN_DIR/wannier90.x" ; then
+    $ECHO
+    $ECHO "ERROR: '$BIN_DIR/wannier90.x' not existent or not executable"
+    $ECHO "Aborting"
+    exit 1
+fi
+
+# check for pseudopotentials
+for FILE in $PSEUDO_LIST ; do
+    if test ! -r $PSEUDO_DIR/$FILE ; then
+       $ECHO
+       $ECHO "Downloading $FILE to $PSEUDO_DIR...\c"
+            $WGET $PSEUDO_DIR/$FILE $NETWORK_PSEUDO/$FILE 2> /dev/null
+    fi
+    if test $? != 0; then
+        $ECHO
+        $ECHO "ERROR: $PSEUDO_DIR/$FILE not existent or not readable"
+        $ECHO "Aborting"
+        exit 1
+    fi
+done
+$ECHO " done"
+
+# how to run executables
+PW_COMMAND="$PARA_PREFIX $BIN_DIR/pw.x $PARA_POSTFIX"
+WAN_COMMAND="$BIN_DIR/wannier90.x"
+PW2WAN_COMMAND="$PARA_PREFIX $BIN_DIR/pw2wannier90.x $PARA_POSTFIX"
+$ECHO
+$ECHO "  running pw.x as          : $PW_COMMAND"
+$ECHO "  running wannier90.x as   : $WAN_COMMAND"
+$ECHO "  running pw2wannier90.x as: $PW2WAN_COMMAND"
+$ECHO
+
+# self-consistent calculation for silicon
+cat > si.scf.in << EOF
+ &control
+    calculation = 'scf'
+    prefix = 'si'
+    pseudo_dir = '$PSEUDO_DIR'
+    outdir = '$TMP_DIR'
+ /
+ &system
+    ibrav = 2, celldm(1) = 10.2625, nat = 2, ntyp = 1,
+    ecutwfc = 25.0
+ /
+ &electrons
+    conv_thr = 1.0d-10
+ /
+ATOMIC_SPECIES
+ Si 28.086 Si.pz-vbc.UPF
+ATOMIC_POSITIONS {crystal}
+Si 0.00 0.00 0.00
+Si 0.25 0.25 0.25
+K_POINTS {automatic}
+ 4 4 4 0 0 0
+EOF
+$ECHO "  running the scf calculation for silicon...\c"
+$PW_COMMAND < si.scf.in > si.scf.out
+check_failure $?
+$ECHO " done"
+
+# non-self-consistent calculation on the uniform 2x2x2 grid
+cat > si.nscf.in << EOF
+ &control
+    calculation = 'nscf'
+    prefix = 'si'
+    pseudo_dir = '$PSEUDO_DIR'
+    outdir = '$TMP_DIR'
+ /
+ &system
+    ibrav = 2, celldm(1) = 10.2625, nat = 2, ntyp = 1,
+    ecutwfc = 25.0, nbnd = 4,
+    nosym = .true., noinv = .true.
+ /
+ &electrons
+    conv_thr = 1.0d-10
+ /
+ATOMIC_SPECIES
+ Si 28.086 Si.pz-vbc.UPF
+ATOMIC_POSITIONS {crystal}
+Si 0.00 0.00 0.00
+Si 0.25 0.25 0.25
+K_POINTS {crystal}
+8
+0.00 0.00 0.00 0.125
+0.00 0.00 0.50 0.125
+0.00 0.50 0.00 0.125
+0.00 0.50 0.50 0.125
+0.50 0.00 0.00 0.125
+0.50 0.00 0.50 0.125
+0.50 0.50 0.00 0.125
+0.50 0.50 0.50 0.125
+EOF
+$ECHO "  running the nscf calculation for silicon...\c"
+$PW_COMMAND < si.nscf.in > si.nscf.out
+check_failure $?
+$ECHO " done"
+
+# wannier90 input: four valence Wannier functions from an sp3 projection.
+# The sp3 orbitals sit on the second atom, whose four lobes point along its
+# bonds, so each projection selects one bond and the order of the Wannier
+# functions is the same from run to run.
+# write_u_matrices and write_xyz are required by the decompose step, and
+# translate_home_cell must stay .false.: each density is decomposed about
+# the centre written in si_centres.xyz.
+cat > si.win << EOF
+num_wann = 4
+num_iter = 200
+num_print_cycles = 50
+
+write_u_matrices = .true.
+write_xyz = .true.
+translate_home_cell = .false.
+
+begin unit_cell_cart
+bohr
+-5.13125  0.00000  5.13125
+ 0.00000  5.13125  5.13125
+-5.13125  5.13125  0.00000
+end unit_cell_cart
+
+begin atoms_frac
+Si 0.00 0.00 0.00
+Si 0.25 0.25 0.25
+end atoms_frac
+
+begin projections
+f=0.25,0.25,0.25:sp3
+end projections
+
+mp_grid : 2 2 2
+
+begin kpoints
+0.0 0.0 0.0
+0.0 0.0 0.5
+0.0 0.5 0.0
+0.0 0.5 0.5
+0.5 0.0 0.0
+0.5 0.0 0.5
+0.5 0.5 0.0
+0.5 0.5 0.5
+end kpoints
+EOF
+
+$ECHO "  running wannier90 -pp to generate the nnkp file...\c"
+$WAN_COMMAND -pp si
+check_failure $?
+$ECHO " done"
+
+# pw2wannier90: projection, overlap and eigenvalue files (no UNK needed)
+cat > si.pw2wan.in << EOF
+ &inputpp
+    outdir = '$TMP_DIR'
+    prefix = 'si'
+    seedname = 'si'
+    write_amn = .true.
+    write_mmn = .true.
+    write_eig = .true.
+ /
+EOF
+$ECHO "  running pw2wannier90 (amn/mmn/eig)...\c"
+$PW2WAN_COMMAND < si.pw2wan.in > si.pw2wan.out
+check_failure $?
+$ECHO " done"
+
+$ECHO "  running wannier90 (wannierisation)...\c"
+$WAN_COMMAND si
+check_failure $?
+$ECHO " done"
+
+# external centres for the (optional) group-density channel:
+# the first Wannier centre and the origin
+cat > centres.dat << EOF
+# external centres for the group-density decomposition (Cartesian, angstrom)
+-0.6788  2.0365  2.0365
+0.0     0.0     0.0
+EOF
+
+# the decomposition itself
+cat > si.decompose.in << EOF
+ &inputpp
+    outdir = '$TMP_DIR'
+    prefix = 'si'
+    seedname = 'si'
+    wan_mode = 'decompose'
+    decompose_n_max = 4
+    decompose_l_max = 4
+    decompose_r_min = 0.5
+    decompose_r_max = 2.5
+    decompose_centres_file = 'centres.dat'
+ /
+EOF
+$ECHO "  running pw2wannier90 with wan_mode='decompose'...\c"
+$PW2WAN_COMMAND < si.decompose.in > si.decompose.out
+check_failure $?
+$ECHO " done"
+
+$ECHO
+$ECHO "  Coefficient files si_0000N.coeff, power spectra si_0000N.power and"
+$ECHO "  group-density coefficients si_gc_0000N.coeff written in results/"
+$ECHO
+$ECHO "$EXAMPLE_DIR: done"

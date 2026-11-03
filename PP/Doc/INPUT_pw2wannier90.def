@@ -75,6 +75,26 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program pw2wa
                 are honoured exactly as in 'standalone' mode and select only which
                 files are written alongside; set @ref write_amn, @ref write_mmn and
                 @ref write_eig to .false. if you do not want them to be written to file.
+
+                'decompose': post-wannierization mode: decompose each
+                Wannier-function density onto an orthonormalized
+                Gaussian-radial x real-spherical-harmonic basis about its
+                own centre, entirely in reciprocal space. Requires a
+                previous wannier90.x run with write_u_matrices = .true.
+                and write_xyz = .true. (reads seedname.nnkp, seedname_u.mat,
+                seedname_u_dis.mat if disentanglement was used, and
+                seedname_centres.xyz). Writes seedname_NNNNN.coeff and
+                seedname_NNNNN.power files. See the decompose_* variables.
+                The wannier90.x run must keep translate_home_cell = .false.,
+                since each density is decomposed about the centre written
+                in seedname_centres.xyz. With disentanglement, the outer
+                window must include the lowest band at every k point
+                (dis_win_min below all included bands), since
+                seedname_u_dis.mat does not record which bands the window
+                left out; use exclude_bands to leave out low-lying bands.
+                Currently restricted to norm-conserving pseudopotentials,
+                collinear spin, no Gamma-only tricks and no pool
+                parallelization.
             }
             default { 'standalone' }
         }
@@ -391,6 +411,63 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program pw2wa
                 Only relevant if @ref write_dmn = .true.
             }
             default { .FALSE. }
+        }
+
+        var decompose_n_max -type INTEGER {
+            info {
+                Number of radial basis functions per angular momentum channel
+                for the Wannier-density decomposition. The radial basis is
+                phi_nl(r) = r^l exp(-alpha_nl r^2), Loewdin-orthonormalized,
+                following Himanen et al., Comput. Phys. Commun. 247, 106949 (2020).
+                Only relevant if @ref wan_mode = 'decompose'.
+            }
+            default { 6 }
+        }
+
+        var decompose_l_max -type INTEGER {
+            info {
+                Maximum angular momentum of the decomposition basis.
+                Only relevant if @ref wan_mode = 'decompose'.
+            }
+            default { 6 }
+        }
+
+        var decompose_r_min -type REAL {
+            info {
+                Smallest threshold radius of the radial basis: the Gaussian
+                decay coefficients are fixed by requiring
+                phi_nl(r_thr,n) = 10^-3 with r_thr,n equally spaced between
+                @ref decompose_r_min and @ref decompose_r_max.
+                Only relevant if @ref wan_mode = 'decompose'.
+            }
+            dimensionality { length }
+            units { angstrom }
+            default { 0.5 }
+        }
+
+        var decompose_r_max -type REAL {
+            info {
+                Largest threshold radius of the radial basis.
+                See @ref decompose_r_min.
+                Only relevant if @ref wan_mode = 'decompose'.
+            }
+            dimensionality { length }
+            units { angstrom }
+            default { 4.0 }
+        }
+
+        var decompose_centres_file -type CHARACTER {
+            info {
+                Optional file with additional centres (one per line, three
+                Cartesian coordinates in angstrom, '#' comments allowed).
+                When given, the group density (the sum of all
+                Wannier-function densities of the run) is additionally
+                decomposed about each listed centre and written to
+                seedname_gc_NNNNN.coeff files. An empty string disables
+                the group-density channel.
+                Only relevant if @ref wan_mode = 'decompose'.
+            }
+            default { '' }
         }
 
     }

@@ -102,7 +102,7 @@ subroutine vxcgc( ndm, mesh, nspin, r, r2, rho, rhoc, vgc, egc, &
   real(DP) :: rh(1), zeta(1), grh2(1), grho2(2)
   real(DP),parameter :: eps=1.e-12_dp, small = 1.E-10_DP
 
-  real(DP), allocatable :: grho(:,:), h(:,:), dh(:), rhoaux(:,:)
+  real(DP), allocatable :: grho(:,:), lapl(:,:), h(:,:), dh(:), rhoaux(:,:)
   !
   !      First compute the charge and the charge gradient, assumed  
   !      to have spherical symmetry. The gradient is the derivative of
@@ -110,6 +110,7 @@ subroutine vxcgc( ndm, mesh, nspin, r, r2, rho, rhoc, vgc, egc, &
   !
   allocate(rhoaux(mesh,nspin),stat=ierr)
   allocate(grho(mesh,nspin),stat=ierr)
+  allocate(lapl(mesh,nspin),stat=ierr)
   allocate(h(mesh,2),stat=ierr)
   allocate(dh(mesh),stat=ierr)
   
@@ -121,6 +122,9 @@ subroutine vxcgc( ndm, mesh, nspin, r, r2, rho, rhoc, vgc, egc, &
         rhoaux(i,is)=(rho(i,is)+rhoc(i)/nspin)/fpi/r2(i)
      enddo
      call radial_gradient(rhoaux(1,is),grho(1,is),r,mesh,iflag)
+     dh(:) = r2(:)*grho(:,is)
+     call radial_gradient(dh,lapl(1,is),r,mesh,iflag)
+     lapl(:,is) = lapl(:,is)/r2(:)
   enddo
   !
   do is=1,nspin
@@ -154,7 +158,7 @@ subroutine vxcgc( ndm, mesh, nspin, r, r2, rho, rhoc, vgc, egc, &
         vtau(:) = 0.0_dp
         ! 
         !
-        CALL xc_metagcx( mesh, 1, 1, ABS(rhoaux), grho_v, tau, sx_v, sc_v, v1x_v, v2x_v, &
+        CALL xc_metagcx( mesh, 1, 1, ABS(rhoaux), grho_v, tau, lapl, sx_v, sc_v, v1x_v, v2x_v, &
                          v3x_v, v1c_v, v2cm_v, v3c_v )
         !
         do i=1,mesh
@@ -246,6 +250,7 @@ subroutine vxcgc( ndm, mesh, nspin, r, r2, rho, rhoc, vgc, egc, &
   deallocate(dh)
   deallocate(h)
   deallocate(grho)
+  deallocate(lapl)
   deallocate(rhoaux)
 
   return

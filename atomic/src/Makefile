@@ -12,7 +12,6 @@ MODFLAGS= $(BASEMOD_FLAGS)
 LD1OBJS = \
 add_exchange.o \
 all_electron.o \
-ascheq.o \
 ascheqps.o \
 ascheqps_drv.o \
 c6_dft.o \
@@ -88,7 +87,6 @@ set_sl3.o \
 sic_correction.o \
 starting_potential.o \
 start_potps.o \
-start_scheq.o \
 test_bessel.o \
 trou.o \
 vdpack.o \

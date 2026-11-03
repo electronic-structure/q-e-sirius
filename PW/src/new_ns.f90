@@ -415,7 +415,7 @@ SUBROUTINE new_ns_nc( ns )
   USE symm_base,            ONLY : d1, d2, d3
   USE lsda_mod,             ONLY : lsda, current_spin, nspin, isk
   USE noncollin_module,     ONLY : npol
-  USE symm_base,            ONLY : nsym, irt, time_reversal, t_rev
+  USE symm_base,            ONLY : nsym, irt, time_reversal, t_rev, invs
   USE wvfct,                ONLY : nbnd, npwx, wg
   USE control_flags,        ONLY : gamma_only
   USE wavefunctions,        ONLY : evc
@@ -511,7 +511,11 @@ SUBROUTINE new_ns_nc( ns )
             DO is2 = 1, npol
               !
 loopisym:     DO isym = 1, nsym  
-                nb = irt (isym, na)  
+                ! nr1(na) must be built from the atom that isym maps INTO na, i.e. the image of na
+                ! under the inverse operation.  With nb = irt(isym,na) (the image of na) the rotation
+                ! below is applied in the wrong orientation; harmless for operations equal to their
+                ! inverse (E, i, C2, mirrors) but wrong for C3, C4, C6, S4, S6 whenever atoms are permuted.
+                nb = irt (invs(isym), na)  
                 !
                 DO m3 = 1, 2*Hubbard_l(nt)+1
                   DO m4 = 1, 2*Hubbard_l(nt)+1
