@@ -54,6 +54,7 @@ SUBROUTINE allocate_wfc(npwx, npol, nbnd)
 !civn: PIN evc memory here
 #if defined(__CUDA)
   IF(use_gpu) istat = cudaHostRegister(C_LOC(evc(1,1)), sizeof(evc), cudaHostRegisterMapped)
+  IF (istat /= cudaSuccess) CALL errore('allocate_wfc', 'cudaHostRegister failed', istat)
   !$acc enter data create(evc)
 #endif
   !
@@ -70,8 +71,11 @@ SUBROUTINE deallocate_wfc()
   INTEGER :: istat
   !
 #if defined(__CUDA)
-  !$acc exit data delete(evc)
-  IF(use_gpu) istat = cudaHostUnregister(C_LOC(evc(1,1)))
+  IF( ALLOCATED( evc ) ) THEN
+    !$acc exit data delete(evc)
+    IF(use_gpu) istat = cudaHostUnregister(C_LOC(evc(1,1)))
+    IF (istat /= cudaSuccess) CALL errore('deallocate_wfc', 'cudaHostUnregister failed', istat)
+  END IF
 #endif
   IF( ALLOCATED( evc ) ) DEALLOCATE( evc )
   !
