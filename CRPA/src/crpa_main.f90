@@ -33,11 +33,15 @@ PROGRAM crpa_main
   !                               determine_num_pert_only, tmp_dir_save,      &
   !                               determine_q_mesh_only
   !
+  !
+  USE mod_sirius
+  !
   IMPLICIT NONE
   !
   INTEGER :: iq
   LOGICAL :: do_iq, setup_pw, done_q
   LOGICAL,EXTERNAL :: check_gpu_support
+  !
   !
   use_gpu = check_gpu_support()
   !
@@ -45,7 +49,12 @@ PROGRAM crpa_main
   !
   CALL mp_startup(start_images = .TRUE.)
   !
+#if defined(__SIRIUS)
+        CALL sirius_initialize(call_mpi_init=.false.)
+#endif
+  !
   CALL environment_start(code)
+  !
   !
   ! Print the preamble
   !
@@ -131,6 +140,7 @@ PROGRAM crpa_main
 !      IF (determine_q_mesh_only) GO TO 105
 !      !
 !      IF (sum_pertq) GO TO 102
+!
      !
      ! Loop over the q points
      !
@@ -160,7 +170,18 @@ PROGRAM crpa_main
         !
         ! If necessary the bands are recalculated
         !
+#if defined(__SIRIUS)
+        IF ( .not. setup_pw ) THEN
+           CALL clear_sirius()
+           CALL setup_sirius()
+        END IF
+#endif
+        !
         IF (setup_pw) CALL crpa_run_nscf(.TRUE.)
+        !
+#if defined(__SIRIUS)
+        CALL sirius_create_hamiltonian(gs_handler, h0_handler)
+#endif
         !
         ! Initialize the quantities which do not depend on
         ! the linear response of the system
@@ -305,6 +326,11 @@ PROGRAM crpa_main
   CALL crpa_print_clock()
   !
   CALL environment_end(code)
+  !
+#if defined(__SIRIUS)
+  CALL clear_sirius()
+  CALL sirius_finalize(call_mpi_fin=.false.)
+#endif
   !
   IF ( use_para_diag ) CALL laxlib_end()
   CALL mp_global_end()

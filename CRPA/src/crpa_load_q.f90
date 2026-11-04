@@ -14,6 +14,7 @@ SUBROUTINE crpa_load_q()
   USE io_global,        ONLY : stdout
   USE qpoint,           ONLY : qpoint_setup_k_plus_q_indices
   USE crpacom,          ONLY : code
+  USE mod_lr_addons
   !
   IMPLICIT NONE
   !
@@ -45,6 +46,7 @@ SUBROUTINE crpa_load_q()
   WRITE( stdout, '(/5x,"Total time spent up to now is:")')
   !
   CALL print_clock (code)
+  CALL generate_qpw()
   !
   RETURN
   !
