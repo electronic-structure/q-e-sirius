@@ -46,6 +46,7 @@ subroutine deallocate_phq
   USE qpoint_aux,   ONLY : ikmks, ikmkmqs, becpt, alphapt
   USE lr_nc_mag,    ONLY : int1_nc_save, deeq_nc_save
   USE Coul_cut_2D_ph, ONLY : deallocate_2d_arrays
+  USE constrained_dfpt, ONLY : cdfpt, cdfpt_deallocate
   IMPLICIT NONE
   INTEGER :: ik, ipol
 
@@ -196,5 +197,7 @@ subroutine deallocate_phq
   ENDIF
 
   call deallocate_2d_arrays ()
- 
+
+  IF (cdfpt) CALL cdfpt_deallocate()  ! Constrained DFPT
+
 end subroutine deallocate_phq

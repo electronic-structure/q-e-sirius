@@ -1,0 +1,1289 @@
+
+     Program CRPA v.8.0dev starts on 28Oct2026 at 11:43:53 
+        Git branch: dHP_metal
+        Last git commit: 1a607a3b2785c0cc7aa48a29f363d9e2fe44ea67-dirty
+        Last git commit date: Wed Oct 28 08:56:47 2026 +0100
+        Last git commit subject: Fix bug introduced at Merge time. Now EPW compiles
+
+     This program is part of the open-source Quantum ESPRESSO suite
+     for quantum simulation of materials; please cite
+         "P. Giannozzi et al., J. Phys.:Condens. Matter 21 395502 (2009);
+         "P. Giannozzi et al., J. Phys.:Condens. Matter 29 465901 (2017);
+         "P. Giannozzi et al., J. Chem. Phys. 152 154105 (2020);
+          URL http://www.quantum-espresso.org", 
+     in publications or presentations arising from this work. More details at
+     http://www.quantum-espresso.org/quote
+
+     Parallel version (MPI), running on     4 processors
+
+     MPI processes distributed on     1 nodes
+     R & G space division:  proc/nbgrp/npool/nimage =       4
+     168309 MiB available memory on the printing compute node when the environment starts
+ 
+
+     =---------------------------------------------------------------------------=
+
+        Constrained random phase approximation using the CRPA code based on DFPT  
+
+           Please cite the following papers when using this program:              
+
+              - CRPA code : To be added                                           
+
+     =---------------------------------------------------------------------------=
+     Waiting for input...
+     Reading input from standard input
+
+     Reading xml data from directory:
+
+     ./out/Si.save/
+
+     IMPORTANT: XC functional enforced from input :
+     Exchange-correlation= PBE
+                           (   1   4   3   4   0   0   0)
+     Any further DFT definition will be discarded
+     Please, verify this is what you really want
+
+ 
+     Parallelization info
+     --------------------
+     sticks:   dense  smooth     PW     G-vecs:    dense   smooth      PW
+     Min         183      90     30                 3234     1142     216
+     Max         184      91     31                 3236     1145     218
+     Sum         733     361    121                12939     4573     869
+ 
+     Using Slab Decomposition
+ 
+     Reading collected, re-writing distributed wavefunctions
+ 
+
+     bravais-lattice index     =             2
+     lattice parameter (alat)  =       10.2631 (a.u.)
+     unit-cell volume          =      270.2564 (a.u.)^3
+     number of atoms/cell      =             2
+     number of atomic types    =             1
+     kinetic-energy cut-off    =         25.00 (Ry)
+     charge density cut-off    =        200.00 (Ry)
+     conv. thresh. for NSCF    =       0.0E+00
+     conv. thresh. for chi     =       0.0E+00
+     Input Hubbard parameters (in eV):
+
+     celldm(1) = 10.26310  celldm(2) =  0.00000  celldm(3) =  0.00000
+     celldm(4) =  0.00000  celldm(5) =  0.00000  celldm(6) =  0.00000
+
+     crystal axes: (cart. coord. in units of alat)
+               a(1) = ( -0.5000  0.0000  0.5000 )  
+               a(2) = (  0.0000  0.5000  0.5000 )  
+               a(3) = ( -0.5000  0.5000  0.0000 )  
+
+     reciprocal axes: (cart. coord. in units 2 pi/alat)
+               b(1) = ( -1.0000 -1.0000  1.0000 )  
+               b(2) = (  1.0000  1.0000  1.0000 )  
+               b(3) = ( -1.0000  1.0000 -1.0000 )  
+
+     Atoms inside the unit cell (Cartesian axes):
+     site n.  atom      mass           positions (alat units)
+        1   Si        28.0850   tau(  1) = (  0.00000  0.00000  0.00000  )
+        2   Si        28.0850   tau(  2) = ( -0.25000  0.25000  0.25000  )
+
+     Perturbation basis: wannier
+
+
+     crpa_reduce_q: using the crystal point group ( 48 operations) to select the irreducible q points
+
+
+     The grid of q-points ( 2, 2, 2)  (  3 q-points ) :
+       N       xq(1)         xq(2)         xq(3)       wq
+       1   0.000000000   0.000000000   0.000000000   0.125000000
+       2   0.500000000  -0.500000000   0.500000000   0.500000000
+       3   0.000000000  -1.000000000   0.000000000   0.375000000
+
+     ========================================
+     Reading Wannier90 checkpoint file
+     Opening file Si.chk
+     written on 28Oct2026 at 11:43:53
+     Number of bands :       4
+     Number of excluded bands :       0
+     Excluded bands :     none.
+     Num kpts :       8
+     mp_grid :       2       2       2
+     nntot :       8
+     num_wann :       4
+     checkpoint: postwann
+     have_disentangled: FALSE
+     U_matrix: read. shape =        4       4       8
+     M_matrix: read.
+     wannier_centres: read.
+     wannier_spreads: read.
+     Completed reading Wannier90 checkpoint file
+     Wannier centers (alat) and spreads (alat^2)
+        -0.1249999690    0.1249999604    0.1249999334    0.0346826958
+        -0.1249999286   -0.1249999462   -0.1249999553    0.0346826904
+         0.1249999378    0.1249999535   -0.1249999670    0.0346826975
+         0.1249999597   -0.1249999397    0.1249999715    0.0346826938
+     Writing real-space Wannier functions in collected form
+
+     Computing Wannier functions in momentum space
+
+     Computing and writing real-space Wannier functions to file
+     Loading real-space Wannier functions to buffer in distributed form
+
+     Number of Wigner-Seitz grid points =       32
+     R-vector      1 =        0       0       0
+     R-vector      2 =        2       0       0
+     R-vector      3 =        0       2       0
+     R-vector      4 =        0       0       2
+     R-vector      5 =       -1       0       0
+     R-vector      6 =        1       0       0
+     R-vector      7 =        1       2       0
+     R-vector      8 =        1       0       2
+     R-vector      9 =        0      -1       0
+     R-vector     10 =        0       1       0
+     R-vector     11 =        2       1       0
+     R-vector     12 =        0       1       2
+     R-vector     13 =       -1       1       0
+     R-vector     14 =        1      -1       0
+     R-vector     15 =        1       1       0
+     R-vector     16 =        0       0      -1
+     R-vector     17 =        0       0       1
+     R-vector     18 =        0       2       1
+     R-vector     19 =        2       0       1
+     R-vector     20 =       -1       0       1
+     R-vector     21 =        1       0      -1
+     R-vector     22 =        1       0       1
+     R-vector     23 =        0      -1       1
+     R-vector     24 =        0       1      -1
+     R-vector     25 =        0       1       1
+     R-vector     26 =       -1      -1       1
+     R-vector     27 =       -1       1      -1
+     R-vector     28 =       -1       1       1
+     R-vector     29 =        1      -1      -1
+     R-vector     30 =        1      -1       1
+     R-vector     31 =        1       1      -1
+     R-vector     32 =        1       1       1
+
+     Reading collected Wannier functions, writing them to buffer
+     ========================================
+
+
+     =-------------------------------------------------------------=
+
+     Calculation for q #   1 = (   0.0000000   0.0000000   0.0000000 )
+
+     =-------------------------------------------------------------=
+
+                   WRITING LINEAR-RESPONSE SUMMARY:
+
+
+
+     No symmetry (except the identity)!
+
+     G cutoff =  533.6144  (   3236 G-vectors)     FFT grid: ( 36, 36, 36)
+     G cutoff =  266.8072  (   1144 G-vectors)  smooth grid: ( 24, 24, 24)
+
+     Number of k (and k+q if q/=0) points =     8
+
+                       cart. coord. (in units 2pi/alat)
+        k (    1) = (   0.0000000   0.0000000   0.0000000), wk = 0.2500000
+        k (    2) = (  -0.5000000   0.5000000  -0.5000000), wk = 0.2500000
+        k (    3) = (   0.5000000   0.5000000   0.5000000), wk = 0.2500000
+        k (    4) = (   0.0000000   1.0000000   0.0000000), wk = 0.2500000
+        k (    5) = (  -0.5000000  -0.5000000   0.5000000), wk = 0.2500000
+        k (    6) = (  -1.0000000   0.0000000   0.0000000), wk = 0.2500000
+        k (    7) = (   0.0000000   0.0000000   1.0000000), wk = 0.2500000
+        k (    8) = (  -0.5000000   0.5000000   0.5000000), wk = 0.2500000
+
+                       cryst. coord.
+        k (    1) = (   0.0000000   0.0000000   0.0000000), wk = 0.2500000
+        k (    2) = (   0.0000000   0.0000000   0.5000000), wk = 0.2500000
+        k (    3) = (   0.0000000   0.5000000   0.0000000), wk = 0.2500000
+        k (    4) = (   0.0000000   0.5000000   0.5000000), wk = 0.2500000
+        k (    5) = (   0.5000000   0.0000000   0.0000000), wk = 0.2500000
+        k (    6) = (   0.5000000   0.0000000   0.5000000), wk = 0.2500000
+        k (    7) = (   0.5000000   0.5000000   0.0000000), wk = 0.2500000
+        k (    8) = (   0.5000000   0.5000000   0.5000000), wk = 0.2500000
+
+     Computing Wannier functions at k and k+q, 8 points
+       1       2       3       4       5       6       7       8
+     Done
+
+
+     Total time spent up to now is:
+     CRPA         :      0.33s CPU      0.41s WALL
+
+
+     Wannier function pairs for perturbation
+     Number of selected WF pairs :      4
+     Distance cutoff (bohr) :     0.000600
+     # i j R (crystal) |r_i0 - r_jR| (bohr)
+            1       1       0       0       0    0.000000
+            2       2       0       0       0    0.000000
+            3       3       0       0       0    0.000000
+            4       4       0       0       0    0.000000
+
+     Wannier function pairs for matrix element calculation
+     Number of selected WF pairs :      4
+     Distance cutoff (bohr) :     0.000600
+     # i j R (crystal) |r_i0 - r_jR| (bohr)
+            1       1       0       0       0    0.000000
+            2       2       0       0       0    0.000000
+            3       3       0       0       0    0.000000
+            4       4       0       0       0    0.000000
+      =--------------------------------------------=
+                 SOLVE THE LINEAR SYSTEM
+      =--------------------------------------------=
+
+     *** WARNING: USPP/PAW support in the CRPA screened-Coulomb
+     *** calculation is INCOMPLETE and UNVALIDATED. CG and Lanczos
+     *** disagree by 4-10%% on Si (norm-conserving agrees to 5e-5 eV).
+     *** Do not use these numbers for production. ***
+
+
+      q point #   1   Perturbation #  1
+     iw =      1 , jw =      1 , R (crystal) =      0     0     0
+     Sum of drho (normalized to 1) =     1.0000000000E+00    2.4418275409E-32
+     TD-DFPT with complex-valued frequency      0.01000     0.01000 Ry
+
+      iter #   1 total cpu time :     0.6 secs   av.it.:  18.3
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.327E-08
+
+      iter #   2 total cpu time :     0.8 secs   av.it.:  17.7
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.569E-10
+
+      iter #   3 total cpu time :     1.0 secs   av.it.:  15.7
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.234E-12
+
+      iter #   4 total cpu time :     1.2 secs   av.it.:  13.4
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.319E-13
+
+      iter #   5 total cpu time :     1.4 secs   av.it.:  12.1
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.088E-16
+
+      iter #   6 total cpu time :     1.5 secs   av.it.:  10.6
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  3.937E-18
+
+      q point #   1   Perturbation #  2
+     iw =      2 , jw =      2 , R (crystal) =      0     0     0
+     Sum of drho (normalized to 1) =     1.0000000000E+00   -1.4850880950E-32
+     TD-DFPT with complex-valued frequency      0.01000     0.01000 Ry
+
+      iter #   1 total cpu time :     1.7 secs   av.it.:  18.6
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.327E-08
+
+      iter #   2 total cpu time :     1.9 secs   av.it.:  17.6
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.569E-10
+
+      iter #   3 total cpu time :     2.1 secs   av.it.:  15.8
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.234E-12
+
+      iter #   4 total cpu time :     2.3 secs   av.it.:  13.9
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.319E-13
+
+      iter #   5 total cpu time :     2.4 secs   av.it.:  12.8
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.088E-16
+
+      iter #   6 total cpu time :     2.6 secs   av.it.:  10.9
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  3.940E-18
+
+      q point #   1   Perturbation #  3
+     iw =      3 , jw =      3 , R (crystal) =      0     0     0
+     Sum of drho (normalized to 1) =     1.0000000000E+00    1.0509854211E-31
+     TD-DFPT with complex-valued frequency      0.01000     0.01000 Ry
+
+      iter #   1 total cpu time :     2.8 secs   av.it.:  18.8
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.327E-08
+
+      iter #   2 total cpu time :     3.0 secs   av.it.:  17.9
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.569E-10
+
+      iter #   3 total cpu time :     3.2 secs   av.it.:  15.9
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.234E-12
+
+      iter #   4 total cpu time :     3.4 secs   av.it.:  14.0
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.319E-13
+
+      iter #   5 total cpu time :     3.5 secs   av.it.:  12.9
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.088E-16
+
+      iter #   6 total cpu time :     3.7 secs   av.it.:  11.0
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  3.940E-18
+
+      q point #   1   Perturbation #  4
+     iw =      4 , jw =      4 , R (crystal) =      0     0     0
+     Sum of drho (normalized to 1) =     1.0000000000E+00   -1.0281379120E-32
+     TD-DFPT with complex-valued frequency      0.01000     0.01000 Ry
+
+      iter #   1 total cpu time :     3.9 secs   av.it.:  18.6
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.327E-08
+
+      iter #   2 total cpu time :     4.1 secs   av.it.:  17.9
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.569E-10
+
+      iter #   3 total cpu time :     4.3 secs   av.it.:  16.1
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.234E-12
+
+      iter #   4 total cpu time :     4.4 secs   av.it.:  14.1
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.319E-13
+
+      iter #   5 total cpu time :     4.6 secs   av.it.:  12.9
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.088E-16
+
+      iter #   6 total cpu time :     4.7 secs   av.it.:  10.8
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  3.938E-18
+      
+      =--------------------------------------------=
+             CONVERGENCE HAS BEEN REACHED
+      =--------------------------------------------=
+
+     INFO: Dielectric function = NOT SPECIFIED
+           NO Correction for Screened Coulomb, bare only
+
+     INFO: Hybertsen-Louie correction scheme
+     INFO: qsz [Ha]                      0.301436
+     INFO: (2/pi)*qsz [Ha]               0.191900
+     INFO: Delta_bare q=0 [eV]              41.774936
+     INFO: Delta_scrd q=0 [eV] vs frequency (Ry)
+           w = (    0.010000,    0.010000) : Re =     0.000000   Im =     0.000000
+
+     Writing bare Coulomb matrix elements to file
+
+     Writing frequency-resolved screened Coulomb matrix elements to file
+     Done writing frequency-resolved screened Coulomb matrix elements to file
+
+
+
+     =-------------------------------------------------------------=
+
+     Calculation for q #   2 = (   0.5000000  -0.5000000   0.5000000 )
+
+     =-------------------------------------------------------------=
+
+     Performing NSCF calculation at all points k and k+q...
+     Subspace diagonalization in iterative solution of the eigenvalue problem:
+     a serial algorithm will be used
+
+ 
+     Parallelization info
+     --------------------
+     sticks:   dense  smooth     PW     G-vecs:    dense   smooth      PW
+     Min         183      90     31                 3234     1142     241
+     Max         184      91     32                 3236     1145     242
+     Sum         733     361    127                12939     4573     965
+ 
+     Using Slab Decomposition
+ 
+
+
+     bravais-lattice index     =            2
+     lattice parameter (alat)  =      10.2631  a.u.
+     unit-cell volume          =     270.2564 (a.u.)^3
+     number of atoms/cell      =            2
+     number of atomic types    =            1
+     number of electrons       =         8.00
+     number of Kohn-Sham states=            4
+     kinetic-energy cutoff     =      25.0000  Ry
+     charge density cutoff     =     200.0000  Ry
+     Exchange-correlation= PBE
+                           (   1   4   3   4   0   0   0)
+
+     celldm(1)=  10.263102  celldm(2)=   0.000000  celldm(3)=   0.000000
+     celldm(4)=   0.000000  celldm(5)=   0.000000  celldm(6)=   0.000000
+
+     crystal axes: (cart. coord. in units of alat)
+               a(1) = (  -0.500000   0.000000   0.500000 )  
+               a(2) = (   0.000000   0.500000   0.500000 )  
+               a(3) = (  -0.500000   0.500000   0.000000 )  
+
+     reciprocal axes: (cart. coord. in units 2 pi/alat)
+               b(1) = ( -1.000000 -1.000000  1.000000 )  
+               b(2) = (  1.000000  1.000000  1.000000 )  
+               b(3) = ( -1.000000  1.000000 -1.000000 )  
+
+
+     PseudoPot. # 1 for Si read from file:
+     ../../pseudo/Si.pbe-nl-rrkjus_psl.1.0.0.UPF
+     MD5 check sum: 78279d3766ecb5dbdc0623f3e93c9a23
+     Pseudo is Ultrasoft + core correction, Zval =  4.0
+     Generated using &quot;atomic&quot; code by A. Dal Corso  v.6.3
+     Using radial grid of 1141 points,  4 beta functions with: 
+                l(1) =   0
+                l(2) =   0
+                l(3) =   1
+                l(4) =   1
+     Q(r) pseudized with 0 coefficients 
+
+
+     atomic species   valence    mass     pseudopotential
+     Si                4.00    28.08500     Si( 1.00)
+
+     No symmetry found
+
+
+
+   Cartesian axes
+
+     site n.     atom                  positions (alat units)
+         1        Si     tau(   1) = (   0.0000000   0.0000000   0.0000000  )
+         2        Si     tau(   2) = (  -0.2500000   0.2500000   0.2500000  )
+
+     number of k points=    16
+                       cart. coord. in units 2pi/alat
+        k(    1) = (   0.0000000   0.0000000   0.0000000), wk =   0.2500000
+        k(    2) = (   0.5000000  -0.5000000   0.5000000), wk =   0.0000000
+        k(    3) = (  -0.5000000   0.5000000  -0.5000000), wk =   0.2500000
+        k(    4) = (   0.0000000   0.0000000   0.0000000), wk =   0.0000000
+        k(    5) = (   0.5000000   0.5000000   0.5000000), wk =   0.2500000
+        k(    6) = (   1.0000000   0.0000000   1.0000000), wk =   0.0000000
+        k(    7) = (   0.0000000   1.0000000   0.0000000), wk =   0.2500000
+        k(    8) = (   0.5000000   0.5000000   0.5000000), wk =   0.0000000
+        k(    9) = (  -0.5000000  -0.5000000   0.5000000), wk =   0.2500000
+        k(   10) = (   0.0000000  -1.0000000   1.0000000), wk =   0.0000000
+        k(   11) = (  -1.0000000   0.0000000   0.0000000), wk =   0.2500000
+        k(   12) = (  -0.5000000  -0.5000000   0.5000000), wk =   0.0000000
+        k(   13) = (   0.0000000   0.0000000   1.0000000), wk =   0.2500000
+        k(   14) = (   0.5000000  -0.5000000   1.5000000), wk =   0.0000000
+        k(   15) = (  -0.5000000   0.5000000   0.5000000), wk =   0.2500000
+        k(   16) = (   0.0000000   0.0000000   1.0000000), wk =   0.0000000
+
+     Dense  grid:    12939 G-vectors     FFT dimensions: (  36,  36,  36)
+
+     Smooth grid:     4573 G-vectors     FFT dimensions: (  24,  24,  24)
+
+     Estimated max dynamical RAM per process >       3.81 MB
+
+     Estimated total dynamical RAM >      15.22 MB
+
+     The potential is recalculated from file :
+     ./out/_crpa0/Si.save/charge-density
+
+     Starting wfcs are    8 atomic wfcs
+
+     Band Structure Calculation
+     Davidson diagonalization with overlap
+
+     ethr =  1.25E-11,  avg # of iterations = 13.2
+
+     total cpu time spent up to now is       -1.0 secs
+
+     End of band structure calculation
+
+          k = 0.0000 0.0000 0.0000 (   537 PWs)   bands (ev):
+
+    -5.5181   6.5078   6.5078   6.5078
+
+          k = 0.5000-0.5000 0.5000 (   568 PWs)   bands (ev):
+
+    -3.1664  -0.5397   5.2726   5.2726
+
+          k =-0.5000 0.5000-0.5000 (   568 PWs)   bands (ev):
+
+    -3.1664  -0.5397   5.2726   5.2726
+
+          k = 0.0000 0.0000 0.0000 (   537 PWs)   bands (ev):
+
+    -5.5181   6.5078   6.5078   6.5078
+
+          k = 0.5000 0.5000 0.5000 (   568 PWs)   bands (ev):
+
+    -3.1664  -0.5397   5.2726   5.2726
+
+          k = 1.0000 0.0000 1.0000 (   588 PWs)   bands (ev):
+
+    -1.3521  -1.3521   3.5809   3.5809
+
+          k = 0.0000 1.0000 0.0000 (   588 PWs)   bands (ev):
+
+    -1.3521  -1.3521   3.5809   3.5809
+
+          k = 0.5000 0.5000 0.5000 (   568 PWs)   bands (ev):
+
+    -3.1664  -0.5397   5.2726   5.2726
+
+          k =-0.5000-0.5000 0.5000 (   568 PWs)   bands (ev):
+
+    -3.1664  -0.5397   5.2726   5.2726
+
+          k = 0.0000-1.0000 1.0000 (   588 PWs)   bands (ev):
+
+    -1.3521  -1.3521   3.5809   3.5809
+
+          k =-1.0000 0.0000 0.0000 (   588 PWs)   bands (ev):
+
+    -1.3521  -1.3521   3.5809   3.5809
+
+          k =-0.5000-0.5000 0.5000 (   568 PWs)   bands (ev):
+
+    -3.1664  -0.5397   5.2726   5.2726
+
+          k = 0.0000 0.0000 1.0000 (   588 PWs)   bands (ev):
+
+    -1.3521  -1.3521   3.5809   3.5809
+
+          k = 0.5000-0.5000 1.5000 (   568 PWs)   bands (ev):
+
+    -3.1664  -0.5397   5.2726   5.2726
+
+          k =-0.5000 0.5000 0.5000 (   568 PWs)   bands (ev):
+
+    -3.1664  -0.5397   5.2726   5.2726
+
+          k = 0.0000 0.0000 1.0000 (   588 PWs)   bands (ev):
+
+    -1.3521  -1.3521   3.5809   3.5809
+
+     highest occupied level (ev):     6.5078
+
+     Writing all to output data dir ./out/_crpa0/Si.save/ :
+     XML data file, pseudopotentials, collected wavefunctions
+     Done!
+
+                   WRITING LINEAR-RESPONSE SUMMARY:
+
+
+
+     No symmetry (except the identity)!
+
+     G cutoff =  533.6144  (   3236 G-vectors)     FFT grid: ( 36, 36, 36)
+     G cutoff =  266.8072  (   1144 G-vectors)  smooth grid: ( 24, 24, 24)
+
+     Number of k (and k+q if q/=0) points =    16
+
+                       cart. coord. (in units 2pi/alat)
+        k (    1) = (   0.0000000   0.0000000   0.0000000), wk = 0.2500000
+        k (    2) = (   0.5000000  -0.5000000   0.5000000), wk = 0.0000000
+        k (    3) = (  -0.5000000   0.5000000  -0.5000000), wk = 0.2500000
+        k (    4) = (   0.0000000   0.0000000   0.0000000), wk = 0.0000000
+        k (    5) = (   0.5000000   0.5000000   0.5000000), wk = 0.2500000
+        k (    6) = (   1.0000000   0.0000000   1.0000000), wk = 0.0000000
+        k (    7) = (   0.0000000   1.0000000   0.0000000), wk = 0.2500000
+        k (    8) = (   0.5000000   0.5000000   0.5000000), wk = 0.0000000
+        k (    9) = (  -0.5000000  -0.5000000   0.5000000), wk = 0.2500000
+        k (   10) = (   0.0000000  -1.0000000   1.0000000), wk = 0.0000000
+        k (   11) = (  -1.0000000   0.0000000   0.0000000), wk = 0.2500000
+        k (   12) = (  -0.5000000  -0.5000000   0.5000000), wk = 0.0000000
+        k (   13) = (   0.0000000   0.0000000   1.0000000), wk = 0.2500000
+        k (   14) = (   0.5000000  -0.5000000   1.5000000), wk = 0.0000000
+        k (   15) = (  -0.5000000   0.5000000   0.5000000), wk = 0.2500000
+        k (   16) = (   0.0000000   0.0000000   1.0000000), wk = 0.0000000
+
+                       cryst. coord.
+        k (    1) = (   0.0000000   0.0000000   0.0000000), wk = 0.2500000
+        k (    2) = (   0.0000000   0.0000000  -0.5000000), wk = 0.0000000
+        k (    3) = (   0.0000000   0.0000000   0.5000000), wk = 0.2500000
+        k (    4) = (   0.0000000   0.0000000   0.0000000), wk = 0.0000000
+        k (    5) = (   0.0000000   0.5000000   0.0000000), wk = 0.2500000
+        k (    6) = (   0.0000000   0.5000000  -0.5000000), wk = 0.0000000
+        k (    7) = (   0.0000000   0.5000000   0.5000000), wk = 0.2500000
+        k (    8) = (   0.0000000   0.5000000  -0.0000000), wk = 0.0000000
+        k (    9) = (   0.5000000   0.0000000   0.0000000), wk = 0.2500000
+        k (   10) = (   0.5000000   0.0000000  -0.5000000), wk = 0.0000000
+        k (   11) = (   0.5000000   0.0000000   0.5000000), wk = 0.2500000
+        k (   12) = (   0.5000000   0.0000000  -0.0000000), wk = 0.0000000
+        k (   13) = (   0.5000000   0.5000000   0.0000000), wk = 0.2500000
+        k (   14) = (   0.5000000   0.5000000  -0.5000000), wk = 0.0000000
+        k (   15) = (   0.5000000   0.5000000   0.5000000), wk = 0.2500000
+        k (   16) = (   0.5000000   0.5000000   0.0000000), wk = 0.0000000
+
+     Computing Wannier functions at k and k+q, 16 points
+       1       2       3       4       5       6       7       8       9      10
+      11      12      13      14      15      16
+     Done
+
+
+     Total time spent up to now is:
+     CRPA         :      4.38s CPU      4.98s WALL
+
+
+     Wannier function pairs for perturbation
+     Number of selected WF pairs :      4
+     Distance cutoff (bohr) :     0.000600
+     # i j R (crystal) |r_i0 - r_jR| (bohr)
+            1       1       0       0       0    0.000000
+            2       2       0       0       0    0.000000
+            3       3       0       0       0    0.000000
+            4       4       0       0       0    0.000000
+
+     Wannier function pairs for matrix element calculation
+     Number of selected WF pairs :      4
+     Distance cutoff (bohr) :     0.000600
+     # i j R (crystal) |r_i0 - r_jR| (bohr)
+            1       1       0       0       0    0.000000
+            2       2       0       0       0    0.000000
+            3       3       0       0       0    0.000000
+            4       4       0       0       0    0.000000
+      =--------------------------------------------=
+                 SOLVE THE LINEAR SYSTEM
+      =--------------------------------------------=
+
+     *** WARNING: USPP/PAW support in the CRPA screened-Coulomb
+     *** calculation is INCOMPLETE and UNVALIDATED. CG and Lanczos
+     *** disagree by 4-10%% on Si (norm-conserving agrees to 5e-5 eV).
+     *** Do not use these numbers for production. ***
+
+
+      q point #   2   Perturbation #  1
+     iw =      1 , jw =      1 , R (crystal) =      0     0     0
+     Sum of drho (normalized to 1) =     7.6004126207E-01    3.1481934548E-01
+     TD-DFPT with complex-valued frequency      0.01000     0.01000 Ry
+
+      iter #   1 total cpu time :     5.2 secs   av.it.:  19.9
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.894E-06
+
+      iter #   2 total cpu time :     5.4 secs   av.it.:  20.0
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.231E-06
+
+      iter #   3 total cpu time :     5.7 secs   av.it.:  19.4
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  6.956E-10
+
+      iter #   4 total cpu time :     5.9 secs   av.it.:  16.8
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.105E-11
+
+      iter #   5 total cpu time :     6.0 secs   av.it.:  15.5
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.284E-13
+
+      iter #   6 total cpu time :     6.2 secs   av.it.:  13.8
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.631E-14
+
+      iter #   7 total cpu time :     6.4 secs   av.it.:  13.4
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.438E-15
+
+      iter #   8 total cpu time :     6.5 secs   av.it.:  12.2
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.338E-15
+
+      iter #   9 total cpu time :     6.7 secs   av.it.:  12.2
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  4.750E-18
+
+      q point #   2   Perturbation #  2
+     iw =      2 , jw =      2 , R (crystal) =      0     0     0
+     Sum of drho (normalized to 1) =     7.6004133355E-01    3.1481922084E-01
+     TD-DFPT with complex-valued frequency      0.01000     0.01000 Ry
+
+      iter #   1 total cpu time :     6.9 secs   av.it.:  19.9
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.894E-06
+
+      iter #   2 total cpu time :     7.1 secs   av.it.:  19.9
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.231E-06
+
+      iter #   3 total cpu time :     7.3 secs   av.it.:  19.3
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  6.956E-10
+
+      iter #   4 total cpu time :     7.5 secs   av.it.:  16.8
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.105E-11
+
+      iter #   5 total cpu time :     7.7 secs   av.it.:  15.4
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.285E-13
+
+      iter #   6 total cpu time :     7.9 secs   av.it.:  13.7
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.653E-14
+
+      iter #   7 total cpu time :     8.1 secs   av.it.:  13.2
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  3.027E-15
+
+      iter #   8 total cpu time :     8.2 secs   av.it.:  12.2
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.122E-15
+
+      iter #   9 total cpu time :     8.4 secs   av.it.:  12.1
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  4.718E-18
+
+      q point #   2   Perturbation #  3
+     iw =      3 , jw =      3 , R (crystal) =      0     0     0
+     Sum of drho (normalized to 1) =     7.6004125639E-01    3.1481931202E-01
+     TD-DFPT with complex-valued frequency      0.01000     0.01000 Ry
+
+      iter #   1 total cpu time :     8.6 secs   av.it.:  20.0
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.894E-06
+
+      iter #   2 total cpu time :     8.8 secs   av.it.:  20.0
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.231E-06
+
+      iter #   3 total cpu time :     9.1 secs   av.it.:  19.4
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  6.956E-10
+
+      iter #   4 total cpu time :     9.3 secs   av.it.:  17.0
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.105E-11
+
+      iter #   5 total cpu time :     9.5 secs   av.it.:  15.6
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.284E-13
+
+      iter #   6 total cpu time :     9.7 secs   av.it.:  13.8
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.636E-14
+
+      iter #   7 total cpu time :     9.8 secs   av.it.:  13.3
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.552E-15
+
+      iter #   8 total cpu time :    10.0 secs   av.it.:  12.2
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.295E-15
+
+      iter #   9 total cpu time :    10.2 secs   av.it.:  12.1
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  4.741E-18
+
+      q point #   2   Perturbation #  4
+     iw =      4 , jw =      4 , R (crystal) =      0     0     0
+     Sum of drho (normalized to 1) =     2.9652122806E-01   -7.1586477848E-01
+     TD-DFPT with complex-valued frequency      0.01000     0.01000 Ry
+
+      iter #   1 total cpu time :    10.4 secs   av.it.:  19.9
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.020E-05
+
+      iter #   2 total cpu time :    10.6 secs   av.it.:  20.3
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  4.995E-05
+
+      iter #   3 total cpu time :    10.9 secs   av.it.:  20.1
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.416E-09
+
+      iter #   4 total cpu time :    11.1 secs   av.it.:  17.2
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  8.970E-10
+
+      iter #   5 total cpu time :    11.3 secs   av.it.:  16.3
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.127E-10
+
+      iter #   6 total cpu time :    11.4 secs   av.it.:  16.1
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  4.763E-14
+
+      iter #   7 total cpu time :    11.6 secs   av.it.:  13.2
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.195E-14
+
+      iter #   8 total cpu time :    11.8 secs   av.it.:  12.5
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.172E-16
+
+      iter #   9 total cpu time :    11.9 secs   av.it.:  11.1
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.096E-18
+      
+      =--------------------------------------------=
+             CONVERGENCE HAS BEEN REACHED
+      =--------------------------------------------=
+
+     Writing bare Coulomb matrix elements to file
+
+     Writing frequency-resolved screened Coulomb matrix elements to file
+     Done writing frequency-resolved screened Coulomb matrix elements to file
+
+
+
+     =-------------------------------------------------------------=
+
+     Calculation for q #   3 = (   0.0000000  -1.0000000   0.0000000 )
+
+     =-------------------------------------------------------------=
+
+     Performing NSCF calculation at all points k and k+q...
+ 
+     Parallelization info
+     --------------------
+     sticks:   dense  smooth     PW     G-vecs:    dense   smooth      PW
+     Min         183      90     31                 3234     1142     241
+     Max         184      91     32                 3236     1145     242
+     Sum         733     361    127                12939     4573     965
+ 
+     Using Slab Decomposition
+ 
+
+
+     bravais-lattice index     =            2
+     lattice parameter (alat)  =      10.2631  a.u.
+     unit-cell volume          =     270.2564 (a.u.)^3
+     number of atoms/cell      =            2
+     number of atomic types    =            1
+     number of electrons       =         8.00
+     number of Kohn-Sham states=            4
+     kinetic-energy cutoff     =      25.0000  Ry
+     charge density cutoff     =     200.0000  Ry
+     Exchange-correlation= PBE
+                           (   1   4   3   4   0   0   0)
+
+     celldm(1)=  10.263102  celldm(2)=   0.000000  celldm(3)=   0.000000
+     celldm(4)=   0.000000  celldm(5)=   0.000000  celldm(6)=   0.000000
+
+     crystal axes: (cart. coord. in units of alat)
+               a(1) = (  -0.500000   0.000000   0.500000 )  
+               a(2) = (   0.000000   0.500000   0.500000 )  
+               a(3) = (  -0.500000   0.500000   0.000000 )  
+
+     reciprocal axes: (cart. coord. in units 2 pi/alat)
+               b(1) = ( -1.000000 -1.000000  1.000000 )  
+               b(2) = (  1.000000  1.000000  1.000000 )  
+               b(3) = ( -1.000000  1.000000 -1.000000 )  
+
+
+     PseudoPot. # 1 for Si read from file:
+     ../../pseudo/Si.pbe-nl-rrkjus_psl.1.0.0.UPF
+     MD5 check sum: 78279d3766ecb5dbdc0623f3e93c9a23
+     Pseudo is Ultrasoft + core correction, Zval =  4.0
+     Generated using &quot;atomic&quot; code by A. Dal Corso  v.6.3
+     Using radial grid of 1141 points,  4 beta functions with: 
+                l(1) =   0
+                l(2) =   0
+                l(3) =   1
+                l(4) =   1
+     Q(r) pseudized with 0 coefficients 
+
+
+     atomic species   valence    mass     pseudopotential
+     Si                4.00    28.08500     Si( 1.00)
+
+     No symmetry found
+
+
+
+   Cartesian axes
+
+     site n.     atom                  positions (alat units)
+         1        Si     tau(   1) = (   0.0000000   0.0000000   0.0000000  )
+         2        Si     tau(   2) = (  -0.2500000   0.2500000   0.2500000  )
+
+     number of k points=    16
+                       cart. coord. in units 2pi/alat
+        k(    1) = (   0.0000000   0.0000000   0.0000000), wk =   0.2500000
+        k(    2) = (   0.0000000  -1.0000000   0.0000000), wk =   0.0000000
+        k(    3) = (  -0.5000000   0.5000000  -0.5000000), wk =   0.2500000
+        k(    4) = (  -0.5000000  -0.5000000  -0.5000000), wk =   0.0000000
+        k(    5) = (   0.5000000   0.5000000   0.5000000), wk =   0.2500000
+        k(    6) = (   0.5000000  -0.5000000   0.5000000), wk =   0.0000000
+        k(    7) = (   0.0000000   1.0000000   0.0000000), wk =   0.2500000
+        k(    8) = (   0.0000000  -0.0000000   0.0000000), wk =   0.0000000
+        k(    9) = (  -0.5000000  -0.5000000   0.5000000), wk =   0.2500000
+        k(   10) = (  -0.5000000  -1.5000000   0.5000000), wk =   0.0000000
+        k(   11) = (  -1.0000000   0.0000000   0.0000000), wk =   0.2500000
+        k(   12) = (  -1.0000000  -1.0000000   0.0000000), wk =   0.0000000
+        k(   13) = (   0.0000000   0.0000000   1.0000000), wk =   0.2500000
+        k(   14) = (   0.0000000  -1.0000000   1.0000000), wk =   0.0000000
+        k(   15) = (  -0.5000000   0.5000000   0.5000000), wk =   0.2500000
+        k(   16) = (  -0.5000000  -0.5000000   0.5000000), wk =   0.0000000
+
+     Dense  grid:    12939 G-vectors     FFT dimensions: (  36,  36,  36)
+
+     Smooth grid:     4573 G-vectors     FFT dimensions: (  24,  24,  24)
+
+     Estimated max dynamical RAM per process >       3.81 MB
+
+     Estimated total dynamical RAM >      15.23 MB
+
+     The potential is recalculated from file :
+     ./out/_crpa0/Si.save/charge-density
+
+     Starting wfcs are    8 atomic wfcs
+
+     Band Structure Calculation
+     Davidson diagonalization with overlap
+
+     ethr =  1.25E-11,  avg # of iterations = 13.2
+
+     total cpu time spent up to now is       -1.0 secs
+
+     End of band structure calculation
+
+          k = 0.0000 0.0000 0.0000 (   537 PWs)   bands (ev):
+
+    -5.5181   6.5078   6.5078   6.5078
+
+          k = 0.0000-1.0000 0.0000 (   588 PWs)   bands (ev):
+
+    -1.3521  -1.3521   3.5809   3.5809
+
+          k =-0.5000 0.5000-0.5000 (   568 PWs)   bands (ev):
+
+    -3.1664  -0.5397   5.2726   5.2726
+
+          k =-0.5000-0.5000-0.5000 (   568 PWs)   bands (ev):
+
+    -3.1664  -0.5397   5.2726   5.2726
+
+          k = 0.5000 0.5000 0.5000 (   568 PWs)   bands (ev):
+
+    -3.1664  -0.5397   5.2726   5.2726
+
+          k = 0.5000-0.5000 0.5000 (   568 PWs)   bands (ev):
+
+    -3.1664  -0.5397   5.2726   5.2726
+
+          k = 0.0000 1.0000 0.0000 (   588 PWs)   bands (ev):
+
+    -1.3521  -1.3521   3.5809   3.5809
+
+          k = 0.0000-0.0000 0.0000 (   537 PWs)   bands (ev):
+
+    -5.5181   6.5078   6.5078   6.5078
+
+          k =-0.5000-0.5000 0.5000 (   568 PWs)   bands (ev):
+
+    -3.1664  -0.5397   5.2726   5.2726
+
+          k =-0.5000-1.5000 0.5000 (   568 PWs)   bands (ev):
+
+    -3.1664  -0.5397   5.2726   5.2726
+
+          k =-1.0000 0.0000 0.0000 (   588 PWs)   bands (ev):
+
+    -1.3521  -1.3521   3.5809   3.5809
+
+          k =-1.0000-1.0000 0.0000 (   588 PWs)   bands (ev):
+
+    -1.3521  -1.3521   3.5809   3.5809
+
+          k = 0.0000 0.0000 1.0000 (   588 PWs)   bands (ev):
+
+    -1.3521  -1.3521   3.5809   3.5809
+
+          k = 0.0000-1.0000 1.0000 (   588 PWs)   bands (ev):
+
+    -1.3521  -1.3521   3.5809   3.5809
+
+          k =-0.5000 0.5000 0.5000 (   568 PWs)   bands (ev):
+
+    -3.1664  -0.5397   5.2726   5.2726
+
+          k =-0.5000-0.5000 0.5000 (   568 PWs)   bands (ev):
+
+    -3.1664  -0.5397   5.2726   5.2726
+
+     highest occupied level (ev):     6.5078
+
+     Writing all to output data dir ./out/_crpa0/Si.save/ :
+     XML data file, pseudopotentials, collected wavefunctions
+     Done!
+
+                   WRITING LINEAR-RESPONSE SUMMARY:
+
+
+
+     No symmetry (except the identity)!
+
+     G cutoff =  533.6144  (   3236 G-vectors)     FFT grid: ( 36, 36, 36)
+     G cutoff =  266.8072  (   1144 G-vectors)  smooth grid: ( 24, 24, 24)
+
+     Number of k (and k+q if q/=0) points =    16
+
+                       cart. coord. (in units 2pi/alat)
+        k (    1) = (   0.0000000   0.0000000   0.0000000), wk = 0.2500000
+        k (    2) = (   0.0000000  -1.0000000   0.0000000), wk = 0.0000000
+        k (    3) = (  -0.5000000   0.5000000  -0.5000000), wk = 0.2500000
+        k (    4) = (  -0.5000000  -0.5000000  -0.5000000), wk = 0.0000000
+        k (    5) = (   0.5000000   0.5000000   0.5000000), wk = 0.2500000
+        k (    6) = (   0.5000000  -0.5000000   0.5000000), wk = 0.0000000
+        k (    7) = (   0.0000000   1.0000000   0.0000000), wk = 0.2500000
+        k (    8) = (   0.0000000  -0.0000000   0.0000000), wk = 0.0000000
+        k (    9) = (  -0.5000000  -0.5000000   0.5000000), wk = 0.2500000
+        k (   10) = (  -0.5000000  -1.5000000   0.5000000), wk = 0.0000000
+        k (   11) = (  -1.0000000   0.0000000   0.0000000), wk = 0.2500000
+        k (   12) = (  -1.0000000  -1.0000000   0.0000000), wk = 0.0000000
+        k (   13) = (   0.0000000   0.0000000   1.0000000), wk = 0.2500000
+        k (   14) = (   0.0000000  -1.0000000   1.0000000), wk = 0.0000000
+        k (   15) = (  -0.5000000   0.5000000   0.5000000), wk = 0.2500000
+        k (   16) = (  -0.5000000  -0.5000000   0.5000000), wk = 0.0000000
+
+                       cryst. coord.
+        k (    1) = (   0.0000000   0.0000000   0.0000000), wk = 0.2500000
+        k (    2) = (   0.0000000  -0.5000000  -0.5000000), wk = 0.0000000
+        k (    3) = (   0.0000000   0.0000000   0.5000000), wk = 0.2500000
+        k (    4) = (   0.0000000  -0.5000000   0.0000000), wk = 0.0000000
+        k (    5) = (   0.0000000   0.5000000   0.0000000), wk = 0.2500000
+        k (    6) = (   0.0000000   0.0000000  -0.5000000), wk = 0.0000000
+        k (    7) = (   0.0000000   0.5000000   0.5000000), wk = 0.2500000
+        k (    8) = (   0.0000000  -0.0000000  -0.0000000), wk = 0.0000000
+        k (    9) = (   0.5000000   0.0000000   0.0000000), wk = 0.2500000
+        k (   10) = (   0.5000000  -0.5000000  -0.5000000), wk = 0.0000000
+        k (   11) = (   0.5000000   0.0000000   0.5000000), wk = 0.2500000
+        k (   12) = (   0.5000000  -0.5000000  -0.0000000), wk = 0.0000000
+        k (   13) = (   0.5000000   0.5000000   0.0000000), wk = 0.2500000
+        k (   14) = (   0.5000000  -0.0000000  -0.5000000), wk = 0.0000000
+        k (   15) = (   0.5000000   0.5000000   0.5000000), wk = 0.2500000
+        k (   16) = (   0.5000000   0.0000000   0.0000000), wk = 0.0000000
+
+     Computing Wannier functions at k and k+q, 16 points
+       1       2       3       4       5       6       7       8       9      10
+      11      12      13      14      15      16
+     Done
+
+
+     Total time spent up to now is:
+     CRPA         :     10.72s CPU     12.12s WALL
+
+
+     Wannier function pairs for perturbation
+     Number of selected WF pairs :      4
+     Distance cutoff (bohr) :     0.000600
+     # i j R (crystal) |r_i0 - r_jR| (bohr)
+            1       1       0       0       0    0.000000
+            2       2       0       0       0    0.000000
+            3       3       0       0       0    0.000000
+            4       4       0       0       0    0.000000
+
+     Wannier function pairs for matrix element calculation
+     Number of selected WF pairs :      4
+     Distance cutoff (bohr) :     0.000600
+     # i j R (crystal) |r_i0 - r_jR| (bohr)
+            1       1       0       0       0    0.000000
+            2       2       0       0       0    0.000000
+            3       3       0       0       0    0.000000
+            4       4       0       0       0    0.000000
+      =--------------------------------------------=
+                 SOLVE THE LINEAR SYSTEM
+      =--------------------------------------------=
+
+     *** WARNING: USPP/PAW support in the CRPA screened-Coulomb
+     *** calculation is INCOMPLETE and UNVALIDATED. CG and Lanczos
+     *** disagree by 4-10%% on Si (norm-conserving agrees to 5e-5 eV).
+     *** Do not use these numbers for production. ***
+
+
+      q point #   3   Perturbation #  1
+     iw =      1 , jw =      1 , R (crystal) =      0     0     0
+     Sum of drho (normalized to 1) =     5.3322427157E-01    5.3322395083E-01
+     TD-DFPT with complex-valued frequency      0.01000     0.01000 Ry
+
+      iter #   1 total cpu time :    12.4 secs   av.it.:  19.8
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.372E-06
+
+      iter #   2 total cpu time :    12.6 secs   av.it.:  19.9
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  4.247E-06
+
+      iter #   3 total cpu time :    12.8 secs   av.it.:  19.6
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  9.084E-09
+
+      iter #   4 total cpu time :    13.0 secs   av.it.:  17.9
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.388E-10
+
+      iter #   5 total cpu time :    13.2 secs   av.it.:  16.4
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  3.727E-11
+
+      iter #   6 total cpu time :    13.4 secs   av.it.:  15.6
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  9.441E-13
+
+      iter #   7 total cpu time :    13.5 secs   av.it.:  14.5
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.259E-14
+
+      iter #   8 total cpu time :    13.7 secs   av.it.:  12.8
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.069E-15
+
+      iter #   9 total cpu time :    13.8 secs   av.it.:  11.8
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.839E-16
+
+      iter #  10 total cpu time :    14.0 secs   av.it.:  10.9
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.532E-18
+
+      q point #   3   Perturbation #  2
+     iw =      2 , jw =      2 , R (crystal) =      0     0     0
+     Sum of drho (normalized to 1) =     5.3322434920E-01   -5.3322396084E-01
+     TD-DFPT with complex-valued frequency      0.01000     0.01000 Ry
+
+      iter #   1 total cpu time :    14.2 secs   av.it.:  19.8
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.372E-06
+
+      iter #   2 total cpu time :    14.4 secs   av.it.:  19.9
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  4.247E-06
+
+      iter #   3 total cpu time :    14.6 secs   av.it.:  19.6
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  9.084E-09
+
+      iter #   4 total cpu time :    14.8 secs   av.it.:  17.8
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.388E-10
+
+      iter #   5 total cpu time :    15.0 secs   av.it.:  16.3
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  3.727E-11
+
+      iter #   6 total cpu time :    15.2 secs   av.it.:  15.5
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  9.441E-13
+
+      iter #   7 total cpu time :    15.3 secs   av.it.:  14.6
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.259E-14
+
+      iter #   8 total cpu time :    15.5 secs   av.it.:  12.8
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.069E-15
+
+      iter #   9 total cpu time :    15.6 secs   av.it.:  11.9
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.840E-16
+
+      iter #  10 total cpu time :    15.8 secs   av.it.:  11.3
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.532E-18
+
+      q point #   3   Perturbation #  3
+     iw =      3 , jw =      3 , R (crystal) =      0     0     0
+     Sum of drho (normalized to 1) =     5.3322428594E-01    5.3322391627E-01
+     TD-DFPT with complex-valued frequency      0.01000     0.01000 Ry
+
+      iter #   1 total cpu time :    16.0 secs   av.it.:  19.8
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.372E-06
+
+      iter #   2 total cpu time :    16.2 secs   av.it.:  19.9
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  4.247E-06
+
+      iter #   3 total cpu time :    16.4 secs   av.it.:  19.6
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  9.084E-09
+
+      iter #   4 total cpu time :    16.6 secs   av.it.:  17.9
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.388E-10
+
+      iter #   5 total cpu time :    16.8 secs   av.it.:  16.3
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  3.727E-11
+
+      iter #   6 total cpu time :    16.9 secs   av.it.:  15.6
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  9.441E-13
+
+      iter #   7 total cpu time :    17.1 secs   av.it.:  14.4
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.259E-14
+
+      iter #   8 total cpu time :    17.2 secs   av.it.:  12.8
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.069E-15
+
+      iter #   9 total cpu time :    17.4 secs   av.it.:  11.8
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.840E-16
+
+      iter #  10 total cpu time :    17.5 secs   av.it.:  11.0
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.532E-18
+
+      q point #   3   Perturbation #  4
+     iw =      4 , jw =      4 , R (crystal) =      0     0     0
+     Sum of drho (normalized to 1) =     5.3322436615E-01   -5.3322390768E-01
+     TD-DFPT with complex-valued frequency      0.01000     0.01000 Ry
+
+      iter #   1 total cpu time :    17.7 secs   av.it.:  19.7
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.372E-06
+
+      iter #   2 total cpu time :    18.0 secs   av.it.:  19.8
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  4.247E-06
+
+      iter #   3 total cpu time :    18.2 secs   av.it.:  19.6
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  9.084E-09
+
+      iter #   4 total cpu time :    18.4 secs   av.it.:  17.8
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.388E-10
+
+      iter #   5 total cpu time :    18.5 secs   av.it.:  16.1
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  3.727E-11
+
+      iter #   6 total cpu time :    18.7 secs   av.it.:  15.5
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  9.441E-13
+
+      iter #   7 total cpu time :    18.9 secs   av.it.:  14.6
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.259E-14
+
+      iter #   8 total cpu time :    19.0 secs   av.it.:  12.8
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.069E-15
+
+      iter #   9 total cpu time :    19.1 secs   av.it.:  11.9
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.840E-16
+
+      iter #  10 total cpu time :    19.3 secs   av.it.:  11.0
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  2.532E-18
+      
+      =--------------------------------------------=
+             CONVERGENCE HAS BEEN REACHED
+      =--------------------------------------------=
+
+     Writing bare Coulomb matrix elements to file
+
+     Writing frequency-resolved screened Coulomb matrix elements to file
+     Done writing frequency-resolved screened Coulomb matrix elements to file
+
+
+     q-averaged W of    16 elements at    1 frequencies over    3 q points written to crpa_cg.dir-W
+     WARNING: crpa_reduce_q, only star-invariant combinations (trace, pair sum) of these elements are the BZ average
+ 
+     PRINTING TIMING FROM PWSCF ROUTINES: 
+ 
+     init_run     :      0.06s CPU      0.07s WALL (       2 calls)
+     electrons    :      0.16s CPU      0.18s WALL (       2 calls)
+
+     Called by init_run:
+     wfcinit      :      0.00s CPU      0.00s WALL (       2 calls)
+     wfcinit:atom :      0.00s CPU      0.00s WALL (      32 calls)
+     wfcinit:wfcr :      0.02s CPU      0.02s WALL (      32 calls)
+     potinit      :      0.01s CPU      0.01s WALL (       2 calls)
+     hinit0       :      0.04s CPU      0.04s WALL (       2 calls)
+
+     Called by electrons:
+     c_bands      :      0.16s CPU      0.18s WALL (       2 calls)
+     v_of_rho     :      0.02s CPU      0.02s WALL (       3 calls)
+     v_h          :      0.00s CPU      0.00s WALL (       3 calls)
+     v_xc         :      0.02s CPU      0.02s WALL (       3 calls)
+     newd         :      0.01s CPU      0.01s WALL (       3 calls)
+
+     Called by c_bands:
+     init_us_2    :      0.05s CPU      0.06s WALL (    1528 calls)
+     cegterg      :      0.14s CPU      0.15s WALL (      32 calls)
+
+     Called by sum_band:
+
+     Called by *egterg:
+     cdiaghg      :      0.03s CPU      0.03s WALL (     456 calls)
+     cegterg:over :      0.01s CPU      0.01s WALL (     424 calls)
+     cegterg:upda :      0.00s CPU      0.00s WALL (     424 calls)
+     cegterg:last :      0.00s CPU      0.00s WALL (     124 calls)
+     h_psi        :     11.09s CPU     12.30s WALL (   55446 calls)
+     s_psi        :      0.64s CPU      0.72s WALL (  112004 calls)
+     g_psi        :      0.00s CPU      0.00s WALL (     424 calls)
+
+     Called by h_psi:
+     h_psi:calbec :      0.83s CPU      0.92s WALL (   55446 calls)
+     vloc_psi     :      9.61s CPU     10.66s WALL (   55446 calls)
+     add_vuspsi   :      0.35s CPU      0.39s WALL (   55446 calls)
+
+     General routines
+     calbec       :      1.24s CPU      1.38s WALL (  113212 calls)
+     fft          :      0.27s CPU      0.32s WALL (    1694 calls)
+     ffts         :      0.01s CPU      0.01s WALL (     241 calls)
+     fftw         :      8.30s CPU      9.21s WALL (  418944 calls)
+     interpolate  :      0.04s CPU      0.06s WALL (     241 calls)
+     davcio       :      0.19s CPU      0.34s WALL (    8800 calls)
+ 
+     Parallel routines
+ 
+     init_vloc    :      0.01s CPU      0.01s WALL (       3 calls)
+     init_us_1    :      0.04s CPU      0.04s WALL (       3 calls)
+     newd         :      0.01s CPU      0.01s WALL (       3 calls)
+     add_vuspsi   :      0.35s CPU      0.39s WALL (   55446 calls)
+ 
+     PRINTING TIMING FROM CRPA ROUTINES: 
+ 
+     crpa_setup_q :      0.05s CPU      0.05s WALL (       3 calls)
+     crpa_init_q  :      0.11s CPU      0.18s WALL (       3 calls)
+     crpa_solve_l :     16.41s CPU     18.39s WALL (       3 calls)
+     crpa_perturb :      0.06s CPU      0.06s WALL (      12 calls)
+     crpa_upd_cou :      0.10s CPU      0.12s WALL (      24 calls)
+     crpa_mel_wan :      0.10s CPU      0.12s WALL (      24 calls)
+     crpa_run_nsc :      0.24s CPU      0.29s WALL (       2 calls)
+     crpa_postpro :      0.00s CPU      0.00s WALL (       3 calls)
+ 
+     PRINTING TIMING FROM Wannier90 INTERFACE ROUTINES: 
+ 
+     w90_interpol :      0.10s CPU      0.17s WALL (      40 calls)
+ 
+     w90_readwrit :      0.03s CPU      0.06s WALL (      64 calls)
+     w90_mult_iqr :      0.02s CPU      0.03s WALL (     192 calls)
+     w90_shift_wf :      0.00s CPU      0.00s WALL (     192 calls)
+ 
+     PRINTING TIMING FROM LR MODULE: 
+ 
+     dfpt_kernel  :     16.13s CPU     18.08s WALL (      12 calls)
+     sth_kernel_f :     15.08s CPU     16.77s WALL (     100 calls)
+     sth_postproc :      0.34s CPU      0.35s WALL (     100 calls)
+     apply_dpot_b :      0.28s CPU      0.32s WALL (    1184 calls)
+     ortho        :      0.06s CPU      0.06s WALL (    1600 calls)
+     h_prec_freq  :      0.09s CPU      0.11s WALL (    1600 calls)
+     ccgsolve     :     14.42s CPU     15.99s WALL (    1600 calls)
+     ch_psi       :     13.66s CPU     15.15s WALL (   54958 calls)
+     incdrhoscf   :      0.19s CPU      0.23s WALL (     800 calls)
+     dv_of_drho   :      0.26s CPU      0.34s WALL (     124 calls)
+     mix_pot      :      0.10s CPU      0.24s WALL (     100 calls)
+     setup_dgc    :      0.04s CPU      0.05s WALL (       3 calls)
+     setup_dmuxc  :      0.01s CPU      0.01s WALL (       3 calls)
+     setup_nbnd_o :      0.00s CPU      0.00s WALL (       3 calls)
+     cft_wave     :      0.23s CPU      0.26s WALL (    9472 calls)
+ 
+     USPP ROUTINES: 
+ 
+     newdq        :      0.40s CPU      0.41s WALL (     124 calls)
+     adddvscf     :      0.01s CPU      0.01s WALL (     800 calls)
+     addusdbec    :      0.02s CPU      0.02s WALL (     800 calls)
+ 
+     CRPA         :     17.09s CPU     19.27s WALL
+
+ 
+   This run was terminated on:  11:44:12  28Oct2026            
+
+=------------------------------------------------------------------------------=
+   JOB DONE.
+=------------------------------------------------------------------------------=
+CRPA-EXTRACT vbare 44.911809951253
+CRPA-EXTRACT vscrd_cg 1.706108536298
+CRPA-EXTRACT u_bare 12.639380036
+CRPA-EXTRACT u_scrd_cg 2.587163760

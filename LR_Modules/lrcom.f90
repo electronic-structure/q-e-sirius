@@ -19,6 +19,13 @@ MODULE control_lr
   !
   INTEGER, ALLOCATABLE :: nbnd_occ(:)  ! occupied bands in metals
   REAL(DP) :: alpha_pv       ! the alpha value for shifting the bands
+  LOGICAL  :: lflat_proj = .FALSE.
+  !! if .TRUE. orthogonalize (lgauss branch) applies the occupation-free projector:
+  !! components with nonzero metallic weight are kept with the factor (1+alpha_pv/de)
+  !! only, the degenerate block |de| < flat_deg_thr is removed, no wg1 scaling.
+  !! Set by CRPA around dvpsi_e (electric-field auxiliary function); .FALSE. otherwise.
+  REAL(DP) :: flat_deg_thr = 1.0d-5
+  !! degeneracy threshold (Ry) of the occupation-free projector
   LOGICAL  :: lgamma         ! if .TRUE. this is a q=0 computation
   LOGICAL  :: lrpa           ! if .TRUE. uses the Random Phace Approximation
   REAL(DP) :: ethr_nscf      ! convergence threshol for KS eigenvalues in the
@@ -57,6 +64,10 @@ MODULE control_lr
   !! mixing type
   REAL(DP) :: tr2_ph
   !! threshold for DFPT calculation
+  REAL(DP) :: conv_thr_nscf
+  !! Threshold for the NSCF bands calculation
+  REAL(DP) :: thresh_init
+  !! Initial threshold for the solution of the linear system
   REAL(DP) :: alpha_mix(maxter)
   !! the mixing parameter
   !
@@ -204,6 +215,10 @@ MODULE units_lr
              iuatswfc,& ! unit for atomic wavefunctions * S
              iudwf,   & ! unit with D psi
              lrdwf      ! length of D psi record
+  INTEGER :: iudvwfc
+  !! Unit for the perturbing potential * wavefunctions
+  INTEGER :: lrdvwfc
+  !! Length of the record for the perturbing potential * wavefunctions
   !
 END MODULE units_lr
 

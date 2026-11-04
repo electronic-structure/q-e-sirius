@@ -18,9 +18,10 @@ SUBROUTINE orthogonalize_omega(dvpsi, evq, ikk, ikq, dpsi, npwq, w)
   ! NB: IN/OUT is dvpsi ; dpsi is used as work_space
   !
 USE kinds, ONLY : DP
-USE klist, ONLY : lgauss, degauss, ngauss
+USE klist, ONLY : lgauss, degauss, ngauss, ltetra, wk
 USE noncollin_module, ONLY : noncolin, npol
-USE wvfct, ONLY : npwx, nbnd, et
+USE wvfct, ONLY : npwx, nbnd, et, wg
+USE dfpt_tetra_mod, ONLY : dfpt_tetra_ttheta
 USE ener, ONLY : ef
 USE control_lr,  ONLY : alpha_pv, nbnd_occ
 USE becmod,      ONLY : bec_type, becp, calbec
@@ -58,7 +59,7 @@ ALLOCATE(ps(nbnd,nbnd))
 ps = (0.0_DP, 0.0_DP)
 
 !
-if (lgauss) then
+if (lgauss .OR. ltetra) then
    !
    IF (gamma_only) CALL errore ('orthogonalize', "degauss with gamma &
         & point algorithms",1)
@@ -75,15 +76,36 @@ if (lgauss) then
    !
 
    DO ibnd = 1, nbnd_occ (ikk)
-      wg1 = wgauss ((ef-et(ibnd,ikk)) / degauss, ngauss)
-      w0g = w0gauss((ef-et(ibnd,ikk)) / degauss, ngauss) / degauss
+      IF (lgauss) THEN
+         wg1 = wgauss ((ef-et(ibnd,ikk)) / degauss, ngauss)
+         w0g = w0gauss((ef-et(ibnd,ikk)) / degauss, ngauss) / degauss
+      ELSE
+         !
+         ! Tetrahedra: dfpt_tetra_ttheta is the alpha_pv-free counterpart of the
+         ! Gaussian wg1*(1-theta) + wgp*theta above (see its declaration comment
+         ! in dfpt_tetra_mod.f90), so the pair weight is W = wg1 - ttheta. The
+         ! alpha_pv term baked into dfpt_tetra_beta at setup has the STATIC
+         ! denominator and cannot be used here; it is built below at call time
+         ! from W with the (deltae - w) denominator, exactly as in the Gaussian
+         ! branch, so that it cancels the alpha_pv*P_v shift of
+         ! ch_psi_all_complex. No jbnd <= nbnd_occ guard as in the Gaussian
+         ! branch: dfpt_tetra_main sets nbnd_occ = nbnd, so every band is in P_v
+         !
+         wg1 = wg(ibnd,ikk) / wk(ikk)
+      ENDIF
       DO jbnd = 1, nbnd
-         wgp = wgauss ( (ef - et (jbnd, ikq) ) / degauss, ngauss)
-         deltae = et (jbnd, ikq) - et (ibnd, ikk)
-         theta = wgauss (deltae / degauss, 0)
-         wwg = CMPLX(wg1 * (1.d0 - theta) + wgp * theta,0.0_DP)
-         IF (jbnd <= nbnd_occ (ikq) ) THEN
-            wwg = wwg + alpha_pv * theta * (wgp - wg1) / (deltae - w)
+         IF (lgauss) THEN
+            wgp = wgauss ( (ef - et (jbnd, ikq) ) / degauss, ngauss)
+            deltae = et (jbnd, ikq) - et (ibnd, ikk)
+            theta = wgauss (deltae / degauss, 0)
+            wwg = CMPLX(wg1 * (1.d0 - theta) + wgp * theta,0.0_DP)
+            IF (jbnd <= nbnd_occ (ikq) ) THEN
+               wwg = wwg + alpha_pv * theta * (wgp - wg1) / (deltae - w)
+            ENDIF
+         ELSE
+            deltae = et (jbnd, ikq) - et (ibnd, ikk)
+            wwg = CMPLX(dfpt_tetra_ttheta(jbnd,ibnd,ikk), 0.0_DP, KIND=DP) &
+                - alpha_pv * (wg1 - dfpt_tetra_ttheta(jbnd,ibnd,ikk)) / (deltae - w)
          ENDIF
          !
          ps(jbnd,ibnd) = wwg * ps(jbnd,ibnd)
@@ -127,12 +149,23 @@ ENDIF
 !
 ! dpsi is used as work space to store S|evc>
 !
-IF (okvan) CALL calbec ( npwq, vkb, evq, becp, nbnd_eff)
+IF (okvan) THEN
+   CALL calbec ( npwq, vkb, evq, becp, nbnd_eff)
+   ! calbec ran on the host; with OpenACC s_psi reads becp on the device
+   ! (present_or_copyin), so a device copy that already exists must be refreshed
+   IF (gamma_only) THEN
+      !$acc update device(becp%r) if_present
+   ELSEIF (noncolin) THEN
+      !$acc update device(becp%nc) if_present
+   ELSE
+      !$acc update device(becp%k) if_present
+   ENDIF
+ENDIF
 CALL s_psi (npwx, npwq, nbnd_eff, evq, dpsi)
 !
 ! |dvspi> =  -(|dvpsi> - S|evq><evq|dvpsi>)
 !
-if (lgauss) then
+if (lgauss .OR. ltetra) then
    !
    !  metallic case
    !

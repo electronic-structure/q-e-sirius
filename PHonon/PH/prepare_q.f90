@@ -43,6 +43,7 @@ SUBROUTINE prepare_q(auxdyn, do_band, do_iq, setup_pw, iq)
   USE dfpt_tetra_mod,  ONLY : dfpt_tetra_linit
   USE control_lr,      ONLY : lgamma, where_rec, rec_code
   USE noncollin_module, ONLY : noncolin, domag
+  USE constrained_dfpt, ONLY : cdfpt
   ! YAMBO >
   USE YAMBO,           ONLY : elph_yambo,yambo_elph_file_name,dvscf_yambo
   ! YAMBO <
@@ -136,7 +137,7 @@ SUBROUTINE prepare_q(auxdyn, do_band, do_iq, setup_pw, iq)
      !
      IF ( lgamma .and. .not. elph_mat ) THEN
         !
-        IF ( .NOT. (lgauss .OR. ltetra)) THEN
+        IF ( .NOT. (lgauss .OR. ltetra) .OR. cdfpt) THEN
            !
            ! ... in the case of an insulator at q=0 one has to calculate
            ! ... the dielectric constant and the Born eff. charges

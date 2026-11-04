@@ -107,7 +107,7 @@ SUBROUTINE dfpt_kernel(code, npert, iter0, lrdvpsi, iudvpsi, dr2, dfpt_data, &
    USE efermi_shift,         ONLY : ef_shift_new, ef_shift_wfc_new
    USE lrus,                 ONLY : int3_paw, int3_nc
    USE control_lr,           ONLY : lgamma, niter_ph, nmix_ph, tr2_ph, alpha_mix, convt, &
-                                    lgamma_gamma, flmixdpot, where_rec, lnoloc
+                                    lgamma_gamma, flmixdpot, where_rec, lnoloc, thresh_init
    USE dv_of_drho_lr,        ONLY : dv_of_drho
    USE lr_nc_mag,            ONLY : int3_nc_save
    USE apply_dpot_mod,       ONLY : apply_dpot_allocate, apply_dpot_deallocate
@@ -190,7 +190,16 @@ SUBROUTINE dfpt_kernel(code, npert, iter0, lrdvpsi, iudvpsi, dr2, dfpt_data, &
    !
    CALL start_clock('dfpt_kernel')
    !
-   finite_freq = PRESENT(w_freq)
+   finite_freq = .FALSE.
+   IF (PRESENT(w_freq)) THEN
+      IF (ABS(w_freq) > 1.0d-10) THEN
+         finite_freq = .TRUE.
+      ENDIF
+   ENDIF
+   !
+   IF (finite_freq) THEN
+      WRITE(stdout, '(5x, A, 2F12.5, A)') "TD-DFPT with complex-valued frequency ", w_freq, " Ry"
+   ENDIF
    !
    nsolv = 1
    IF ((noncolin .AND. domag) .OR. finite_freq) nsolv = 2
@@ -230,7 +239,7 @@ SUBROUTINE dfpt_kernel(code, npert, iter0, lrdvpsi, iudvpsi, dr2, dfpt_data, &
    !
    ! if q=0 for a metal: allocate and compute local DOS at Ef
    !
-   lmetq0 = (lgauss .OR. ltetra) .AND. lgamma
+   lmetq0 = (lgauss .OR. ltetra) .AND. lgamma .AND. .NOT. finite_freq
    IF (lmetq0) THEN
       CALL allocate_dfpt_ldos(ldos_data)
       CALL localdos_new(ldos_data,ef)
@@ -261,7 +270,7 @@ SUBROUTINE dfpt_kernel(code, npert, iter0, lrdvpsi, iudvpsi, dr2, dfpt_data, &
       !
       IF (first_iter .OR. kter == 1) THEN
          ! If first iteration or first iteration after restart
-         thresh = 1.0d-2
+         thresh = thresh_init
       ELSE
          thresh = min(1.d-1 * sqrt(dr2), thresh)
       ENDIF

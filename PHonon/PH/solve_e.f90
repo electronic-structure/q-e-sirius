@@ -52,6 +52,7 @@ subroutine solve_e
   USE dfpt_type,             ONLY : dfpt_data_type, allocate_dfpt_data, deallocate_dfpt_data
   USE dfpt_kernels,          ONLY : dfpt_kernel
   USE recover_mod,           ONLY : write_rec
+  USE constrained_dfpt,      ONLY : cdfpt
   !
   IMPLICIT NONE
   !
@@ -95,7 +96,7 @@ subroutine solve_e
   !
   ! if q=0 for a metal: allocate and compute local DOS at Ef
   !
-  if ( (lgauss .or. ltetra) .or..not.lgamma) call errore ('solve_e', &
+  if ( ((lgauss .or. ltetra) .and. .not. cdfpt) .or..not.lgamma) call errore ('solve_e', &
        'called in the wrong case', 1)
   !
   ! Compute P_c^+ x psi for all polarization and k points and store in buffer

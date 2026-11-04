@@ -15,9 +15,10 @@
   USE kinds,      ONLY : DP
   USE constants,  ONLY : ry_to_cmm1
   USE ions_base,  ONLY : nat
-  USE disp,       ONLY : nqs, omega_disp, x_q, done_iq
+  USE disp,       ONLY : nqs, x_q, done_iq
   USE control_ph, ONLY : qplot
-  USE el_phon,    ONLY : elph_simple, gamma_disp, el_ph_nsigma
+  USE modes,      ONLY : omega_for_all_q
+  USE el_phon,    ONLY : elph_simple, gamma_for_all_q, el_ph_nsigma
   USE mp_images,  ONLY : nimage
   USE output,     ONLY : fildyn
   USE io_global,  ONLY : ionode
@@ -56,8 +57,8 @@
      DO n=1, nqs
         WRITE(iunit,'(10x,3f10.6)')  x_q(1,n), x_q(2,n), x_q(3,n)
         DO i=1, 3*nat
-           w1(i) = SQRT (ABS (omega_disp (i,n)) ) * ry_to_cmm1
-           IF ( omega_disp(i,n) < 0.d0) w1(i) = - w1(i)
+           w1(i) = SQRT (ABS (omega_for_all_q (i,n)) ) * ry_to_cmm1
+           IF ( omega_for_all_q(i,n) < 0.d0) w1(i) = - w1(i)
         ENDDO
         WRITE(iunit,'(6f10.4)') (w1(i), i=1,3*nat)
      END DO
@@ -70,7 +71,7 @@
            WRITE(iunit, '(" &plot nbnd=",i4,", nks=",i4," /")') 3*nat, nqs
            DO n=1, nqs
               WRITE(iunit,'(10x,3f10.6)')  x_q(1,n), x_q(2,n), x_q(3,n)
-              WRITE(iunit,'(6f10.4)') (gamma_disp(i,isig,n), i=1,3*nat)
+              WRITE(iunit,'(6f10.4)') (gamma_for_all_q(i,isig,n), i=1,3*nat)
            END DO
            CLOSE(unit=iunit)
         END DO

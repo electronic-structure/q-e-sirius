@@ -344,6 +344,114 @@ inputs_args = ('h2o.scf.in', '1'), ('h2o.kcw-wann2kcw.in', '15'), ('h2o.kcw-scre
 program = KCW
 inputs_args = ('Si_nc.scf.in', '1'), ('Si_nc.win', '2'), ('Si_nc.pw2wann.in', '3'), ('Si_nc.win', '4'), ('Si_nc.kcw-wann2kcw.in', '5'), ('Si_nc.kcw-screen.in', '6'), ('Si_nc.kcw-ham.in', '7')
 
+[crpa_coul_nc_w0_rpa/]
+program = CRPA
+inputs_args = ('Si.scf.in', '1'), ('Si.win', '2'), ('Si.pw2wan.in', '3'), ('Si.win', '4'), ('Si.crpa-cg.in', '5'), ('Si.crpa-lanczos.in', '6')
+
+[crpa_coul_nc_w0_rpa_rspace/]
+program = CRPA
+inputs_args = ('Si.scf.in', '1'), ('Si.win', '2'), ('Si.pw2wan.in', '3'), ('Si.win', '4'), ('Si.crpa-cg.in', '5')
+
+[crpa_coul_nc_w0_dft/]
+program = CRPA
+inputs_args = ('Si.scf.in', '1'), ('Si.win', '2'), ('Si.pw2wan.in', '3'), ('Si.win', '4'), ('Si.crpa-cg.in', '5'), ('Si.crpa-lanczos.in', '6')
+
+[crpa_coul_nc_wf_rpa/]
+program = CRPA
+inputs_args = ('Si.scf.in', '1'), ('Si.win', '2'), ('Si.pw2wan.in', '3'), ('Si.win', '4'), ('Si.crpa-cg.in', '5'), ('Si.crpa-lanczos.in', '6')
+
+[crpa_coul_nc_wf_dft/]
+program = CRPA
+inputs_args = ('Si.scf.in', '1'), ('Si.win', '2'), ('Si.pw2wan.in', '3'), ('Si.win', '4'), ('Si.crpa-cg.in', '5'), ('Si.crpa-lanczos.in', '6')
+
+[crpa_coul_us_w0_rpa/]
+program = CRPA
+inputs_args = ('Si.scf.in', '1'), ('Si.win', '2'), ('Si.pw2wan.in', '3'), ('Si.win', '4'), ('Si.crpa-cg.in', '5'), ('Si.crpa-lanczos.in', '6')
+
+[crpa_coul_us_w0_dft/]
+program = CRPA
+inputs_args = ('Si.scf.in', '1'), ('Si.win', '2'), ('Si.pw2wan.in', '3'), ('Si.win', '4'), ('Si.crpa-cg.in', '5'), ('Si.crpa-lanczos.in', '6')
+
+[crpa_coul_us_wf_rpa/]
+program = CRPA
+inputs_args = ('Si.scf.in', '1'), ('Si.win', '2'), ('Si.pw2wan.in', '3'), ('Si.win', '4'), ('Si.crpa-cg.in', '5'), ('Si.crpa-lanczos.in', '6')
+
+[crpa_coul_us_wf_dft/]
+program = CRPA
+inputs_args = ('Si.scf.in', '1'), ('Si.win', '2'), ('Si.pw2wan.in', '3'), ('Si.win', '4'), ('Si.crpa-cg.in', '5'), ('Si.crpa-lanczos.in', '6')
+
+[crpa_diel_nc_w0_rpa/]
+program = CRPA
+inputs_args = ('Si.scf.in', '1'), ('Si.crpa-cg.in', '5'), ('Si.crpa-lanczos.in', '6')
+
+[crpa_diel_nc_w0_dft/]
+program = CRPA
+inputs_args = ('Si.scf.in', '1'), ('Si.crpa-cg.in', '5'), ('Si.crpa-lanczos.in', '6')
+
+[crpa_diel_nc_wf_rpa/]
+program = CRPA
+inputs_args = ('Si.scf.in', '1'), ('Si.crpa-cg.in', '5'), ('Si.crpa-lanczos.in', '6')
+
+[crpa_diel_nc_wf_dft/]
+program = CRPA
+inputs_args = ('Si.scf.in', '1'), ('Si.crpa-cg.in', '5'), ('Si.crpa-lanczos.in', '6')
+
+[crpa_diel_us_w0_rpa/]
+program = CRPA
+inputs_args = ('Si.scf.in', '1'), ('Si.crpa-cg.in', '5'), ('Si.crpa-lanczos.in', '6')
+
+[crpa_diel_us_w0_dft/]
+program = CRPA
+inputs_args = ('Si.scf.in', '1'), ('Si.crpa-cg.in', '5'), ('Si.crpa-lanczos.in', '6')
+
+[crpa_diel_us_wf_rpa/]
+program = CRPA
+inputs_args = ('Si.scf.in', '1'), ('Si.crpa-cg.in', '5'), ('Si.crpa-lanczos.in', '6')
+
+[crpa_diel_us_wf_dft/]
+program = CRPA
+inputs_args = ('Si.scf.in', '1'), ('Si.crpa-cg.in', '5'), ('Si.crpa-lanczos.in', '6')
+
+[crpa_metal_coul_gauss_wf_rpa/]
+program = CRPA_METAL
+inputs_args = ('SrVO3.scf.in', '1'), ('SrVO3.nscf.in', '1'), ('SrVO3.win', '2'), ('SrVO3.pw2wan.in', '3'), ('SrVO3.win', '4'), ('SrVO3.crpa-cg.in', '5'), ('SrVO3.crpa-lanczos.in', '6')
+
+[crpa_metal_coul_gauss_wf_dft/]
+program = CRPA_METAL
+inputs_args = ('SrVO3.scf.in', '1'), ('SrVO3.nscf.in', '1'), ('SrVO3.win', '2'), ('SrVO3.pw2wan.in', '3'), ('SrVO3.win', '4'), ('SrVO3.crpa-cg.in', '5'), ('SrVO3.crpa-lanczos.in', '6')
+
+[crpa_metal_coul_gauss_w0_rpa/]
+program = CRPA_METAL
+inputs_args = ('SrVO3.scf.in', '1'), ('SrVO3.nscf.in', '1'), ('SrVO3.win', '2'), ('SrVO3.pw2wan.in', '3'), ('SrVO3.win', '4'), ('SrVO3.crpa-cg.in', '5')
+
+[crpa_metal_coul_gauss_w0_dft/]
+program = CRPA_METAL
+inputs_args = ('SrVO3.scf.in', '1'), ('SrVO3.nscf.in', '1'), ('SrVO3.win', '2'), ('SrVO3.pw2wan.in', '3'), ('SrVO3.win', '4'), ('SrVO3.crpa-cg.in', '5')
+
+[crpa_metal_coul_tetra_wf_rpa/]
+program = CRPA_METAL
+inputs_args = ('SrVO3.scf.in', '1'), ('SrVO3.nscf.in', '1'), ('SrVO3.win', '2'), ('SrVO3.pw2wan.in', '3'), ('SrVO3.win', '4'), ('SrVO3.crpa-cg.in', '5'), ('SrVO3.crpa-lanczos.in', '6')
+
+[crpa_metal_coul_tetra_wf_dft/]
+program = CRPA_METAL
+inputs_args = ('SrVO3.scf.in', '1'), ('SrVO3.nscf.in', '1'), ('SrVO3.win', '2'), ('SrVO3.pw2wan.in', '3'), ('SrVO3.win', '4'), ('SrVO3.crpa-cg.in', '5'), ('SrVO3.crpa-lanczos.in', '6')
+
+[crpa_metal_diel_gauss_wf_rpa/]
+program = CRPA_METAL
+inputs_args = ('SrVO3.scf.in', '1'), ('SrVO3.crpa-cg.in', '5'), ('SrVO3.crpa-lanczos.in', '6')
+
+[crpa_metal_diel_gauss_wf_dft/]
+program = CRPA_METAL
+inputs_args = ('SrVO3.scf.in', '1'), ('SrVO3.crpa-cg.in', '5'), ('SrVO3.crpa-lanczos.in', '6')
+
+[crpa_metal_diel_tetra_wf_rpa/]
+program = CRPA_METAL
+inputs_args = ('SrVO3.scf.in', '1'), ('SrVO3.crpa-cg.in', '5'), ('SrVO3.crpa-lanczos.in', '6')
+
+[crpa_metal_diel_tetra_wf_dft/]
+program = CRPA_METAL
+inputs_args = ('SrVO3.scf.in', '1'), ('SrVO3.crpa-cg.in', '5'), ('SrVO3.crpa-lanczos.in', '6')
+
 [pp_acf/]
 program = PP
 inputs_args = ('scf_vdw.in', '1'), ('ppacf_fock.in', '2')
@@ -416,5 +524,7 @@ image_all = image_*??
 all_currents_all = QEHeat_*
 _default_ = pw_*?? cp_*?? ph_*?? epw_*?? tddfpt_*?? hp_*?? all_currents_*??
 kcw_all = kcw_*??
+crpa_all = crpa_*??
+crpa_metal = crpa_metal_*??
 oscdft_all = oscdft_pw oscdft_pp
 pioud_all = pioud*??

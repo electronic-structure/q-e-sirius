@@ -72,6 +72,7 @@ SUBROUTINE solve_linter (irr, imode0, dfpt_data)
   USE dfpt_kernels,         ONLY : dfpt_kernel
   USE phus,                 ONLY : becsumort
   USE recover_mod,          ONLY : write_rec
+  USE constrained_dfpt,     ONLY : cdfpt
   !
   IMPLICIT NONE
   !

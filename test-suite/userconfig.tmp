@@ -293,6 +293,59 @@ tolerance = ( (5.0e-5, 5.0e-3, 'e1'),
 skip_program = grep
 skip_args = 'not present in this version'
 
+[CRPA]
+exe = XXXXXX/test-suite/run-crpa.sh
+extract_program = XXXXXX/test-suite/extract-crpa.sh
+inputs_args = ('*.in', '')
+run_cmd_template = tc.program tc.args tc.input tc.output tc.error
+tolerance = ( (5.0e-5, 5.0e-3, 'e1'),
+              (5.0e+0, 5.0e-1, 'n1'),
+              (5.0e-4, 1.0e-5, 'omega'),
+              (1.0e-6, 1.0e-8, 'nnkpts'),
+              (5.0e-4, 1.0e-5, 'eig1'),
+              (5.0e-3, 1.0e-3, 'vbare'),
+              (5.0e-3, 1.0e-3, 'vbare_ln'),
+              (1.0e-2, None,   'vscrd_cg'),
+              (1.0e-2, None,   'vscrd_ln'),
+              (5.0e-3, 1.0e-3, 'u_bare'),
+              (5.0e-3, 1.0e-3, 'u_bare_ln'),
+              (1.0e-2, None,   'u_scrd_cg'),
+              (1.0e-2, None,   'u_scrd_ln'),
+              (2.0e-3, 1.0e-4, 'eps_cg'),
+              (2.0e-3, None,   'eps_cg_im'),
+              (8.0e-3, 5.0e-4, 'eps_ln'),
+              (8.0e-3, None,   'eps_ln_im'),
+              (5.0e-3, 1.0e-3, 'wr_vbare'),
+              (1.0e-2, None,   'wr_wscrd_cg'),
+              (5.0e-3, 1.0e-3, 'wr_off_vbare'),
+              (1.0e-2, None,   'wr_off_wscrd_cg'))
+skip_program = grep
+skip_args = 'not present in this version'
+
+[CRPA_METAL]
+exe = XXXXXX/test-suite/run-crpa-metal.sh
+extract_program = XXXXXX/test-suite/extract-crpa-metal.sh
+inputs_args = ('*.in', '')
+run_cmd_template = tc.program tc.args tc.input tc.output tc.error
+tolerance = ( (5.0e-5, 5.0e-3, 'e1'),
+              (5.0e+0, 5.0e-1, 'n1'),
+              (1.0e-3, 1.0e-4, 'ef'),
+              (5.0e-4, 1.0e-5, 'omega'),
+              (1.0e-6, 1.0e-8, 'nnkpts'),
+              (5.0e-4, 1.0e-5, 'eig1'),
+              (5.0e-3, 1.0e-3, 'vbare'),
+              (1.0e-2, None,   'vscrd_cg'),
+              (5.0e-3, 1.0e-3, 'vbare_q2'),
+              (1.0e-2, None,   'vscrd_cg_q2'),
+              (1.0e-2, None,   'vscrd_ln_q2'),
+              (2.0e-3, 1.0e-4, 'eps_cg'),
+              (2.0e-3, 1.0e-4, 'eps_cg_im'),
+              (8.0e-3, 5.0e-4, 'eps_ln'),
+              (8.0e-3, 5.0e-4, 'eps_ln_im'),
+              (1.0e-5, 1.0e-4, 'wp2'))
+skip_program = grep
+skip_args = 'not present in this version'
+
 [OSCDFT]
 exe = XXXXXX/test-suite/run-oscdft.sh
 extract_program = XXXXXX/test-suite/extract-pw.sh

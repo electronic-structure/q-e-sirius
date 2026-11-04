@@ -353,6 +353,7 @@ set_target_properties(qe_phonon_alpha2f_exe PROPERTIES OUTPUT_NAME alpha2f.x)
 target_link_libraries(qe_phonon_alpha2f_exe
     PRIVATE
         qe_openacc_fortran
+        qe_lr_modules
         qe_pw
         qe_modules
         qe_phonon_ph)

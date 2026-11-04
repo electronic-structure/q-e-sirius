@@ -15,7 +15,7 @@ default :
 	@echo ' '
 	@echo 'where <target> identifies an action'
 	@echo ' run-tests-XX [NPROCS=N NBGRP=M]  : run tests [optionally, on N processors and M band groups]'
-	@echo ' for XX=pw, cp, ph, pp, hp, tddfpt, kcw, all_currents, epw, zg, xsd-pw'
+	@echo ' for XX=pw, cp, ph, pp, hp, tddfpt, kcw, crpa, all_currents, epw, zg, xsd-pw'
 	@echo ' run-tests [NPROCS=N]             : run all tests above (except the last four)'
 	@echo ' run-custom-test testdir=DIR [NPROCS=N NBGRP=M]: run test in DIR only'
 	@echo ' compare                          : compare last output with reference'
@@ -43,6 +43,7 @@ pseudo :
 	@./check_pseudo.sh ph_
 	@./check_pseudo.sh QEHeat_
 	@./check_pseudo.sh kcw_
+	@./check_pseudo.sh crpa_
 	@./check_pseudo.sh oscdft_
 
 run-tests : run-tests-pw run-tests-cp run-tests-ph run-tests-pp run-tests-hp run-tests-tddfpt run-tests-kcw run-tests-pioud
@@ -76,6 +77,12 @@ run-tests-image : prolog pseudo
 
 run-tests-kcw : prolog pseudo
 	env QE_USE_MPI=$(NPROCS) ${TESTCODE_DIR}/bin/testcode.py --verbose  --category=kcw_all
+
+run-tests-crpa : prolog pseudo
+	env QE_USE_MPI=$(NPROCS) ${TESTCODE_DIR}/bin/testcode.py --verbose --category=crpa_all
+
+run-tests-crpa-metal : prolog pseudo
+	env QE_USE_MPI=$(NPROCS) ${TESTCODE_DIR}/bin/testcode.py --verbose --category=crpa_metal
 
 run-tests-all_currents : prolog pseudo
 	env QE_USE_MPI=$(NPROCS) ${TESTCODE_DIR}/bin/testcode.py --verbose --category=all_currents_all
@@ -115,6 +122,12 @@ create-reference-all_currents : pseudo prolog
 create-reference-oscdft : pseudo prolog
 	env QE_USE_MPI=$(NPROCS) ${TESTCODE_DIR}/bin/testcode.py --category=oscdft_all make-benchmarks
 
+create-reference-crpa : pseudo prolog
+	env QE_USE_MPI=$(NPROCS) ${TESTCODE_DIR}/bin/testcode.py --category=crpa_all make-benchmarks
+
+create-reference-crpa-metal : pseudo prolog
+	env QE_USE_MPI=$(NPROCS) ${TESTCODE_DIR}/bin/testcode.py --category=crpa_metal make-benchmarks
+
 compare : compare-cp compare-pw compare-ph compare-epw compare-tddfpt compare-hp compare-all_currents
 
 compare-cp : prolog
@@ -141,11 +154,11 @@ compare-all_currents : prolog pseudo
 
 clean:
 # output files
-	@rm -rf pw_*/test* ph_*/test* cp_*/test* hp_*/test* pp_*/test* epw_*/test* zg_*/test* tddfpt_*/test* kcw_*/test*
+	@rm -rf pw_*/test* ph_*/test* cp_*/test* hp_*/test* pp_*/test* epw_*/test* zg_*/test* tddfpt_*/test* kcw_*/test* crpa_*/test*
 # error files
-	@rm -rf pw_*/CRASH ph_*/CRASH* cp_*/CRASH hp_*/CRASH pp_*/CRASH epw_*/CRASH zg_*/CRASH tddfpt_*/CRASH kcw_*/CRASH
+	@rm -rf pw_*/CRASH ph_*/CRASH* cp_*/CRASH hp_*/CRASH pp_*/CRASH epw_*/CRASH zg_*/CRASH tddfpt_*/CRASH kcw_*/CRASH crpa_*/CRASH
 # temporary input files
-	@rm -rf pw_*/input_tmp.in ph_*/input_tmp.in cp_*/input_tmp.in hp_*/input_tmp.in pp_*/input_tmp.in epw_*/input_tmp.in zg_*/input_tmp.in tddfpt_*/input_tmp.in kcw_*/input_tmp.in
+	@rm -rf pw_*/input_tmp.in ph_*/input_tmp.in cp_*/input_tmp.in hp_*/input_tmp.in pp_*/input_tmp.in epw_*/input_tmp.in zg_*/input_tmp.in tddfpt_*/input_tmp.in kcw_*/input_tmp.in crpa_*/input_tmp.in
 # pwscf data files
 	@rm -rf pw_*/pwscf.* ph_*/pwscf.* pp_*/pwscf.* epw_*/pwscf.*
 # cp data files
@@ -180,6 +193,11 @@ clean:
 # Cleaning KCW final files
 	@rm -rf	kcw_*/out kcw_*/*.nnkp kcw_*/*.wout kcw_*/*.amn kcw_*/*.mmn kcw_*/*.eig kcw_*/*band* kcw_*/*chk \
                 kcw_*/*.dat kcw_*/*.xyz kcw_*/*.mat 
+# Cleaning CRPA final files
+	@rm -rf	crpa_*/out crpa_*/*.nnkp crpa_*/*.wout crpa_*/*.amn crpa_*/*.mmn crpa_*/*.eig crpa_*/*.chk \
+                crpa_*/*.xyz crpa_*/*.dat crpa_*/*.mat crpa_*/*_band* \
+                crpa_*/crpa_cg.* crpa_*/crpa_ln.* crpa_*/crpa.q  \
+                crpa_*/*lanczos_chain* crpa_*/*.werr
 # Cleaning EPW final files
 	@rm -rf epw_*/_ph0 epw_*/*.save epw_*/*.wfc* epw_*/*.dyn* \
 		epw_*/*.qdos_* epw_*/*.P epw_*/*.wout epw_*/crystal*.fmt epw_*/*.pade* \
