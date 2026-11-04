@@ -23,8 +23,7 @@ set(sources
     dynmat_sub.f90
     h_prec.f90
     h_prec_freq.f90
-    incdrhoscf.f90
-    incdrhoscf_nc.f90
+    incdrhoscf_mod.f90
     dv_of_drho.f90
     dgradcorr.f90
     dnonloccorr.f90

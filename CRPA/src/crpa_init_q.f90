@@ -25,7 +25,7 @@ SUBROUTINE crpa_init_q()
   USE io_global,            ONLY : stdout
   USE buffers,              ONLY : get_buffer, save_buffer
   USE wavefunctions,        ONLY : evc
-  USE uspp,                 ONLY : vkb, okvan
+  USE uspp,                 ONLY : vkb, okvan, nkb
   USE eqv,                  ONLY : evq
   USE lrus,                 ONLY : becp1, becpt
   USE control_lr,           ONLY : lgamma
@@ -90,9 +90,10 @@ SUBROUTINE crpa_init_q()
      !
      IF (.NOT.lgamma .AND. nksq.EQ.1) CALL get_buffer (evq, lrwfc, iuwfc, ikq)
      !
-     ! 2) USPP: Compute the becp terms which are used in the rest of the code
+     ! 2) Compute becp1 = <vkb|evc> for all pseudopotentials (NC and USPP).
+     !    commutator_Hx_psi uses becp1 whenever nkb > 0, not only for USPP.
      !
-     IF (okvan) THEN
+     IF (nkb > 0) THEN
         !
         ! Compute the beta function vkb(k+G)
         !

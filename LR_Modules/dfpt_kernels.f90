@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2001-2018 Quantum ESPRESSO group
+! Copyright (C) 2025-2026 Quantum ESPRESSO Foundation
 ! This file is distributed under the terms of the
 ! GNU General Public License. See the file `License'
 ! in the root directory of the present distribution,
@@ -103,6 +103,7 @@ SUBROUTINE dfpt_kernel(code, npert, iter0, lrdvpsi, iudvpsi, dr2, dfpt_data, &
    USE noncollin_module,     ONLY : noncolin, domag, npol, nspin_mag
    USE paw_variables,        ONLY : okpaw
    USE paw_onecenter,        ONLY : paw_dpotential
+   USE ener,                 ONLY : ef, ef_cond
    USE efermi_shift,         ONLY : ef_shift_new, ef_shift_wfc_new
    USE lrus,                 ONLY : int3_paw, int3_nc
    USE control_lr,           ONLY : lgamma, niter_ph, nmix_ph, tr2_ph, alpha_mix, convt, &
@@ -119,6 +120,7 @@ SUBROUTINE dfpt_kernel(code, npert, iter0, lrdvpsi, iudvpsi, dr2, dfpt_data, &
    USE lr_two_chem,          ONLY : allocate_twochem, deallocate_twochem, &
                                     sternheimer_kernel_twochem, dbecsum_cond, &
                                     dbecsum_cond_nc, drhos_cond, ef_shift_wfc_twochem
+   USE localdos_mod,         ONLY : localdos_new
    !
    IMPLICIT NONE
    !
@@ -237,10 +239,10 @@ SUBROUTINE dfpt_kernel(code, npert, iter0, lrdvpsi, iudvpsi, dr2, dfpt_data, &
    !
    ! if q=0 for a metal: allocate and compute local DOS at Ef
    !
-   lmetq0 = (lgauss .OR. ltetra) .AND. lgamma
+   lmetq0 = (lgauss .OR. ltetra) .AND. lgamma .AND. .NOT. finite_freq
    IF (lmetq0) THEN
       CALL allocate_dfpt_ldos(ldos_data)
-      CALL localdos_wrapper(ldos_data)
+      CALL localdos_new(ldos_data,ef)
    endif
    !
    IF (twochem) CALL allocate_twochem(npert, nsolv)

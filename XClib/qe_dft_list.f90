@@ -25,7 +25,7 @@ MODULE qe_dft_list
   !
   SAVE
   !
-  INTEGER, PARAMETER :: nxc=10, ncc=14, ngcx=51, ngcc=14, nmeta=8
+  INTEGER, PARAMETER :: nxc=10, ncc=14, ngcx=51, ngcc=15, nmeta=8
   CHARACTER(LEN=4)   :: dft_LDAx_name(0:nxc),  dft_LDAc_name(0:ncc),  &
                         dft_GGAx_name(0:ngcx), dft_GGAc_name(0:ngcc), &
                         dft_MGGA_name(0:nmeta)
@@ -36,7 +36,7 @@ MODULE qe_dft_list
      INTEGER :: IDs(6)
   END TYPE dft_label
   !
-  INTEGER, PARAMETER :: n_dft=42
+  INTEGER, PARAMETER :: n_dft=43
   TYPE(dft_label) :: dft_full(n_dft)
   !
   !
@@ -61,7 +61,7 @@ MODULE qe_dft_list
   ! GGA correlation terms
   DATA dft_GGAc_name / 'NOGC', 'P86', 'GGC', 'BLYP', 'PBC', 'HCTH',     & ! 0 to  5
                        'NONE', 'B3LP','PSC', 'PBE' , 'xxxx','xxxx',     & ! 6 "  11
-                       'Q2DC', 'xxxx','BEEC' /                            !12 "  14
+                       'Q2DC', 'xxxx','BEEC', 'xxxx' /                    !12 "  15
   ! MGGA exchange+correlation terms
   DATA dft_MGGA_name / 'NONE', 'TPSS', 'M06L', 'TB09', 'NONE', 'SCAN',  & ! 0 to  5
                        'SCA0', 'xxxx', 'xxxx' /                           ! 6 "   8
@@ -246,6 +246,10 @@ MODULE qe_dft_list
   DATA dft_full(42)%name     / 'RSCAN' /
   DATA dft_full(42)%name2    / 'none' /
   DATA dft_full(42)%IDs(1:6) / 0,0,0,0,8,0 /
+  !
+  DATA dft_full(43)%name     / 'BEEF_LXC' /
+  DATA dft_full(43)%name2    / 'none'     /
+  DATA dft_full(43)%IDs(1:6) / 0,0,0,15,0,0 /  ! placeholder; converted to LibXC ID 286
   !
 CONTAINS
   !

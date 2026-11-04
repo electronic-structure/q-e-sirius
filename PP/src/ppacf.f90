@@ -41,7 +41,7 @@ PROGRAM do_ppacf
   USE mp_images,            ONLY : intra_image_comm
   USE mp_global,            ONLY : mp_startup
   USE mp_bands,             ONLY : intra_bgrp_comm
-  USE exx,                  ONLY : exxinit, exxenergy2, fock2, ecutfock, & 
+  USE exx,                  ONLY : exxinit, exxenergy2, exxenergyace, fock2, ecutfock, & 
                                    use_ace, aceinit, local_thr, nbndproj
   USE exx_base,             ONLY : exx_grid_init, exx_mp_init, exx_div_check, &
                                    exxdiv_treatment
@@ -90,7 +90,6 @@ PROGRAM do_ppacf
               ttcnl_check, tcnl_int
   REAL(DP), ALLOCATABLE :: Ec_nl_ngamma(:)
   REAL(DP) :: etc, etclda, etcgc,etcnl,etcnlncc
-  REAL(DP), EXTERNAL :: exxenergyace
   !
   INTEGER :: is, ir, iq, ig, icar, nnrtot
   ! counter on mesh points

@@ -15,7 +15,7 @@ default :
 	@echo ' '
 	@echo 'where <target> identifies an action'
 	@echo ' run-tests-XX [NPROCS=N NBGRP=M]  : run tests [optionally, on N processors and M band groups]'
-	@echo ' for XX=pw, cp, ph, pp, hp, tddfpt, kcw, all_currents, epw, zg, xsd-pw'
+	@echo ' for XX=pw, cp, ph, pp, hp, tddfpt, kcw, crpa, all_currents, epw, zg, xsd-pw'
 	@echo ' run-tests [NPROCS=N]             : run all tests above (except the last four)'
 	@echo ' run-custom-test testdir=DIR [NPROCS=N NBGRP=M]: run test in DIR only'
 	@echo ' compare                          : compare last output with reference'
@@ -29,6 +29,10 @@ default :
 prolog :
 	@sed "s|XXXXXX|$(ESPRESSO_ROOT)|g" < userconfig.tmp > userconfig
 	@if ! test -d $(ESPRESSO_TMPDIR); then mkdir $(ESPRESSO_TMPDIR); fi
+	@if ! test -f ph_multipole/ph.in.01; then touch ph_multipole/ph.in.01 ; fi
+	@if ! test -f ph_multipole/ph.in.02; then touch ph_multipole/ph.in.02 ; fi
+	@if ! test -f ph_multipole/ph.in.03; then touch ph_multipole/ph.in.03 ; fi
+	@if ! test -f ph_multipole/ph.in.04; then touch ph_multipole/ph.in.04 ; fi
 
 pseudo :
 	@./check_pseudo.sh pw_
@@ -39,6 +43,7 @@ pseudo :
 	@./check_pseudo.sh ph_
 	@./check_pseudo.sh QEHeat_
 	@./check_pseudo.sh kcw_
+	@./check_pseudo.sh crpa_
 	@./check_pseudo.sh oscdft_
 
 run-tests : run-tests-pw run-tests-cp run-tests-ph run-tests-pp run-tests-hp run-tests-tddfpt run-tests-kcw run-tests-pioud
@@ -72,6 +77,12 @@ run-tests-image : prolog pseudo
 
 run-tests-kcw : prolog pseudo
 	env QE_USE_MPI=$(NPROCS) ${TESTCODE_DIR}/bin/testcode.py --verbose  --category=kcw_all
+
+run-tests-crpa : prolog pseudo
+	env QE_USE_MPI=$(NPROCS) ${TESTCODE_DIR}/bin/testcode.py --verbose --category=crpa_all
+
+run-tests-crpa-metal : prolog pseudo
+	env QE_USE_MPI=$(NPROCS) ${TESTCODE_DIR}/bin/testcode.py --verbose --category=crpa_metal
 
 run-tests-all_currents : prolog pseudo
 	env QE_USE_MPI=$(NPROCS) ${TESTCODE_DIR}/bin/testcode.py --verbose --category=all_currents_all
@@ -111,6 +122,12 @@ create-reference-all_currents : pseudo prolog
 create-reference-oscdft : pseudo prolog
 	env QE_USE_MPI=$(NPROCS) ${TESTCODE_DIR}/bin/testcode.py --category=oscdft_all make-benchmarks
 
+create-reference-crpa : pseudo prolog
+	env QE_USE_MPI=$(NPROCS) ${TESTCODE_DIR}/bin/testcode.py --category=crpa_all make-benchmarks
+
+create-reference-crpa-metal : pseudo prolog
+	env QE_USE_MPI=$(NPROCS) ${TESTCODE_DIR}/bin/testcode.py --category=crpa_metal make-benchmarks
+
 compare : compare-cp compare-pw compare-ph compare-epw compare-tddfpt compare-hp compare-all_currents
 
 compare-cp : prolog
@@ -137,11 +154,11 @@ compare-all_currents : prolog pseudo
 
 clean:
 # output files
-	@rm -rf pw_*/test* ph_*/test* cp_*/test* hp_*/test* pp_*/test* epw_*/test* zg_*/test* tddfpt_*/test* kcw_*/test*
+	@rm -rf pw_*/test* ph_*/test* cp_*/test* hp_*/test* pp_*/test* epw_*/test* zg_*/test* tddfpt_*/test* kcw_*/test* crpa_*/test*
 # error files
-	@rm -rf pw_*/CRASH ph_*/CRASH* cp_*/CRASH hp_*/CRASH pp_*/CRASH epw_*/CRASH zg_*/CRASH tddfpt_*/CRASH kcw_*/CRASH
+	@rm -rf pw_*/CRASH ph_*/CRASH* cp_*/CRASH hp_*/CRASH pp_*/CRASH epw_*/CRASH zg_*/CRASH tddfpt_*/CRASH kcw_*/CRASH crpa_*/CRASH
 # temporary input files
-	@rm -rf pw_*/input_tmp.in ph_*/input_tmp.in cp_*/input_tmp.in hp_*/input_tmp.in pp_*/input_tmp.in epw_*/input_tmp.in zg_*/input_tmp.in tddfpt_*/input_tmp.in kcw_*/input_tmp.in
+	@rm -rf pw_*/input_tmp.in ph_*/input_tmp.in cp_*/input_tmp.in hp_*/input_tmp.in pp_*/input_tmp.in epw_*/input_tmp.in zg_*/input_tmp.in tddfpt_*/input_tmp.in kcw_*/input_tmp.in crpa_*/input_tmp.in
 # pwscf data files
 	@rm -rf pw_*/pwscf.* ph_*/pwscf.* pp_*/pwscf.* epw_*/pwscf.*
 # cp data files
@@ -161,6 +178,7 @@ clean:
 	        ph_U_metal_us/iron.* ph_U_insulator_us/bn.* ph_U_metal_paw/nickel.* ph_U_insulator_paw/bn.*
 	@rm -rf ph_*/*.wfc* ph_*/*.hub*
 	@rm -rf ph_1d/dynmat.axsf ph_1d/dynmat.mold
+	@rm -rf ph_raman/dynmat.axsf ph_raman/dynmat.mold
 	@rm -rf ph_2d/bn.frc ph_2d/bn.frq ph_2d/bn.frq.gp
 	@rm -rf ph_twochem/dynq1
 	@rm -rf ph_multipole/*npz ph_multipole/*fmt ph_multipole/*dat* ph_multipole/*pkl ph_multipole/*processing*
@@ -175,9 +193,14 @@ clean:
 # Cleaning KCW final files
 	@rm -rf	kcw_*/out kcw_*/*.nnkp kcw_*/*.wout kcw_*/*.amn kcw_*/*.mmn kcw_*/*.eig kcw_*/*band* kcw_*/*chk \
                 kcw_*/*.dat kcw_*/*.xyz kcw_*/*.mat 
+# Cleaning CRPA final files
+	@rm -rf	crpa_*/out crpa_*/*.nnkp crpa_*/*.wout crpa_*/*.amn crpa_*/*.mmn crpa_*/*.eig crpa_*/*.chk \
+                crpa_*/*.xyz crpa_*/*.dat crpa_*/*.mat crpa_*/*_band* \
+                crpa_*/crpa_cg.* crpa_*/crpa_ln.* crpa_*/crpa.q  \
+                crpa_*/*lanczos_chain* crpa_*/*.werr
 # Cleaning EPW final files
 	@rm -rf epw_*/_ph0 epw_*/*.save epw_*/*.wfc* epw_*/*.dyn* \
-		epw_*/*.qdos_* epw_*/*.P epw_*/*.wout epw_*/crystal.fmt epw_*/*.pade* \
+		epw_*/*.qdos_* epw_*/*.P epw_*/*.wout epw_*/crystal*.fmt epw_*/*.pade* \
 		epw_*/*.epmat_wanep epw_*/*.kgmap epw_*/*.nnkp epw_*/*.epmatwp* \
 		epw_*/*.acon_iso_* epw_*/*.a2f* epw_*/*.phdos* epw_*/*.lambda \
 		epw_*/*.kmap epw_*/*.lambda_k_pairs epw_*/*.ukk epw_*/*.imag_aniso* \
@@ -193,23 +216,23 @@ clean:
 		epw_*/*.bvec epw_*/*.fc epw_*/*.xml epw_*/*.labelinfo.dat \
 		epw_*/Fepmatkq1* epw_*/Fepmatkqcb1* epw_*/Fsparse* epw_*/Fsparsecb* \
 		epw_*/*.cube epw_*/EPW.bib \
-		epw_*/*_hr.dat epw_*/*_wsvec.dat epw_*/epwdata.fmt epw_*/IBTEvel_sup*.fmt \
-		epw_*/restart*.fmt epw_*/vmedata.fmt \
-		epw_*/selecq.fmt epw_*/dmedata.fmt epw_*/band.eig epw_*/ksdata.fmt \
-		epw_*/mobility_nk.fmt epw_*/mobility_nuq.fmt epw_*/inv_tau* \
-		epw_*/wigner.fmt epw_*/*.dos epw_*/*.dmat* epw_*/*.qmap epw_*/*.dwmatwe* \
+		epw_*/*_hr.dat epw_*/*_wsvec.dat epw_*/epwdata*.fmt epw_*/IBTEvel_sup*.fmt \
+		epw_*/restart*.fmt epw_*/vmedata*.fmt \
+		epw_*/selecq.fmt epw_*/dmedata*.fmt epw_*/band*.eig epw_*/ksdata*.fmt \
+		epw_*/mobility_nk*.fmt epw_*/mobility_nuq*.fmt epw_*/inv_tau* \
+		epw_*/wigner*.fmt epw_*/*.dos epw_*/*.dmat* epw_*/*.qmap epw_*/*.dwmatwe* \
 		epw_*/*.symk epw_*/*.sthmatwe* epw_*/*.xqc* epw_*/*.dgmatwe* epw_*/*.cpmew* \
-		epw_*/elself_wfpt_sup.* epw_*/*.bak epw_*/out.*
+		epw_*/elself_wfpt_sup.* epw_*/*.bak epw_*/out.* epw_*/m_effective*.fmt
 
 # Special cases for EPW
 	@rm -rf epw_base/save epw_super/save epw_super/*.bands.*.dat epw_pl/save/ epw_polar/save/ \
 		epw_trev/save epw_trev_uspp/save epw_trev_paw/save \
-		epw_mob/save epw_mob_ibte/save epw_mob_ibte_sym/save epw_mob_polar/save \
+		epw_mob/save epw_mob_ibte/save epw_mob_ibte_sym/save epw_mob_polar/save epw_mob_U/save \
 		epw_qdpt/save epw_2D/save epw_hall/save epw_qdpt/*.dat epw_wfpt/save \
 		epw_wfpt/matdyn.modes epw_plrn/*.plrn epw_plrn/plrn_tmp epw_plrn/save \
 		epw_plrn/dtau.plrn.xsf epw_tdbe/ie_ph.dat epw_tdbe/iph_e.dat          \
 		epw_tdbe/felec epw_tdbe/nphon epw_tdbe/*points epw_tdbe/selecq_tdbe.fmt \
-	        epw_tdbe/inv_tau_rta* epw_tdbe/ph_freq epw_tdbe/save
+	    epw_tdbe/inv_tau_rta* epw_tdbe/ph_freq epw_tdbe/save epw_lsda_metal/save
 
 # Cleaning IMAGE final files
 	@rm -rf image_*/_ph0 image_*/*.save image_*/*.xml image_*/*.dyn? image_*/*.dyn??  \

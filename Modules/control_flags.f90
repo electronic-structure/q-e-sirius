@@ -166,10 +166,8 @@ MODULE control_flags
   TYPE(offload_kind_acc) :: offload_acc  ! flag to select CUF/OpenACC offload type
   TYPE(offload_kind_omp) :: offload_omp  ! flag to select OpenMP5 offload type
   TYPE(offload_kind_cpu) :: offload_cpu  ! flag to select no offload type (CPU execution)
-#if defined(__CUDA)
+#if defined(_OPENACC)
   TYPE(offload_kind_acc) :: offload_type ! flag to point the actual currently used offload type 
-#elif defined(__OPENMP_GPU)
-  TYPE(offload_kind_omp) :: offload_type
 #else
   TYPE(offload_kind_cpu) :: offload_type
 #endif

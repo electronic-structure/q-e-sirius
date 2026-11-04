@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2001-2016 Quantum ESPRESSO group
+! Copyright (C) 2001-2026 Quantum ESPRESSO group
 ! This file is distributed under the terms of the
 ! GNU General Public License. See the file `License'
 ! in the root directory of the present distribution,
@@ -81,7 +81,7 @@ subroutine dvqpsi_us (ik, uact, addnlcc, becp1, alphap)
   nl_d  = dffts%nl
 #endif
   !
-  call start_clock_gpu ('dvqpsi_us')
+  call start_clock ('dvqpsi_us')
   allocate (dvlocin(dffts%nnr))
   allocate (aux2(dffts%nnr))
   !
@@ -105,7 +105,8 @@ subroutine dvqpsi_us (ik, uact, addnlcc, becp1, alphap)
   ! Compute dV_loc/dtau in real space
   !
   IF (.NOT. lmultipole) THEN
-    CALL compute_dvloc (uact, addnlcc, dvlocin)
+     CALL compute_dvloc (uact, .false., dvlocin)
+     if (addnlcc) CALL compute_dvloc_cc(uact, dvlocin)
   ELSE
     ! Bring potential in reciprocal space
     !$acc host_data use_device(dvlocin)
@@ -189,7 +190,7 @@ subroutine dvqpsi_us (ik, uact, addnlcc, becp1, alphap)
   !
   IF (lda_plus_u) CALL dvqhub_barepsi_us(ik, uact)
   !
-  call stop_clock_gpu ('dvqpsi_us')
+  call stop_clock ('dvqpsi_us')
   !
 #if !defined(__CUDA)
   DEALLOCATE(nl_d)

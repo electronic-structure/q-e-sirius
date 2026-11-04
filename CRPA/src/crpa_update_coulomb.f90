@@ -66,6 +66,8 @@ SUBROUTINE crpa_update_coulomb(iq, ipert, v_coul, dvscfs)
    COMPLEX(DP), ALLOCATABLE :: coulomb_matrix(:, :, :)
    !! Coulomb matrix elements in the band basis
    !
+   CALL start_clock('crpa_upd_coul')
+   !
    ! FIXME: Pool parallelization
    !
    IF (pert_basis == 'bands') THEN
@@ -133,6 +135,8 @@ SUBROUTINE crpa_update_coulomb(iq, ipert, v_coul, dvscfs)
       !
    ENDIF
    !
+   CALL stop_clock('crpa_upd_coul')
+   !
 END SUBROUTINE crpa_update_coulomb
 
 
@@ -152,15 +156,21 @@ SUBROUTINE crpa_compute_mel_wannier(dvscf, mel)
    USE fft_base,             ONLY : dffts
    USE buffers,              ONLY : get_buffer
    USE lsda_mod,             ONLY : lsda, current_spin, isk
-   USE wavefunctions,        ONLY : evc
    USE wvfct,                ONLY : nbnd, npwx
    USE ldaU,                 ONLY : lda_plus_u
    USE noncollin_module,     ONLY : nspin_mag, npol
-   USE eqv,                  ONLY : dvpsi, evq, dpsi
+   USE eqv,                  ONLY : dvpsi, dpsi
    USE qpoint,               ONLY : ikks, ikqs, nksq
    USE apply_dpot_mod,       ONLY : apply_dpot_bands
    USE w90_interface,        ONLY : num_wann
-   USE crpacom,              ONLY : dvbare, iuwan, lrwan
+   USE crpacom,              ONLY : dvbares, iuwan, lrwan
+   USE uspp,                 ONLY : okvan, nkb, vkb
+   USE uspp_param,           ONLY : upf, nh
+   USE ions_base,            ONLY : nat, ityp, ntyp => nsp
+   USE lrus,                 ONLY : int3
+   USE klist,                ONLY : ngk, igk_k, xk
+   USE uspp_init,            ONLY : init_us_2
+   USE becmod,               ONLY : bec_type, calbec, allocate_bec_type, deallocate_bec_type
    !
    IMPLICIT NONE
    !
@@ -171,35 +181,57 @@ SUBROUTINE crpa_compute_mel_wannier(dvscf, mel)
    !
    LOGICAL :: time_reversed
    !! If solving time reversed Sternheimer equation
-   INTEGER :: ik, ikk, ikq, ipert, nrec, npert
+   INTEGER :: ik, ikk, ikq, nrec, npert
+   INTEGER :: na, nt, ih, jh, ikb, jkb, ijkb0, ibnd, npw, npwq
+   COMPLEX(DP) :: sum_us
+   TYPE(bec_type) :: becp_wan
+   !! <beta|w>, the WANNIER projections (not becp1, which is <beta|psi_KS>)
    !! indices
+   COMPLEX(DP), ALLOCATABLE :: wan_k(:, :), wan_kq(:, :)
+   !! Wannier functions at k and k+q, read from the iuwan buffer. These must NOT
+   !! be the global evc/evq: those hold the KS states that the Sternheimer solver
+   !! called right after this routine (crpa_solve_linear_system -> dfpt_kernel)
+   !! relies on, and when nksq == 1 that solver does not re-read them
+   !! (see the guard in LR_Modules/response_kernels.f90). Overwriting them here
+   !! made the DFPT response contract against Wannier functions instead of KS
+   !! states, silently corrupting the screened Coulomb matrix elements.
+   !
+   CALL start_clock('crpa_mel_wan')
    !
    time_reversed = .FALSE.
    !
    mel = (0.d0, 0.d0)
    !
+   ALLOCATE(wan_k(npwx*npol, num_wann))
+   IF (okvan) CALL allocate_bec_type(nkb, num_wann, becp_wan)
+   ALLOCATE(wan_kq(npwx*npol, num_wann))
+   !
+   !$acc enter data create(dvpsi, dpsi)
+   !
    DO ik = 1, nksq
       !
       ikk = ikks(ik)
       ikq = ikqs(ik)
+      npw  = ngk(ikk)
+      npwq = ngk(ikq)
       !
       ! Read Wannier function from buffer
       !
-      CALL get_buffer(evc, lrwan, iuwan, ikk)
-      CALL get_buffer(evq, lrwan, iuwan, ikq)
+      CALL get_buffer(wan_k, lrwan, iuwan, ikk)
+      CALL get_buffer(wan_kq, lrwan, iuwan, ikq)
       !
       ! Compute dvpsi = dV_tot * psi_k
       !
       ! (1) Bare term dV_bare * psi_k is stored in iudvwfc
       !
-      CALL apply_dpot_bands(ik, num_wann, dvbare, evc, dvpsi)
+      CALL apply_dpot_bands(ik, num_wann, dvbares, wan_k, dvpsi)   ! smooth grid (see crpa_interpolate_dense_to_smooth)
       !
       ! (2) Induced term dvscf * psi_k
       !
       ! calculates dvscf_q*psi_k in G_space, for all bands, k=kpoint
       ! dvscf_q from previous iteration (mix_potential)
       !
-      CALL apply_dpot_bands(ik, num_wann, dvscf, evc, dpsi)
+      CALL apply_dpot_bands(ik, num_wann, dvscf, wan_k, dpsi)
       dvpsi = dvpsi + dpsi
       !
       ! (3) Additional contribution for USPP
@@ -208,28 +240,148 @@ SUBROUTINE crpa_compute_mel_wannier(dvscf, mel)
       !  selfconsist term which comes from the dependence of D on
       !  V_{eff} on the bare change of the potential
       !
-      IF (time_reversed) THEN
-         CALL adddvscf_ph_mag(ipert, ik)
-      ELSE
-         CALL adddvscf(ipert, ik)
+      ! USPP/PAW augmentation of this matrix element:
+      !
+      !    mel(j,i) += sum_nm int3_nm <w_{k+q,j}|beta_n^{k+q}> <beta_m^k|w_{k,i}>
+      !
+      ! implemented by adding  sum_n |beta_n^{k+q}> sum_m int3_nm <beta_m^k|w_i>
+      ! to dvpsi, so that the ZGEMM below (<wan_kq|dvpsi>) picks it up. Body
+      ! mirrors LR_Modules/adddvscf.f90, but adddvscf itself CANNOT be used
+      ! here: it hardcodes becp1(ik) from lrus, i.e. <beta|psi_KS>, whereas both
+      ! projections here must be onto the WANNIER functions (num_wann columns,
+      ! not nbnd). Calling it mixed two different band-index spaces.
+      ! int3 is built by the caller's newdq() from the SAME potential that
+      ! apply_dpot_bands applied above (dvbare, or dvbare + dvscf).
+      !
+      IF (okvan) THEN
+         ! KET projector at k, BRA at k+q - as in adddvscf, where
+         ! becp1(ik) = <beta^k|psi_k> while the zaxpy uses vkb at k+q. Building
+         ! the ket against the k+q vkb (and with npwq) cost ~1.8 % on the bare
+         ! U, and vanished at q=Gamma where k+q = k.
+         CALL init_us_2(npw, igk_k(1,ikk), xk(1,ikk), vkb, .true.)
+         !$acc update host(vkb)   ! init_us_2 fills vkb on the device; calbec/zaxpy/commutator below use the host copy
+         CALL calbec(npw, vkb, wan_k, becp_wan, num_wann)
+         CALL init_us_2(npwq, igk_k(1,ikq), xk(1,ikq), vkb, .true.)
+         !$acc update host(vkb)   ! init_us_2 fills vkb on the device; calbec/zaxpy/commutator below use the host copy
+         ijkb0 = 0
+         DO nt = 1, ntyp
+            IF (upf(nt)%tvanp) THEN
+               DO na = 1, nat
+                  IF (ityp(na) == nt) THEN
+                     DO ibnd = 1, num_wann
+                        DO ih = 1, nh(nt)
+                           ikb = ijkb0 + ih
+                           sum_us = (0.0_DP, 0.0_DP)
+                           DO jh = 1, nh(nt)
+                              jkb = ijkb0 + jh
+                              sum_us = sum_us + int3(ih, jh, na, current_spin, 1) * &
+                                                becp_wan%k(jkb, ibnd)
+                           ENDDO
+                           CALL zaxpy(npwq, sum_us, vkb(1,ikb), 1, dvpsi(1,ibnd), 1)
+                        ENDDO
+                     ENDDO
+                     ijkb0 = ijkb0 + nh(nt)
+                  ENDIF
+               ENDDO
+            ELSE
+               DO na = 1, nat
+                  IF (ityp(na) == nt) ijkb0 = ijkb0 + nh(nt)
+               ENDDO
+            ENDIF
+         ENDDO
       ENDIF
       !
-      ! (4) Additional contribution for DFPT + U
-      !
-      ! DFPT+U: add to dvpsi the scf part of the response
-      ! Hubbard potential dV_hub
-      !
-      IF (lda_plus_u) CALL adddvhubscf(ipert, ik)
+      ! IF (lda_plus_u) CALL adddvhubscf(1, ik)   ! see the comment above
       !
       ! Compute matrix element
       ! mel(j, i) = <psi_{k+q,j} | dV_tot * psi_{k,i}>
       !
       CALL ZGEMM('C', 'N', num_wann, num_wann, npwx*npol, (1.d0, 0.d0), &
-                 evq, npwx*npol, dvpsi, npwx*npol, (0.d0, 0.d0), &
+                 wan_kq, npwx*npol, dvpsi, npwx*npol, (0.d0, 0.d0), &
                  mel(:, :, ik), num_wann)
       !
    ENDDO ! ik
    !
+   DEALLOCATE(wan_k, wan_kq)
+   !
+   !$acc exit data delete(dvpsi, dpsi)
+   !
    CALL mp_sum(mel, intra_bgrp_comm)
    !
+   CALL stop_clock('crpa_mel_wan')
+   !
 END SUBROUTINE crpa_compute_mel_wannier
+
+!----------------------------------------------------------------------
+SUBROUTINE crpa_interpolate_dense_to_smooth(dv_dense, dv_smooth)
+   !----------------------------------------------------------------------
+   !
+   ! Copy a perturbing potential from the DENSE (dfftp) grid to the SMOOTH
+   ! (dffts) one, per spin component.
+   !
+   ! Needed because dv_of_drho() and newdq() work on dfftp while
+   ! apply_dpot_bands() declares its dummy as dv(dffts%nnr, nspin_mag). The two
+   ! grids coincide when doublegrid = .FALSE. (norm-conserving with the default
+   ! ecutrho = 4*ecutwfc), which is why every NC test passed while handing
+   ! apply_dpot_bands a dfftp-sized array; with USPP (ecutrho >> 4*ecutwfc,
+   ! e.g. dense 45^3 vs smooth 32^3) that silently reinterpreted dense data on
+   ! the smooth grid.
+   !
+   USE kinds,           ONLY : DP
+   USE fft_base,        ONLY : dfftp, dffts
+   USE fft_interfaces,  ONLY : fft_interpolate
+   USE gvecs,           ONLY : doublegrid
+   USE noncollin_module,ONLY : nspin_mag
+   !
+   IMPLICIT NONE
+   !
+   COMPLEX(DP), INTENT(IN)  :: dv_dense (dfftp%nnr, nspin_mag)
+   COMPLEX(DP), INTENT(OUT) :: dv_smooth(dffts%nnr, nspin_mag)
+   !
+   INTEGER :: is
+   !
+   IF (doublegrid) THEN
+      DO is = 1, nspin_mag
+         CALL fft_interpolate(dfftp, dv_dense(:,is), dffts, dv_smooth(:,is))
+      ENDDO
+   ELSE
+      dv_smooth(:,:) = dv_dense(:,:)
+   ENDIF
+   !
+   RETURN
+   !
+END SUBROUTINE crpa_interpolate_dense_to_smooth
+!
+!-----------------------------------------------------------------------
+SUBROUTINE crpa_dv_bare(drho)
+   !-----------------------------------------------------------------------
+   !! dv_of_drho() for an external leg of the screened Coulomb interaction W.
+   !! The kernel it applies is selected by crpa_xcmode:
+   !!   'TCTC' (default): force the bare Coulomb kernel (lrpa = .true.)
+   !!   'TETE'          : leave lrpa as given (must be .false.), so the leg
+   !!                     carries v + f_xc
+   !! The screening kernel is applied by dv_of_drho and always follows lrpa.
+   !
+   USE kinds,         ONLY : DP
+   USE fft_base,      ONLY : dfftp
+   USE noncollin_module, ONLY : nspin_mag
+   USE control_lr,    ONLY : lrpa
+   USE dv_of_drho_lr, ONLY : dv_of_drho
+   USE crpacom,       ONLY : crpa_xcmode
+   !
+   IMPLICIT NONE
+   COMPLEX(DP), INTENT(INOUT) :: drho(dfftp%nnr, nspin_mag)
+   LOGICAL :: lrpa_save
+   !
+   lrpa_save = lrpa
+   IF (TRIM(crpa_xcmode) == 'TCTC') lrpa = .TRUE.
+   ! drho is filled on the host, but may also be on the device (dvbare):
+   ! dv_of_drho then works on the device copy (present_or_copy), so refresh
+   ! it before and bring the result back after
+   !$acc update device(drho) if_present
+   CALL dv_of_drho(drho)
+   !$acc update self(drho) if_present
+   lrpa      = lrpa_save
+   !
+   RETURN
+END SUBROUTINE crpa_dv_bare

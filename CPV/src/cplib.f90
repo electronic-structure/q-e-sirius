@@ -1936,41 +1936,6 @@ end subroutine dylmr2_
 
       END SUBROUTINE nlfl_bgrp_x
 !
-!-----------------------------------------------------------------------
-      SUBROUTINE pbc(rin,a1,a2,a3,ainv,rout)
-      !-----------------------------------------------------------------------
-      !! Brings atoms inside the unit cell.
-      !
-      USE kinds,  ONLY: DP
-
-      IMPLICIT NONE
-! input
-      REAL(DP) rin(3), a1(3),a2(3),a3(3), ainv(3,3)
-! output
-      REAL(DP) rout(3)
-! local
-      REAL(DP) x,y,z
-!
-! bring atomic positions to crystal axis
-!
-      x = ainv(1,1)*rin(1)+ainv(1,2)*rin(2)+ainv(1,3)*rin(3)
-      y = ainv(2,1)*rin(1)+ainv(2,2)*rin(2)+ainv(2,3)*rin(3)
-      z = ainv(3,1)*rin(1)+ainv(3,2)*rin(2)+ainv(3,3)*rin(3)
-!
-! bring x,y,z in the range between -0.5 and 0.5
-!
-      x = x - NINT(x)
-      y = y - NINT(y)
-      z = z - NINT(z)
-!
-! bring atomic positions back in cartesian axis
-!
-      rout(1) = x*a1(1)+y*a2(1)+z*a3(1)
-      rout(2) = x*a1(2)+y*a2(2)+z*a3(2)
-      rout(3) = x*a1(3)+y*a2(3)+z*a3(3)
-!
-      RETURN
-      END SUBROUTINE pbc
 
 !
 !-------------------------------------------------------------------------

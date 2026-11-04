@@ -13,7 +13,10 @@ SRCS = test_diaghg_1.f90 \
        test_diaghg_gpu_1.f90 \
        test_diaghg_gpu_2.f90 \
        test_diaghg_gpu_3.f90 \
-       test_diaghg_gpu_4.f90
+       test_diaghg_gpu_4.f90 \
+       test_diagh_1.f90 \
+       test_diagh_2.f90 \
+       test_diagh_4.f90
 
 EXECS = $(SRCS:.f90=.x)
 

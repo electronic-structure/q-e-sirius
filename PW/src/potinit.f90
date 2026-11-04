@@ -34,7 +34,7 @@ SUBROUTINE potinit()
   USE gvect,                ONLY : ngm, gstart, g, gg, ig_l2g
   USE gvecs,                ONLY : doublegrid
   USE control_flags,        ONLY : lscf, gamma_only, restart, sic
-  USE scf,                  ONLY : rho, rho_core, rhog_core, &
+  USE scf,                  ONLY : rho, rho_core, rhog_core, tau_core, &
                                    vltot, v, vrs, kedtau
   USE xc_lib,               ONLY : xclib_dft_is
   USE ener,                 ONLY : ehart, etxc, vtxc, epaw, esol, vsol
@@ -278,7 +278,7 @@ SUBROUTINE potinit()
   !
   ! ... compute the potential and store it in v
   !
-  CALL v_of_rho( rho, rho_core, rhog_core, &
+  CALL v_of_rho( rho, rho_core, rhog_core, tau_core, &
                  ehart, etxc, vtxc, eth, etotefield, charge, v )
   IF (okpaw) CALL PAW_potential(rho%bec, ddd_paw, epaw)
   !

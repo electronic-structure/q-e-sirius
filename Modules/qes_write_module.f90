@@ -805,6 +805,16 @@ MODULE qes_write_module
            CALL xml_addCharacters(xp, obj%localization_threshold, fmt='s16')
         CALL xml_EndElement(xp, "localization_threshold")
      END IF
+     IF (obj%use_ace_ispresent) THEN
+        CALL xml_NewElement(xp, "use_ace")
+           CALL xml_addCharacters(xp, obj%use_ace)
+        CALL xml_EndElement(xp, "use_ace")
+     END IF
+     IF (obj%nbndproj_ispresent) THEN
+        CALL xml_NewElement(xp, "nbndproj")
+           CALL xml_addCharacters(xp, obj%nbndproj)
+        CALL xml_EndElement(xp, "nbndproj")
+     END IF
      CALL xml_EndElement(xp, TRIM(obj%tagname))
    END SUBROUTINE qes_write_hybrid
 

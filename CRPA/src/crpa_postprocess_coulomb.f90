@@ -18,6 +18,7 @@ SUBROUTINE crpa_postprocess_coulomb(iq)
    USE lsda_mod,      ONLY : nspin
    USE io_files,      ONLY : prefix, tmp_dir
    USE crpacom,       ONLY : v_coul_bare, v_coul_scrd, filU
+   USE crpa_pert,     ONLY : pert_basis
    !
    IMPLICIT NONE
    !
@@ -34,27 +35,36 @@ SUBROUTINE crpa_postprocess_coulomb(iq)
    !
    CALL start_clock('crpa_postproc')
    !
-   IF (ionode) THEN
+   ! Wannier basis (CG and Lanczos): filU.bare#iq and filU.scrd#iq, with
+   ! the frequency of every row, see crpa_write_coulomb_lanczos
+   !
+   IF (pert_basis == 'wannier') THEN
+      !
+      CALL crpa_write_coulomb_lanczos(iq)
+      !
+      ! Qe-Sirius CI-CD output file (first frequency)
+      IF (ionode) THEN
+         filename=  "crpa_iq" // TRIM(int_to_char(iq)) // ".yml"
+         OPEN (NEWUNIT = iun, FILE = TRIM(filename), ERR = 100, IOSTAT = ios)
+         CALL write_yml(iun, v_coul_bare, v_coul_scrd(:,:,1))
+         CLOSE(iun, STATUS = "keep")
+      ENDIF
+      !
+   ELSEIF (ionode) THEN
       !
       WRITE(stdout, '(/5x, a)') "Writing Coulomb matrix elements to file"
       !
       filename = TRIM(filU) // ".bare" // TRIM(int_to_char(iq))
       OPEN (NEWUNIT = iun, FILE = TRIM(filename), ERR = 100, IOSTAT = ios)
-      CALL write_coulomb(iun, v_coul_bare)
+      CALL write_coulomb_bands(iun, v_coul_bare)
       CLOSE(iun, STATUS = "keep")
       !
       filename = TRIM(filU) // ".scrd" // TRIM(int_to_char(iq))
       OPEN (NEWUNIT = iun, FILE = TRIM(filename), ERR = 100, IOSTAT = ios)
-      CALL write_coulomb(iun, v_coul_scrd)
+      CALL write_coulomb_bands(iun, v_coul_scrd(:,:,1))
       CLOSE(iun, STATUS = "keep")
       !
       WRITE(stdout, '(5x, a/)') "Done writing Coulomb matrix elements to file"
-      !
-      ! Qe-Sirius CI-CD output file
-      filename=  "crpa_iq" // TRIM(int_to_char(iq)) // ".yml"
-      OPEN (NEWUNIT = iun, FILE = TRIM(filename), ERR = 100, IOSTAT = ios)
-      CALL write_yml(iun, v_coul_bare, v_coul_scrd)
-      CLOSE(iun, STATUS = "keep")
       !
    ENDIF
    !
@@ -64,25 +74,6 @@ SUBROUTINE crpa_postprocess_coulomb(iq)
 100  CALL errore('crpa_postprocess_coulomb', 'opening file' // TRIM(filename), ABS(ios))
    !
 CONTAINS
-!
-SUBROUTINE write_coulomb(iun, v)
-   !
-   USE crpa_pert,     ONLY : npert_tot, nmels_tot
-   USE crpa_pert,     ONLY : pert_basis
-   !
-   IMPLICIT NONE
-   !
-   INTEGER, INTENT(IN) :: iun
-   !! Unit number to write to
-   COMPLEX(DP), INTENT(IN) :: v(nmels_tot, npert_tot)
-   !
-   IF (pert_basis == 'bands') THEN
-      CALL write_coulomb_bands(iun, v)
-   ELSEIF (pert_basis == 'wannier') THEN
-      CALL write_coulomb_wannier(iun, v)
-   ENDIF
-   !
-END SUBROUTINE write_coulomb
 !
 SUBROUTINE write_coulomb_bands(iun, v)
    !
@@ -116,40 +107,6 @@ SUBROUTINE write_coulomb_bands(iun, v)
    ENDDO
    !
 END SUBROUTINE write_coulomb_bands
-!
-SUBROUTINE write_coulomb_wannier(iun, v)
-   !
-   USE constants,     ONLY : RYTOEV
-   USE crpa_pert,     ONLY : npert_tot, pert_iwlist, pert_jwlist, pert_Rlist, &
-                             nmels_tot, mels_iwlist, mels_jwlist, mels_Rlist
-   !
-   IMPLICIT NONE
-   !
-   INTEGER, INTENT(IN) :: iun
-   !! Unit number to write to
-   COMPLEX(DP), INTENT(IN) :: v(nmels_tot, npert_tot)
-   !
-   INTEGER :: iw1, iw2, jw1, jw2, R1(3), R2(3), ipert1, ipert2
-   !
-   WRITE(iun, '(a)') "# iw1 jw1 R1a R1b R1c iw2 jw2 R2a R2b R2c      Re V (eV)      Im V (eV)"
-   !
-   DO ipert2 = 1, npert_tot
-      !
-      iw2 = pert_iwlist(ipert2)
-      jw2 = pert_jwlist(ipert2)
-      R2  = pert_Rlist(:, ipert2)
-      !
-      DO ipert1 = 1, nmels_tot
-         !
-         iw1 = mels_iwlist(ipert1)
-         jw1 = mels_jwlist(ipert1)
-         R1  = mels_Rlist(:, ipert1)
-         !
-         WRITE(iun, '(10I4, 2F20.12)') iw1, jw1, R1, iw2, jw2, R2, v(ipert1, ipert2) * RYTOEV
-      ENDDO
-   ENDDO
-   !
-END SUBROUTINE write_coulomb_wannier
 !
 SUBROUTINE write_yml(iun, v, u)
    !

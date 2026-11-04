@@ -36,8 +36,6 @@ subroutine drho
   USE paw_variables,    ONLY : okpaw
   USE control_ph, ONLY : all_done
   USE lrus,       ONLY : becp1
-  USE klist,      ONLY : lgauss
-  USE two_chem,   ONLY : twochem
   USE qpoint,     ONLY : nksq
   USE control_lr, ONLY : lgamma, rec_code_read
 
@@ -96,10 +94,8 @@ subroutine drho
   !    due to the displacement of the augmentation charge
   !
   call compute_becsum_ph()
-  if(twochem.and.lgamma.and.lgauss) call compute_becsum_ph_cond()
   !
   call compute_alphasum()
-  if(twochem.and.lgamma.and.lgauss) call compute_alphasum_cond()
   !
   !    then compute the weights
   !
@@ -251,7 +247,7 @@ subroutine drho
      
      ! Process augmentation density for entire batch
      mode_batch_start = mode - npe_total
-     call addusddens (drhoust, dbecsum(1,1,1,mode_batch_start+1), mode_batch_start, npe_total)
+     call addusddens_pulay (drhoust, dbecsum(1,1,1,mode_batch_start+1), mode_batch_start, npe_total)
      
      ! Save buffers for all perturbations in batch
      do iper = 1, npe_total

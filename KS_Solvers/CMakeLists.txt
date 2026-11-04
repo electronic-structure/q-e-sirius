@@ -52,9 +52,13 @@ set(src_paro
 qe_enable_cuda_fortran("${src_paro}")
 
 set(src_rmmdiis
-    RMM/crmmdiagg.f90 
-    RMM/rrmmdiagg.f90) 
+    RMM/crmmdiagg.f90
+    RMM/rrmmdiagg.f90)
     qe_enable_cuda_fortran("${src_rmmdiis}")
+
+set(src_direct
+    Direct/direct_diag_k.f90)
+qe_enable_cuda_fortran("${src_direct}")
 
 qe_add_library(qe_kssolver_davidson ${src_davidson})
 target_link_libraries(qe_kssolver_davidson
@@ -118,7 +122,14 @@ target_link_libraries(qe_kssolver_rmmdiis
         qe_openacc_fortran
         qe_utilx
 	qe_devxlib
-        qe_mpi_fortran )  
+        qe_mpi_fortran )
+
+qe_add_library(qe_kssolver_direct ${src_direct})
+target_link_libraries(qe_kssolver_direct
+    PRIVATE
+        qe_lax
+        qe_utilx
+        qe_mpi_fortran)
 
 ###########################################################
 
@@ -128,4 +139,5 @@ qe_install_targets(
     qe_kssolver_cg
     qe_kssolver_paro
     qe_kssolver_dense
-    qe_kssolver_rmmdiis)
+    qe_kssolver_rmmdiis
+    qe_kssolver_direct)

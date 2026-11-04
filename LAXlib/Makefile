@@ -13,6 +13,8 @@ la_module.o \
 la_helper.o \
 cdiaghg.o \
 rdiaghg.o \
+cdiagh.o \
+rdiagh.o \
 dspev_drv.o \
 ptoolkit.o \
 transto.o \

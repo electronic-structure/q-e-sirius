@@ -89,7 +89,7 @@ SUBROUTINE lr_calc_dens_magnons (drhoscf, dpsi, L_dag)
   ALLOCATE (psi  (dffts%nnr, npol))
   ALLOCATE (dpsic(dffts%nnr, npol))
   !
-  CALL start_clock_gpu ('lr_calc_dens')
+  CALL start_clock ('lr_calc_dens')
   !
   ALLOCATE (drhoscfh(dffts%nnr,nspin_mag))
   !
@@ -293,7 +293,7 @@ SUBROUTINE lr_calc_dens_magnons (drhoscf, dpsi, L_dag)
   !
   DEALLOCATE (psi, dpsic )
   !
-  CALL stop_clock_gpu ('lr_calc_dens')
+  CALL stop_clock ('lr_calc_dens')
   !
   RETURN
   !

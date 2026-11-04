@@ -40,6 +40,18 @@ crpa_dealloc_q.o \
 crpa_close_q.o \
 crpa_init.o \
 crpa_compute_perturbation_q.o \
+crpa_build_freq_grid.o \
+crpa_coul_lanczos.o \
+crpa_allocate_coul_lanczos.o \
+crpa_restart_coul_lanczos.o \
+crpa_restart_coul_cg.o \
+crpa_average_w.o \
+crpa_do_lanczos_coulomb.o \
+crpa_calc_coulomb_lanczos.o \
+crpa_extrapolate_coul.o \
+crpa_diel_lanczos_chain_io.o \
+crpa_coul_lanczos_chain_io.o \
+crpa_run_spectrum_only.o \
 crpa_symmetry.o \
 crpa_summary.o \
 crpa_setup_wannier.o \
@@ -48,7 +60,18 @@ crpa_postprocess_coulomb.o \
 crpa_update_coulomb.o \
 crpa_copy_original_xk.o \
 lr_compute_matrix_elements.o \
-crpa_q0correction.f90
+crpa_q0correction.o \
+crpa_phescf_w.o \
+crpa_solve_e_w.o \
+crpa_dielec.o \
+crpa_plasma_frequency.o \
+crpa_diel_lanczos.o \
+crpa_allocate_diel_lanczos.o \
+crpa_do_lanczos_epsilon.o \
+crpa_psym_diel.o \
+crpa_calc_chi_epsilon.o \
+crpa_extrapolate_diel.o \
+crpa_restart_diel_lanczos.o
 
 # crpa_skip_nscf_by_rotate.o
 

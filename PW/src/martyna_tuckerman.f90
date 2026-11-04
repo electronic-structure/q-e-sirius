@@ -74,7 +74,7 @@ CONTAINS
     !
     INTEGER :: ig
     !
-    !$acc data copyin(rho) copyout(v)
+    !$acc data present_or_copyin(rho) present_or_copyout(v)
     !
     IF (.NOT. wg_corr_is_updated) CALL init_wg_corr
     !

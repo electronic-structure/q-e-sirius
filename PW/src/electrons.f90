@@ -23,8 +23,8 @@ SUBROUTINE electrons()
                                    vtxc, etxc, etxcc, ewld, demet, epaw, &
                                    elondon, edftd3, vsol, esol, ef_up, ef_dw
   USE tsvdw_module,         ONLY : EtsvdW
-  USE scf,                  ONLY : rho, rho_core, rhog_core, v, vltot, vrs, &
-                                   kedtau, vnew
+  USE scf,                  ONLY : rho, rho_core, rhog_core, tau_core, v, vltot, &
+                                   vrs, kedtau, vnew
   USE control_flags,        ONLY : tr2, nexxiter, conv_elec, restart, lmd, &
                                    do_makov_payne, sic
   USE sic_mod,              ONLY : sic_energy, occ_f2fn, occ_fn2f, save_rhon, sic_first
@@ -34,7 +34,7 @@ SUBROUTINE electrons()
   USE wvfct,                ONLY : nbnd, wg, et
   USE klist,                ONLY : nks
   USE uspp,                 ONLY : okvan
-  USE exx,                  ONLY : aceinit,exxinit, exxenergy2, exxbuff, &
+  USE exx,                  ONLY : aceinit,exxinit, exxenergy2, exxenergyace, exxbuff, &
                                    fock0, fock1, fock2, fock3, dexx, use_ace, local_thr, &
                                    domat
   USE xc_lib,               ONLY : xclib_dft_is, exx_is_active, stop_exx
@@ -60,8 +60,6 @@ SUBROUTINE electrons()
   REAL(DP) :: charge
   !! the total charge
   REAL(DP) :: exxen
-  !! used to compute exchange energy
-  REAL(DP), EXTERNAL :: exxenergyace
   INTEGER :: idum
   !! dummy counter on iterations
   INTEGER :: iter
@@ -139,7 +137,7 @@ SUBROUTINE electrons()
            domat = .false.
 ! 
            !
-           CALL v_of_rho( rho, rho_core, rhog_core, &
+           CALL v_of_rho( rho, rho_core, rhog_core, tau_core, &
                ehart, etxc, vtxc, eth, etotefield, charge, v)
            IF (lrism) CALL rism_calc3d(rho%of_g(:, 1), esol, vsol, v%of_r, tr2)
            IF (okpaw) CALL PAW_potential(rho%bec, ddd_paw, epaw,etot_cmp_paw)
@@ -232,7 +230,7 @@ SUBROUTINE electrons()
         ! Recalculate potential because XC functional has changed,
         ! start self-consistency loop on exchange
         !
-        CALL v_of_rho( rho, rho_core, rhog_core, &
+        CALL v_of_rho( rho, rho_core, rhog_core, tau_core, &
              ehart, etxc, vtxc, eth, etotefield, charge, v)
         etot = etot + etxc + exxen
         !
@@ -388,7 +386,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
   USE kinds,                ONLY : DP
   USE check_stop,           ONLY : check_stop_now, stopped_by_user
   USE io_global,            ONLY : stdout, ionode
-  USE cell_base,            ONLY : at, bg, alat, omega, tpiba2
+  USE cell_base,            ONLY : at, bg, alat, omega, tpiba2, pbc
   USE ions_base,            ONLY : zv, nat, nsp, ityp, tau, compute_eextfor, atm, &
                                    ntyp => nsp
   USE starting_scf,         ONLY : starting_pot
@@ -409,7 +407,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
                                    egrand, vsol, esol, esic, esci
   USE scf,                  ONLY : scf_type, scf_type_COPY, bcast_scf_type,&
                                    create_scf_type, destroy_scf_type, &
-                                   scf_ns_copy, rho, rho_core, rhog_core, &
+                                   scf_ns_copy, rho, rho_core, rhog_core, tau_core, &
                                    v, vltot, vrs, kedtau, vnew
   USE mix,                  ONLY : open_mix_file, close_mix_file, mix_rho
   USE control_flags,        ONLY : mixing_beta, tr2, ethr, niter, nmix, &
@@ -426,7 +424,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
                                    niter_with_fixed_ns, hub_pot_fix, &
                                    v_nsg, at_sc, neighood, &
                                    ldim_u, is_hubbard_back, apply_U, orbital_resolved
-  USE extfield,             ONLY : tefield, etotefield, gate, etotgatefield !TB
+  USE extfield,             ONLY : tefield, dipfield, etotefield, gate, etotgatefield, edir !TB
   USE noncollin_module,     ONLY : noncolin, magtot_nc, i_cons,  bfield, &
                                    lambda, report, domag, nspin_mag, npol
   USE io_rho_xml,           ONLY : write_scf
@@ -447,6 +445,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
   USE paw_symmetry,         ONLY : PAW_symmetrize_ddd
   USE dfunct,               ONLY : newd
   USE esm,                  ONLY : do_comp_esm, esm_printpot, esm_ewald
+  USE printpot_module,      ONLY : printpot
   USE gcscf_module,         ONLY : lgcscf, gcscf_mu, gcscf_ignore_mun, gcscf_set_nelec
   USE clib_wrappers,        ONLY : memstat
   USE fcp_module,           ONLY : lfcp, fcp_mu
@@ -596,7 +595,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
     CALL start_clock( 'electrons' )
     ! look only for the convergence of the density; converge total energy only to 10^-4
     CALL sirius_initialize_subspace(gs_handler, ks_handler)
-    CALL sirius_find_ground_state(gs_handler, density_tol=SQRT(tr2), energy_tol=1d-4, initial_guess=.false.,&
+    CALL sirius_find_ground_state(gs_handler, density_tol=tr2, energy_tol=1d-4, initial_guess=.false.,&
         &max_niter=niter, iter_solver_tol=ethr, save_state=.false., converged=conv_elec, niter=iter)
     IF (conv_elec) THEN
       n_scf_steps = iter
@@ -748,14 +747,11 @@ SUBROUTINE electrons_scf ( printout, exxen )
      CALL start_clock('energy_dftd3')
      ! taupbc are atomic positions in alat units, centered around r=0
      ALLOCATE ( taupbc(3,nat) )
-     taupbc(:,:) = tau(:,:)
-     CALL cryst_to_cart( nat, taupbc, bg, -1 ) 
-     taupbc(:,:) = taupbc(:,:) - NINT(taupbc(:,:))
-     CALL cryst_to_cart( nat, taupbc, at,  1 ) 
      DO na = 1, nat
+        taupbc(:,na) = pbc( tau(:,na)*alat )
         atnum(na) = get_atomic_number(TRIM(atm(ityp(na))))
      ENDDO
-     call dftd3_pbc_dispersion(dftd3, alat*taupbc, atnum, alat*at, edftd3)
+     call dftd3_pbc_dispersion(dftd3, taupbc, atnum, alat*at, edftd3)
      edftd3=edftd3*2.d0
      DEALLOCATE( taupbc)
      CALL stop_clock('energy_dftd3')
@@ -1049,7 +1045,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
            ENDIF
            !
            !
-           CALL v_of_rho( rhoin, rho_core, rhog_core, &
+           CALL v_of_rho( rhoin, rho_core, rhog_core, tau_core, &
                           ehart, etxc, vtxc, eth, etotefield, charge, v )
            !
            IF (lrism) THEN
@@ -1092,7 +1088,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
            !
            vnew%of_r(:,:) = v%of_r(:,:)
            !
-           CALL v_of_rho( rho,rho_core,rhog_core, &
+           CALL v_of_rho( rho,rho_core,rhog_core,tau_core, &
                           ehart, etxc, vtxc, eth, etotefield, charge, v )
            !
            IF (lrism) THEN
@@ -1303,6 +1299,7 @@ SUBROUTINE electrons_scf ( printout, exxen )
         ! ... print out ESM potentials if desired
         !
         IF ( do_comp_esm ) CALL esm_printpot( rho%of_g )
+        IF ( tefield .AND. dipfield ) CALL printpot( rho%of_g(:,1), rho%of_r, edir )
         !
         ! ... print out 3D-RISM potentials if desired
         !
@@ -1958,72 +1955,3 @@ SUBROUTINE electrons_scf ( printout, exxen )
   END SUBROUTINE print_energies
   !
 END SUBROUTINE electrons_scf
-!
-!----------------------------------------------------------------------------
-FUNCTION exxenergyace( )
-  !--------------------------------------------------------------------------
-  !! Compute exchange energy using ACE
-  !
-  USE kinds,              ONLY : DP
-  USE buffers,            ONLY : get_buffer
-  USE exx,                ONLY : vexxace_gamma, vexxace_k, domat, &
-                                 vexxace_gamma_gpu, vexxace_k_gpu
-  USE klist,              ONLY : nks, ngk
-  USE wvfct,              ONLY : nbnd, npwx, current_k
-  USE lsda_mod,           ONLY : lsda, isk, current_spin
-  USE io_files,           ONLY : iunwfc, nwordwfc
-  USE mp_pools,           ONLY : inter_pool_comm
-  USE mp_bands,           ONLY : intra_bgrp_comm
-  USE mp,                 ONLY : mp_sum
-  USE control_flags,      ONLY : gamma_only, use_gpu
-  USE wavefunctions,      ONLY : evc
-  !
-  IMPLICIT NONE
-  !
-  REAL(DP) :: exxenergyace
-  !! computed energy
-  !
-  ! ... local variables
-  !
-  REAL(DP) :: ex
-  INTEGER :: ik, npw
-  !
-  domat = .TRUE.
-  exxenergyace=0.0_dp
-  !
-  DO ik = 1, nks
-     npw = ngk (ik)
-     !
-     current_k = ik
-     IF ( lsda ) current_spin = isk(ik)
-     !
-     IF (nks > 1) THEN
-        CALL get_buffer( evc, nwordwfc, iunwfc, ik )
-        !$acc update device(evc)
-     ENDIF
-     !
-     IF (gamma_only) THEN
-        IF (use_gpu) THEN
-          !$acc host_data use_device(evc)
-          CALL vexxace_gamma_gpu( npw, nbnd, evc, ex )
-          !$acc end host_data
-        ELSE
-          CALL vexxace_gamma( npw, nbnd, evc, ex )
-        END IF
-     ELSE
-        IF (use_gpu) THEN
-          !$acc host_data use_device(evc)
-          CALL vexxace_k_gpu( npw, nbnd, evc, ex )
-          !$acc end host_data
-        ELSE
-          CALL vexxace_k( npw, nbnd, evc, ex )
-        ENDIF
-     ENDIF
-     exxenergyace = exxenergyace + ex
-  ENDDO
-  !
-  CALL mp_sum( exxenergyace, inter_pool_comm )
-  !
-  domat = .FALSE.
-  !
-END FUNCTION exxenergyace

@@ -17,6 +17,8 @@ SUBROUTINE crpa_close_q ( flag )
   USE buffers,        ONLY : close_buffer
   USE io_files,       ONLY : iunhub
   USE units_lr,       ONLY : iuwfc, iuatswfc, iudwf, iudvwfc
+  USE units_ph,       ONLY : iuebar, iucom
+  USE uspp,           ONLY : okvan
   USE control_lr,     ONLY : lgamma
   USE ldaU,           ONLY : lda_plus_u
   USE crpacom,        ONLY : lrwan, iuwan
@@ -43,5 +45,8 @@ SUBROUTINE crpa_close_q ( flag )
   IF (lgamma) CALL close_buffer(iunhub,'delete')
   !
   IF (pert_basis == 'wannier') CALL close_buffer(iuwan,'delete')
+  !
+  CALL close_buffer(iuebar,'delete')
+  IF (okvan) CALL close_buffer(iucom,'delete')
   !
 END SUBROUTINE crpa_close_q

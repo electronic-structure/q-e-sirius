@@ -32,15 +32,20 @@ SUBROUTINE crpa_run_nscf (do_band)
   USE control_lr,      ONLY : lgamma, ethr_nscf, conv_thr_nscf
   USE lr_symm_base,    ONLY : nsymq, invsymq
   USE crpacom,         ONLY : tmp_dir_save, tmp_dir_crpa
+  USE crpa_pert,       ONLY : pert_basis
+  USE start_k,         ONLY : nks_start, wk_start
   USE noncollin_module,ONLY : noncolin, domag
   USE ldaU,            ONLY : lda_plus_u_kind
   USE rism_module,     ONLY : lrism, rism_set_restart
+  USE kinds,           ONLY : DP
+  USE random_numbers,  ONLY : randy
   USE noncollin_module,ONLY : noncolin, domag
   !
   IMPLICIT NONE
   !
   LOGICAL, INTENT(IN) :: do_band
   LOGICAL :: exst
+  REAL(DP) :: arg
   INTEGER :: verbosity_save
   !
   CALL start_clock( 'crpa_run_nscf' )
@@ -63,6 +68,13 @@ SUBROUTINE crpa_run_nscf (do_band)
   conv_ions      = .TRUE.
   ethr_nscf      = MAX(1.D-13, 0.1D0 * MIN( 1.D-2, conv_thr_nscf / nelec ))
   !
+  ! Reseed the random-number generator, as PHonon does at every q (set_irr:
+  ! arg = randy(0)). When the pseudopotentials carry no atomic wavefunctions
+  ! the NSCF starts from random vectors (wfcinit); reseeding makes them
+  ! independent of whatever drew random numbers earlier in the run (e.g.
+  ! another q point), so a q point gives the same result in any run.
+  arg = randy(0)
+  !
   IF (lrism) CALL rism_set_restart()
   !
   ! iverbosity is used by the PWscf routines
@@ -82,7 +94,18 @@ SUBROUTINE crpa_run_nscf (do_band)
   CALL fft_type_allocate ( dfftp, at, bg, gcutm,  intra_bgrp_comm, nyfft=nyfft )
   CALL fft_type_allocate ( dffts, at, bg, gcutms, intra_bgrp_comm, nyfft=nyfft)
   !
-  CALL setup_nscf ( .FALSE., xq, .FALSE. )
+  ! Wannier basis: keep exactly the k points of the SCF (the Wannier mesh) plus
+  ! k+q. Without dont_use_ibz, irreducible_BZ treats them as the IBZ of the full
+  ! lattice group and adds rotated, off-mesh k with split weights whenever the
+  ! mesh is not invariant under the lattice rotations (e.g. 3x1x1): there the
+  ! Wannier interpolation is not exact and the pair density, which weights every
+  ! k uniformly, is wrong. irreducible_BZ also normalizes the weights to 1, so
+  ! skipping it needs the input weights (e.g. 1.0 per k of an explicit list)
+  ! normalized here.
+  !
+  IF (pert_basis == 'wannier' .AND. nks_start > 0) &
+     wk_start(1:nks_start) = wk_start(1:nks_start) / SUM(wk_start(1:nks_start))
+  CALL setup_nscf ( .FALSE., xq, pert_basis == 'wannier' )
   !
   CALL init_run()
   !

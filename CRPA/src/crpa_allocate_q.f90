@@ -21,6 +21,7 @@ subroutine crpa_allocate_q
    USE wavefunctions,        ONLY : evc
    USE becmod,               ONLY : allocate_bec_type
    USE uspp,                 ONLY : nkb, okvan
+   USE units_ph,             ONLY : this_pcxpsi_is_on_file
    USE qpoint,               ONLY : nksq, eigqts
    USE lrus,                 ONLY : becp1, becpt
    USE eqv,                  ONLY : dpsi, evq, dmuxc, dvpsi
@@ -61,6 +62,9 @@ subroutine crpa_allocate_q
    DO ik = 1,nksq
       CALL allocate_bec_type ( nkb, nbnd, becp1(ik) )
    ENDDO
+   !
+   ALLOCATE (this_pcxpsi_is_on_file(nksq, 3))
+   this_pcxpsi_is_on_file(:,:) = .false.
    !
    IF (lda_plus_u) THEN
       ALLOCATE (swfcatomk(npwx*npol,nwfcU))

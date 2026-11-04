@@ -7,8 +7,7 @@ set(src_ph
     PH/addcore.f90
     PH/dynmat_nlcc.f90
     PH/addnlcc_zstar_eu_us.f90
-    PH/addusddens.f90
-    PH/addusddens_cond.f90
+    PH/addusddens_pulay.f90
     PH/addusdynmat.f90
     PH/allocate_part.f90
     PH/allocate_pert.f90
@@ -23,10 +22,8 @@ set(src_ph
     PH/clinear.f90
     PH/close_phq.f90
     PH/compute_alphasum.f90
-    PH/compute_alphasum_cond.f90
     PH/compute_becalp.f90
     PH/compute_becsum_ph.f90
-    PH/compute_becsum_ph_cond.f90
     PH/compute_drhous.f90
     PH/compute_drhous_nc.f90
     PH/compute_dvloc.f90
@@ -356,6 +353,7 @@ set_target_properties(qe_phonon_alpha2f_exe PROPERTIES OUTPUT_NAME alpha2f.x)
 target_link_libraries(qe_phonon_alpha2f_exe
     PRIVATE
         qe_openacc_fortran
+        qe_lr_modules
         qe_pw
         qe_modules
         qe_phonon_ph)

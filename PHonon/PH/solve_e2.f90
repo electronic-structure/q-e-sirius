@@ -45,6 +45,7 @@ subroutine solve_e2
   USE uspp_init,        ONLY : init_us_2
   USE dfpt_type,        ONLY : dfpt_data_type, allocate_dfpt_data, deallocate_dfpt_data, &
                                dfpt_dvscfp_to_dvscfs
+  USE incdrhoscf_mod,   ONLY : incdrhoscf
 
   implicit none
 
@@ -105,6 +106,7 @@ subroutine solve_e2
      avg_iter = 0.d0
 
      dfpt_data%drhop = (0.d0, 0.d0)
+     dfpt_data%drhos = (0.d0, 0.d0)
      dfpt_data%dbecsum = (0.d0, 0.d0)
 
      do ik = 1, nksq
@@ -161,7 +163,7 @@ subroutine solve_e2
            ! calculates dvscf, sum over k => dvscf_q_ipert
            !
            weight = wk (ik)
-           call incdrhoscf (dfpt_data%drhos(1,1,ipol), weight, ik, &
+           call incdrhoscf (dfpt_data%drhos(:,1,ipol), weight, ik, &
                             dfpt_data%dbecsum (1,1,1,ipol), dpsi)
            enddo   ! on perturbations
         enddo      ! on k points

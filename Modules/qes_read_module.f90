@@ -3316,6 +3316,62 @@ MODULE qes_read_module
        obj%localization_threshold_ispresent = .FALSE.
     END IF
     !
+    tmp_node_list => getElementsByTagname(xml_node, "use_ace")
+    tmp_node_list_size = getLength(tmp_node_list)
+    !
+    IF (tmp_node_list_size > 1) THEN
+        IF (PRESENT(ierr) ) THEN
+           CALL infomsg("qes_read:hybridType","use_ace: too many occurrences")
+           ierr = ierr + 1
+        ELSE
+           CALL errore("qes_read:hybridType","use_ace: too many occurrences",10)
+        END IF
+    END IF
+    !
+    IF (tmp_node_list_size>0) THEN
+      obj%use_ace_ispresent = .TRUE.
+      tmp_node => item(tmp_node_list, 0)
+      CALL extractDataContent(tmp_node, obj%use_ace , IOSTAT = iostat_)
+      IF ( iostat_ /= 0 ) THEN
+         IF ( PRESENT (ierr ) ) THEN
+            CALL infomsg("qes_read:hybridType","error reading use_ace")
+            ierr = ierr + 1
+         ELSE
+            CALL errore ("qes_read:hybridType","error reading use_ace",10)
+         END IF
+      END IF
+    ELSE
+       obj%use_ace_ispresent = .FALSE.
+    END IF
+    !
+    tmp_node_list => getElementsByTagname(xml_node, "nbndproj")
+    tmp_node_list_size = getLength(tmp_node_list)
+    !
+    IF (tmp_node_list_size > 1) THEN
+        IF (PRESENT(ierr) ) THEN
+           CALL infomsg("qes_read:hybridType","nbndproj: too many occurrences")
+           ierr = ierr + 1
+        ELSE
+           CALL errore("qes_read:hybridType","nbndproj: too many occurrences",10)
+        END IF
+    END IF
+    !
+    IF (tmp_node_list_size>0) THEN
+      obj%nbndproj_ispresent = .TRUE.
+      tmp_node => item(tmp_node_list, 0)
+      CALL extractDataContent(tmp_node, obj%nbndproj , IOSTAT = iostat_)
+      IF ( iostat_ /= 0 ) THEN
+         IF ( PRESENT (ierr ) ) THEN
+            CALL infomsg("qes_read:hybridType","error reading nbndproj")
+            ierr = ierr + 1
+         ELSE
+            CALL errore ("qes_read:hybridType","error reading nbndproj",10)
+         END IF
+      END IF
+    ELSE
+       obj%nbndproj_ispresent = .FALSE.
+    END IF
+    !
     !
     obj%lwrite = .TRUE.
     !

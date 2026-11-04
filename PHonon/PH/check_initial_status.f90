@@ -136,9 +136,9 @@ SUBROUTINE check_initial_status(auxdyn)
         !
         nqs = 1
         last_q = 1
-        ALLOCATE(x_q(3,1))
-        ALLOCATE(wq(1))
-        ALLOCATE(lgamma_iq(1))
+        IF (.NOT. ALLOCATED(x_q)) ALLOCATE(x_q(3,1))
+        IF (.NOT. ALLOCATED(wq) ) ALLOCATE(wq(1))
+        IF (.NOT. ALLOCATED(lgamma_iq) ) ALLOCATE(lgamma_iq(1))
         x_q(:,1)=xq(:)
         wq(1)=1.0d0
         lgamma_iq(1)=lgamma

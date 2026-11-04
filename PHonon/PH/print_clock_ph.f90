@@ -100,7 +100,7 @@ subroutine print_clock_ph
      call print_clock ('ortho')
      call print_clock ('cgsolve')
      call print_clock ('incdrhoscf')
-     call print_clock ('addusddens')
+     call print_clock ('addusddens_pulay')
      call print_clock ('vpsifft')
      call print_clock ('dv_of_drho')
      call print_clock ('mix_pot')

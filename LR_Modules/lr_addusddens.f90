@@ -9,11 +9,19 @@
 SUBROUTINE lr_addusddens (npert, dbecsum, drhop)
   !---------------------------------------------------------------------------
   !
-  ! Calculate the additional charge in reciprocal space due to US PP's
-  ! See Eq.(36) in B. Walker and R. Gebauer, J. Chem. Phys. 127, 164106 (2007)
-  ! Then sum up the normal and ultrasoft charges.
+  ! Self-consistent ultrasoft-augmentation contribution to drho.
+  ! Given dbecsum (built from the Sternheimer dpsi), adds to drhop the
+  ! corresponding augmentation density: Eq. (36) of B. Walker and
+  ! R. Gebauer, J. Chem. Phys. 127, 164106 (2007).
+  !
+  ! This is the SCF augmentation piece that applies to every DFPT
+  ! perturbation type (phonon, electric field, EELS, Hubbard, ...). For
+  ! phonons there is an additional non-self-consistent Pulay-like
+  ! contribution coming from the displacement of the projector centers;
+  ! that piece is computed by PHonon/PH/addusddens_pulay.f90 and stored in
+  ! dfpt_data%drhop_pulay. It is added in response_kernels.f90, not here.
+  !
   ! It assumes that the array dbecsum has already been computed.
-  ! Inspired by PH/addusddens.f90
   !
   ! Created by Iurii Timrov (2013)
   !
@@ -27,7 +35,6 @@ SUBROUTINE lr_addusddens (npert, dbecsum, drhop)
   USE uspp,                 ONLY : okvan
   USE uspp_param,           ONLY : upf, lmaxq, nh, nhm
   USE qpoint,               ONLY : xq, eigqts
-  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -40,29 +47,34 @@ SUBROUTINE lr_addusddens (npert, dbecsum, drhop)
   !
   ! the local variables
   !
-  INTEGER :: ig, na, nt, ih, jh, is, ijh, ir, na1, ld
+  COMPLEX(DP) :: dbec
+  ! temporary scalar to hold dbecsum value
+  !
+  INTEGER :: ig, na, nt, ih, jh, is, ijh, ir, nab, nb
   ! counter on G vectors
   ! counter on atoms
   ! counter on atomic type
   ! counter on beta functions
   ! counter on beta functions
-  ! counter on r vectors
   ! counter on spin
   ! counter on combined beta functions
+  ! counter on r vectors
+  ! max number of atoms of type nt
+  ! counter on atoms of the same type
+  !
   INTEGER :: ipert
   !! counter on perturbations
   !
+  REAL(DP), ALLOCATABLE :: qmod(:), qpg(:,:), ylmk0(:,:)
   ! the modulus of q+G
   ! the values of q+G
   ! the spherical harmonics
   !
-  COMPLEX(DP), ALLOCATABLE :: aux(:, :, :), aux_r(:), dm1(:,:), tmp1(:,:)
+  COMPLEX(DP), ALLOCATABLE :: sk(:,:), qgm(:), aux(:, :, :), aux_r(:)
   ! the structure factor
   ! q_lm(G)
   ! auxiliary variable for drho(G)
   ! auxiliary variable for drho(r)
-  !
-  COMPLEX(DP) :: z1
   !
   IF (.NOT.okvan) RETURN
   !
@@ -70,54 +82,102 @@ SUBROUTINE lr_addusddens (npert, dbecsum, drhop)
   !
   ALLOCATE (aux(ngm, nspin_mag, npert))
   ALLOCATE (aux_r(dfftp%nnr))
+  ALLOCATE (ylmk0(ngm,lmaxq * lmaxq))
+  ALLOCATE (qgm(ngm))
+  ALLOCATE (qmod(ngm))
+  ALLOCATE (qpg(3,ngm))
   !
-  aux(:, :, :) = (0.d0, 0.d0)
-
-  DO nt = 1, ntyp
-     IF (upf(nt)%tvanp) THEN
-        ! get number of atoms of the given type
-        na1 = 0
-        DO na = 1, nat
-           IF (ityp (na) .EQ. nt) THEN
-              na1 = na1 + 1
-           ENDIF
-        ENDDO
-        ld = nh(nt) * (nh(nt) + 1) / 2
-        ALLOCATE(dm1(ld, na1))
-        ALLOCATE(tmp1(na1, ngm))
-        DO ipert = 1, npert
-           DO is = 1, nspin_mag
-              na1 = 0
-              DO na = 1, nat
-                 IF (ityp (na) .EQ. nt) THEN
-                    na1 = na1 + 1
-                    dm1(1:ld, na1) = dbecsum(1:ld, na, is, ipert)
-                 ENDIF
-              ENDDO !ia
-              CALL zgemm('T', 'N', na1, ngm, ld, cmplx(1.d0, 0.d0, kind=kind(0.0d0)), dm1, ld,&
-                         atom_type(nt)%qpw_t, ld, cmplx(0.d0, 0.d0, kind=kind(0.0d0)), tmp1, na1)
-              na1 = 0
-              DO na = 1, nat
-                 IF (ityp (na) .eq.nt) THEN
-                    na1 = na1 + 1
-!$omp parallel do default(shared) private(z1)
-                    DO ig = 1, ngm
-                       z1 = eigts1(mill(1,ig),na) * &
-                            eigts2(mill(2,ig),na) * &
-                            eigts3(mill(3,ig),na) * &
-                            eigqts(na)
-                        aux(ig, is, ipert) = aux(ig, is, ipert) + 2.0d0 * tmp1(na1, ig) * z1
-                    ENDDO !ig
-!$omp end parallel do
-                 ENDIF
-              ENDDO !na
-           ENDDO !is
-        ENDDO !ipert
-        DEALLOCATE(dm1)
-        DEALLOCATE(tmp1)
-     ENDIF
+  ! Calculate the q+G vector, its modulus, and the spherical harmonics.
+  !
+  CALL setqmod (ngm, xq, g, qmod, qpg)
+  !
+  !$acc data create(ylmk0, qgm) copyin(qmod, eigqts) copyout(aux)
+  !
+  ! ylmr2 has copyin(qpg, qmod) and copyout(ylmk0)
+  CALL ylmr2 (lmaxq * lmaxq, ngm, qpg, qmod, ylmk0)
+  DEALLOCATE (qpg)
+  !
+  !$acc parallel loop
+  DO ig = 1, ngm
+     qmod(ig) = sqrt(qmod(ig)) * tpiba
   ENDDO
   !
+  !$acc kernels
+  aux(:, :, :) = (0.d0, 0.d0)
+  !$acc end kernels
+  !
+  DO nt = 1, ntyp
+     IF (upf(nt)%tvanp) THEN
+        !
+        ! count the number of atoms of type nt and allocate sk accordingly
+        !
+        nab = 0
+        DO na = 1, nat
+           IF ( ityp(na) == nt ) nab = nab + 1
+        ENDDO
+        !
+        ALLOCATE( sk(ngm,nab) )
+        !$acc data create(sk)
+        !
+        nb = 0
+        DO na = 1, nat
+           IF ( ityp(na) == nt ) THEN
+              nb = nb + 1
+              !
+              ! Calculate the structure factor for all atoms of type nt
+              !
+              !$acc parallel loop present(eigts1,eigts2,eigts3,mill,eigqts)
+              DO ig = 1, ngm
+                 sk(ig,nb) = eigts1(mill(1,ig),na) * &
+                             eigts2(mill(2,ig),na) * &
+                             eigts3(mill(3,ig),na) * &
+                             eigqts(na)
+              ENDDO
+           ENDIF
+        ENDDO
+        !
+        ijh = 0
+        DO ih = 1, nh (nt)
+           DO jh = ih, nh (nt)
+              !
+              ! Calculate the Fourier transform of the Q functions,
+              ! and put the result in qgm.
+              !
+              CALL qvan2 (ngm, ih, jh, nt, qmod, qgm, ylmk0)
+              !
+              ijh = ijh + 1
+              nb = 0
+              DO na = 1, nat
+                 IF (ityp (na) .eq.nt) THEN
+                    nb = nb + 1
+                    !
+                    ! Calculate the second term in Eq.(36) of the ultrasoft paper.
+                    !
+                    DO ipert = 1, npert
+                       DO is = 1, nspin_mag
+                          dbec = dbecsum(ijh, na, is, ipert)
+                          !$acc parallel loop present(aux, qgm, sk)
+                          DO ig = 1, ngm
+                             !
+                             aux(ig, is, ipert) = aux(ig, is, ipert) &
+                                + 2.0d0 * qgm(ig) * sk(ig, nb) * dbec
+                             !
+                          ENDDO
+                       ENDDO
+                    ENDDO ! ipert
+                    !
+                 ENDIF
+              ENDDO
+           ENDDO
+        ENDDO
+        !
+        !$acc end data ! affects only the device-resident sk array
+        DEALLOCATE( sk )
+        !
+     ENDIF
+  ENDDO
+  !$acc end data
+  ! aux is copied back to host due to copyout(aux)
   !
   ! Convert aux to real space, and add to the charge density.
   !
@@ -139,6 +199,9 @@ SUBROUTINE lr_addusddens (npert, dbecsum, drhop)
      ENDDO
   ENDDO ! ipert
   !
+  DEALLOCATE (qmod)
+  DEALLOCATE (qgm)
+  DEALLOCATE (ylmk0)
   DEALLOCATE (aux)
   DEALLOCATE (aux_r)
   !

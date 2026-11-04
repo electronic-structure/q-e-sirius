@@ -334,14 +334,19 @@ SUBROUTINE print_cuda_info(check_use_gpu)
      ierr = cudaGetDeviceProperties(prop, idev)
      WRITE(stdout,"(5X,'   Device Number: ',i0)") idev
      WRITE(stdout,"(5X,'   Device name: ',a)") trim(prop%name)
-     WRITE(stdout,"(5X,'   Compute capability : ',i0, i0)") prop%major, prop%minor
-     WRITE(stdout,"(5X,'   Ratio of single to double precision performance  : ',i0)") prop%singleToDoublePrecisionPerfRatio
+     WRITE(stdout,"(5X,'   Compute capability: ',i0, i0)") prop%major, prop%minor
+     WRITE(stdout,"(5X,'   Ratio of single to double precision performance: ',i0)") prop%singleToDoublePrecisionPerfRatio
      WRITE(stdout,"(5X,'   Memory Clock Rate (KHz): ', i0)") &
        prop%memoryClockRate
      WRITE(stdout,"(5X,'   Memory Bus Width (bits): ', i0)") &
        prop%memoryBusWidth
-     WRITE(stdout,"(5X,'   Peak Memory Bandwidth (GB/s): ', f6.2)") &
-       2.0*prop%memoryClockRate*(prop%memoryBusWidth/8)/10.0**6
+     WRITE(stdout,"(5X,'   Peak Memory Bandwidth (GB/s): ', f8.2)") &
+       2.0d0*prop%memoryClockRate*(prop%memoryBusWidth/8.0d0)/10.0**6
+     WRITE(stdout,"(5X,'   Total Global Memory (MiB): ',i0)") prop%totalGlobalMem/2**20
+     ! Memory reported in MiB, not in MB to match what "nvidia-smi" reports.
+     ! 1 MiB = 2^20 bytes = 1048576 bytes
+     ! 1 MB  = 10^6 bytes = 1000000 bytes
+     WRITE(stdout,'()')
   END IF
   !
 #endif

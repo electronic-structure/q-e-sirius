@@ -1919,7 +1919,7 @@ SUBROUTINE calc_doverlap_inv( alpha, ipol, ik, ijkb0 )
          ELSE
             gvec =  0.0_dp
          END IF
-         dwfcatom(ig,m1) = (0.0_dp,-1.0_dp) * gvec * wfcatom(ig,m1)
+         dwfcatom(ig,m1) = CMPLX(0.0_dp,-1.0_dp,KIND=DP) * gvec * wfcatom(ig,m1)
       END DO
    END DO
    !$acc host_data use_device(dwfcatom, swfcatom, doverlap_us)

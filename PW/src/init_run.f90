@@ -166,7 +166,7 @@ SUBROUTINE init_run()
   IF ( xclib_dft_is('hybrid') ) THEN
      IF ( lmovecell ) CALL infomsg('iosys', &
           'Variable cell and hybrid XC little tested')
-     CALL aceinit0()
+     CALL aceinit0( nbnd )
   END IF
   !
   CALL hinit0()

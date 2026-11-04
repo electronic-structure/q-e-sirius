@@ -983,10 +983,20 @@ SUBROUTINE control_iosys()
   CASE  ( 'rmm-paro')
      !
      isolve = 4
-     rmm_ndim = diago_rmm_ndim 
-     rmm_conv = diago_rmm_conv 
-     gs_nblock = diago_gs_nblock 
-     rmm_with_davidson = .FALSE.  
+     rmm_ndim = diago_rmm_ndim
+     rmm_conv = diago_rmm_conv
+     gs_nblock = diago_gs_nblock
+     rmm_with_davidson = .FALSE.
+     !
+  CASE ( 'direct' )
+     !
+     isolve = 5
+     WRITE( stdout, '(/5X,"Using direct diagonalization")')
+     WRITE( stdout, '(5X,"WARNING: Use only when you need a lot of unoccupied states")')
+#if defined(__CUDA)
+    Call errore('input', 'direct diagonalization on GPU not present in this version',1)
+#endif
+     !
   CASE DEFAULT
      !
      CALL errore( 'iosys', 'diagonalization ' // &
@@ -2090,12 +2100,14 @@ SUBROUTINE dftd3_iosys ( )
   USE dftd3_api,        ONLY : dftd3_init, dftd3_set_functional
   USE dftd3_qe,         ONLY : dftd3_xc, dftd3, dftd3_in
   USE funct,            ONLY : get_dft_short
+  USE mp_images,        ONLY : intra_image_comm
+  !
   IMPLICIT NONE
   CHARACTER(LEN=256):: dft
   !
   if (dftd3_version==2) dftd3_threebody=.false.
   dftd3_in%threebody = dftd3_threebody
-  CALL dftd3_init(dftd3, dftd3_in)
+  CALL dftd3_init(dftd3, dftd3_in, intra_image_comm)
   dft = get_dft_short( )
   dft = dftd3_xc ( dft )
   CALL dftd3_set_functional(dftd3, func=dft, version=dftd3_version,tz=.false.)
@@ -2116,14 +2128,14 @@ SUBROUTINE exx_iosys ( ecutwfc, ecutrho )
                               exxdiv_treatment, yukawa, ecutvcut,          &
                               gau_parameter, localization_thr, scdm, ace,  &
                               scdmden, scdmgrd, nscdm, n_proj,             & 
-                              exx_fraction, screening_parameter, ecutfock 
+                              exx_fraction, exx_type, screening_parameter, ecutfock 
   USE io_global,     ONLY : stdout
   USE klist,         ONLY : tot_charge
   USE ions_base,     ONLY : nat, ityp, zv
   USE xc_lib,        ONLY:  xclib_dft_is
   USE xc_lib,        ONLY : xclib_set_exx_fraction, set_screening_parameter
   USE exx_base,      ONLY : x_gamma_extrapolation_ => x_gamma_extrapolation, &
-                            nq1, nq2, nq3, &
+                            nq1, nq2, nq3, exx_bgrp_type, EXX_BGRP_BANDS, EXX_BGRP_PAIRS, &
                             exxdiv_treatment_ => exxdiv_treatment, &
                             yukawa_           => yukawa, &
                             ecutvcut_         => ecutvcut
@@ -2176,6 +2188,21 @@ SUBROUTINE exx_iosys ( ecutwfc, ecutrho )
   !
   IF (screening_parameter >= 0.0_DP) &
         & CALL set_screening_parameter(screening_parameter)
+  !
+  IF (xclib_dft_is('hybrid')) WRITE(stdout, &
+     '(/,5x,"Exact exchange band parallelism type set to ",A/)' ) trim(adjustl(exx_type))
+  !
+  select case(trim(adjustl(exx_type)))
+  case("bands")
+    exx_bgrp_type = EXX_BGRP_BANDS
+#if defined(__CUDA)
+    Call errore('input', 'exx_type = bands on GPU not present in this version (use exx_type = band_pairs)',1)
+#endif
+  case("band_pairs")
+    exx_bgrp_type = EXX_BGRP_PAIRS
+  case default
+    CALL errore('input','Invalid value of exx_type (values: bands or band_pairs)',1)
+  end select
   !
 END SUBROUTINE exx_iosys
 

@@ -13,7 +13,8 @@ fname=$1
 args=$(echo $fname | awk -F= '{print $NF}')
 
 scf=$(echo $fname | awk '/pw/{print 1}' )
-turbolancz=$(echo $fname | awk '/tddfpt.in/{print 1}' )
+turbodav=$(echo $fname | awk '/-dav.in/{print 1}' )
+turbolancz=$(echo $fname | awk '/-lan.in/{print 1}' )
 eels=$(echo $fname | awk '/eels.in/{print 1}' )
 magnons=$(echo $fname | awk '/magnons.in/{print 1}' )
 turbospec=$(echo $fname | awk '/pp.in/{print 1}' )
@@ -26,6 +27,15 @@ if [ "$scf" = "1" ]; then
         n1=`grep 'convergence has' $fname | tail -1 | awk '{print $6}'`
         f1=`grep "Total force" $fname | head -1 | awk '{printf "%8.4f\n", $4}'`
         p1=`grep "P= " $fname | tail -1 | awk '{print $6}'`
+fi
+
+# turbo_davidson.x
+if [ "$turbodav" = "1" ]; then
+        e3=`grep "The transition energy is" $fname | awk '{print $(NF-3)}' | sed 's/(//g' `
+        n3=` grep      "Davidson diagonalization has finished" $fname |              awk '{print $(NF-1)}' `
+        nb1=`grep -A 1 "Davidson diagonalization has finished" $fname | tail -n 1  | awk '{print $NF}' `
+        nb2=`grep -A 2 "Davidson diagonalization has finished" $fname | tail -n 1  | awk '{print $NF}' `
+        chi=`grep --no-group-separator  -A  2  "Chi_i_i"       $fname | grep -v Chi_i_i   | tr '\n' ' ' `
 fi
 
 # turbo_lanczos.x
@@ -143,6 +153,31 @@ fi
 if test "$e1" != ""; then
 	echo e1
 	echo $e1
+fi
+
+if test "$e3" != ""; then
+	echo e3
+	for x in $e3; do echo $x; done 
+fi
+
+if test "$n3" != ""; then
+	echo n3
+	echo $n3
+fi
+
+if test "$nb1" != ""; then
+	echo nb1
+	echo $nb1
+fi
+
+if test "$nb2" != ""; then
+	echo nb2
+	echo $nb2
+fi
+
+if test "$chi" != ""; then
+	echo chi
+	for x in $chi; do echo $x; done 
 fi
 
 if test "$n1" != ""; then

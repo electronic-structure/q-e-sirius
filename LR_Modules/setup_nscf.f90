@@ -75,8 +75,11 @@ SUBROUTINE setup_nscf ( newgrid, xq, dont_use_ibz )
      david = 4
   ELSE IF (isolve == 1) THEN
      david = 1
+   ELSE IF (isolve == 5) THEN
+     david = -1  ! direct diagonalization, nbndx not used
   ELSE
-     call errore('setup_nscf','erroneous value for diagonalization method. Should be isolve=0 (david) or 1 (cg)',1)
+     call errore('setup_nscf','erroneous value for diagonalization method. &
+                               Should be isolve=0 (david) or 1 (cg) or 5 (direct)',1)
   END IF
   nbndx = david*nbnd
   max_cg_iter=20

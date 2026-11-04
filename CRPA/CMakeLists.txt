@@ -10,4 +10,3 @@ add_custom_target(
     crpa
     DEPENDS pw w90 qe_crpa_exe  qe_wannier2pw_exe  qe_elph_exe
     COMMENT "CRPA implementation")
-

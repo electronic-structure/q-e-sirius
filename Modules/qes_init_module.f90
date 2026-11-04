@@ -1116,8 +1116,8 @@ MODULE qes_init_module
   !
   !
   SUBROUTINE qes_init_hybrid(obj, tagname, qpoint_grid, ecutfock, exx_fraction, screening_parameter,&
-                            exxdiv_treatment, x_gamma_extrapolation, ecutvcut, localization_threshold &
-                            )
+                            exxdiv_treatment, x_gamma_extrapolation, ecutvcut, localization_threshold,&
+                            use_ace, nbndproj)
     !
     IMPLICIT NONE
     !
@@ -1131,6 +1131,8 @@ MODULE qes_init_module
     LOGICAL,OPTIONAL,INTENT(IN) :: x_gamma_extrapolation
     REAL(DP),OPTIONAL,INTENT(IN) :: ecutvcut
     REAL(DP),OPTIONAL,INTENT(IN) :: localization_threshold
+    LOGICAL,OPTIONAL,INTENT(IN) :: use_ace
+    INTEGER,OPTIONAL,INTENT(IN) :: nbndproj
     !
     obj%tagname = TRIM(tagname)
     obj%lwrite = .TRUE.
@@ -1183,6 +1185,18 @@ MODULE qes_init_module
       obj%localization_threshold = localization_threshold
     ELSE
       obj%localization_threshold_ispresent = .FALSE.
+    END IF
+    IF ( PRESENT(use_ace)) THEN
+      obj%use_ace_ispresent = .TRUE. 
+      obj%use_ace = use_ace
+    ELSE
+      obj%use_ace_ispresent = .FALSE.
+    END IF
+    IF ( PRESENT(nbndproj)) THEN
+      obj%nbndproj_ispresent = .TRUE. 
+      obj%nbndproj = nbndproj
+    ELSE
+      obj%nbndproj_ispresent = .FALSE.
     END IF
     !
   END SUBROUTINE qes_init_hybrid

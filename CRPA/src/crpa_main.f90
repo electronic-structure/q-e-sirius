@@ -23,8 +23,11 @@ PROGRAM crpa_main
   USE control_flags,     ONLY : use_para_diag, use_gpu
   USE qpoint,            ONLY : nqs
   USE w90_wan_Rr_buffer, ONLY : w90_wan_Rr_close_buffer
-  USE crpacom,           ONLY : code
+  USE control_lr,        ONLY : lgamma
+  USE crpacom,           ONLY : code, crpa_epsil_only, crpa_llanczos, crpa_spectrum_only, &
+                                crpa_coul_restart
   USE crpa_pert,         ONLY : pert_basis
+  USE crpa_coul_cg_restart, ONLY : crpa_coul_cg_q_done, crpa_coul_cg_write_done
   ! USE ldaU_hp,           ONLY : perturbed_atom, start_q, last_q, &
   !                               compute_hp, sum_pertq, perturb_only_atom,   &
   !                               determine_num_pert_only, tmp_dir_save,      &
@@ -36,7 +39,7 @@ PROGRAM crpa_main
   IMPLICIT NONE
   !
   INTEGER :: iq
-  LOGICAL :: do_iq, setup_pw
+  LOGICAL :: do_iq, setup_pw, done_q
   LOGICAL,EXTERNAL :: check_gpu_support
   !
   !
@@ -118,7 +121,19 @@ PROGRAM crpa_main
 !      ! Check the status of the calculation and
 !      ! initialize the q mesh (q_points) and R mesh (R_points)
 !      !
+     ! crpa_spectrum_only skips SCF/NSCF/Wannier setup and the q-point loop
+     ! entirely: it only reads back previously saved Lanczos chain
+     ! coefficients and redoes the frequency-dependent solve (see
+     ! crpa_run_spectrum_only.f90).
+     !
+     IF (crpa_spectrum_only) THEN
+        CALL crpa_run_spectrum_only()
+        GOTO 999
+     ENDIF
+     !
      CALL crpa_generate_grids()
+     !
+     ! if crpa_epsil_only remove pert_basis=='wannier' from input
      !
      CALL crpa_setup_wannier()
 !      !
@@ -138,6 +153,20 @@ PROGRAM crpa_main
         !  If this q is not done in this run, cycle
         !
         IF (.NOT. do_iq) CYCLE
+        !
+        ! Restart of the screened Coulomb: a q point already done is skipped,
+        ! with no NSCF and no linear response. Lanczos: rebuilt from its saved
+        ! chain, if long enough (crpa_restart_coul_lanczos.f90). CG: its results
+        ! are already on file (crpa_restart_coul_cg.f90).
+        !
+        IF (crpa_coul_restart .AND. .NOT. crpa_epsil_only) THEN
+           IF (crpa_llanczos) THEN
+              CALL crpa_coul_q_from_chain_file(iq, done_q)
+           ELSE
+              CALL crpa_coul_cg_q_done(iq, done_q)
+           ENDIF
+           IF (done_q) CYCLE
+        ENDIF
         !
         ! If necessary the bands are recalculated
         !
@@ -161,25 +190,52 @@ PROGRAM crpa_main
         !
         ! CALL crpa_skip_nscf_by_rotate()
         !
+        ! Epsilon-only mode: compute dielectric tensor at Gamma and stop.
+        !
+        IF (crpa_epsil_only) THEN
+           CALL crpa_phescf_w()
+           CALL crpa_clean_q(.TRUE.)
+           EXIT
+        ENDIF
+        !
         CALL crpa_prepare_perturbations_q(iq)
         !
-        ! SCF solution of the linearized Kohn-Sham equation
+        ! SCF solution of the linearized Kohn-Sham equation: either the
+        ! self-consistent Sternheimer/CG solve (one perturbation at a time,
+        ! at w_freq or at every frequency of the crpa_freq_* grid), or,
+        ! if crpa_llanczos = .true., one
+        ! non-Hermitian Lanczos chain per bare perturbation, giving the
+        ! screened Coulomb matrix over a whole frequency grid at once (see
+        ! crpa_do_lanczos_coulomb.f90).
         !
-        CALL crpa_solve_linear_system(iq)
+        IF (crpa_llanczos) THEN
+           CALL crpa_do_lanczos_coulomb(iq)
+        ELSE
+           CALL crpa_solve_linear_system(iq)
+        ENDIF
         !
-        ! Apply q=0 correction
+        ! Apply q=0 correction (only meaningful at q=Gamma)
         !
-        CALL crpa_q0correction()
+        IF (lgamma) CALL crpa_q0correction()
         !
-        ! Write the Coulomb matrix for the current q to file
+        ! Write the Coulomb matrix for the current q to file (branches
+        ! internally on crpa_llanczos, see crpa_postprocess_coulomb.f90)
         !
         CALL crpa_postprocess_coulomb(iq)
+        !
+        ! CG: mark this q point as done (crpa_coul_restart)
+        !
+        IF (.NOT. crpa_llanczos) CALL crpa_coul_cg_write_done(iq)
         !
         ! Cleanup of the variables for the next q point
         !
         CALL crpa_clean_q(.TRUE.)
         !
      ENDDO
+     !
+     ! BZ-averaged W of every element, from the files of all the q points
+     !
+     IF (.NOT. crpa_epsil_only) CALL crpa_average_w()
      !
 !      IF (start_q > 1 .OR. last_q < nqs) THEN
 !         !
@@ -259,6 +315,8 @@ PROGRAM crpa_main
     ! Close the buffer
     CALL w90_wan_Rr_close_buffer()
   ENDIF
+  !
+999 CONTINUE
   !
   ! Print clocks
   !

@@ -36,7 +36,7 @@ MODULE mix
      COMPLEX(DP), ALLOCATABLE :: of_g(:,:)
      !! the charge density in G-space
      COMPLEX(DP), ALLOCATABLE :: kin_g(:,:)
-     !! the charge density in G-space
+     !! the kinetic energy density in G-space
      REAL(DP),    ALLOCATABLE :: ns(:,:,:,:)
      !! the DFT+U occupation matrix
      REAL(DP),    ALLOCATABLE :: nsb(:,:,:,:)

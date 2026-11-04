@@ -163,7 +163,7 @@ CONTAINS
     INTEGER :: ibnd, ig
 
     k = nbnd_occ (ikqs(ik))
-    CALL start_clock_gpu ('ch_psi_all_k_complex')
+    CALL start_clock ('ch_psi_all_k_complex')
     !$acc data present(evq, ps, hpsi, spsi)
     !
     !   Here we compute the projector in the valence band
@@ -207,7 +207,7 @@ CONTAINS
     !
     !    And apply S again
     !
-    CALL start_clock_gpu ('ch_psi_calbec')
+    CALL start_clock ('ch_psi_calbec')
     if (use_bgrp_in_hpsi .AND. .NOT. exx_is_active() .AND. m > 1) then
        call divide (inter_bgrp_comm, m, m_start, m_end)
        if (m_end >= m_start) then
@@ -216,7 +216,8 @@ CONTAINS
     else
        CALL calbec (offload_type, n, vkb, hpsi, becp, m)
     endif
-    CALL stop_clock_gpu ('ch_psi_calbec')
+    CALL stop_clock ('ch_psi_calbec')
+    !$acc wait
     CALL s_psi (npwx, n, m, hpsi, spsi)
     !$acc parallel loop collapse(2) present(ah, spsi)
     DO ibnd = 1, m
@@ -234,7 +235,7 @@ CONTAINS
        ENDDO
        !$acc end parallel loop
     END IF
-    CALL stop_clock_gpu ('ch_psi_all_k_complex')
+    CALL stop_clock ('ch_psi_all_k_complex')
     return
   END SUBROUTINE ch_psi_all_k_complex
 

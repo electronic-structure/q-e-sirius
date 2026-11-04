@@ -471,10 +471,10 @@ SUBROUTINE init_wfc ( ik )
 END SUBROUTINE init_wfc
 !
 !----------------------------------------------------------------------------
-SUBROUTINE aceinit0()
+SUBROUTINE aceinit0( nbndsize )
   !----------------------------------------------------------------------------
   !
-  ! ... This routine reads the ACE potential from files in non-scf calculations
+  ! ... This routine reads the ACE potential for non-scf and TDDFPT calculations.
   !
   USE io_global,            ONLY : stdout
   USE klist,                ONLY : nks, nkstot
@@ -488,6 +488,11 @@ SUBROUTINE aceinit0()
   USE wvfct,                ONLY : npwx
   !
   IMPLICIT NONE
+  !
+  INTEGER, INTENT(IN) :: nbndsize
+  ! the number of bands used for xi allocation:
+  !     - in non-scf is user defined, and set to nbnd (see init_run)
+  !     - in TDDFPT is set to the nbndproj value read from XML (from prior SCF/non-SCF ground state, see lr_exx_alloc)
   !
   INTEGER :: ierr
   INTEGER :: ik
@@ -505,9 +510,9 @@ SUBROUTINE aceinit0()
     !
     Call start_exx()
     !
-    IF (.NOT. ALLOCATED(xi)) ALLOCATE( xi(npwx*npol,nbnd,nkstot) )
+    IF (.NOT. ALLOCATED(xi)) ALLOCATE( xi(npwx*npol,nbndsize,nkstot) )
 #if defined (__CUDA)
-    IF (.NOT. ALLOCATED(xi_d)) ALLOCATE( xi_d(npwx*npol,nbnd) )
+    IF (.NOT. ALLOCATED(xi_d)) ALLOCATE( xi_d(npwx*npol,nbndsize) )
 #endif
     !
     xi=(0.0d0, 0.0d0)

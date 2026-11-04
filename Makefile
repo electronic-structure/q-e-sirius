@@ -127,7 +127,7 @@ couple : pw cp
 	if test -d COUPLE ; then \
 	( cd COUPLE ; $(MAKE) all || exit 1 ) ; fi
 
-epw: phlibs libw90 pp
+epw: pw ph pp ld1 libw90 
 	if test -d EPW ; then \
 	( cd EPW ; $(MAKE) all || exit 1; \
 		cd ../bin; ln -fs ../EPW/bin/epw.x . ); fi

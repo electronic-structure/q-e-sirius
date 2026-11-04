@@ -16,6 +16,7 @@ SUBROUTINE crpa_dealloc_q()
   USE noncollin_module,    ONLY : m_loc
   USE becmod,              ONLY : deallocate_bec_type
   USE uspp,                ONLY : okvan
+  USE units_ph,            ONLY : this_pcxpsi_is_on_file
   USE qpoint,              ONLY : eigqts, ikks, ikqs, ikmks, ikmkmqs
   USE lrus,                ONLY : becp1, becpt
   USE gc_lr,               ONLY : grho, gmag, dvxc_rr, dvxc_sr, dvxc_ss, &
@@ -56,6 +57,7 @@ SUBROUTINE crpa_dealloc_q()
      enddo
      deallocate(becp1)
   endif
+  if (allocated(this_pcxpsi_is_on_file)) deallocate (this_pcxpsi_is_on_file)
   if (allocated(becpt)) then
       do ik=1,size(becpt)
          call deallocate_bec_type ( becpt(ik) )
@@ -85,10 +87,10 @@ SUBROUTINE crpa_dealloc_q()
   !
   IF (cdfpt) CALL cdfpt_deallocate()
   !
-  DEALLOCATE(v_coul_bare)
-  DEALLOCATE(v_coul_scrd)
+  IF (ALLOCATED(v_coul_bare)) DEALLOCATE(v_coul_bare)
+  IF (ALLOCATED(v_coul_scrd)) DEALLOCATE(v_coul_scrd)
   !
-  IF (pert_basis == 'wannier') THEN
+  IF (pert_basis == 'wannier' .AND. ALLOCATED(pert_Rlist)) THEN
      DEALLOCATE(pert_Rlist)
   ENDIF
   !

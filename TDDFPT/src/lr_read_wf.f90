@@ -89,10 +89,8 @@ SUBROUTINE lr_read_wf()
      !
      CALL open_buffer ( iunwfc, 'wfc', nwordwfc, io_level, exst ) 
      !
-     ! set_ace=.false. disables Lin Lin's ACE for TD-DFPT 
-     !
      CALL mp_start_exx (nband_, ntg_, intra_pool_comm)
-     CALL lr_exx_restart( set_ace=.false.)
+     CALL lr_exx_restart( )
      !
      IF (.NOT. no_hxc) THEN
         !

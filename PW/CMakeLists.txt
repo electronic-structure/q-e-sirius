@@ -44,7 +44,8 @@ set(src_pw
    src/compute_ux.f90 
    src/Coul_cut_2D.f90 
    src/d_matrix.f90 
-   src/data_structure.f90 
+   src/data_structure.f90
+   src/diag_direct.f90
    src/divide_class.f90 
    src/divide_class_so.f90 
    src/divide_et_impera.f90 
@@ -67,7 +68,9 @@ set(src_pw
    src/ewald_dipole.f90 
    src/extfield.f90 
    src/exx_base.f90 
-   src/exx_band.f90 
+   src/exx_bp_utils.f90 
+   src/exx_bp.f90 
+   src/exx_std.f90 
    src/exx.f90 
    src/fcp_capacitance.f90 
    src/fcp_dyn_calcavg.f90 
@@ -101,8 +104,8 @@ set(src_pw
    src/hs_1psi.f90 
    src/h_epsi_her_apply.f90 
    src/h_epsi_her_set.f90 
-   src/h_psi.f90 
-   src/h_psi_meta.f90 
+   src/h_psi.f90
+   src/h_psi_meta.f90
    src/hinit0.f90 
    src/hinit1.f90 
    src/hubbard.f90 
@@ -164,7 +167,8 @@ set(src_pw
    src/plus_u_full.f90 
    src/potinit.f90 
    src/print_clock_pw.f90 
-   src/print_ks_energies.f90 
+   src/print_ks_energies.f90
+   src/printpot.f90
    src/punch.f90 
    src/pw_restart_new.f90 
    src/add_qexsd_step.f90 
@@ -283,7 +287,8 @@ endif(QE_ENABLE_SIRIUS)
 
 target_link_libraries(qe_pw
     PRIVATE
-        qe_device_lapack  
+        qe_device_lapack
+        qe_lapack
         qe_hdf5_fortran
         qe_elpa
         qe_scalapack
@@ -293,6 +298,7 @@ target_link_libraries(qe_pw
         qe_kssolver_paro
         qe_kssolver_rmmdiis
         qe_kssolver_dense
+        qe_kssolver_direct
         qe_upflib # TODO turn to vendorized library from MaX gitrepo ? 
         qe_modules
         qe_fftx
@@ -312,7 +318,7 @@ if(QE_ENABLE_CUDA)
 endif()
 
 if(QE_ENABLE_SIRIUS)
-    target_link_libraries(qe_pw PRIVATE sirius::sirius)
+    target_link_libraries(qe_pw PUBLIC sirius::sirius)
 endif(QE_ENABLE_SIRIUS)
 
 if ("legacy" IN_LIST QE_ENABLE_PLUGINS) 

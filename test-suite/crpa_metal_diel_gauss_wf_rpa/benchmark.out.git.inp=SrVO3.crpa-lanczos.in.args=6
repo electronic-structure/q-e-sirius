@@ -1,0 +1,338 @@
+
+     Program CRPA v.8.0dev starts on 28Oct2026 at 12: 2:34 
+        Git branch: dHP_metal
+        Last git commit: 1a607a3b2785c0cc7aa48a29f363d9e2fe44ea67-dirty
+        Last git commit date: Wed Oct 28 08:56:47 2026 +0100
+        Last git commit subject: Fix bug introduced at Merge time. Now EPW compiles
+
+     This program is part of the open-source Quantum ESPRESSO suite
+     for quantum simulation of materials; please cite
+         "P. Giannozzi et al., J. Phys.:Condens. Matter 21 395502 (2009);
+         "P. Giannozzi et al., J. Phys.:Condens. Matter 29 465901 (2017);
+         "P. Giannozzi et al., J. Chem. Phys. 152 154105 (2020);
+          URL http://www.quantum-espresso.org", 
+     in publications or presentations arising from this work. More details at
+     http://www.quantum-espresso.org/quote
+
+     Parallel version (MPI), running on     4 processors
+
+     MPI processes distributed on     1 nodes
+     R & G space division:  proc/nbgrp/npool/nimage =       4
+     168271 MiB available memory on the printing compute node when the environment starts
+ 
+
+     =---------------------------------------------------------------------------=
+
+        Constrained random phase approximation using the CRPA code based on DFPT  
+
+           Please cite the following papers when using this program:              
+
+              - CRPA code : To be added                                           
+
+     =---------------------------------------------------------------------------=
+     Waiting for input...
+     Reading input from standard input
+
+     Reading xml data from directory:
+
+     ./out/SrVO3.save/
+
+     IMPORTANT: XC functional enforced from input :
+     Exchange-correlation= PBE
+                           (   1   4   3   4   0   0   0)
+     Any further DFT definition will be discarded
+     Please, verify this is what you really want
+
+ 
+     Parallelization info
+     --------------------
+     sticks:   dense  smooth     PW     G-vecs:    dense   smooth      PW
+     Min         126     126     40                 2102     2102     386
+     Max         127     127     41                 2103     2103     389
+     Sum         505     505    161                 8409     8409    1551
+ 
+     Using Slab Decomposition
+ 
+     Reading collected, re-writing distributed wavefunctions
+ 
+
+     bravais-lattice index     =             1
+     lattice parameter (alat)  =        7.2613 (a.u.)
+     unit-cell volume          =      382.8628 (a.u.)^3
+     number of atoms/cell      =             5
+     number of atomic types    =             3
+     kinetic-energy cut-off    =         30.00 (Ry)
+     charge density cut-off    =        120.00 (Ry)
+     conv. thresh. for NSCF    =       0.0E+00
+     conv. thresh. for chi     =       0.0E+00
+     Input Hubbard parameters (in eV):
+
+     celldm(1) =  7.26130  celldm(2) =  0.00000  celldm(3) =  0.00000
+     celldm(4) =  0.00000  celldm(5) =  0.00000  celldm(6) =  0.00000
+
+     crystal axes: (cart. coord. in units of alat)
+               a(1) = (  1.0000  0.0000  0.0000 )  
+               a(2) = (  0.0000  1.0000  0.0000 )  
+               a(3) = (  0.0000  0.0000  1.0000 )  
+
+     reciprocal axes: (cart. coord. in units 2 pi/alat)
+               b(1) = (  1.0000  0.0000  0.0000 )  
+               b(2) = (  0.0000  1.0000  0.0000 )  
+               b(3) = (  0.0000  0.0000  1.0000 )  
+
+     Atoms inside the unit cell (Cartesian axes):
+     site n.  atom      mass           positions (alat units)
+        1   Sr        87.6200   tau(  1) = (  0.00000  0.00000  0.00000  )
+        2   V         50.9420   tau(  2) = (  0.50000  0.50000  0.50000  )
+        3   O         15.9990   tau(  3) = (  0.50000  0.00000  0.50000  )
+        4   O         15.9990   tau(  4) = (  0.50000  0.50000  0.00000  )
+        5   O         15.9990   tau(  5) = (  0.00000  0.50000  0.50000  )
+
+     Perturbation basis: bands
+          Perturbation bands:     0 -     0
+
+
+
+     The grid of q-points ( 2, 2, 2)  (  4 q-points ) :
+       N       xq(1)         xq(2)         xq(3)       wq
+       1   0.000000000   0.000000000   0.000000000   0.125000000
+       2   0.000000000   0.000000000  -0.500000000   0.375000000
+       3   0.000000000  -0.500000000  -0.500000000   0.375000000
+       4  -0.500000000  -0.500000000  -0.500000000   0.125000000
+
+
+     =-------------------------------------------------------------=
+
+     Calculation for q #   1 = (   0.0000000   0.0000000   0.0000000 )
+
+     =-------------------------------------------------------------=
+
+                   WRITING LINEAR-RESPONSE SUMMARY:
+
+
+
+
+     Number of symmetries in the small group of q, nsymq = 48
+
+     G cutoff =  160.2693  (   2103 G-vectors)     FFT grid: ( 25, 25, 25)
+
+     Number of k (and k+q if q/=0) points =    10  Gaussian smearing, width (Ry) =  0.0200
+
+                       cart. coord. (in units 2pi/alat)
+        k (    1) = (   0.0000000   0.0000000   0.0000000), wk = 0.0312500
+        k (    2) = (   0.0000000   0.0000000   0.2500000), wk = 0.1875000
+        k (    3) = (   0.0000000   0.0000000  -0.5000000), wk = 0.0937500
+        k (    4) = (   0.0000000   0.2500000   0.2500000), wk = 0.3750000
+        k (    5) = (   0.0000000   0.2500000  -0.5000000), wk = 0.3750000
+        k (    6) = (   0.0000000  -0.5000000  -0.5000000), wk = 0.0937500
+        k (    7) = (   0.2500000   0.2500000   0.2500000), wk = 0.2500000
+        k (    8) = (   0.2500000   0.2500000  -0.5000000), wk = 0.3750000
+        k (    9) = (   0.2500000  -0.5000000  -0.5000000), wk = 0.1875000
+        k (   10) = (  -0.5000000  -0.5000000  -0.5000000), wk = 0.0312500
+
+                       cryst. coord.
+        k (    1) = (   0.0000000   0.0000000   0.0000000), wk = 0.0312500
+        k (    2) = (   0.0000000   0.0000000   0.2500000), wk = 0.1875000
+        k (    3) = (   0.0000000   0.0000000  -0.5000000), wk = 0.0937500
+        k (    4) = (   0.0000000   0.2500000   0.2500000), wk = 0.3750000
+        k (    5) = (   0.0000000   0.2500000  -0.5000000), wk = 0.3750000
+        k (    6) = (   0.0000000  -0.5000000  -0.5000000), wk = 0.0937500
+        k (    7) = (   0.2500000   0.2500000   0.2500000), wk = 0.2500000
+        k (    8) = (   0.2500000   0.2500000  -0.5000000), wk = 0.3750000
+        k (    9) = (   0.2500000  -0.5000000  -0.5000000), wk = 0.1875000
+        k (   10) = (  -0.5000000  -0.5000000  -0.5000000), wk = 0.0312500
+
+     Total time spent up to now is:
+     CRPA         :      0.12s CPU      0.15s WALL
+
+
+     Electric Fields Calculation
+
+     Intraband (Drude) plasma frequency, cartesian axis
+     omega_p^2 (Ry^2) =    0.18763756    0.00000000    0.00000000
+     omega_p^2 (Ry^2) =    0.00000000    0.18763756    0.00000000
+     omega_p^2 (Ry^2) =    0.00000000    0.00000000    0.18763756
+     omega_p   (eV)   =    5.89359870    5.89359870    5.89359870
+
+     Non-Hermitian Lanczos chains for the dielectric function (3 polarizations, lock-step)
+     beta (00000001)=     7.21443743     gamma(00000001)=     7.21443743
+     beta (00000002)=     2.24416153     gamma(00000002)=     2.24416153
+     beta (00000003)=    10.74148147     gamma(00000003)=    10.74148147
+     beta (00000004)=    16.87507143     gamma(00000004)=    16.87507143
+     beta (00000005)=    15.21147980     gamma(00000005)=    15.21147980
+     beta (00000006)=    15.51051598     gamma(00000006)=    15.51051598
+     beta (00000007)=    16.03365522     gamma(00000007)=    16.03365522
+     beta (00000008)=    16.22508817     gamma(00000008)=    16.22508817
+     beta (00000009)=    16.83130312     gamma(00000009)=    16.83130312
+     beta (00000010)=    17.15198293     gamma(00000010)=    17.15198293
+     beta (00000011)=    17.33409011     gamma(00000011)=    17.33409011
+     beta (00000012)=    16.88793637     gamma(00000012)=    16.88793637
+     beta (00000013)=    17.02411119     gamma(00000013)=    17.02411119
+     beta (00000014)=    16.65890162     gamma(00000014)=    16.65890162
+     beta (00000015)=    17.26891465     gamma(00000015)=    17.26891465
+     beta (00000016)=    16.95611121     gamma(00000016)=    16.95611121
+     beta (00000017)=    17.09283489     gamma(00000017)=    17.09283489
+     beta (00000018)=    16.81790228     gamma(00000018)=    16.81790228
+     beta (00000019)=    16.77480658     gamma(00000019)=    16.77480658
+     beta (00000020)=    16.85619650     gamma(00000020)=    16.85619650
+     beta (00000021)=    17.14177066     gamma(00000021)=    17.14177066
+     beta (00000022)=    17.34569047     gamma(00000022)=    17.34569047
+     beta (00000023)=    16.97397995     gamma(00000023)=    16.97397995
+     beta (00000024)=    16.92285222     gamma(00000024)=    16.92285222
+     beta (00000025)=    16.59533097     gamma(00000025)=    16.59533097
+     beta (00000026)=    16.77330856     gamma(00000026)=    16.77330856
+     beta (00000027)=    16.85197358     gamma(00000027)=    16.85197358
+     beta (00000028)=    16.99813183     gamma(00000028)=    16.99813183
+     beta (00000029)=    17.18614585     gamma(00000029)=    17.18614585
+     beta (00000030)=    16.98170292     gamma(00000030)=    16.98170292
+     beta (00000031)=    17.24470559     gamma(00000031)=    17.24470559
+     beta (00000032)=    16.67619607     gamma(00000032)=    16.67619607
+     beta (00000033)=    17.17832273     gamma(00000033)=    17.17832273
+     beta (00000034)=    16.96617524     gamma(00000034)=    16.96617524
+     beta (00000035)=    17.42932283     gamma(00000035)=    17.42932283
+     beta (00000036)=    16.68284064     gamma(00000036)=    16.68284064
+     beta (00000037)=    17.26052743     gamma(00000037)=    17.26052743
+     beta (00000038)=    16.77147593     gamma(00000038)=    16.77147593
+     beta (00000039)=    17.15018523     gamma(00000039)=    17.15018523
+     beta (00000040)=    16.87782442     gamma(00000040)=    16.87782442
+     beta (00000041)=    17.37562703     gamma(00000041)=    17.37562703
+     beta (00000042)=    16.90358620     gamma(00000042)=    16.90358620
+     beta (00000043)=    17.08296031     gamma(00000043)=    17.08296031
+     beta (00000044)=    16.78612796     gamma(00000044)=    16.78612796
+     beta (00000045)=    17.22041836     gamma(00000045)=    17.22041836
+     beta (00000046)=    17.01885208     gamma(00000046)=    17.01885208
+     beta (00000047)=    17.01246954     gamma(00000047)=    17.01246954
+     beta (00000048)=    17.07109300     gamma(00000048)=    17.07109300
+     beta (00000049)=    16.98202151     gamma(00000049)=    16.98202151
+     beta (00000050)=    17.15742111     gamma(00000050)=    17.15742111
+     beta (00000051)=    17.17108086     gamma(00000051)=    17.17108086
+     beta (00000052)=    17.26853440     gamma(00000052)=    17.26853440
+     beta (00000053)=    16.72967255     gamma(00000053)=    16.72967255
+     beta (00000054)=    17.00197433     gamma(00000054)=    17.00197433
+     beta (00000055)=    16.82522493     gamma(00000055)=    16.82522493
+     beta (00000056)=    17.31808749     gamma(00000056)=    17.31808749
+     beta (00000057)=    16.82097414     gamma(00000057)=    16.82097414
+     beta (00000058)=    17.13497112     gamma(00000058)=    17.13497112
+     beta (00000059)=    16.88542701     gamma(00000059)=    16.88542701
+     beta (00000060)=    17.12828708     gamma(00000060)=    17.12828708
+     beta (00000061)=    16.77970789     gamma(00000061)=    16.77970789
+     beta (00000062)=    17.24616303     gamma(00000062)=    17.24616303
+     beta (00000063)=    16.95095479     gamma(00000063)=    16.95095479
+     beta (00000064)=    17.19167792     gamma(00000064)=    17.19167792
+     beta (00000065)=    16.98015363     gamma(00000065)=    16.98015363
+     beta (00000066)=    17.06419729     gamma(00000066)=    17.06419729
+     beta (00000067)=    17.06722289     gamma(00000067)=    17.06722289
+     beta (00000068)=    17.25787044     gamma(00000068)=    17.25787044
+     beta (00000069)=    17.22891596     gamma(00000069)=    17.22891596
+     beta (00000070)=    17.27940081     gamma(00000070)=    17.27940081
+     beta (00000071)=    17.04846049     gamma(00000071)=    17.04846049
+     beta (00000072)=    17.13762242     gamma(00000072)=    17.13762242
+     beta (00000073)=    17.04489226     gamma(00000073)=    17.04489226
+     beta (00000074)=    16.78283692     gamma(00000074)=    16.78283692
+     beta (00000075)=    17.04599933     gamma(00000075)=    17.04599933
+     beta (00000076)=    17.06572814     gamma(00000076)=    17.06572814
+     beta (00000077)=    17.07426248     gamma(00000077)=    17.07426248
+     beta (00000078)=    17.10621930     gamma(00000078)=    17.10621930
+     beta (00000079)=    17.03468149     gamma(00000079)=    17.03468149
+     beta (00000080)=    16.98222879     gamma(00000080)=    16.98222879
+     beta (00000081)=    17.05891922     gamma(00000081)=    17.05891922
+     beta (00000082)=    17.08406631     gamma(00000082)=    17.08406631
+     beta (00000083)=    17.08098107     gamma(00000083)=    17.08098107
+     beta (00000084)=    16.78939425     gamma(00000084)=    16.78939425
+     beta (00000085)=    16.91830753     gamma(00000085)=    16.91830753
+     beta (00000086)=    16.91701738     gamma(00000086)=    16.91701738
+     beta (00000087)=    17.10974252     gamma(00000087)=    17.10974252
+     beta (00000088)=    16.75649733     gamma(00000088)=    16.75649733
+     beta (00000089)=    17.19536362     gamma(00000089)=    17.19536362
+     beta (00000090)=    16.83064391     gamma(00000090)=    16.83064391
+     beta (00000091)=    17.12097180     gamma(00000091)=    17.12097180
+     beta (00000092)=    16.87068519     gamma(00000092)=    16.87068519
+     beta (00000093)=    17.13641470     gamma(00000093)=    17.13641470
+     beta (00000094)=    16.99477897     gamma(00000094)=    16.99477897
+     beta (00000095)=    17.15310828     gamma(00000095)=    17.15310828
+     beta (00000096)=    16.91884432     gamma(00000096)=    16.91884432
+     beta (00000097)=    17.22190660     gamma(00000097)=    17.22190660
+     beta (00000098)=    17.02802342     gamma(00000098)=    17.02802342
+     beta (00000099)=    17.00143159     gamma(00000099)=    17.00143159
+     beta (00000100)=    16.94753135     gamma(00000100)=    16.94753135
+
+     End of electric fields calculation
+     INFO: Dielectric Lanczos chain written to diel_lanczos_chain.dat
+
+          Dielectric tensor in cartesian axis at w = (    0.300000,    0.050000) Ry
+
+          (      11.885309,      11.418579)  (       0.000000,       0.000000)  (      -0.000000,       0.000000)
+          (       0.000000,       0.000000)  (      11.885309,      11.418579)  (       0.000000,       0.000000)
+          (      -0.000000,       0.000000)  (       0.000000,       0.000000)  (      11.885309,      11.418579)
+     INFO: Dielectric tensor written to epsilon_w.dat
+ 
+     PRINTING TIMING FROM PWSCF ROUTINES: 
+ 
+
+     Called by init_run:
+
+     Called by electrons:
+     v_of_rho     :      0.00s CPU      0.00s WALL (       1 calls)
+     v_h          :      0.00s CPU      0.00s WALL (       1 calls)
+     v_xc         :      0.00s CPU      0.00s WALL (       1 calls)
+
+     Called by c_bands:
+     init_us_2    :      0.69s CPU      0.71s WALL (    3090 calls)
+
+     Called by sum_band:
+
+     Called by *egterg:
+     h_psi        :     21.19s CPU     21.95s WALL (    7207 calls)
+
+     Called by h_psi:
+     h_psi:calbec :      1.46s CPU      1.52s WALL (    7207 calls)
+     vloc_psi     :     18.40s CPU     19.07s WALL (    7207 calls)
+     add_vuspsi   :      1.11s CPU      1.14s WALL (    7207 calls)
+
+     General routines
+     calbec       :      1.46s CPU      1.52s WALL (    7277 calls)
+     fft          :      0.12s CPU      0.13s WALL (     922 calls)
+     fftw         :     30.51s CPU     31.71s WALL (  549416 calls)
+     davcio       :      0.01s CPU      0.02s WALL (      73 calls)
+ 
+     Parallel routines
+ 
+     init_vloc    :      0.02s CPU      0.02s WALL (       1 calls)
+     init_us_1    :      0.00s CPU      0.00s WALL (       1 calls)
+     add_vuspsi   :      1.11s CPU      1.14s WALL (    7207 calls)
+ 
+     PRINTING TIMING FROM CRPA ROUTINES: 
+ 
+     crpa_setup_q :      0.01s CPU      0.01s WALL (       1 calls)
+     crpa_init_q  :      0.01s CPU      0.01s WALL (       1 calls)
+ 
+     PRINTING TIMING FROM Wannier90 INTERFACE ROUTINES: 
+ 
+ 
+ 
+     PRINTING TIMING FROM LR MODULE: 
+ 
+     sth_postproc :      0.01s CPU      0.01s WALL (     101 calls)
+     crpa_psym_di :      3.29s CPU      3.42s WALL (     101 calls)
+     apply_dpot_b :      8.87s CPU      9.29s WALL (    3000 calls)
+     ortho        :      0.98s CPU      1.02s WALL (    3060 calls)
+     cgsolve      :      2.55s CPU      2.67s WALL (      30 calls)
+     ch_psi       :     21.91s CPU     22.69s WALL (    7207 calls)
+     incdrhoscf   :      8.86s CPU      9.17s WALL (    3030 calls)
+     dv_of_drho   :      0.12s CPU      0.13s WALL (     303 calls)
+     setup_dgc    :      0.01s CPU      0.01s WALL (       1 calls)
+     setup_dmuxc  :      0.00s CPU      0.00s WALL (       1 calls)
+     setup_nbnd_o :      0.00s CPU      0.00s WALL (       1 calls)
+     cft_wave     :      7.89s CPU      8.27s WALL (  129000 calls)
+ 
+     CRPA         :     47.40s CPU     49.24s WALL
+
+ 
+   This run was terminated on:  12: 3:23  28Oct2026            
+
+=------------------------------------------------------------------------------=
+   JOB DONE.
+=------------------------------------------------------------------------------=
+CRPA-EXTRACT wp2 0.18763756
+CRPA-EXTRACT eps_ln 0.1188531E+02
+CRPA-EXTRACT eps_ln_im 0.1141858E+02

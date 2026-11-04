@@ -73,6 +73,8 @@ SUBROUTINE crpa_setup_q()
   USE dfunct,           ONLY : newd
   USE Coul_cut_2D,      ONLY : do_cutoff_2D
   USE Coul_cut_2D_ph,   ONLY : cutoff_fact_qg
+  USE crpacom,          ONLY : crpa_nfreq, crpa_freq
+  USE klist,            ONLY : ltetra
   !
   IMPLICIT NONE
   INTEGER :: ir, isym, ik, it, na
@@ -134,11 +136,7 @@ SUBROUTINE crpa_setup_q()
   !
   CALL setup_nbnd_occ()
   !
-  ! 8) Compute alpha_pv
-  !
-  CALL setup_alpha_pv()
-  !
-  ! 9) Set various symmetry-related variables
+  ! 8) Set various symmetry-related variables
   !
   magnetic_sym = noncolin .AND. domag
   time_reversal = .NOT. noinv .AND. .NOT. magnetic_sym
@@ -150,13 +148,38 @@ SUBROUTINE crpa_setup_q()
      !
      nsymq   = nsym
      !
-     IF ( time_reversal ) THEN
+     ! Note: condition on Re(w) is introduced to avoid forced real induced density
+     ! symmetrization from symdvscf.f90, which is not true when Re(w)/= 0
+     ! (for any of the frequencies)
+     !
+     IF ( time_reversal .AND. MAXVAL(ABS(DBLE(crpa_freq))) < 1.0d-10 ) THEN
          minus_q = .TRUE.
      ELSE
          minus_q = .FALSE.
      ENDIF
      !
   ENDIF
+  !
+  ! Same guard at q /= 0, where minus_q comes from the geometry (S q = -q+G)
+  ! alone: symdvscf's minus_q branch averages drho with the conjugate of its
+  ! rotated copy, i.e. drho(w) with drho(-w*) = conj(drho(w)), which keeps
+  ! only Re(chi). Exact for real or purely imaginary w, wrong once Re(w)/=0.
+  !
+  IF (.NOT. lgamma .AND. MAXVAL(ABS(DBLE(crpa_freq))) > 1.0d-10) minus_q = .FALSE.
+  !
+  ! 9) Compute alpha_pv. With tetrahedra this also initializes the tetrahedra
+  ! (dfpt_tetra_main -> opt_tetra_init), which needs nsymq, time_reversal and
+  ! minus_q, so it must come after they are set - as in PHonon/PH/phq_setup.f90,
+  ! which asserts nsymq/=0 on entry. No effect for lgauss or insulators.
+  !
+  CALL setup_alpha_pv()
+  !
+  ! Tetrahedra, static response at q = Gamma: make the Fermi-surface (Drude)
+  ! weights of dfpt_tetra_mod independent of the basis inside degenerate
+  ! multiplets. Every other case keeps the dfpt_tetra_mod weights unchanged.
+  !
+  IF (ltetra .AND. lgamma .AND. crpa_nfreq == 1 .AND. ABS(crpa_freq(1)) < 1.0d-10) &
+     CALL crpa_tetra_degenerate_drude()
   !
   ! Calculate rtau (the Bravais lattice vector associated to a rotation)
   ! with the new symmetry order
@@ -197,3 +220,65 @@ SUBROUTINE crpa_setup_q()
   RETURN
   !
 END SUBROUTINE crpa_setup_q
+!
+!-----------------------------------------------------------------------
+SUBROUTINE crpa_tetra_degenerate_drude()
+  !-----------------------------------------------------------------------
+  !! Called by crpa_setup_q for tetrahedra with a static response (w_freq = 0)
+  !! at q = Gamma only.
+  !!
+  !! dfpt_tetra_main adds the Fermi-surface (Drude) term -delta_i/2 (times
+  !! alpha_pv) to the diagonal pair weight dfpt_tetra_beta(i,i) only, while the
+  !! other pairs (i,j) of a degenerate multiplet at the same k keep the
+  !! interband value. With a diagonal weight a different from the off-diagonal
+  !! one b the response contains (a-b)*sum_i |<i|dV|i>|^2, which depends on the
+  !! (arbitrary, layout-dependent) basis the eigensolver picked inside the
+  !! multiplet. In the q -> 0 limit (f_i-f_j)/(e_i-e_j) -> -delta(e_F-e) for
+  !! every pair of a degenerate block, which is what Gaussian smearing does
+  !! (orthogonalize: theta = 1/2, w0gauss for all degenerate pairs). The same is
+  !! done here: inside each degenerate block every pair (i,j) gets the block
+  !! mean of the diagonal weights, and delta_i (used by the Fermi-energy shift
+  !! and by the diagonal) its block mean. Non-degenerate bands are unchanged.
+  !
+  USE kinds,          ONLY : DP
+  USE wvfct,          ONLY : nbnd, et
+  USE qpoint,         ONLY : nksq, ikks
+  USE dfpt_tetra_mod, ONLY : dfpt_tetra_beta, dfpt_tetra_delta
+  USE io_global,      ONLY : stdout
+  !
+  IMPLICIT NONE
+  !
+  REAL(DP), PARAMETER :: thr = 1.0d-5   ! Ry, degeneracy threshold
+  REAL(DP) :: bdiag, dbar
+  INTEGER :: ik, ikk, i1, i2, n, ib
+  !
+  WRITE(stdout, '(/,5x,"WARNING: tetrahedra, static response at q = Gamma.",/, &
+     & 5x,"The Fermi-surface (Drude) weights of degenerate multiplets are set to their",/, &
+     & 5x,"block mean, as with Gaussian smearing, to remove the dependence on the basis",/, &
+     & 5x,"inside the multiplets (MPI layout, diagonalizer). This treatment has not been",/, &
+     & 5x,"cross-validated; Gaussian smearing is the safer choice for static U(q=Gamma).")')
+  !
+  DO ik = 1, nksq
+     ikk = ikks(ik)
+     i1 = 1
+     DO WHILE (i1 <= nbnd)
+        i2 = i1
+        DO WHILE (i2 < nbnd)
+           IF (ABS(et(i2+1,ikk) - et(i1,ikk)) > thr) EXIT
+           i2 = i2 + 1
+        ENDDO
+        n = i2 - i1 + 1
+        IF (n > 1) THEN
+           bdiag = 0.0_DP
+           DO ib = i1, i2
+              bdiag = bdiag + dfpt_tetra_beta(ib, ib, ikk)
+           ENDDO
+           dfpt_tetra_beta(i1:i2, i1:i2, ikk) = bdiag / DBLE(n)
+           dbar = SUM(dfpt_tetra_delta(i1:i2, ikk)) / DBLE(n)
+           dfpt_tetra_delta(i1:i2, ikk) = dbar
+        ENDIF
+        i1 = i2 + 1
+     ENDDO
+  ENDDO
+  !
+END SUBROUTINE crpa_tetra_degenerate_drude

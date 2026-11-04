@@ -55,6 +55,7 @@ SUBROUTINE lr_compute_matrix_elements(npert, lrdvpsi, iudvpsi, dvscf, mel)
   CALL start_clock ('lr_matrix_elements')
   !
   ALLOCATE(aux(npwx*npol, nbnd))
+  !$acc enter data create(aux(1:npwx*npol, 1:nbnd))
   !
   mel = (0.d0, 0.d0)
   !
@@ -69,6 +70,7 @@ SUBROUTINE lr_compute_matrix_elements(npert, lrdvpsi, iudvpsi, dvscf, mel)
       !
       CALL get_buffer(evc, lrwfc, iuwfc, ikks(ik))
       IF (lgamma) CALL get_buffer(evq, lrwfc, iuwfc, ikqs(ik))
+      !$acc update device(evc)
       !
       ! Compute dvpsi = dV_tot * psi_k
       !
@@ -119,6 +121,7 @@ SUBROUTINE lr_compute_matrix_elements(npert, lrdvpsi, iudvpsi, dvscf, mel)
   !
   CALL mp_sum(mel, intra_bgrp_comm)
   !
+  !$acc exit data delete(aux)
   DEALLOCATE(aux)
   !
   CALL stop_clock ('lr_matrix_elements')

@@ -20,9 +20,11 @@ subroutine crpa_init()
   USE crpacom,       ONLY : chi0, chi, nqsh, code
                            !  determine_num_pert_only
                            !  perturbed_atom, todo_atom
+  USE ph_restart,    ONLY : ph_readfile
+  USE control_lr,    ONLY : rec_code_read
   !
   IMPLICIT NONE
-  INTEGER :: na, nt
+  INTEGER :: na, nt, ierr
   !
 !   ALLOCATE (todo_atom(nat))
 !   ALLOCATE (perturbed_atom(nat))
@@ -30,6 +32,15 @@ subroutine crpa_init()
   ! Determine the number of q-points in the q-mesh without symmetry
   !
   nqsh = nq1*nq2*nq3
+  !
+  ! Try to read a previous save file (written by crpa_phescf_w after the
+  ! dielectric calculation completes). If found, rec_code_read is updated
+  ! and crpa_phescf_w will skip the E-field calculation on restart.
+  !
+  CALL ph_readfile('status_ph', 0, 0, ierr)
+  IF (ierr == 0) THEN
+     WRITE(stdout, '(/,5x,"Restart file found. Resuming from rec_code = ", i5)') rec_code_read
+  ENDIF
 !   !
 !   ! Determine the total number of Hubbard atoms in the virtual supercell
 !   !

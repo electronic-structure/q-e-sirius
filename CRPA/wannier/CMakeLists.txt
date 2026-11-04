@@ -23,6 +23,7 @@ target_link_libraries(qe_crpa_w90
 # wannier2pw.x
 ###########################################################
 set(src_w90_prog wannier2pw.f90)
+qe_enable_cuda_fortran("${src_w90_prog}")
 qe_add_executable(qe_wannier2pw_exe ${src_w90_prog})
 set_target_properties(qe_wannier2pw_exe PROPERTIES OUTPUT_NAME wannier2pw.x)
 
@@ -30,4 +31,4 @@ target_include_directories(qe_wannier2pw_exe PRIVATE
     ${CMAKE_SOURCE_DIR}/LAXlib
 )
 
-target_link_libraries(qe_wannier2pw_exe PRIVATE qe_crpa_w90 qe_pw qe_lax qe_modules qe_xclib)
+target_link_libraries(qe_wannier2pw_exe PRIVATE qe_crpa_w90 qe_pw qe_lax qe_modules qe_xclib qe_fftx)

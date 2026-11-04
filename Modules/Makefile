@@ -196,7 +196,6 @@ xml_io_rism.o
 
 OBJS = \
 atom_weight.o \
-capital.o \
 cryst_to_car.o \
 expint.o \
 generate_k_along_lines.o \
@@ -205,7 +204,6 @@ inpfile.o \
 int_to_char.o \
 latgen.o \
 linpack.o \
-matches.o \
 plot_io.o \
 radial_gradients.o \
 rgen.o \
@@ -213,7 +211,6 @@ recips.o \
 remove_tot_torque.o \
 sort.o \
 trimcheck.o \
-test_input_file.o \
 date_and_tim.o \
 volume.o \
 wgauss.o \

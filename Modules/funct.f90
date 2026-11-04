@@ -22,6 +22,7 @@ MODULE funct
   USE kinds,          ONLY: DP
   USE beef_interface, ONLY: beef_set_type
   USE xc_lib
+  USE upf_utils,      ONLY: matches, capital
   !
   IMPLICIT NONE
   !
@@ -218,7 +219,8 @@ MODULE funct
   !              "vv10"   rVV10                          inlc =26
   !
   ! Meta-GGA with van der Waals
-  !              "rvv10-scan" rVV10 (with b=15.7) and scan inlc=26 (PRX 6, 041005 (2016))
+  !              all MGGA functionals with rVV10 are currently set to inlc=26 and applies b=15.7.
+  !              Except for rvv10-r2scan which uses b=11.95
   !
   ! Note: as a rule, all keywords should be unique, and should be different
   ! from the short name, but there are a few exceptions.
@@ -349,12 +351,11 @@ CONTAINS
     !
     ! ... local variables
     !
-    INTEGER :: len, l, i
+    INTEGER :: l, i
     CHARACTER(len=150) :: dftout, dftout_loc
     LOGICAL :: dft_defined
     LOGICAL :: check_libxc
     !
-    CHARACTER(LEN=1), EXTERNAL :: capital
     CHARACTER(LEN=4) :: lda_exch, lda_corr, gga_exch, gga_corr
     !
     INTEGER :: save_inlc, lnt, ln_nlc
@@ -372,12 +373,7 @@ CONTAINS
     !
     ! convert to uppercase
     !
-    len = LEN_TRIM(dft_)
-    dftout = ' '
-    !
-    DO l = 1, len
-       dftout(l:l) = capital( dft_(l:l) )
-    ENDDO
+    dftout = capital( TRIM(dft_) )
     !
     !
     ! ----------------------------------------------
@@ -409,6 +405,12 @@ CONTAINS
        END SELECT
        dft_defined = xclib_set_dft_IDs(1,4,43,14,0,0)
        inlc = beefvdw
+    ! Special case BEEF_LXC: BEEF-vdW via LibXC (XC_GGA_XC_BEEFVDW, ID 286)
+    ! + vdW-DF2 non-local correlation (inlc=2), same as native BEEF-vdW.
+    CASE( 'BEEF_LXC' )
+       CALL xclib_set_dft_from_name( 'BEEF_LXC' )
+       dft_defined = .TRUE.
+       inlc = 2
     ! Special case vdW-DF
     CASE( 'VDW-DF' )
        dft_defined = xclib_set_dft_IDs(1,4,4,0,0,0)
@@ -608,7 +610,6 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN):: name(0:n)
     CHARACTER(LEN=*), INTENT(IN):: dft
     INTEGER :: i
-    LOGICAL, EXTERNAL :: matches
     !
     matching = notset
     !
@@ -953,9 +954,15 @@ CONTAINS
     ELSE IF ( inlc == 26 ) THEN
       !
       IF ( xclib_get_id('MGGA','EXCH') == 0 ) THEN
-        CALL xc_rVV10 (rho_valence(:,1), rho_core, nspin, enl, vnl, v)
+         ! no MetaGGA, rVV10 with default b=6.3 as in Phys. Rev. B 87, 041108(R) (2013)
+        CALL xc_rVV10  (rho_valence(:,1), rho_core, nspin, enl, vnl, v)  ! default b=6.3
+      ELSE IF (xclib_dft_is_libxc('MGGA','EXCH') .AND. xclib_get_id('MGGA','EXCH')==497 ) THEN
+         ! rVV10-R2SCAN, with b=11.95, read Phys. Rev. B 106, 075422 (2022)
+         CALL xc_rVV10 (rho_valence(:,1), rho_core, nspin, enl, vnl, v, 11.95_dp)
       ELSE
-        CALL xc_rVV10 (rho_valence(:,1), rho_core, nspin, enl, vnl, v, 15.7_dp)
+         ! All other metaGGA exchange functionals b=15.7.
+         ! as found for rvv10+scan in Phys. Rev. B 106, 075422 (2022)
+        CALL xc_rVV10  (rho_valence(:,1), rho_core, nspin, enl, vnl, v, 15.7_dp)
       END IF
       !
     ELSE

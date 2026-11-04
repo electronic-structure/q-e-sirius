@@ -20,6 +20,8 @@ SUBROUTINE crpa_openfil_q()
   USE qpoint,           ONLY : nksq
   USE control_lr,       ONLY : lgamma
   USE units_lr,         ONLY : iuwfc, lrwfc, iuatswfc, iudwf, lrdwf, iudvwfc, lrdvwfc
+  USE units_ph,         ONLY : iuebar, lrebar, iucom, lrcom
+  USE uspp,             ONLY : okvan
   USE ldaU,             ONLY : nwfcU, lda_plus_u
   USE crpacom,          ONLY : recalc_sym, tmp_dir_save, tmp_dir_crpa, iuwan, lrwan
   USE crpa_pert,        ONLY : pert_basis
@@ -84,6 +86,20 @@ SUBROUTINE crpa_openfil_q()
      !
      CALL open_buffer(iunhub, 'hub', nwordwfcU, io_level, exst_mem, exst, tmp_dir)
      !
+  ENDIF
+  !
+  ! Open buffer for P_c^+ x psi (needed by dvpsi_e / cgsolve_all)
+  !
+  iuebar = 30
+  lrebar = nbnd * npwx * npol
+  CALL open_buffer (iuebar, 'ebar', lrebar, io_level, exst_mem, exst, tmp_dir)
+  !
+  ! Open buffer for dvpsi saved for Born effective charges (USPP only)
+  !
+  IF (okvan) THEN
+     iucom = 28
+     lrcom = nbnd * npwx * npol
+     CALL open_buffer (iucom, 'com', lrcom, io_level, exst_mem, exst, tmp_dir)
   ENDIF
   !
   IF (pert_basis == 'wannier') THEN

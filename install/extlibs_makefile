@@ -87,15 +87,17 @@ make_w90: git_w90
 	cd $(TOPDIR)/external/wannier90 ; \
 	( $(MAKE) lib || exit 1) ; \
 	( $(MAKE) PREFIX=$(BUILDDIR)/wannier90 install && \
-	  touch $(BUILDDIR)/wannier90/make_w90 ) ; \
+	  touch $(BUILDDIR)/wannier90/make_w90 && \
+	  ln -fs $(BUILDDIR)/wannier90/bin/*.x  $(BUILDDIR)/bin/ ) ; \
 	mkdir $(BUILDDIR)/wannier90/obj ; \
 	cp src/obj/*.o src/obj/*mod $(BUILDDIR)/wannier90/obj ; fi
 
 clean_w90:
 	if test -d $(BUILDDIR)/wannier90 ; then \
 	   rm -f -R $(BUILDDIR)/wannier90/* ; fi
-	cd $(TOPDIR)/external/wannier90; \
-	( $(MAKE) veryclean && rm make.inc )
+	if test -d $(TOPDIR)/external/wannier90; then \
+	   cd $(TOPDIR)/external/wannier90; \
+	   ( $(MAKE) veryclean && rm make.inc ) ; fi
 
 distclean_w90:
 	if test ! -f git_w90; then rm git_w90 ; fi

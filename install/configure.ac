@@ -1,4 +1,4 @@
-# Copyright (C) 2001-2025 Quantum ESPRESSO group
+# Copyright (C) 2001-2026 Quantum ESPRESSO group
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -6,7 +6,7 @@
 # of the License. See the file `License' in the root directory
 # of the present distribution.
 
-AC_INIT(ESPRESSO, 7.5, , espresso)
+AC_INIT(ESPRESSO, 7.6, , espresso)
 
 AC_PREREQ(2.64)
 AC_CONFIG_MACRO_DIR([m4/])
@@ -41,11 +41,14 @@ try_dflags=""
 # Add needed include directories
 try_iflags="-I. -I\$(TOPDIR)/include"
 
-# Checking archiver...
+# Checking archiver (obsolete? "ar ruv" seems to always work) ...
 X_AC_QE_AR()
 
-# Checking OpenMP...
+# Checking OpenMP for CPUs...
 X_AC_QE_OPENMP()
+
+# Checking for GPU ...
+X_AC_QE_GPU()
 
 AC_LANG_PUSH(Fortran) 
 AC_FC_SRCEXT(f90) 
@@ -66,7 +69,11 @@ X_AC_QE_CPP()
 X_AC_QE_LD()
 
 # Checking CUDA...
-X_AC_QE_CUDA()
+if test "$with_gpu" = "1"; then
+   X_AC_QE_CUDA()
+elif test "$with_gpu" = "2"; then
+   X_AC_QE_OPENMP_OFFLOAD()
+fi
 
 # Checking F90 rule...
 X_AC_QE_F90RULE()
@@ -89,7 +96,7 @@ ACX_LIBXC()
 # Setting FoX...
 X_AC_QE_FOX()
 
-# Checking for IBM MASS library...
+# Checking for IBM MASS library (obsolete?) ...
 X_AC_QE_MASS()
 
 # check for MPI library...
@@ -116,7 +123,7 @@ X_AC_QE_SIGNAL()
 # Checking STATUS...
 X_AC_QE_STATUS()
 
-# Checking for ranlib...
+# Checking for ranlib (obsolete/useless?)...
 X_AC_QE_RANLIB()
 
 # Checking wget or curl...
@@ -125,11 +132,11 @@ X_AC_QE_WGET()
 # set up git
 X_AC_QE_GIT()
 
-# Show dflags before adding $(MANUAL_DFLAGS) and adapt to XLF (if needed)
+# Show dflags before adding $(MANUAL_DFLAGS) and adapt to XLF (obsolete?)
 if test "$dflags" = "" ; then dflags="$try_dflags" ; fi
 echo setting DFLAGS... $try_dflags
 
-# xlf compilers (AIX and powerpc) want comma-separated -D directives
+# xlf compilers (AIX and powerpc: obsolete?) want comma-separated -D directives 
 X_AC_QE_AIX_DFLAGS()
 
 # prepend input $IFLAGS to what configure has found

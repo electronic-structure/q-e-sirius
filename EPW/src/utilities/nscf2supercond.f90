@@ -1,4 +1,5 @@
   !
+  ! Copyright (C) 2023-2026 EPW-Collaboration
   ! Copyright (C) 2024 EPW-Collaboration
   !
   ! This file is distributed under the terms of the GNU General Public
@@ -71,7 +72,7 @@
   !
   CALL write_eigen_band (filband)
   !
-  CALL environment_end ( )
+  CALL environment_end ( 'BANDS' )
   !
   CALL stop_pp()
   STOP

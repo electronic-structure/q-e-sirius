@@ -455,6 +455,8 @@ MODULE qe_dft_refs
   DATA dft_full_descr(41) / 'PBESOL-AH: HJS implementation (PBEsol params).' /
   ! RSCAN
   DATA dft_full_descr(42) / 'RSCAN Meta-GGA - needs Libxc.' /
+  ! BEEF_LXC
+  DATA dft_full_descr(43) / 'BEEF-vdW GGA XC via Libxc (XC_GGA_XC_BEEFVDW, ID 286) - needs Libxc.' /
   !
 END MODULE qe_dft_refs
 

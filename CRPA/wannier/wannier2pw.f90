@@ -213,6 +213,7 @@ PROGRAM wannier2pw
     USE uspp,             ONLY : vkb
     USE uspp_init,        ONLY : init_us_2
     USE wavefunctions,    ONLY : evc
+    USE upf_utils,        ONLY : imatches
     !
     IMPLICIT NONE
     !
@@ -228,7 +229,6 @@ PROGRAM wannier2pw
     !! I/O status
     REAL(DP) :: dummy
     !! Dummy variable for reading k points
-    LOGICAL, EXTERNAL :: imatches
     !
     ! Reset k point and G vectors
     !

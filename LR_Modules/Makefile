@@ -35,8 +35,7 @@ dfpt_type.o \
 dynmat_sub.o \
 h_prec.o \
 h_prec_freq.o \
-incdrhoscf.o \
-incdrhoscf_nc.o \
+incdrhoscf_mod.o \
 dv_of_drho.o \
 dgradcorr.o \
 dnonloccorr.o \
@@ -107,5 +106,3 @@ clean :
 
 
 include make.depend
-
-

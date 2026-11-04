@@ -81,15 +81,14 @@ BASEMODS= $(BUILDDIR)/Modules/libqemod.a \
 # Compilers: fortran-90, fortran-77, C
 # If a parallel compilation is desired, MPIF90 should be a fortran-90
 # compiler that produces executables for parallel execution using MPI
-# (such as for instance mpif90, mpf90, mpxlf90,...);
-# otherwise, an ordinary fortran-90 compiler (f90, g95, xlf90, ifort,...)
+# (e.g. mpif90); otherwise, an ordinary fortran-90 compiler (e.g. gfortran)
 
 MPIF90         = @mpif90@
 F90           = @f90@
 CC             = @cc@
 
-# GPU architecture (Kepler: 35, Pascal: 60, Volta: 70, Turing: 75, Ampere: 80)
-GPU_ARCH=@gpu_arch@
+# NVidia GPU arch (Kepler: 35, Pascal: 60, Volta: 70, Turing: 75, Ampere: 80)
+CUDA_ARCH=@cuda_arch@
 
 # CUDA runtime (should be compatible with the CUDA driver)
 CUDA_RUNTIME=@cuda_runtime@

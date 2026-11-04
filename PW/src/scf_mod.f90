@@ -90,6 +90,10 @@ MODULE scf
   !! position dependent kinetic energy enhancement factor
   COMPLEX(DP), ALLOCATABLE :: rhog_core(:)
   !! the core charge in reciprocal space
+  REAL(DP), ALLOCATABLE :: tau_core(:)
+  !! the kinetic energy density of the core charge in real space
+  COMPLEX(DP), ALLOCATABLE :: taug_core(:)
+  !! the kinetic energy density of the core charge in reciprocal space
   !
   !! DFT+U, colinear and noncolinear cases
   !! These variables are set every time create_scf_type is called

@@ -1,0 +1,17 @@
+--- a/cmake/FindSCALAPACK.cmake	2026-09-07 12:09:40.798662855 +0200
++++ b/cmake/FindSCALAPACK.cmake	2026-09-07 12:09:45.862516154 +0200
+@@ -299,7 +299,13 @@
+ endmacro(Check_Scalapack_Libraries)
+ 
+ set(SCALAPACK_LINKER_FLAGS)
+-set(SCALAPACK_LIBRARIES)
++# Respect a caller-supplied SCALAPACK_LIBRARIES (e.g. spack passing the
++# resolved libraries for a provider, such as nvpl-scalapack, whose split
++# blacs/scalapack library names this module's vendor search does not know)
++# instead of unconditionally discarding it before the search below runs.
++if(NOT SCALAPACK_LIBRARIES)
++  set(SCALAPACK_LIBRARIES)
++endif()
+ set(SCALAPACK95_LIBRARIES)
+ 
+ if(NOT BLAS_FOUND)

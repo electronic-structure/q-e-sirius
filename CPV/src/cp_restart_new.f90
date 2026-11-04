@@ -684,7 +684,8 @@ MODULE cp_restart_new
       LOGICAL :: ldftd3
       INTEGER :: nq1, nq2, nq3, lda_plus_U_kind
       REAL(dp):: exx_fraction, screening_parameter, ecutfock, ecutvcut,local_thr
-      LOGICAL :: x_gamma_extrapolation
+      LOGICAL :: x_gamma_extrapolation, use_ace
+      INTEGER :: nbndproj
       REAL(dp):: hubbard_dum(3,nsp), hubba_dum(nsp), hubba_dum_dum(1,1,1) 
       LOGICAL :: backall_dum(nsp)
       INTEGER :: hub_l2_dum(nsp), hub_l3_dum(nsp), hub_lmax_back_dum  
@@ -787,7 +788,7 @@ MODULE cp_restart_new
 
       CALL qexsd_copy_dft ( output_obj%dft, nsp, atm, dft_name, &
            nq1, nq2, nq3, ecutfock, exx_fraction, screening_parameter, &
-           exxdiv_treatment, x_gamma_extrapolation, ecutvcut, local_thr, &
+           exxdiv_treatment, x_gamma_extrapolation, ecutvcut, local_thr, use_ace, nbndproj, &
            lda_plus_U, bool_dum,lda_plus_U_kind, Hubbard_projectors, Hubbard_n, Hubbard_l, Hubbard_lmax,Hubbard_dum, &
            hub_l2_dum, hub_l2_dum, hub_l2_dum, hub_l2_dum, backall_dum, hub_lmax_back_dum, hubba_dum, & 
            Hubbard_U, hubba_dum_dum,hubba_dum, Hubbard_dum(1,:), Hubbard_dum(2,:), hubba_dum_dum, Hubbard_dum(3,:), &

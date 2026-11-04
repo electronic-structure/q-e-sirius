@@ -704,6 +704,10 @@ MODULE qes_types_module
     REAL(DP) :: ecutvcut
     LOGICAL  :: localization_threshold_ispresent = .FALSE.
     REAL(DP) :: localization_threshold
+    LOGICAL  :: use_ace_ispresent = .FALSE.
+    LOGICAL :: use_ace
+    LOGICAL  :: nbndproj_ispresent = .FALSE.
+    INTEGER :: nbndproj
     !
   END TYPE hybrid_type
   !

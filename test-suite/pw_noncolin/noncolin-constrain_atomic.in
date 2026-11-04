@@ -13,6 +13,7 @@
     lambda = 1
  /
  &electrons
+    conv_thr=1.0e-7
     mixing_beta = 0.2
  /
 ATOMIC_SPECIES

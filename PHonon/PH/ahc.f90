@@ -1032,6 +1032,8 @@ SUBROUTINE elph_ahc_setup()
   !! Unit for \(e_n(k)\) energy eigenvalue output
   INTEGER :: iunetq
   !! Unit for \(e_n(k+q)\) energy eigenvalue output
+  INTEGER :: iuninfo
+  !! Unit for ahc_info.dat metadata output
   REAL(DP), ALLOCATABLE :: et_collect(:, :, :)
   !! energy eigenvalues at k and k+q for all k points
   CHARACTER(LEN=6), EXTERNAL :: int_to_char
@@ -1042,6 +1044,17 @@ SUBROUTINE elph_ahc_setup()
   ! Create output directory
   !
   CALL create_directory(ahc_dir)
+  !
+  ! Write AHC metadata file for EPW consistency checks
+  !
+  IF (ionode) THEN
+    OPEN(NEWUNIT=iuninfo, FILE=TRIM(ahc_dir) // 'ahc_info.dat', &
+        FORM='formatted', STATUS='replace')
+    WRITE(iuninfo, '(A, I8)') 'ahc_nbnd      ', ahc_nbnd
+    WRITE(iuninfo, '(A, I8)') 'ahc_nbndskip  ', ahc_nbndskip
+    WRITE(iuninfo, '(A, I8)') 'nbnd          ', nbnd
+    CLOSE(iuninfo)
+  ENDIF
   !
   ib_ahc_min = ahc_nbndskip + 1
   ib_ahc_max = ahc_nbndskip + ahc_nbnd

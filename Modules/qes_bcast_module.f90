@@ -785,6 +785,12 @@ MODULE qes_bcast_module
     CALL mp_bcast(obj%localization_threshold_ispresent, ionode_id, comm)
     IF (obj%localization_threshold_ispresent) &
       CALL mp_bcast(obj%localization_threshold, ionode_id, comm)
+    CALL mp_bcast(obj%use_ace_ispresent, ionode_id, comm)
+    IF (obj%use_ace_ispresent) &
+      CALL mp_bcast(obj%use_ace, ionode_id, comm)
+    CALL mp_bcast(obj%nbndproj_ispresent, ionode_id, comm)
+    IF (obj%nbndproj_ispresent) &
+      CALL mp_bcast(obj%nbndproj, ionode_id, comm)
     !
   END SUBROUTINE qes_bcast_hybrid
   !

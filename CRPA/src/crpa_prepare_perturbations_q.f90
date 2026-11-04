@@ -18,7 +18,7 @@ SUBROUTINE crpa_prepare_perturbations_q(iq)
   USE io_global,         ONLY : stdout
   USE qpoint,            ONLY : nksqtot
   USE crpacom,           ONLY : v_coul_bare, v_coul_scrd, dist_thr, active_bands_min, &
-                                active_bands_max, dist_thr_large
+                                active_bands_max, dist_thr_large, crpa_nfreq
   USE crpa_pert,         ONLY : pert_basis, npert_tot, nmels_tot, pert_nbnd, pert_ibnd_max, &
                                 pert_ibnd_min, pert_iwlist, pert_jwlist, pert_Rlist, &
                                 mels_iwlist, mels_jwlist, mels_Rlist
@@ -39,7 +39,7 @@ SUBROUTINE crpa_prepare_perturbations_q(iq)
     nmels_tot = npert_tot
     !
     ALLOCATE(v_coul_bare(nmels_tot, npert_tot))
-    ALLOCATE(v_coul_scrd(nmels_tot, npert_tot))
+    ALLOCATE(v_coul_scrd(nmels_tot, npert_tot, crpa_nfreq))
     !
   ELSEIF (pert_basis == 'wannier') THEN
     !
@@ -52,7 +52,7 @@ SUBROUTINE crpa_prepare_perturbations_q(iq)
     pert_nbnd = num_wann
     !
     ALLOCATE(v_coul_bare(nmels_tot, npert_tot))
-    ALLOCATE(v_coul_scrd(nmels_tot, npert_tot))
+    ALLOCATE(v_coul_scrd(nmels_tot, npert_tot, crpa_nfreq))
     !
   ENDIF
   !

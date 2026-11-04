@@ -176,12 +176,12 @@ SUBROUTINE dnsq_orth()
         ! 
         DO na = 1, nat
            !
-           nt = ityp(na)
-           !
            DO icart = 1, 3 
               !   
               ! Calculates the derivatives \delta(na,icart) of beta functions
               ! only for j=na, at k and k+q (for all the states l,l')
+              !
+              nt = ityp(na)
               !
               DO ih = 1, nh(nt)
                  !

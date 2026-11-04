@@ -77,10 +77,11 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
    USE eqv,                   ONLY : dpsi, dvpsi, evq
    USE apply_dpot_mod,        ONLY : apply_dpot_bands
    USE lr_nc_mag,             ONLY : lr_apply_time_reversal
+   USE constrained_dfpt,      ONLY : cdfpt, cdfpt_subtract_active_wfc
+   USE incdrhoscf_mod,        ONLY : incdrhoscf, incdrhoscf_nc
    USE cell_base,             ONLY : at
    USE gvect,                 ONLY : mill
    USE control_lr,            ONLY : alpha_pv
-   USE constrained_dfpt,      ONLY : cdfpt, cdfpt_subtract_active_wfc
    USE mod_sirius
    !
    IMPLICIT NONE
@@ -133,7 +134,6 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
    INTEGER, ALLOCATABLE :: vg_kq(:,:)
    !
    INTEGER :: ig
-   !
    COMPLEX(DP) , ALLOCATABLE :: dvpsi_copy(:, :)
    !! copy of dvpsi. Used for cDFPT.
    !
@@ -273,7 +273,7 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
          !
          ! TODO: should nbnd_occ(ikk) be nbnd_occ(ikmk)?
 #if defined(__SIRIUS)
-         ALLOCATE(vg_kq(3,npwq))
+         ALLOCATE(vg_kq(3,ngk(ikq)))
          DO ig = 1, npwq
            vg_kq(:, ig) = mill(:, igk_k(ig, ikq))
          ENDDO
@@ -383,6 +383,7 @@ SUBROUTINE sternheimer_kernel_freq(first_iter, time_reversed, npert, lrdvpsi, iu
    USE eqv,                   ONLY : dpsi, dvpsi, evq
    USE apply_dpot_mod,        ONLY : apply_dpot_bands
    USE lr_nc_mag,             ONLY : lr_apply_time_reversal
+   USE incdrhoscf_mod,        ONLY : incdrhoscf, incdrhoscf_nc
    USE cell_base,             ONLY : at
    USE gvect,                 ONLY : mill
    USE control_lr,            ONLY : alpha_pv

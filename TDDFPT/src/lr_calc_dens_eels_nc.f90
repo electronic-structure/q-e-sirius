@@ -40,6 +40,7 @@ SUBROUTINE lr_calc_dens_eels_nc (drhoscf, dpsi)
   USE fft_interfaces,        ONLY : fft_interpolate
   USE uspp_init,             ONLY : init_us_2
   USE units_lr,              ONLY : lrwfc, iuwfc
+  USE incdrhoscf_mod,        ONLY : incdrhoscf_nc
   !
   IMPLICIT NONE
   !

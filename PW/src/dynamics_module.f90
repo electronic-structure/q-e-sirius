@@ -1873,8 +1873,7 @@ CONTAINS
       !! Refold atomic positions.
       !
       USE ions_base,          ONLY : nat, tau
-      USE cell_base,          ONLY : alat
-      USE constraints_module, ONLY : pbc
+      USE cell_base,          ONLY : alat, pbc
       !
       IMPLICIT NONE
       !
@@ -1896,8 +1895,7 @@ CONTAINS
       !! Molecular dynamics - compute averages.
       !
       USE ions_base,          ONLY : nat, tau, fixatom
-      USE cell_base,          ONLY : alat, at
-      USE constraints_module, ONLY : pbc
+      USE cell_base,          ONLY : alat, at, pbc
       USE io_files,           ONLY : delete_if_present
       !
       IMPLICIT NONE

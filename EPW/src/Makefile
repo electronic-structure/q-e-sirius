@@ -85,6 +85,10 @@ tdbe_mod.o \
 tdbe_common.o \
 phph.o \
 utilities/screening.o \
+global_setups.o \
+qe_wrappers.o \
+dvqhub.o \
+onemkl_wrappers.f90 \
 #default : epw
 
 PHOBJS = ../../PHonon/PH/libph.a
@@ -114,6 +118,7 @@ nscf2supercond.x : utilities/nscf2supercond.o $(PWOBJS) $(QEMODS)
 	- ( cd ../bin ; ln -fs ../src/$@ . )
 	- ( cd ../../bin ; ln -fs ../EPW/src/$@ . )
 
+
 iodir :
 	if test ! -d io ; then mkdir io ; fi
 
@@ -127,6 +132,7 @@ bindir :
 
 clean :
 	- /bin/rm -f  *.o *~ *.d *.mod *.i io/*.mod io/*.o utilities/*.mod utilities/*.o libepw.a liblr.a
+
 
 
 include make.depend
