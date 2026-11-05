@@ -1,0 +1,417 @@
+
+     Program PWSCF v.8.0dev starts on 28Oct2026 at 11:53:39 
+        Git branch: dHP_metal
+        Last git commit: 1a607a3b2785c0cc7aa48a29f363d9e2fe44ea67-dirty
+        Last git commit date: Wed Oct 28 08:56:47 2026 +0100
+        Last git commit subject: Fix bug introduced at Merge time. Now EPW compiles
+
+     This program is part of the open-source Quantum ESPRESSO suite
+     for quantum simulation of materials; please cite
+         "P. Giannozzi et al., J. Phys.:Condens. Matter 21 395502 (2009);
+         "P. Giannozzi et al., J. Phys.:Condens. Matter 29 465901 (2017);
+         "P. Giannozzi et al., J. Chem. Phys. 152 154105 (2020);
+          URL http://www.quantum-espresso.org", 
+     in publications or presentations arising from this work. More details at
+     http://www.quantum-espresso.org/quote
+
+     Parallel version (MPI), running on     4 processors
+
+     MPI processes distributed on     1 nodes
+     168399 MiB available memory on the printing compute node when the environment starts
+ 
+     Waiting for input...
+     Reading input from standard input
+
+     Current dimensions of program PWSCF are:
+     Max number of different atomic species (ntypx) = 10
+     Max number of k-points (npk) =  40000
+     Max angular momentum in pseudopotentials (lmaxx) =  4
+
+     Atomic positions and unit cell read from directory:
+     ./out/SrVO3.save/
+ 
+     [opt_tetra]  Optimized tetrahedron method is used.
+ 
+     R & G space division:  proc/nbgrp/npool/nimage =       4
+     Subspace diagonalization in iterative solution of the eigenvalue problem:
+     a serial algorithm will be used
+
+ 
+     Parallelization info
+     --------------------
+     sticks:   dense  smooth     PW     G-vecs:    dense   smooth      PW
+     Min         126     126     40                 2102     2102     386
+     Max         127     127     41                 2103     2103     389
+     Sum         505     505    161                 8409     8409    1551
+ 
+     Using Slab Decomposition
+ 
+
+
+     bravais-lattice index     =            1
+     lattice parameter (alat)  =       7.2613  a.u.
+     unit-cell volume          =     382.8628 (a.u.)^3
+     number of atoms/cell      =            5
+     number of atomic types    =            3
+     number of electrons       =        41.00
+     number of Kohn-Sham states=           30
+     kinetic-energy cutoff     =      30.0000  Ry
+     charge density cutoff     =     120.0000  Ry
+     Exchange-correlation= PBE
+                           (   1   4   3   4   0   0   0)
+
+     celldm(1)=   7.261300  celldm(2)=   0.000000  celldm(3)=   0.000000
+     celldm(4)=   0.000000  celldm(5)=   0.000000  celldm(6)=   0.000000
+
+     crystal axes: (cart. coord. in units of alat)
+               a(1) = (   1.000000   0.000000   0.000000 )  
+               a(2) = (   0.000000   1.000000   0.000000 )  
+               a(3) = (   0.000000   0.000000   1.000000 )  
+
+     reciprocal axes: (cart. coord. in units 2 pi/alat)
+               b(1) = (  1.000000  0.000000  0.000000 )  
+               b(2) = (  0.000000  1.000000  0.000000 )  
+               b(3) = (  0.000000  0.000000  1.000000 )  
+
+
+     PseudoPot. # 1 for Sr read from file:
+     ../../pseudo/Sr_ONCV_PBE-1.0.upf
+     MD5 check sum: 78fc4efdafbc3dc123c8ae2ba82404d1
+     Pseudo is Norm-conserving, Zval = 10.0
+     Generated using ONCVPSP code by D. R. Hamann
+     Using radial grid of  602 points,  6 beta functions with: 
+                l(1) =   0
+                l(2) =   0
+                l(3) =   1
+                l(4) =   1
+                l(5) =   2
+                l(6) =   2
+
+     PseudoPot. # 2 for V  read from file:
+     ../../pseudo/V_ONCV_PBE-1.0.upf
+     MD5 check sum: c2b49fb55f89a022ba3f2a4f0f778651
+     Pseudo is Norm-conserving, Zval = 13.0
+     Generated using ONCVPSP code by D. R. Hamann
+     Using radial grid of  602 points,  6 beta functions with: 
+                l(1) =   0
+                l(2) =   0
+                l(3) =   1
+                l(4) =   1
+                l(5) =   2
+                l(6) =   2
+
+     PseudoPot. # 3 for O  read from file:
+     ../../pseudo/O_ONCV_PBE-1.0.upf
+     MD5 check sum: 80a85145cbbb6f60b39549a50e3ff56c
+     Pseudo is Norm-conserving, Zval =  6.0
+     Generated using ONCVPSP code by D. R. Hamann
+     Using radial grid of  602 points,  4 beta functions with: 
+                l(1) =   0
+                l(2) =   0
+                l(3) =   1
+                l(4) =   1
+
+     atomic species   valence    mass     pseudopotential
+     Sr               10.00    87.62000     Sr( 1.00)
+     V                13.00    50.94200     V ( 1.00)
+     O                 6.00    15.99900     O ( 1.00)
+
+     No symmetry found
+
+
+                                    s                        frac. trans.
+
+      isym =  1     identity                                     
+
+ cryst.   s( 1) = (     1          0          0      )
+                  (     0          1          0      )
+                  (     0          0          1      )
+
+ cart.    s( 1) = (  1.0000000  0.0000000  0.0000000 )
+                  (  0.0000000  1.0000000  0.0000000 )
+                  (  0.0000000  0.0000000  1.0000000 )
+
+
+     point group C_1 (1)    
+     there are  1 classes
+     the character table:
+
+       E    
+A      1.00
+
+     the symmetry operations in each class and the name of the first element:
+
+     E        1
+          identity                                               
+
+   Cartesian axes
+
+     site n.     atom                  positions (alat units)
+         1        Sr     tau(   1) = (   0.0000000   0.0000000   0.0000000  )
+         2        V      tau(   2) = (   0.5000000   0.5000000   0.5000000  )
+         3        O      tau(   3) = (   0.5000000   0.0000000   0.5000000  )
+         4        O      tau(   4) = (   0.5000000   0.5000000   0.0000000  )
+         5        O      tau(   5) = (   0.0000000   0.5000000   0.5000000  )
+
+   Crystallographic axes
+
+     site n.     atom                  positions (cryst. coord.)
+         1        Sr     tau(   1) = (  0.0000000  0.0000000  0.0000000  )
+         2        V      tau(   2) = (  0.5000000  0.5000000  0.5000000  )
+         3        O      tau(   3) = (  0.5000000  0.0000000  0.5000000  )
+         4        O      tau(   4) = (  0.5000000  0.5000000  0.0000000  )
+         5        O      tau(   5) = (  0.0000000  0.5000000  0.5000000  )
+
+     number of k points=     8 (tetrahedron method)
+                       cart. coord. in units 2pi/alat
+        k(    1) = (   0.0000000   0.0000000   0.0000000), wk =   0.2500000
+        k(    2) = (   0.0000000   0.0000000  -0.5000000), wk =   0.2500000
+        k(    3) = (   0.0000000  -0.5000000   0.0000000), wk =   0.2500000
+        k(    4) = (   0.0000000  -0.5000000  -0.5000000), wk =   0.2500000
+        k(    5) = (  -0.5000000   0.0000000   0.0000000), wk =   0.2500000
+        k(    6) = (  -0.5000000   0.0000000  -0.5000000), wk =   0.2500000
+        k(    7) = (  -0.5000000  -0.5000000   0.0000000), wk =   0.2500000
+        k(    8) = (  -0.5000000  -0.5000000  -0.5000000), wk =   0.2500000
+
+                       cryst. coord.
+        k(    1) = (   0.0000000   0.0000000   0.0000000), wk =   0.2500000
+        k(    2) = (   0.0000000   0.0000000  -0.5000000), wk =   0.2500000
+        k(    3) = (   0.0000000  -0.5000000   0.0000000), wk =   0.2500000
+        k(    4) = (   0.0000000  -0.5000000  -0.5000000), wk =   0.2500000
+        k(    5) = (  -0.5000000   0.0000000   0.0000000), wk =   0.2500000
+        k(    6) = (  -0.5000000   0.0000000  -0.5000000), wk =   0.2500000
+        k(    7) = (  -0.5000000  -0.5000000   0.0000000), wk =   0.2500000
+        k(    8) = (  -0.5000000  -0.5000000  -0.5000000), wk =   0.2500000
+
+     Dense  grid:     8409 G-vectors     FFT dimensions: (  25,  25,  25)
+
+     Dynamical RAM for                 wfc:       0.12 MB
+
+     Dynamical RAM for     wfc (w. buffer):       0.12 MB
+
+     Dynamical RAM for           str. fact:       0.10 MB
+
+     Dynamical RAM for           local pot:       0.00 MB
+
+     Dynamical RAM for          nlocal pot:       0.24 MB
+
+     Dynamical RAM for                qrad:       2.64 MB
+
+     Dynamical RAM for          rho,v,vnew:       0.20 MB
+
+     Dynamical RAM for           G-vectors:       0.14 MB
+
+     Dynamical RAM for          h,s,v(r/c):       0.16 MB
+
+     Dynamical RAM for          <psi|beta>:       0.03 MB
+
+     Dynamical RAM for                 psi:       0.24 MB
+
+     Dynamical RAM for                hpsi:       0.24 MB
+
+     Dynamical RAM for      wfcinit/wfcrot:       0.26 MB
+
+     Estimated static dynamical RAM per process >       3.73 MB
+
+     Estimated max dynamical RAM per process >       4.41 MB
+
+     Estimated total dynamical RAM >      17.63 MB
+
+     The potential is recalculated from file :
+     ./out/SrVO3.save/charge-density
+
+     Starting wfcs are random
+
+     Band Structure Calculation
+     Davidson diagonalization with overlap
+
+     Computing kpt #:     1  of     8
+     total cpu time spent up to now is        0.3 secs
+
+     Computing kpt #:     2  of     8
+     total cpu time spent up to now is        0.6 secs
+
+     Computing kpt #:     3  of     8
+     total cpu time spent up to now is        0.9 secs
+
+     Computing kpt #:     4  of     8
+     total cpu time spent up to now is        1.2 secs
+
+     Computing kpt #:     5  of     8
+     total cpu time spent up to now is        1.4 secs
+
+     Computing kpt #:     6  of     8
+     total cpu time spent up to now is        1.8 secs
+
+     Computing kpt #:     7  of     8
+     total cpu time spent up to now is        2.1 secs
+
+     Computing kpt #:     8  of     8
+     total cpu time spent up to now is        2.3 secs
+
+     ethr =  1.00E-13,  avg # of iterations = 47.5
+
+     total cpu time spent up to now is        2.3 secs
+
+     End of band structure calculation
+
+          k = 0.0000 0.0000 0.0000 (  1045 PWs)   bands (ev):
+
+   -55.8475 -28.7171 -28.7171 -28.7171 -21.5327  -8.3402  -7.1626  -7.1626
+    -3.5507  -3.5507  -3.5507   7.6733   7.6733   7.6733   9.8164   9.8164
+     9.8164  10.4572  10.4572  10.4572  12.4864  12.4864  12.4864  14.9437
+    14.9437  16.4084  16.4084  17.2087  19.6649  19.6649
+
+     occupation numbers 
+     1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000
+     1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000
+     1.0000   1.0000   1.0000   1.0000   0.4275   0.4275   0.4275   0.0000
+     0.0000   0.0000   0.0000   0.0000   0.0000   0.0000
+
+          k = 0.0000 0.0000-0.5000 (  1044 PWs)   bands (ev):
+
+   -55.8471 -28.7518 -28.7023 -28.7023 -21.4985  -8.2935  -7.1812  -7.0254
+    -3.4836  -3.4836  -3.1476   5.9493   7.5229   7.5229   8.3322   8.3753
+     8.3753   8.7239  10.2335  10.2335  12.7625  14.6647  14.6647  15.0423
+    17.5852  18.6855  18.7196  19.2351  21.0091  21.0091
+
+     occupation numbers 
+     1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000
+     1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000
+     1.0000   1.0000   1.0000   1.0000   0.6080   0.0236   0.0236   0.0000
+     0.0000   0.0000   0.0000   0.0000   0.0000   0.0000
+
+          k = 0.0000-0.5000 0.0000 (  1044 PWs)   bands (ev):
+
+   -55.8471 -28.7518 -28.7023 -28.7023 -21.4985  -8.2935  -7.1812  -7.0254
+    -3.4836  -3.4836  -3.1476   5.9493   7.5229   7.5229   8.3322   8.3753
+     8.3753   8.7239  10.2335  10.2335  12.7625  14.6647  14.6647  15.0423
+    17.5852  18.6855  18.7196  19.2351  21.0091  21.0091
+
+     occupation numbers 
+     1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000
+     1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000
+     1.0000   1.0000   1.0000   1.0000   0.6080   0.0236   0.0236   0.0000
+     0.0000   0.0000   0.0000   0.0000   0.0000   0.0000
+
+          k = 0.0000-0.5000-0.5000 (  1056 PWs)   bands (ev):
+
+   -55.8504 -28.7935 -28.7560 -28.7560 -21.4737  -7.5957  -7.2662  -7.2662
+    -3.4080  -3.3971  -3.3971   5.6076   5.9112   6.0166   7.6725   7.6725
+     8.6615   9.2930   9.2930  10.8700  14.5571  14.5571  15.3338  16.0334
+    19.2191  19.7630  20.3903  21.0824  21.0824  21.6486
+
+     occupation numbers 
+     1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000
+     1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000
+     1.0000   1.0000   1.0000   1.0000   0.1056   0.1056   0.0095   0.0000
+     0.0000   0.0000   0.0000   0.0000   0.0000   0.0000
+
+          k =-0.5000 0.0000 0.0000 (  1044 PWs)   bands (ev):
+
+   -55.8471 -28.7518 -28.7023 -28.7023 -21.4985  -8.2935  -7.1812  -7.0254
+    -3.4836  -3.4836  -3.1476   5.9493   7.5229   7.5229   8.3322   8.3753
+     8.3753   8.7239  10.2335  10.2335  12.7625  14.6647  14.6647  15.0423
+    17.5852  18.6855  18.7196  19.2351  21.0091  21.0091
+
+     occupation numbers 
+     1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000
+     1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000
+     1.0000   1.0000   1.0000   1.0000   0.6080   0.0236   0.0236   0.0000
+     0.0000   0.0000   0.0000   0.0000   0.0000   0.0000
+
+          k =-0.5000 0.0000-0.5000 (  1056 PWs)   bands (ev):
+
+   -55.8504 -28.7935 -28.7560 -28.7560 -21.4737  -7.5957  -7.2662  -7.2662
+    -3.4080  -3.3971  -3.3971   5.6076   5.9112   6.0166   7.6725   7.6725
+     8.6615   9.2930   9.2930  10.8700  14.5571  14.5571  15.3338  16.0334
+    19.2191  19.7630  20.3903  21.0824  21.0824  21.6486
+
+     occupation numbers 
+     1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000
+     1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000
+     1.0000   1.0000   1.0000   1.0000   0.1056   0.1056   0.0095   0.0000
+     0.0000   0.0000   0.0000   0.0000   0.0000   0.0000
+
+          k =-0.5000-0.5000 0.0000 (  1056 PWs)   bands (ev):
+
+   -55.8504 -28.7935 -28.7560 -28.7560 -21.4737  -7.5957  -7.2662  -7.2662
+    -3.4080  -3.3971  -3.3971   5.6076   5.9112   6.0166   7.6725   7.6725
+     8.6615   9.2930   9.2930  10.8700  14.5571  14.5571  15.3338  16.0334
+    19.2191  19.7630  20.3903  21.0824  21.0824  21.6486
+
+     occupation numbers 
+     1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000
+     1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000
+     1.0000   1.0000   1.0000   1.0000   0.1056   0.1056   0.0095   0.0000
+     0.0000   0.0000   0.0000   0.0000   0.0000   0.0000
+
+          k =-0.5000-0.5000-0.5000 (  1064 PWs)   bands (ev):
+
+   -55.8528 -28.8050 -28.8050 -28.8050 -21.4501  -7.0250  -7.0250  -7.0250
+    -3.8749  -3.8749  -3.8749   5.4163   5.9040   5.9040   6.9053   6.9053
+     6.9053  10.8556  10.8556  10.8556  15.3151  15.3151  15.3151  17.9555
+    17.9555  17.9555  20.4507  20.4507  21.0310  21.0310
+
+     occupation numbers 
+     1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000
+     1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000
+     1.0000   1.0000   1.0000   1.0000   0.0300   0.0300   0.0300   0.0000
+     0.0000   0.0000   0.0000   0.0000   0.0000   0.0000
+
+     the Fermi energy is    13.5032 ev
+     (compare with:    13.5571 eV, computed in scf)
+
+     Writing all to output data dir ./out/SrVO3.save/ :
+     XML data file, pseudopotentials, collected wavefunctions
+ 
+     init_run     :      0.03s CPU      0.05s WALL (       1 calls)
+     electrons    :      2.16s CPU      2.22s WALL (       1 calls)
+
+     Called by init_run:
+     wfcinit      :      0.00s CPU      0.00s WALL (       1 calls)
+     wfcinit:wfcr :      0.04s CPU      0.05s WALL (       8 calls)
+     potinit      :      0.01s CPU      0.01s WALL (       1 calls)
+     hinit0       :      0.02s CPU      0.04s WALL (       1 calls)
+
+     Called by electrons:
+     c_bands      :      2.15s CPU      2.21s WALL (       1 calls)
+     v_of_rho     :      0.00s CPU      0.00s WALL (       1 calls)
+     v_h          :      0.00s CPU      0.00s WALL (       1 calls)
+     v_xc         :      0.00s CPU      0.00s WALL (       1 calls)
+
+     Called by c_bands:
+     init_us_2    :      0.00s CPU      0.00s WALL (       8 calls)
+     cegterg      :      2.10s CPU      2.15s WALL (      23 calls)
+
+     Called by sum_band:
+
+     Called by *egterg:
+     cdiaghg      :      0.53s CPU      0.54s WALL (     388 calls)
+     cegterg:over :      0.16s CPU      0.17s WALL (     380 calls)
+     cegterg:upda :      0.05s CPU      0.05s WALL (     380 calls)
+     cegterg:last :      0.09s CPU      0.10s WALL (     251 calls)
+     h_psi        :      1.22s CPU      1.26s WALL (     411 calls)
+     g_psi        :      0.01s CPU      0.01s WALL (     380 calls)
+
+     Called by h_psi:
+     h_psi:calbec :      0.09s CPU      0.10s WALL (     411 calls)
+     vloc_psi     :      1.05s CPU      1.09s WALL (     411 calls)
+     add_vuspsi   :      0.07s CPU      0.07s WALL (     411 calls)
+
+     General routines
+     calbec       :      0.09s CPU      0.10s WALL (     411 calls)
+     fft          :      0.00s CPU      0.01s WALL (      10 calls)
+     fftw         :      0.92s CPU      0.95s WALL (   15300 calls)
+     davcio       :      0.00s CPU      0.00s WALL (      16 calls)
+ 
+     Parallel routines
+ 
+     PWSCF        :      2.27s CPU      2.38s WALL
+
+ 
+   This run was terminated on:  11:53:42  28Oct2026            
+
+=------------------------------------------------------------------------------=
+   JOB DONE.
+=------------------------------------------------------------------------------=

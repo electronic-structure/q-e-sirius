@@ -23,7 +23,7 @@ SUBROUTINE phq_readin()
   USE start_k,       ONLY : reset_grid
   USE klist,         ONLY : xk, nks, nkstot, lgauss, two_fermi_energies, ltetra
   USE control_flags, ONLY : gamma_only, tqr, restart, io_level, &
-                            ts_vdw, ldftd3, lxdm, isolve, dfpt_hub
+                            ts_vdw, ldftd3, lxdm, isolve
   USE xc_lib,        ONLY : xclib_dft_is
   USE uspp,          ONLY : okvan
   USE fixed_occ,     ONLY : tfixed_occ
@@ -31,13 +31,13 @@ SUBROUTINE phq_readin()
   USE cellmd,        ONLY : lmovecell
   USE run_info,      ONLY : title
   USE control_ph,    ONLY : epsil, zue, zeu, xmldyn, newgrid,                      &
-                            trans, ldisp, recover, lnoloc, start_irr, &
+                            trans, ldisp, recover, start_irr, &
                             last_irr, start_q, last_q, current_iq, tmp_dir_ph, &
                             ext_recover, ext_restart, u_from_file, ldiag, &
                             search_sym, lqdir, electron_phonon, tmp_dir_phq, &
                             qplot, only_init, only_wfc, &
                             low_directory_check, nk1, nk2, nk3, k1, k2, k3, &
-                            dftd3_hess
+                            dftd3_hess, lmultipole
   USE save_ph,       ONLY : tmp_dir_save, save_ph_input_variables
   USE gamma_gamma,   ONLY : asr
   USE partial,       ONLY : atomo, nat_todo, nat_todo_input
@@ -63,7 +63,10 @@ SUBROUTINE phq_readin()
 
   USE qpoint,        ONLY : nksq, xq
   USE control_lr,    ONLY : lgamma, lrpa, alpha_mix, lgamma_gamma, tr2_ph, niter_ph, &
-                            nmix_ph, maxter, reduce_io, rec_code_read, lmultipole, lnolr
+                            nmix_ph, maxter, reduce_io, rec_code_read, lnolr, lnoloc, &
+                            thresh_init
+  USE constrained_dfpt, ONLY : cdfpt, cdfpt_active_space, cdfpt_bands_min, cdfpt_bands_max, &
+                               cdfpt_validate_input
   ! YAMBO >
   USE YAMBO,         ONLY : elph_yambo,dvscf_yambo
   ! YAMBO <
@@ -80,6 +83,7 @@ SUBROUTINE phq_readin()
   USE open_close_input_file, ONLY : open_input_file, close_input_file
   USE el_phon,       ONLY : kx, ky, kz, elph_print
   USE two_chem,      ONLY : twochem
+  USE upf_utils,     ONLY : imatches
   !
   IMPLICIT NONE
   !
@@ -102,7 +106,6 @@ SUBROUTINE phq_readin()
   LOGICAL      :: q2d, q_in_band_form
   INTEGER, EXTERNAL  :: atomic_number
   REAL(DP), EXTERNAL :: atom_weight
-  LOGICAL, EXTERNAL  :: imatches
   LOGICAL, EXTERNAL  :: has_xml
   LOGICAL :: exst, parallelfs
   REAL(DP), ALLOCATABLE :: xqaux(:,:)
@@ -127,7 +130,9 @@ SUBROUTINE phq_readin()
                        lshift_q, read_dns_bare, d2ns_type, diagonalization, &
                        ldvscf_interpolate, do_long_range, do_charge_neutral, &
                        wpot_dir, ahc_dir, ahc_nbnd, ahc_nbndskip, &
-                       skip_upper, dftd3_hess, kx, ky, kz, lmultipole
+                       skip_upper, dftd3_hess, kx, ky, kz, lmultipole, &
+                       thresh_init, cdfpt, cdfpt_active_space, cdfpt_bands_min, &
+                       cdfpt_bands_max
 
   ! tr2_ph       : convergence threshold
   ! amass        : atomic masses
@@ -256,6 +261,7 @@ SUBROUTINE phq_readin()
   alpha_mix(1) = 0.7D0
   niter_ph     = maxter
   nmix_ph      = 4
+  thresh_init  = 1.D-2
   nat_todo     = 0
   modenum      = 0
   iverbosity   = 1234567
@@ -263,6 +269,10 @@ SUBROUTINE phq_readin()
   trans        = .TRUE.
   lrpa         = .FALSE.
   lnoloc       = .FALSE.
+  cdfpt        = .FALSE.
+  cdfpt_active_space = ''
+  cdfpt_bands_min    = 0
+  cdfpt_bands_max    = 0
   epsil        = .FALSE.
   zeu          = .TRUE.
   zue          = .FALSE.
@@ -383,6 +393,8 @@ SUBROUTINE phq_readin()
      isolve = 0
   CASE ('cg')
      isolve = 1
+  CASE ('direct')
+     isolve = 5
   CASE DEFAULT
      CALL errore('phq_readin','diagonalization '//trim(diagonalization)//' not implemented',1)
   END SELECT
@@ -429,6 +441,7 @@ SUBROUTINE phq_readin()
   IF (modenum < 0) CALL errore ('phq_readin', ' Wrong modenum ', 1)
   IF (dek <= 0.d0) CALL errore ( 'phq_readin', ' Wrong dek ', 1)
   !
+  IF (cdfpt) CALL cdfpt_validate_input()
   !
   elph_simple= .FALSE.
   elph_mat   = .FALSE.
@@ -537,10 +550,10 @@ SUBROUTINE phq_readin()
      CALL mp_bcast(xq, meta_ionode_id, world_comm  )
   ENDIF
 
-  IF (.NOT.ldisp) THEN
-     lgamma = xq (1) .EQ.0.D0.AND.xq (2) .EQ.0.D0.AND.xq (3) .EQ.0.D0
-     IF ( (epsil.OR.zue.or.lraman.or.elop) .AND..NOT.lgamma) &
-                CALL errore ('phq_readin', 'gamma is needed for elec.field', 1)
+  IF (.NOT.ldisp .AND. .NOT. qplot) THEN
+     lgamma = ( xq(1)==0.0_dp .AND. xq(2)==0.0_dp .AND. xq(3)==0.0_dp )
+     IF ( .NOT.lgamma .AND. (epsil.OR.zue.OR.lraman.OR.elop) ) &
+        CALL errore ('phq_readin', 'gamma is needed for elec.field', 1)
   ENDIF
 
   IF (magnetic_sym.AND.(epsil.OR.zue.or.lraman.or.elop)) &
@@ -816,6 +829,10 @@ SUBROUTINE phq_readin()
 
   IF (noncolin.and.(lraman.or.elop)) CALL errore('phq_readin', &
       'lraman, elop, and noncolin not programmed',1)
+#if defined(__CUDA)
+  IF (lraman) CALL errore('phq_readin', &
+          'Raman for GPU not present in this version', 1)
+#endif
   IF ( domag .and. lspinorb .and. elph ) CALL errore('phq_readin', & 
     'el-ph coefficient calculation disabled in magnetic spinorbit case',1)
 
@@ -954,7 +971,17 @@ SUBROUTINE phq_readin()
   !   IF (meta_ionode) ios = close_input_file ()
   !
   IF (twochem.AND.elph) CALL errore ('phq_readin', 'electron-phonon with twochem approach not yet implemented',1)
-  IF (epsil.AND.(lgauss .OR. ltetra)) &
+  !
+  ! The twochem method with USPP is not implemented nor tested. One thing
+  ! needed to implement it is the conduction-band Pulay augmentation charge.
+  ! It would need modification of compute_alphasum and compute_becsum_ph and
+  ! using them in addusddens_pulay. Since this code is not used, this code
+  ! was deleted. See commit d144d538d for the last state with this code
+  ! present, which can serve as a starting point for twochem+USPP implementation.
+  IF (twochem .AND. okvan) CALL errore ('phq_readin', &
+       'twochem with ultrasoft/PAW pseudopotentials is not implemented', 1)
+  !
+  IF (epsil.AND.(lgauss .OR. ltetra) .AND. (.NOT. cdfpt)) &
         CALL errore ('phq_readin', 'no elec. field with metals', 1)
   IF (modenum > 0) THEN
      IF ( ldisp ) &

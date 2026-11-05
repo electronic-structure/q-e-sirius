@@ -30,6 +30,6 @@ MODULE el_phon
        el_ph_mat_rec_col(:,:,:,:)    !  nbnd, nbnd, nksqtot, npe
   CHARACTER (LEN=256) :: auxdvscf
   LOGICAL, ALLOCATABLE :: comp_elph(:), done_elph(:)
-  REAL(DP), ALLOCATABLE :: gamma_disp(:,:,:)
+  REAL(DP), ALLOCATABLE :: gamma_for_all_q(:,:,:)
   !
 END MODULE el_phon

@@ -37,6 +37,9 @@ MODULE modes
   INTEGER, ALLOCATABLE :: num_rap_mode(:)
   !! number of the representation for each mode
   !
+  REAL(DP), ALLOCATABLE :: omega_for_all_q(:, :)
+  !! Collection of phonon frequencies for all q points. Used for printing if qplot is true.
+  !
 END MODULE modes
 !
 MODULE cryst_ph
@@ -277,8 +280,6 @@ MODULE control_ph
   !! if TRUE there is a restart file
   LOGICAL :: ext_recover
   !! if TRUE there is a recover file
-  LOGICAL :: lnoloc
-  !! if TRUE calculates the dielectric constant neglecting local field effects
   LOGICAL :: search_sym=.TRUE.
   !! if TRUE search the mode symmetry
   LOGICAL :: search_sym_save=.TRUE.
@@ -307,6 +308,8 @@ MODULE control_ph
   !! if TRUE the dynamical matrix is in xml form
   LOGICAL :: all_done
   !! if TRUE all representations have been done
+  LOGICAL :: lmultipole = .FALSE.
+  !! if TRUE macroscopic density response to q-potential perturbation is written as output
   !
   LOGICAL :: newgrid=.FALSE.
   !! if TRUE use new k-point grid nk1,nk2,nk3
@@ -430,25 +433,9 @@ END MODULE output
 !
 MODULE disp
   !
-  USE kinds, ONLY: DP
+  ! TODO: Remove and use lrcom/qpoint
   !
-  SAVE
-  !
-  INTEGER :: nq1, nq2, nq3
-  !! number of q-points in each direction
-  INTEGER :: nqs
-  !! number of q points to be calculated
-  REAL(DP), ALLOCATABLE :: x_q(:,:)
-  !! coordinates of the q points
-  REAL(DP), ALLOCATABLE :: wq(:)
-  !! for plot
-  REAL(DP), ALLOCATABLE :: omega_disp(:,:)
-  LOGICAL, ALLOCATABLE :: lgamma_iq(:)
-  !! if TRUE this q is gamma.
-  LOGICAL, ALLOCATABLE :: done_iq(:)
-  !! if TRUE this q point has been already calculated
-  LOGICAL, ALLOCATABLE :: comp_iq(:)
-  !! if TRUE this q point has to be calculated
+  USE qpoint, ONLY : nq1, nq2, nq3, nqs, x_q, wq, lgamma_iq, done_iq, comp_iq
   !
 END MODULE disp
 
@@ -515,9 +502,7 @@ MODULE ldaU_ph
   COMPLEX(DP), ALLOCATABLE :: dnsorth_cart(:,:,:,:,:,:)
   !! same as above, but in cart. coordinates
   !
-  COMPLEX (DP), ALLOCATABLE :: proj1(:,:),    &
-                               proj2(:,:),    &
-                               projpb(:,:),   &
+  COMPLEX (DP), ALLOCATABLE :: projpb(:,:),   &
                                projpdb(:,:,:)
   ! Arrays to store scalar products between vectors
   ! projpb  = <psi|beta>
@@ -531,19 +516,6 @@ MODULE ldaU_ph
   !! of atomic occupation matrix ns
   !
 END MODULE ldaU_ph
-
-!MODULE qpoint_aux
-!  USE kinds,      ONLY : DP
-!  USE becmod,     ONLY : bec_type
-!  SAVE
-  
-!  INTEGER, ALLOCATABLE :: ikmks(:)    ! index of -k for magnetic calculations
-
-!  INTEGER, ALLOCATABLE :: ikmkmqs(:)  ! index of -k-q for magnetic calculations
-
-!  TYPE(bec_type), ALLOCATABLE :: becpt(:), alphapt(:,:)
-
-!END MODULE qpoint_aux
 
 MODULE phcom
   USE dynmat
@@ -560,5 +532,4 @@ MODULE phcom
   USE disp
   USE grid_irr_iq
   USE ldaU_ph
-!  USE qpoint_aux
 END MODULE phcom

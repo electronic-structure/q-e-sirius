@@ -59,9 +59,10 @@ SUBROUTINE dynmat_hub_scf (irr, nu_i0, nper)
   USE control_flags, ONLY : iverbosity
   USE io_global,     ONLY : stdout
   USE mp_bands,      ONLY : intra_bgrp_comm
-  USE mp_pools,      ONLY : inter_pool_comm       
+  USE mp_pools,      ONLY : inter_pool_comm
   USE mp,            ONLY : mp_sum
   USE buffers,       ONLY : get_buffer
+  USE constrained_dfpt, ONLY : cdfpt
   !
   IMPLICIT NONE
   !
@@ -100,11 +101,11 @@ SUBROUTINE dynmat_hub_scf (irr, nu_i0, nper)
   ALLOCATE (dvqhbar_orth(npwx,nbnd,3,nat))
   ALLOCATE (dvqhbar_orth_lm(npwx,nbnd,3,nat))
   ! 
-  dyn1          = (0.d0, 0.d0)  
-  dyn_orth_cart = (0.d0, 0.d0)  
-  dyn1_test     = (0.d0, 0.d0)  
-  ! 
-  lmetq0 = (lgauss .OR. ltetra) .AND. lgamma
+  dyn1          = (0.d0, 0.d0)
+  dyn_orth_cart = (0.d0, 0.d0)
+  dyn1_test     = (0.d0, 0.d0)
+  !
+  lmetq0 = (lgauss .OR. ltetra) .AND. lgamma .AND. (.NOT. cdfpt)
   !
   ! USPP: compute the weights as in square bracket 
   ! of Eq. (27) of A. Dal Corso PRB 64, 235118 (2001).

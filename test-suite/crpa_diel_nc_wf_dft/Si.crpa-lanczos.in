@@ -1,0 +1,20 @@
+&inputcrpa
+  prefix = 'Si'
+  outdir = './out'
+  nq1 = 3
+  nq2 = 3
+  nq3 = 3
+  lrpa = .false.
+  crpa_xcmode = 'TCTC'
+  niter_max = 100
+  tr2 = 1.D-16
+  thresh_init = 1.D-10
+  cdfpt = .false.
+  crpa_epsil = .true.
+  crpa_epsil_only = .true.
+  crpa_mode = 'dHP'
+  crpa_diel_llanczos = .true.
+  crpa_diel_lanczos_steps = 100
+  crpa_diel_extrapolation = 'no'
+  w_freq = (0.01, 0.01)
+/

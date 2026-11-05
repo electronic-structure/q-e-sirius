@@ -41,8 +41,8 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
   USE xc_lib,           ONLY : exx_is_active
   USE control_flags,    ONLY : gamma_only, offload_type
   USE gvect,            ONLY : gstart
-  USE control_lr,       ONLY : alpha_pv, nbnd_occ
-  USE dfpt_tetra_mod,   ONLY : dfpt_tetra_beta
+  USE control_lr,       ONLY : alpha_pv, nbnd_occ, lflat_proj, flat_deg_thr
+  USE dfpt_tetra_mod,   ONLY : dfpt_tetra_beta, dfpt_tetra_ttheta
   USE two_chem,         ONLY : twochem
   !
   IMPLICIT NONE
@@ -56,7 +56,7 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
   COMPLEX(DP), ALLOCATABLE :: ps(:,:)
   REAL(DP), ALLOCATABLE    :: ps_r(:,:)
   INTEGER :: ibnd, jbnd, nbnd_eff, n_start, n_end
-  REAL(DP) :: wg1, w0g, wgp, wwg(nbnd), deltae, theta
+  REAL(DP) :: wg1, w0g, wgp, wwg(nbnd), deltae, theta, wg1f
   REAL(DP), EXTERNAL :: w0gauss, wgauss
   ! functions computing the delta and theta function
   !
@@ -129,6 +129,21 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
               end if
               deltae = et (jbnd, ikq) - et (ibnd, ikk)
               theta = wgauss (deltae / degauss, 0)
+              IF (lflat_proj) THEN
+                 !
+                 ! occupation-free projector: keep (1+alpha_pv/de) where the
+                 ! metallic weight (wg1-wgp)*theta is nonzero, drop the
+                 ! degenerate block and the pairs with zero weight
+                 !
+                 IF (ABS((wg1 - wgp) * theta) > 1.0d-8 .AND. &
+                     ABS(deltae) > flat_deg_thr) THEN
+                    wwg(jbnd) = 0.d0
+                    IF (jbnd <= nbnd_occ (ikq)) wwg(jbnd) = - alpha_pv / deltae
+                 ELSE
+                    wwg(jbnd) = 1.d0
+                 ENDIF
+                 CYCLE
+              ENDIF
               wwg(jbnd) = wg1 * (1.d0 - theta) + wgp * theta
               IF (jbnd <= nbnd_occ (ikq) ) THEN
                  IF (abs (deltae) > 1.0d-5) THEN
@@ -150,16 +165,41 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
            END DO
            !$acc end parallel loop
            !
+           IF (lflat_proj) wg1 = 1.d0   ! no occupation factor on dvpsi either
+           !
         ELSE
            !
            wg1 = wg(ibnd,ikk) / wk(ikk)
            !
-           DO jbnd = 1, nbnd
+           IF (lflat_proj) THEN
               !
-              wwg(jbnd) = dfpt_tetra_beta(jbnd,ibnd,ikk)
+              ! occupation-free projector, tetrahedra: the pair weight is
+              ! W = wg1 - ttheta (alpha_pv-free counterpart of the Gaussian
+              ! (wg1-wgp)*theta). Here nbnd_occ = nbnd, so ALL bands enter and
+              ! all are in P_v: on supp(W) keep 1+alpha_pv/de, elsewhere drop.
+              ! Empty ibnd (wg1 = 0) get no complement (wg1f = 0), otherwise
+              ! (H-e)^-1 would act on the unprojected high-energy part
               !
+              wg1f = 0.d0
+              IF (ABS(wg1) > 1.0d-8) wg1f = 1.d0
+              DO jbnd = 1, nbnd
+                 deltae = et (jbnd, ikq) - et (ibnd, ikk)
+                 IF (ABS(wg1 - dfpt_tetra_ttheta(jbnd,ibnd,ikk)) > 1.0d-8 .AND. &
+                     ABS(deltae) > flat_deg_thr) THEN
+                    wwg(jbnd) = wg1f - 1.d0 - alpha_pv / deltae
+                 ELSE
+                    wwg(jbnd) = wg1f
+                 ENDIF
+              ENDDO
+              wg1 = wg1f
               !
-           ENDDO
+           ELSE
+              !
+              DO jbnd = 1, nbnd
+                 wwg(jbnd) = dfpt_tetra_beta(jbnd,ibnd,ikk)
+              ENDDO
+              !
+           ENDIF
            !
            !$acc kernels copyin(wwg)
            DO jbnd = 1, nbnd
@@ -238,7 +278,7 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
         end if
      end if
      !
-     CALL s_psi_acc (npwx, npwq, nbnd_eff, evq, dpsi)
+     CALL s_psi (npwx, npwq, nbnd_eff, evq, dpsi)
      !
   ENDIF
   !

@@ -1,0 +1,23 @@
+&inputcrpa
+  prefix = 'SrVO3'
+  outdir = './out'
+  wannier_seedname = 'SrVO3'
+  pert_basis = 'wannier'
+  filU = 'crpa_cg'
+  nq1 = 2
+  nq2 = 2
+  nq3 = 2
+  start_q = 1
+  last_q = 2
+  lrpa = .false.
+  crpa_xcmode = 'TCTC'
+  niter_max = 150
+  tr2 = 1.D-14
+  thresh_init = 1.D-10
+  cdfpt = .false.
+  crpa_epsil = .false.
+  crpa_mode = 'dHP'
+  crpa_reduce_q = .false.
+  crpa_llanczos = .false.
+  w_freq = (0.0, 0.0)
+/
