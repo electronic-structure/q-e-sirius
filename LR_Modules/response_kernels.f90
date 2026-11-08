@@ -129,10 +129,6 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
    REAL(DP), ALLOCATABLE :: h_diag(:, :)
    !! diagonal part of the Hamiltonian, used for preconditioning
    COMPLEX(DP) , ALLOCATABLE :: aux2(:, :)
-   !! temporary storage used in apply_dpot_bands
-   INTEGER, ALLOCATABLE :: vg_kq(:,:)
-   !
-   INTEGER :: ig
    !
    EXTERNAL ch_psi_all, cg_psi
    !! functions passed to cgsolve_all
@@ -265,11 +261,6 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
          !
          ! TODO: should nbnd_occ(ikk) be nbnd_occ(ikmk)?
 #if defined(__SIRIUS)
-         ALLOCATE(vg_kq(3,ngk(ikq)))
-         DO ig = 1, npwq
-           vg_kq(:, ig) = mill(:, igk_k(ig, ikq))
-         ENDDO
-         !
          ! dvpsi == d0psi  <-- right-hand side (in, destroyed on exit)
          ! dpsi   <-- left-hand side (in/out)
          CALL sirius_linear_solver( gs_handler, h0_handler, kq_handler=lr_kpoints(ik), dpsi=dpsi,&
@@ -277,7 +268,6 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
             &alpha_pv=alpha_pv, spin=current_spin, nbnd_occ_k=nbnd_occ(ikk),& 
             &nbnd_occ_kq=nbnd_occ(ikq), tol=thresh, niter=num_iter)
          !
-         DEALLOCATE(vg_kq)
 #else
          CALL cgsolve_all(ch_psi_all, cg_psi, et(1, ikmk), dvpsi, dpsi, h_diag, &
             npwx, npwq, thresh, ik, num_iter, conv_root, anorm, nbnd_occ(ikk), npol)
