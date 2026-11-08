@@ -39,6 +39,9 @@ SUBROUTINE screen_coeff ()
   USE cell_base,            ONLY : omega
   !
   USE mod_sirius
+  USE klist,     ONLY : xk, ngk, igk_k
+  USE qpoint,    ONLY : nksq, ikqs
+  USE gvect,     ONLY : mill
   !
   IMPLICIT NONE
   ! 
@@ -88,6 +91,11 @@ SUBROUTINE screen_coeff ()
  !! COMPLEX(DP), ALLOCATABLE :: phase(:) !, wann_c(:,:)  !, rho_c(:,:)
   !! The phase associated to the hift k+q-> k'
   INTEGER :: ii
+#if defined(__SIRIUS)
+  INTEGER :: ik, ikq, ig, npwq
+  INTEGER, ALLOCATABLE :: gkvec_loc(:,:)
+  REAL(DP) :: vk(3)
+#endif
 
   ALLOCATE(rhowann(dffts%nnr, num_wann,nrho), rhor(dffts%nnr,nrho) )
   ALLOCATE(delta_vr(dffts%nnr,nspin_mag), delta_vr_(dffts%nnr,nspin_mag))
@@ -96,10 +104,6 @@ SUBROUTINE screen_coeff ()
 
   nqs = nqstot
   !
-#if defined(__SIRIUS)
-  CALL sirius_initialize(call_mpi_init=.false.)
-#endif
-
   IF (nqs == 1) do_real_space = .TRUE.
   IF (do_real_space) THEN 
      ALLOCATE ( drhor_scf(dffts%nnr,nspin_mag) ) 
@@ -183,6 +187,32 @@ SUBROUTINE screen_coeff ()
     ALLOCATE ( rhog (ngms,nrho) , delta_vg(ngms,nspin_mag), vh_rhog(ngms), drhog_scf (ngms, nspin_mag), delta_vg_(ngms,nspin_mag) )
     !
     IF ( lgamma .AND. .NOT. l_unique_manifold) CALL check_density (rhowann) 
+
+#if defined(__SIRIUS)
+    IF (.NOT. irr_bz) THEN
+      ALLOCATE(lr_kpoints(nksq))
+
+      DO ik = 1, nksq
+        ikq = ikqs(ik)
+        npwq = ngk(ikq)
+
+        ! Fractional coordinates of k+q.
+        vk = MATMUL(TRANSPOSE(at), xk(:,ikq))
+
+        ! Preserve the local G-vector ordering used by QE wavefunctions.
+        ALLOCATE(gkvec_loc(3,npwq))
+        DO ig = 1, npwq
+          gkvec_loc(:,ig) = mill(:,igk_k(ig,ikq))
+        ENDDO
+
+        CALL sirius_create_kpoint(handler=sctx, vk=vk, num_gkvec_loc=npwq, gkvec_loc=gkvec_loc, &
+            kp_handler=lr_kpoints(ik))
+
+        DEALLOCATE(gkvec_loc)
+      ENDDO
+    ENDIF
+#endif
+
     !
     !$acc enter data create(rhor, rhog, vh_rhog, delta_vr, delta_vr_, delta_vg, delta_vg_)
     !
@@ -374,6 +404,14 @@ SUBROUTINE screen_coeff ()
     ENDDO
     FLUSH(iun_res)
     !
+#if defined(__SIRIUS)
+    IF (ALLOCATED(lr_kpoints)) THEN
+      DO ik = 1, SIZE(lr_kpoints)
+        CALL sirius_free_handler(lr_kpoints(ik))
+      ENDDO
+      DEALLOCATE(lr_kpoints)
+    ENDIF
+#endif
     IF (.NOT. irr_bz) CALL clean_pw_kcw( )
     !$acc exit data delete(rhor, rhog , delta_vg, vh_rhog, delta_vg_ )
     !$acc exit data delete(delta_vr, delta_vr_ )
@@ -448,7 +486,6 @@ SUBROUTINE screen_coeff ()
   CALL kcw_deallocate_symmetry_arrays()
 #if defined(__SIRIUS)
   CALL clear_sirius()
-  CALL sirius_finalize(call_mpi_fin=.false.)
 #endif
   !
 9010 FORMAT(/, 8x, "iq =", i4, 3x, "iwann =", i4, 3x, "rPi_q =", 2f15.8, 3x, & 
