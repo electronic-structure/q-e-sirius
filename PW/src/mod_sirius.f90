@@ -82,6 +82,9 @@ MODULE mod_sirius
   TYPE(sirius_H0_handler) :: h0_handler
   !! SIRIUS handler for k-independent Hamiltonian
   !
+  TYPE(sirius_kpoint_handler), ALLOCATABLE :: lr_kpoints(:)
+  !! Handlers of the k+q points
+  !
  CONTAINS
   !
   !--------------------------------------------------------------------
