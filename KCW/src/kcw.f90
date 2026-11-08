@@ -35,6 +35,7 @@ PROGRAM kcw
   USE mp_global,         ONLY : mp_startup
   USE check_stop,        ONLY : check_stop_init
   USE coulomb,           ONLY : setup_coulomb
+  USE mod_sirius
   !
   IMPLICIT NONE
   !
@@ -43,6 +44,9 @@ PROGRAM kcw
   !
   ! 1) Initialize MPI, clocks, print initial messages
   CALL mp_startup ( )
+#if defined(__SIRIUS)
+  CALL sirius_initialize(call_mpi_init=.false.)
+#endif
   !
   CALL header ()
   !
@@ -61,8 +65,11 @@ PROGRAM kcw
   CALL print_clock_kcw ( )
   !
   ! 5) Clean and Close 
-  CALL mp_global_end()
   CALL environment_end( )
+#if defined(__SIRIUS)
+  CALL sirius_finalize(call_mpi_fin=.false., call_device_reset=.false.)
+#endif
+  CALL mp_global_end()
   !
 END PROGRAM kcw
 
