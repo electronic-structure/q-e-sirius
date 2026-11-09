@@ -191,6 +191,7 @@ SUBROUTINE screen_coeff ()
 #if defined(__SIRIUS)
     IF (.NOT. irr_bz) THEN
       ALLOCATE(lr_kpoints(nksq))
+      ALLOCATE(lr_hamiltonians(nksq))
 
       DO ik = 1, nksq
         ikq = ikqs(ik)
@@ -207,6 +208,8 @@ SUBROUTINE screen_coeff ()
 
         CALL sirius_create_kpoint(handler=sctx, vk=vk, num_gkvec_loc=npwq, gkvec_loc=gkvec_loc, &
             kp_handler=lr_kpoints(ik))
+
+        CALL sirius_create_hamiltonian_k(h0_handler, lr_kpoints(ik), lr_hamiltonians(ik))
 
         DEALLOCATE(gkvec_loc)
       ENDDO
@@ -407,6 +410,7 @@ SUBROUTINE screen_coeff ()
 #if defined(__SIRIUS)
     IF (ALLOCATED(lr_kpoints)) THEN
       DO ik = 1, SIZE(lr_kpoints)
+        CALL sirius_free_handler(lr_hamiltonians(ik))
         CALL sirius_free_handler(lr_kpoints(ik))
       ENDDO
       DEALLOCATE(lr_kpoints)

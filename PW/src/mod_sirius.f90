@@ -85,6 +85,9 @@ MODULE mod_sirius
   TYPE(sirius_kpoint_handler), ALLOCATABLE :: lr_kpoints(:)
   !! Handlers of the k+q points
   !
+  TYPE(sirius_Hk_handler), ALLOCATABLE :: lr_hamiltonians(:)
+  !! Handlers of the H(k+q) Hamiltonians
+  !
  CONTAINS
   !
   !--------------------------------------------------------------------

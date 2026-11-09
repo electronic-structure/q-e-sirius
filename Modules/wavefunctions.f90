@@ -74,7 +74,7 @@ SUBROUTINE deallocate_wfc()
     !$acc exit data delete(evc)
     IF(use_gpu) istat = cudaHostUnregister(C_LOC(evc(1,1)))
   END IF
- #endif
+#endif
   IF( ALLOCATED( evc ) ) DEALLOCATE( evc )
   !
 END SUBROUTINE deallocate_wfc
