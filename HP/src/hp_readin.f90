@@ -109,12 +109,18 @@ SUBROUTINE hp_readin()
   !
   CALL hp_bcast_input()
   !
-  ! Normalize and validate the method (done on all ranks, after the broadcast)
+  ! Validate the method case-insensitively and store its canonical spelling,
+  ! which the checks below compare against (done on all ranks, after the broadcast)
   !
-  method = capital(method)
-  IF (TRIM(method) /= 'LR-cDFT' .AND. TRIM(method) /= 'cRPA') &
+  SELECT CASE (TRIM(capital(method)))
+  CASE ('LR-CDFT')
+     method = 'LR-cDFT'
+  CASE ('CRPA')
+     method = 'cRPA'
+  CASE DEFAULT
      CALL errore('hp_readin', 'Invalid method: ' // TRIM(method) // &
                  '. Must be LR-cDFT or cRPA.', 1)
+  END SELECT
   !
   ! Image parallelization is only supported for method='cRPA'. Check this
   ! before any file I/O (create_directory, read_file): otherwise the images
