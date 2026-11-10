@@ -384,7 +384,7 @@ SUBROUTINE screen_coeff ()
   CALL kcw_deallocate_symmetry_arrays()
 #if defined(__SIRIUS)
   CALL clear_sirius()
-  CALL sirius_finalize(call_mpi_fin=.false.)
+  CALL sirius_finalize(call_mpi_fin=.false., call_device_reset=.false.)
 #endif
   !
 9010 FORMAT(/, 8x, "iq =", i4, 3x, "iwann =", i4, 3x, "rPi_q =", 2f15.8, 3x, & 

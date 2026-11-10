@@ -50,7 +50,7 @@ SUBROUTINE stop_run( exit_status )
   CALL environment_end( 'PWSCF' )
   ! finalize sirius at the very end
 #if defined(__SIRIUS)
-  CALL sirius_finalize(call_mpi_fin=.true., call_device_reset=.true.)
+  CALL sirius_finalize(call_mpi_fin=.true., call_device_reset=.false.)
 #else
   CALL mp_global_end()
 #endif
