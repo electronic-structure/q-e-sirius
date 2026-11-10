@@ -58,7 +58,7 @@ SUBROUTINE hp_readin()
   ! Set default values for variables in namelist
   !
   prefix             = 'pwscf'
-  method             = 'LRT'
+  method             = 'LR-cDFT'
   conv_thr_chi       = 1.D-5
   thresh_init        = 1.D-14
   ethr_nscf          = 1.D-11
@@ -112,22 +112,22 @@ SUBROUTINE hp_readin()
   ! Normalize and validate the method (done on all ranks, after the broadcast)
   !
   method = capital(method)
-  IF (TRIM(method) /= 'LRT' .AND. TRIM(method) /= 'CRPA') &
+  IF (TRIM(method) /= 'LR-cDFT' .AND. TRIM(method) /= 'cRPA') &
      CALL errore('hp_readin', 'Invalid method: ' // TRIM(method) // &
-                 '. Must be LRT or CRPA.', 1)
+                 '. Must be LR-cDFT or cRPA.', 1)
   !
-  ! Image parallelization is only supported for method='CRPA'. Check this
+  ! Image parallelization is only supported for method='cRPA'. Check this
   ! before any file I/O (create_directory, read_file): otherwise the images
   ! race on the shared HP/ scratch directory during the errore abort,
   ! producing a spurious secondary "File cannot be deleted" runtime error.
   !
-  IF (TRIM(method) == 'LRT' .AND. nimage > 1) CALL errore ('hp_readin', &
-     & "image parallelization (-ni) is only supported for method='CRPA'", 1)
+  IF (TRIM(method) == 'LR-cDFT' .AND. nimage > 1) CALL errore ('hp_readin', &
+     & "image parallelization (-ni) is only supported for method='cRPA'", 1)
   !
   ! Inform the PW routines that we are performing the calculation
   ! of Hubbard parameters (needed before read_file)
   !
-  IF (TRIM(method) == 'LRT') dfpt_hub = .TRUE.
+  IF (TRIM(method) == 'LR-cDFT') dfpt_hub = .TRUE.
   !
   ! Print the preamble (with the method-specific citations)
   !
@@ -136,10 +136,10 @@ SUBROUTINE hp_readin()
   ! Here we finished the reading of the &INPUTHP namelist.
   ! Now allocate space for pwscf variables, read and check them.
   !
-  IF (TRIM(method) == 'CRPA') THEN
+  IF (TRIM(method) == 'cRPA') THEN
      !
      ! Read the &CRPA namelist and the optional q-point card;
-     ! also sets up the CRPA scratch directories.
+     ! also sets up the cRPA scratch directories.
      !
      CALL crpa_readin()
      !
@@ -161,7 +161,7 @@ SUBROUTINE hp_readin()
   ! Compute the trace of the occupation matrix and then compute
   ! the occupations and the magnetization
   !
-  IF (TRIM(method) == 'LRT') CALL hp_ns_trace()
+  IF (TRIM(method) == 'LR-cDFT') CALL hp_ns_trace()
   !
   ! Make sure all the features used in the PWscf calculation
   ! are actually supported by HP.
@@ -179,12 +179,12 @@ SUBROUTINE print_preamble()
   !
   IMPLICIT NONE
   !
-  IF (TRIM(method) == 'CRPA') THEN
+  IF (TRIM(method) == 'cRPA') THEN
      !
      WRITE( stdout, '(/,5X,"=---------------------------------------------------------------------------=")')
-     WRITE( stdout, '(/,5X,"   Constrained random phase approximation using the CRPA code based on DFPT  ")')
+     WRITE( stdout, '(/,5X,"   Constrained random phase approximation using the cRPA code based on DFPT  ")')
      WRITE( stdout, '(/,5X,"      Please cite the following papers when using this program:              ")')
-     WRITE( stdout, '(/,5X,"         - CRPA code : To be added                                           ")')
+     WRITE( stdout, '(/,5X,"         - cRPA code : To be added                                           ")')
      WRITE( stdout, '(/,5X,"=---------------------------------------------------------------------------=")')
      !
   ELSE
@@ -270,7 +270,7 @@ SUBROUTINE input_sanity()
   IF ( xclib_dft_is('hybrid') ) CALL errore('hp_readin',&
      'The HP code with hybrid functionals is not yet available',1)
   !
-  IF (TRIM(method) == 'CRPA') THEN
+  IF (TRIM(method) == 'cRPA') THEN
      CALL input_sanity_crpa()
   ELSE
      CALL input_sanity_lrt()
@@ -283,7 +283,7 @@ END SUBROUTINE input_sanity
 SUBROUTINE input_sanity_lrt()
   !--------------------------------------------------------------------------
   !
-  ! Sanity checks specific to method = 'LRT' (calculation of Hubbard parameters).
+  ! Sanity checks specific to method = 'LR-cDFT' (calculation of Hubbard parameters).
   !
   USE Coul_cut_2D,      ONLY : do_cutoff_2D
   USE ldaU,             ONLY : lda_plus_u, Hubbard_projectors, lda_plus_u_kind, Hubbard_J0, &
@@ -291,7 +291,7 @@ SUBROUTINE input_sanity_lrt()
   !
   IMPLICIT NONE
   !
-  ! The -ni-only-for-CRPA guard is enforced early in hp_readin.
+  ! The -ni-only-for-cRPA guard is enforced early in hp_readin.
   !
   IF (conv_thr_chi <= 0.D0) CALL errore ('hp_readin', ' Wrong conv_thr_chi ',1)
   !
@@ -341,8 +341,8 @@ END SUBROUTINE input_sanity_lrt
 SUBROUTINE input_sanity_crpa()
   !--------------------------------------------------------------------------
   !
-  ! Sanity checks specific to method = 'CRPA'.
-  ! Note: CRPA does NOT require lda_plus_u.
+  ! Sanity checks specific to method = 'cRPA'.
+  ! Note: cRPA does NOT require lda_plus_u.
   !
   USE mp_pools,         ONLY : npool
   USE control_lr,       ONLY : tr2_ph, thresh_init_lr => thresh_init, &
@@ -357,7 +357,7 @@ SUBROUTINE input_sanity_crpa()
   !
   IF (thresh_init_lr <= 0.D0) CALL errore ('hp_readin', ' Wrong thresh_init ', 1)
   !
-  ! The CRPA code paths use control_lr's niter_ph and alpha_mix, whose
+  ! The cRPA code paths use control_lr's niter_ph and alpha_mix, whose
   ! maximum size is control_lr's maxter.
   !
   IF (niter_ph < 1 .OR. niter_ph > maxter_lr) &

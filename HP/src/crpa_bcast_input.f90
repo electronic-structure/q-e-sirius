@@ -10,7 +10,7 @@
 SUBROUTINE crpa_bcast_input ( )
   !-----------------------------------------------------------------------
   !
-  ! In this routine the first processor sends the CRPA input parameters
+  ! In this routine the first processor sends the cRPA input parameters
   ! to all the other processors
   !
   USE mp,               ONLY : mp_bcast
@@ -75,7 +75,7 @@ SUBROUTINE crpa_bcast_input ( )
   CALL mp_bcast (cdfpt_bands_min,    meta_ionode_id, world_comm)
   CALL mp_bcast (cdfpt_bands_max,    meta_ionode_id, world_comm)
   !
-  ! CRPA perturbation basis parameters (from crpacom)
+  ! cRPA perturbation basis parameters (from crpacom)
   CALL mp_bcast (pert_basis,       meta_ionode_id, world_comm)
   CALL mp_bcast (pert_bands_min,   meta_ionode_id, world_comm)
   CALL mp_bcast (pert_bands_max,   meta_ionode_id, world_comm)

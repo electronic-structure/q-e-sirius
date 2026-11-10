@@ -19,11 +19,11 @@
 
      =---------------------------------------------------------------------------=
 
-        Constrained random phase approximation using the CRPA code based on DFPT  
+        Constrained random phase approximation using the cRPA code based on DFPT  
 
            Please cite the following papers when using this program:              
 
-              - CRPA code : To be added                                           
+              - cRPA code : To be added                                           
 
      =---------------------------------------------------------------------------=
 
@@ -1224,7 +1224,7 @@
      init_us_1    :      0.00s CPU      0.00s WALL (       2 calls)
      add_vuspsi   :      8.57s CPU      8.69s WALL (   23139 calls)
 
-     PRINTING TIMING FROM CRPA ROUTINES: 
+     PRINTING TIMING FROM cRPA ROUTINES: 
 
      crpa_setup_q :      0.05s CPU      0.06s WALL (       2 calls)
      crpa_init_q  :      0.11s CPU      0.12s WALL (       2 calls)

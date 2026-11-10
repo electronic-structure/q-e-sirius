@@ -9,7 +9,7 @@
 SUBROUTINE crpa_run_nscf (do_band)
   !-----------------------------------------------------------------------
   !
-  ! This is the main driver of the PWscf program called from the CRPA code.
+  ! This is the main driver of the PWscf program called from the cRPA code.
   !
   USE mp,              ONLY : mp_barrier
   USE mp_bands,        ONLY : intra_bgrp_comm, nyfft
@@ -49,7 +49,7 @@ SUBROUTINE crpa_run_nscf (do_band)
   !
   CALL close_files (.TRUE.)
   !
-  ! From now on, work only on the CRPA directory
+  ! From now on, work only on the cRPA directory
   !
   wfc_dir = tmp_dir_hp
   tmp_dir = tmp_dir_hp

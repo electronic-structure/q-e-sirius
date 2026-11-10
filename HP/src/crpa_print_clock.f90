@@ -26,7 +26,7 @@ SUBROUTINE crpa_print_clock
   CALL print_clock ('fft_scatter')
   !
   WRITE( stdout, * )
-  WRITE( stdout, * )  '    PRINTING TIMING FROM CRPA ROUTINES: '
+  WRITE( stdout, * )  '    PRINTING TIMING FROM cRPA ROUTINES: '
   WRITE( stdout, * )
   !
   CALL print_clock ('crpa_nscf_rotate')

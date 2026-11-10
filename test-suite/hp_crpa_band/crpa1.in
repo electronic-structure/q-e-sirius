@@ -1,5 +1,5 @@
 &INPUTHP
-   method = 'CRPA'
+   method = 'cRPA'
    prefix = 'diam'
    outdir = './temp/'
    nq1 = 2, nq2 = 2, nq3 = 2

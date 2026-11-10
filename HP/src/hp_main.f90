@@ -41,7 +41,7 @@ PROGRAM hp_main
   CALL environment_start(code)
   !
   ! Read the input parameters and the data produced by PWscf.
-  ! Also prints the preamble and, for method='LRT', sets dfpt_hub.
+  ! Also prints the preamble and, for method='LR-cDFT', sets dfpt_hub.
   !
   CALL hp_readin()
   !
@@ -49,9 +49,9 @@ PROGRAM hp_main
   !
   CALL check_stop_init()
   !
-  ! Dispatch to the CRPA driver
+  ! Dispatch to the cRPA driver
   !
-  IF (TRIM(method) == 'CRPA') THEN
+  IF (TRIM(method) == 'cRPA') THEN
      CALL crpa_run()
      GO TO 104
   ENDIF
@@ -224,9 +224,9 @@ PROGRAM hp_main
   !
   CALL hp_dealloc_2()
   !
-  ! Print clocks (LRT only; the CRPA driver will handle its own clocks)
+  ! Print clocks (LR-cDFT only; the cRPA driver will handle its own clocks)
   !
-  IF (TRIM(method) == 'LRT' .AND. &
+  IF (TRIM(method) == 'LR-cDFT' .AND. &
       .NOT.compute_hp .AND. .NOT.sum_pertq .AND. .NOT.determine_num_pert_only) THEN
      WRITE( stdout, * )
      WRITE( stdout, * )  '    PRINTING TIMING FROM PWSCF ROUTINES: '

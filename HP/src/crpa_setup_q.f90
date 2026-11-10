@@ -11,7 +11,7 @@ SUBROUTINE crpa_setup_q()
   !-----------------------------------------------------------------------
   !
   !  This subroutine prepares several variables which are needed in the
-  !  CRPA program at fixed q point:
+  !  cRPA program at fixed q point:
   !  1) computes the total local potential (external+scf) on the smooth
   !     grid to be used in h_psi (and other places?)
   !  2) Set the nonlinear core correction variable

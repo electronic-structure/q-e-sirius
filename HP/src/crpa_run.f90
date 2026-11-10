@@ -9,12 +9,12 @@
 SUBROUTINE crpa_run()
   !-----------------------------------------------------------------------
   !
-  ! Driver of the CRPA calculation (hp.x with method = 'CRPA').
+  ! Driver of the cRPA calculation (hp.x with method = 'cRPA').
   !
   ! Input has already been read (hp_readin -> crpa_readin) and the
   ! stop condition initialized in hp_main. MPI startup, the preamble,
   ! citations and the environment are also handled by hp_main; this
-  ! routine performs the CRPA solver's own initialization, the q-point
+  ! routine performs the cRPA solver's own initialization, the q-point
   ! loop, and its clock printing.
   !
   USE io_global,         ONLY : stdout
@@ -27,7 +27,7 @@ SUBROUTINE crpa_run()
   INTEGER :: iq
   LOGICAL :: do_iq, setup_pw
   !
-  ! Allocate and initialize various arrays needed for the CRPA calculation
+  ! Allocate and initialize various arrays needed for the cRPA calculation
   !
   CALL crpa_init()
   !

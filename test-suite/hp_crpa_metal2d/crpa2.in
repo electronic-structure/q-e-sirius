@@ -1,5 +1,5 @@
 &INPUTHP
-   method = 'CRPA'
+   method = 'cRPA'
    prefix = 'MoS2'
    outdir = './temp/'
    niter_max = 150

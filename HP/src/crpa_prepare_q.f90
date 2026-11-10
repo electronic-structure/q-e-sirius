@@ -10,7 +10,7 @@ SUBROUTINE crpa_prepare_q (iq, do_iq, setup_pw)
   !-----------------------------------------------------------------------
   !
   !  This routine prepares a few variables that are needed to control
-  !  the CRPA run after the q point has been decided, but before
+  !  the cRPA run after the q point has been decided, but before
   !  doing the NSCF calculation. In particular it sets:
   !  xq       : the coordinate of the current q point
   !  do_iq    : if .true. q point has to be calculated

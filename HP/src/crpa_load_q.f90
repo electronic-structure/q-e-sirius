@@ -9,7 +9,7 @@
 SUBROUTINE crpa_load_q()
   !-----------------------------------------------------------------------
   !
-  ! This is a driver to the CRPA initialization routines.
+  ! This is a driver to the cRPA initialization routines.
   !
   USE io_global,        ONLY : stdout
   USE qpoint,           ONLY : qpoint_setup_k_plus_q_indices

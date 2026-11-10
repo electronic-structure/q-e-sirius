@@ -10,9 +10,9 @@
 SUBROUTINE crpa_readin()
   !----------------------------------------------------------------------------
   !
-  !  This routine reads the CRPA-specific input (the &CRPA namelist and,
+  !  This routine reads the cRPA-specific input (the &CRPA namelist and,
   !  if qplot, the q-point card). It is called from hp_readin when
-  !  method = 'CRPA', after the &INPUTHP namelist has been read and
+  !  method = 'cRPA', after the &INPUTHP namelist has been read and
   !  broadcast, and before read_file().
   !
   USE kinds,            ONLY : DP
@@ -141,7 +141,7 @@ SUBROUTINE crpa_readin()
   !
   ! The names of the lrcom variables have the _ph suffix, so we copy to them and use.
   ! The DFPT-iteration knobs (niter_max, nmix, alpha_mix, thresh_init) are read from
-  ! &INPUTHP into ldaU_hp; the CRPA code paths use the control_lr copies.
+  ! &INPUTHP into ldaU_hp; the cRPA code paths use the control_lr copies.
   !
   tr2_ph = tr2
   w_freq = w_freq_eV / RYTOEV
@@ -151,7 +151,7 @@ SUBROUTINE crpa_readin()
   thresh_init = thresh_init_hp
   !
   ! Copy the q-grid variables from ldaU_hp (read from &INPUTHP) to the
-  ! qpoint module used by the CRPA code paths.
+  ! qpoint module used by the cRPA code paths.
   !
   nq1 = nq1_hp
   nq2 = nq2_hp
@@ -159,8 +159,8 @@ SUBROUTINE crpa_readin()
   start_q = start_q_hp
   last_q = last_q_hp
   !
-  ! NOTE: Both conv_thr_nscf and ethr_nscf exist in control_lr. The CRPA NSCF
-  ! calculation uses conv_thr_nscf (read from &CRPA), while the LRT (HP) NSCF
+  ! NOTE: Both conv_thr_nscf and ethr_nscf exist in control_lr. The cRPA NSCF
+  ! calculation uses conv_thr_nscf (read from &CRPA), while the LR-cDFT (HP) NSCF
   ! uses ethr_nscf (read from &INPUTHP).
   !
   IF (wan_dist_thr_mels < 0.d0) wan_dist_thr_mels = wan_dist_thr

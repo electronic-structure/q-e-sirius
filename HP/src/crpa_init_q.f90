@@ -11,7 +11,7 @@ SUBROUTINE crpa_init_q()
   !----------------------------------------------------------------------------
   !
   ! This subroutine prepares several variables which are needed in the
-  ! CRPA program at fixed q point:
+  ! cRPA program at fixed q point:
   !
   ! 1) Compute the phase factor (for the USPP case)
   ! 2) Compute becp = <vkb|evc> for every k point

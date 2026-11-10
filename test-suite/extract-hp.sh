@@ -76,7 +76,7 @@ if test "$v2" != ""; then
         echo $v2
 fi
 
-# cRPA (method='CRPA'): interaction summary printed by
+# cRPA (method='cRPA'): interaction summary printed by
 # HP/src/crpa_postprocess_coulomb.f90. Each "label=" marker is a separate
 # whitespace token, so its value is the next token (I4/F16.9 space-padded).
 #

@@ -59,19 +59,19 @@ then
   then
     cat $3
   fi
-# cRPA (hp.x method='CRPA'), no k pools (band basis)
+# cRPA (hp.x method='cRPA'), no k pools (band basis)
 elif [[ "$1" == "5" ]]
 then
-  echo "Running HP (CRPA) ..."
+  echo "Running HP (cRPA) ..."
   ${PARA_PREFIX} ${ESPRESSO_BUILD}/bin/hp.x < $2 > $3 2> $4
   if [[ -e CRASH ]]
   then
     cat $3
   fi
-# cRPA (hp.x method='CRPA'), with k pools
+# cRPA (hp.x method='cRPA'), with k pools
 elif [[ "$1" == "6" ]]
 then
-  echo "Running HP (CRPA) ..."
+  echo "Running HP (cRPA) ..."
   ${PARA_PREFIX} ${ESPRESSO_BUILD}/bin/hp.x ${PARA_SUFFIX} < $2 > $3 2> $4
   if [[ -e CRASH ]]
   then

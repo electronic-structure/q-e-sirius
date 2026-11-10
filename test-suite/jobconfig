@@ -333,8 +333,8 @@ inputs_args = ('bn.scf.in', '1'), ('bn.hp.in', '3'), ('bn.scf.in', '2'), ('bn.hp
 program = HP
 inputs_args = ('bn.scf.in', '1'), ('bn.hp.in', '3'), ('bn.scf.in', '2'), ('bn.hp.in', '4')
 
-# cRPA (hp.x method='CRPA'). Calc numbers: 5 = hp CRPA no pools (band basis),
-# 6 = hp CRPA with pools (Wannier), 7 = pw2wannier90 with wan_mode='library'.
+# cRPA (hp.x method='cRPA'). Calc numbers: 5 = hp cRPA no pools (band basis),
+# 6 = hp cRPA with pools (Wannier), 7 = pw2wannier90 with wan_mode='library'.
 # Band basis: nq-grid case (tests automatic q generation); Wannier cases use
 # qplot with 2 q-points (q=0 and q!=0).
 [hp_crpa_band/]

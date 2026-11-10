@@ -12,7 +12,7 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program hp.x 
 	   ...
 	@b /
 
-	[ @b &CRPA           ]   ( read only when @ref method = 'CRPA' )
+	[ @b &CRPA           ]   ( read only when @ref method = 'cRPA' )
 	[    ...             ]
 	[ @b /               ]
 
@@ -45,25 +45,25 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program hp.x 
         }
 
         var method -type CHARACTER {
-            default { 'LRT' }
+            default { 'LR-cDFT' }
             options {
                 info {
                     Method used by hp.x. It selects which quantity is
                     computed from the linear response of the system.
                 }
-                opt -val 'LRT' {
+                opt -val 'LR-cDFT' {
                     Linear-response theory calculation of the Hubbard
                     parameters U (and V), as described in
                     PRB 98, 085127 (2018) and PRB 103, 045141 (2021).
                     This is the standard HP behavior.
                 }
-                opt -val 'CRPA' {
+                opt -val 'cRPA' {
                     Constrained random phase approximation (cRPA):
                     computes screened (and bare) Coulomb interaction
                     matrix elements in a basis of bands or Wannier
-                    functions. When @ref method = 'CRPA' the additional
+                    functions. When @ref method = 'cRPA' the additional
                     namelist @b &CRPA (see below) is read after @b &INPUTHP,
-                    and most of the LRT-specific keywords of @b &INPUTHP
+                    and most of the LR-cDFT-specific keywords of @b &INPUTHP
                     are ignored. The q-point grid (@ref nq1, @ref nq2,
                     @ref nq3), the DFPT-iteration knobs (@ref niter_max,
                     @ref nmix, @ref alpha_mix, @ref thresh_init) and the
@@ -424,7 +424,7 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program hp.x 
     namelist CRPA {
 
         label {
-            This namelist is read only when @ref method = 'CRPA'. It
+            This namelist is read only when @ref method = 'cRPA'. It
             controls the constrained-RPA calculation of the (screened and
             bare) Coulomb interaction matrix elements. It must appear right
             after the @b &INPUTHP namelist in the input file.
@@ -591,8 +591,8 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program hp.x 
             info {
                 Convergence threshold for the eigenvalues of the
                 non-self-consistent (NSCF) calculation at k and k+q. This
-                is the CRPA counterpart of @ref ethr_nscf (which is used by
-                the LRT method).
+                is the cRPA counterpart of @ref ethr_nscf (which is used by
+                the LR-cDFT method).
             }
         }
 
@@ -671,8 +671,8 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program hp.x 
     card qPointsSpecs {
         label {
             Optional q-point card, read (right after the @b &CRPA namelist)
-            only when @ref qplot = .true. Used only for @ref method = 'CRPA';
-            method = 'LRT' does not read it.
+            only when @ref qplot = .true. Used only for @ref method = 'cRPA';
+            method = 'LR-cDFT' does not read it.
         }
         syntax {
             line {

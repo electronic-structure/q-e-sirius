@@ -11,7 +11,7 @@ SUBROUTINE crpa_clean_q (flag)
   !-----------------------------------------------------------------------
   !
   ! This routine deallocates the variables of PWscf and of the
-  ! CRPA code, and resets the same variables as after reading input in
+  ! cRPA code, and resets the same variables as after reading input in
   ! crpa_readin, so that it is possible to start a calculation at a new q.
   !
   USE lr_symm_base,    ONLY : nsymq

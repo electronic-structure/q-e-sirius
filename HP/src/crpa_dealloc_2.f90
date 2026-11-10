@@ -10,7 +10,7 @@
 subroutine crpa_dealloc_2
   !----------------------------------------------------------------------
   !
-  ! Deallocate various variables from the CRPA calculation
+  ! Deallocate various variables from the cRPA calculation
   !
   USE ldaU,          ONLY : dist_s, ityp_s
   USE crpacom,       ONLY : chi0, chi, ns, magn, ityp_new

@@ -8,12 +8,12 @@
 !
 MODULE crpacom
   !
-  ! Common variables for the CRPA calculation (hp.x with method = 'CRPA').
+  ! Common variables for the cRPA calculation (hp.x with method = 'cRPA').
   !
   ! Some variables here (ns, magn, chi0, chi, dns0, ...) have counterparts in
-  ! ldaU_hp, but they cannot be shared: in CRPA the perturbations are products
+  ! ldaU_hp, but they cannot be shared: in cRPA the perturbations are products
   ! of bands or Wannier functions, not Hubbard-atom occupations, so the arrays
-  ! have different shapes and lifecycles than the LRT (Hubbard) ones.
+  ! have different shapes and lifecycles than the LR-cDFT (Hubbard) ones.
   !
   USE kinds,      ONLY : DP
   USE parameters, ONLY : ntypx
@@ -46,7 +46,7 @@ MODULE crpacom
   COMPLEX(DP) :: w_freq
   !! Complex frequency for finite-frequency DFPT, in Ry: input w_freq_eV / RYTOEV. 0 means static DFPT.
   !
-  ! Definition of perturbation basis (for CRPA)
+  ! Definition of perturbation basis (for cRPA)
   ! NOTE: For constrained DFPT active space, see LR_Modules/constrained_dfpt.f90
   !
   INTEGER :: pert_bands_max
