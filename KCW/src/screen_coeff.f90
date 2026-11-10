@@ -414,6 +414,7 @@ SUBROUTINE screen_coeff ()
         CALL sirius_free_handler(lr_kpoints(ik))
       ENDDO
       DEALLOCATE(lr_kpoints)
+      DEALLOCATE(lr_hamiltonians)
     ENDIF
 #endif
     IF (.NOT. irr_bz) CALL clean_pw_kcw( )
