@@ -253,7 +253,7 @@ PROGRAM hp_main
   !
   !  finalize sirius at the very end
 #if defined(__SIRIUS)
-  CALL sirius_finalize(call_mpi_fin=.false.)
+  CALL sirius_finalize(call_mpi_fin=.false., call_device_reset=.false.)
 #endif
 
   CALL mp_global_end()
