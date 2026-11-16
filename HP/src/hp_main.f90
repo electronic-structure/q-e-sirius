@@ -27,12 +27,20 @@ PROGRAM hp_main
                                 determine_num_pert_only, tmp_dir_save,      &
                                 determine_q_mesh_only
   USE mod_sirius
+  USE klist,     ONLY : xk, ngk, igk_k
+  USE qpoint,    ONLY : nksq, ikqs
+  USE gvect,     ONLY : mill
   !
   IMPLICIT NONE
   !
   INTEGER :: iq, na, ipol
   LOGICAL :: do_iq, setup_pw
   LOGICAL,EXTERNAL :: check_gpu_support 
+#if defined(__SIRIUS)
+  INTEGER :: ik, ikq, ig, npwq
+  INTEGER, ALLOCATABLE :: gkvec_loc(:,:)
+  REAL(DP) :: vk(3)
+#endif
   !
   use_gpu = check_gpu_support()
   !
@@ -150,6 +158,31 @@ PROGRAM hp_main
         ! the linear response of the system
         !
         CALL hp_load_q()
+#if defined(__SIRIUS)
+        ALLOCATE(lr_kpoints(nksq))
+        ALLOCATE(lr_hamiltonians(nksq))
+
+        DO ik = 1, nksq
+          ikq = ikqs(ik)
+          npwq = ngk(ikq)
+
+          ! Fractional coordinates of k+q.
+          vk = MATMUL(TRANSPOSE(at), xk(:,ikq))
+
+          ! Preserve the local G-vector ordering used by QE wavefunctions.
+          ALLOCATE(gkvec_loc(3,npwq))
+          DO ig = 1, npwq
+            gkvec_loc(:,ig) = mill(:,igk_k(ig,ikq))
+          ENDDO
+
+          CALL sirius_create_kpoint(handler=sctx, vk=vk, num_gkvec_loc=npwq, gkvec_loc=gkvec_loc, &
+              kp_handler=lr_kpoints(ik))
+
+          CALL sirius_create_hamiltonian_k(h0_handler, lr_kpoints(ik), lr_hamiltonians(ik))
+
+          DEALLOCATE(gkvec_loc)
+        ENDDO
+#endif
         !
         ! SCF solution of the linearized Kohn-Sham equation
         !
@@ -161,6 +194,16 @@ PROGRAM hp_main
         !
         ! Cleanup of the variables for the next q point
         !
+#if defined(__SIRIUS)
+        IF (ALLOCATED(lr_kpoints)) THEN
+          DO ik = 1, SIZE(lr_kpoints)
+            CALL sirius_free_handler(lr_hamiltonians(ik))
+            CALL sirius_free_handler(lr_kpoints(ik))
+          ENDDO
+          DEALLOCATE(lr_kpoints)
+          DEALLOCATE(lr_hamiltonians)
+        ENDIF
+#endif
         CALL hp_clean_q(.TRUE.)
         !
      ENDDO
