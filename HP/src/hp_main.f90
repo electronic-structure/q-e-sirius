@@ -27,9 +27,12 @@ PROGRAM hp_main
                                 determine_num_pert_only, tmp_dir_save,      &
                                 determine_q_mesh_only
   USE mod_sirius
+#if defined(__SIRIUS)
   USE klist,     ONLY : xk, ngk, igk_k
   USE qpoint,    ONLY : nksq, ikqs
   USE gvect,     ONLY : mill
+  USE cell_base, ONLY : at
+#endif
   !
   IMPLICIT NONE
   !

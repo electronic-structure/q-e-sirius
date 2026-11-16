@@ -68,6 +68,7 @@ target_link_libraries(qe_hp_exe
         qe_pw
         qe_lax
         qe_modules
+        qe_lr_modules
         qe_hp
         qe_xclib)
 
