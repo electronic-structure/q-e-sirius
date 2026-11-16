@@ -1,0 +1,19 @@
+&inputcrpa
+  prefix = 'SrVO3'
+  outdir = './out'
+  nq1 = 2
+  nq2 = 2
+  nq3 = 2
+  lrpa = .true.
+  niter_max = 150
+  tr2 = 1.D-14
+  thresh_init = 1.D-10
+  cdfpt = .false.
+  crpa_epsil = .true.
+  crpa_epsil_only = .true.
+  crpa_mode = 'dHP'
+  crpa_diel_intraband = .true.
+  crpa_diel_flat = .true.
+  crpa_diel_llanczos = .false.
+  w_freq = (0.3, 0.05)
+/

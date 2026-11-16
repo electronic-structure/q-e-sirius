@@ -198,8 +198,12 @@ CONTAINS
     !
     ! Step 2 : |spsi> = S^{-1} * |psi> = |psi> + ps * |beta> 
     !
-    CALL ZGEMM( 'N', 'N', n, m, nkb, (1.D0, 0.D0), vkb, &
+    !$acc enter data copyin(ps)
+    !$acc host_data use_device(vkb, ps, spsi)
+    CALL MYZGEMM( 'N', 'N', n, m, nkb, (1.D0, 0.D0), vkb, &
                  lda, ps, nkb, (1.D0, 0.D0), spsi, lda )
+    !$acc end host_data
+    !$acc exit data delete(ps)
     !
     DEALLOCATE(ps)
     !
@@ -271,8 +275,12 @@ SUBROUTINE sm1_psi_nc()
     !
     ! Step 2 : |spsi> = S^{-1} * |psi> = |psi> + ps * |beta> 
     !
-    CALL ZGEMM( 'N', 'N', n, m*npol, nkb, (1.D0, 0.D0), vkb, &
+    !$acc enter data copyin(ps)
+    !$acc host_data use_device(vkb, ps, spsi)
+    CALL MYZGEMM( 'N', 'N', n, m*npol, nkb, (1.D0, 0.D0), vkb, &
                      & lda, ps, nkb, (1.D0, 0.D0), spsi, lda )
+    !$acc end host_data
+    !$acc exit data delete(ps)
     !
     DEALLOCATE(ps)
     !

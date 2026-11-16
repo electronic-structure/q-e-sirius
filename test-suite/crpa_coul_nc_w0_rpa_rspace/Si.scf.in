@@ -1,0 +1,41 @@
+&control
+    calculation = 'scf'
+    restart_mode = 'from_scratch',
+    prefix = 'Si',
+    pseudo_dir = '../../pseudo/',
+    outdir = './out'
+    verbosity = 'high'
+/
+&system
+    ibrav = 2,
+    celldm(1) = 10.263101844
+    nat = 2, ntyp = 1,
+    ecutwfc = 25.0,
+
+    nbnd = 4
+    nosym = .true.
+    noinv = .true.
+/
+&electrons
+    diagonalization = 'david'
+    diago_full_acc = .true.
+    mixing_beta = 0.7
+    conv_thr = 1.0d-11
+/
+&ions
+/
+ATOMIC_SPECIES
+Si 28.085 Si.pbe-rrkj.UPF
+ATOMIC_POSITIONS crystal
+Si 0.00 0.00 0.00
+Si 0.25 0.25 0.25
+K_POINTS crystal
+8
+  0.00000000  0.00000000  0.00000000  1.250000e-01
+  0.00000000  0.00000000  0.50000000  1.250000e-01
+  0.00000000  0.50000000  0.00000000  1.250000e-01
+  0.00000000  0.50000000  0.50000000  1.250000e-01
+  0.50000000  0.00000000  0.00000000  1.250000e-01
+  0.50000000  0.00000000  0.50000000  1.250000e-01
+  0.50000000  0.50000000  0.00000000  1.250000e-01
+  0.50000000  0.50000000  0.50000000  1.250000e-01

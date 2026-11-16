@@ -1,0 +1,44 @@
+num_bands         =   4
+num_wann          =   4
+use_ws_distance   = .true.
+
+write_hr = .true.
+write_xyz = .true.
+write_u_matrices = .true.
+
+conv_window       = 5
+conv_tol          = 1.0D-11
+conv_noise_amp    = 100000.0
+conv_noise_num    = 5
+
+num_iter          = 4000
+num_print_cycles  = 100
+
+Begin Atoms_Frac
+ Si 0.00 0.00 0.00
+ Si 0.25 0.25 0.25
+End Atoms_Frac
+
+Begin Projections
+f = 0.0, 0.0, 0.0 : sp3
+End Projections
+
+begin unit_cell_cart
+bohr
+-5.1315510  0.00000 5.1315510
+ 0.00000  5.1315510 5.1315510
+-5.1315510  5.1315510 0.00000
+end unit_cell_cart
+
+mp_grid      = 2 2 2
+
+begin kpoints
+  0.00000000  0.00000000  0.00000000
+  0.00000000  0.00000000  0.50000000
+  0.00000000  0.50000000  0.00000000
+  0.00000000  0.50000000  0.50000000
+  0.50000000  0.00000000  0.00000000
+  0.50000000  0.00000000  0.50000000
+  0.50000000  0.50000000  0.00000000
+  0.50000000  0.50000000  0.50000000
+end kpoints

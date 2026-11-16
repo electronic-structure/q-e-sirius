@@ -1,0 +1,263 @@
+
+     Program CRPA v.8.0dev starts on 28Oct2026 at 12: 1:10 
+        Git branch: dHP_metal
+        Last git commit: 1a607a3b2785c0cc7aa48a29f363d9e2fe44ea67-dirty
+        Last git commit date: Wed Oct 28 08:56:47 2026 +0100
+        Last git commit subject: Fix bug introduced at Merge time. Now EPW compiles
+
+     This program is part of the open-source Quantum ESPRESSO suite
+     for quantum simulation of materials; please cite
+         "P. Giannozzi et al., J. Phys.:Condens. Matter 21 395502 (2009);
+         "P. Giannozzi et al., J. Phys.:Condens. Matter 29 465901 (2017);
+         "P. Giannozzi et al., J. Chem. Phys. 152 154105 (2020);
+          URL http://www.quantum-espresso.org", 
+     in publications or presentations arising from this work. More details at
+     http://www.quantum-espresso.org/quote
+
+     Parallel version (MPI), running on     4 processors
+
+     MPI processes distributed on     1 nodes
+     R & G space division:  proc/nbgrp/npool/nimage =       4
+     168240 MiB available memory on the printing compute node when the environment starts
+ 
+
+     =---------------------------------------------------------------------------=
+
+        Constrained random phase approximation using the CRPA code based on DFPT  
+
+           Please cite the following papers when using this program:              
+
+              - CRPA code : To be added                                           
+
+     =---------------------------------------------------------------------------=
+     Waiting for input...
+     Reading input from standard input
+
+     Reading xml data from directory:
+
+     ./out/SrVO3.save/
+
+     IMPORTANT: XC functional enforced from input :
+     Exchange-correlation= PBE
+                           (   1   4   3   4   0   0   0)
+     Any further DFT definition will be discarded
+     Please, verify this is what you really want
+
+ 
+     Parallelization info
+     --------------------
+     sticks:   dense  smooth     PW     G-vecs:    dense   smooth      PW
+     Min         126     126     40                 2102     2102     386
+     Max         127     127     41                 2103     2103     389
+     Sum         505     505    161                 8409     8409    1551
+ 
+     Using Slab Decomposition
+ 
+     Reading collected, re-writing distributed wavefunctions
+ 
+
+     bravais-lattice index     =             1
+     lattice parameter (alat)  =        7.2613 (a.u.)
+     unit-cell volume          =      382.8628 (a.u.)^3
+     number of atoms/cell      =             5
+     number of atomic types    =             3
+     kinetic-energy cut-off    =         30.00 (Ry)
+     charge density cut-off    =        120.00 (Ry)
+     conv. thresh. for NSCF    =       0.0E+00
+     conv. thresh. for chi     =       0.0E+00
+     Input Hubbard parameters (in eV):
+
+     celldm(1) =  7.26130  celldm(2) =  0.00000  celldm(3) =  0.00000
+     celldm(4) =  0.00000  celldm(5) =  0.00000  celldm(6) =  0.00000
+
+     crystal axes: (cart. coord. in units of alat)
+               a(1) = (  1.0000  0.0000  0.0000 )  
+               a(2) = (  0.0000  1.0000  0.0000 )  
+               a(3) = (  0.0000  0.0000  1.0000 )  
+
+     reciprocal axes: (cart. coord. in units 2 pi/alat)
+               b(1) = (  1.0000  0.0000  0.0000 )  
+               b(2) = (  0.0000  1.0000  0.0000 )  
+               b(3) = (  0.0000  0.0000  1.0000 )  
+
+     Atoms inside the unit cell (Cartesian axes):
+     site n.  atom      mass           positions (alat units)
+        1   Sr        87.6200   tau(  1) = (  0.00000  0.00000  0.00000  )
+        2   V         50.9420   tau(  2) = (  0.50000  0.50000  0.50000  )
+        3   O         15.9990   tau(  3) = (  0.50000  0.00000  0.50000  )
+        4   O         15.9990   tau(  4) = (  0.50000  0.50000  0.00000  )
+        5   O         15.9990   tau(  5) = (  0.00000  0.50000  0.50000  )
+
+     Perturbation basis: bands
+          Perturbation bands:     0 -     0
+
+
+
+     The grid of q-points ( 2, 2, 2)  (  4 q-points ) :
+       N       xq(1)         xq(2)         xq(3)       wq
+       1   0.000000000   0.000000000   0.000000000   0.125000000
+       2   0.000000000   0.000000000  -0.500000000   0.375000000
+       3   0.000000000  -0.500000000  -0.500000000   0.375000000
+       4  -0.500000000  -0.500000000  -0.500000000   0.125000000
+
+
+     =-------------------------------------------------------------=
+
+     Calculation for q #   1 = (   0.0000000   0.0000000   0.0000000 )
+
+     =-------------------------------------------------------------=
+
+                   WRITING LINEAR-RESPONSE SUMMARY:
+
+
+
+
+     Number of symmetries in the small group of q, nsymq = 48
+
+     G cutoff =  160.2693  (   2103 G-vectors)     FFT grid: ( 25, 25, 25)
+
+     Number of k (and k+q if q/=0) points =    10  Gaussian smearing, width (Ry) =  0.0200
+
+                       cart. coord. (in units 2pi/alat)
+        k (    1) = (   0.0000000   0.0000000   0.0000000), wk = 0.0312500
+        k (    2) = (   0.0000000   0.0000000   0.2500000), wk = 0.1875000
+        k (    3) = (   0.0000000   0.0000000  -0.5000000), wk = 0.0937500
+        k (    4) = (   0.0000000   0.2500000   0.2500000), wk = 0.3750000
+        k (    5) = (   0.0000000   0.2500000  -0.5000000), wk = 0.3750000
+        k (    6) = (   0.0000000  -0.5000000  -0.5000000), wk = 0.0937500
+        k (    7) = (   0.2500000   0.2500000   0.2500000), wk = 0.2500000
+        k (    8) = (   0.2500000   0.2500000  -0.5000000), wk = 0.3750000
+        k (    9) = (   0.2500000  -0.5000000  -0.5000000), wk = 0.1875000
+        k (   10) = (  -0.5000000  -0.5000000  -0.5000000), wk = 0.0312500
+
+                       cryst. coord.
+        k (    1) = (   0.0000000   0.0000000   0.0000000), wk = 0.0312500
+        k (    2) = (   0.0000000   0.0000000   0.2500000), wk = 0.1875000
+        k (    3) = (   0.0000000   0.0000000  -0.5000000), wk = 0.0937500
+        k (    4) = (   0.0000000   0.2500000   0.2500000), wk = 0.3750000
+        k (    5) = (   0.0000000   0.2500000  -0.5000000), wk = 0.3750000
+        k (    6) = (   0.0000000  -0.5000000  -0.5000000), wk = 0.0937500
+        k (    7) = (   0.2500000   0.2500000   0.2500000), wk = 0.2500000
+        k (    8) = (   0.2500000   0.2500000  -0.5000000), wk = 0.3750000
+        k (    9) = (   0.2500000  -0.5000000  -0.5000000), wk = 0.1875000
+        k (   10) = (  -0.5000000  -0.5000000  -0.5000000), wk = 0.0312500
+
+     Total time spent up to now is:
+     CRPA         :      0.11s CPU      0.14s WALL
+
+
+     Electric Fields Calculation
+     TD-DFPT with complex-valued frequency      0.30000     0.05000 Ry
+
+      iter #   1 total cpu time :    17.6 secs   av.it.:  28.9
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  5.602E-07
+
+      iter #   2 total cpu time :    32.0 secs   av.it.:  27.8
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  9.702E-08
+
+      iter #   3 total cpu time :    43.6 secs   av.it.:  26.6
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  5.563E-09
+
+      iter #   4 total cpu time :    53.5 secs   av.it.:  25.1
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  1.657E-10
+
+      iter #   5 total cpu time :    62.6 secs   av.it.:  23.4
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  3.084E-12
+
+      iter #   6 total cpu time :    70.5 secs   av.it.:  22.1
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  3.941E-13
+
+      iter #   7 total cpu time :    82.8 secs   av.it.:  20.8
+      thresh= 1.000E-10 alpha_mix =  0.700 |ddv_scf|^2 =  9.324E-15
+
+     End of electric fields calculation
+
+     Intraband (Drude) plasma frequency, cartesian axis
+     omega_p^2 (Ry^2) =    0.18763756    0.00000000    0.00000000
+     omega_p^2 (Ry^2) =    0.00000000    0.18763756    0.00000000
+     omega_p^2 (Ry^2) =    0.00000000    0.00000000    0.18763756
+     omega_p   (eV)   =    5.89359870    5.89359870    5.89359870
+
+          RPA dielectric constant in cartesian axis (DV_xc=0)
+
+          (       3.797327,       5.825649)  (       0.000000,       0.000000)  (      -0.000000,       0.000000)
+          (       0.000000,       0.000000)  (       3.797327,       5.825649)  (       0.000000,       0.000000)
+          (      -0.000000,      -0.000000)  (       0.000000,       0.000000)  (       3.797327,       5.825649)
+     INFO: Dielectric tensor written to epsilon_w.dat
+ 
+     PRINTING TIMING FROM PWSCF ROUTINES: 
+ 
+
+     Called by init_run:
+
+     Called by electrons:
+     v_of_rho     :      0.00s CPU      0.00s WALL (       1 calls)
+     v_h          :      0.00s CPU      0.00s WALL (       1 calls)
+     v_xc         :      0.00s CPU      0.00s WALL (       1 calls)
+
+     Called by c_bands:
+     init_us_2    :      0.02s CPU      0.03s WALL (     120 calls)
+
+     Called by sum_band:
+
+     Called by *egterg:
+     h_psi        :     62.99s CPU     65.38s WALL (   32971 calls)
+
+     Called by h_psi:
+     h_psi:calbec :      4.42s CPU      4.59s WALL (   32971 calls)
+     vloc_psi     :     54.78s CPU     56.88s WALL (   32971 calls)
+     add_vuspsi   :      3.25s CPU      3.37s WALL (   32971 calls)
+
+     General routines
+     calbec       :      7.39s CPU      7.68s WALL (   64805 calls)
+     fft          :      0.02s CPU      0.03s WALL (      76 calls)
+     fftw         :     49.03s CPU     50.95s WALL (  954848 calls)
+     davcio       :      0.09s CPU      0.12s WALL (    1412 calls)
+ 
+     Parallel routines
+ 
+     init_vloc    :      0.02s CPU      0.02s WALL (       1 calls)
+     init_us_1    :      0.00s CPU      0.00s WALL (       1 calls)
+     add_vuspsi   :      3.25s CPU      3.37s WALL (   32971 calls)
+ 
+     PRINTING TIMING FROM CRPA ROUTINES: 
+ 
+     crpa_setup_q :      0.01s CPU      0.01s WALL (       1 calls)
+     crpa_init_q  :      0.00s CPU      0.01s WALL (       1 calls)
+ 
+     PRINTING TIMING FROM Wannier90 INTERFACE ROUTINES: 
+ 
+ 
+ 
+     PRINTING TIMING FROM LR MODULE: 
+ 
+     dfpt_kernel  :     76.68s CPU     79.53s WALL (       1 calls)
+     sth_kernel_f :     75.17s CPU     78.01s WALL (       7 calls)
+     sth_postproc :      0.00s CPU      0.00s WALL (       7 calls)
+     psymdvscf    :      1.48s CPU      1.49s WALL (      14 calls)
+     symdvscf     :      1.46s CPU      1.47s WALL (      14 calls)
+     apply_dpot_b :      0.50s CPU      0.52s WALL (     180 calls)
+     ortho        :      0.13s CPU      0.13s WALL (     450 calls)
+     h_prec_freq  :      0.11s CPU      0.12s WALL (     140 calls)
+     cgsolve      :      2.95s CPU      3.05s WALL (      30 calls)
+     ccgsolve     :     73.79s CPU     76.51s WALL (     420 calls)
+     ch_psi       :     72.41s CPU     75.09s WALL (   32971 calls)
+     incdrhoscf   :      0.54s CPU      0.60s WALL (     210 calls)
+     dv_of_drho   :      0.02s CPU      0.02s WALL (      21 calls)
+     mix_pot      :      0.01s CPU      0.02s WALL (       7 calls)
+     setup_dgc    :      0.01s CPU      0.01s WALL (       1 calls)
+     setup_dmuxc  :      0.00s CPU      0.00s WALL (       1 calls)
+     setup_nbnd_o :      0.00s CPU      0.00s WALL (       1 calls)
+     cft_wave     :      0.44s CPU      0.46s WALL (    7740 calls)
+ 
+     CRPA         :   1m19.90s CPU   1m22.91s WALL
+
+ 
+   This run was terminated on:  12: 2:33  28Oct2026            
+
+=------------------------------------------------------------------------------=
+   JOB DONE.
+=------------------------------------------------------------------------------=
+CRPA-EXTRACT wp2 0.18763756
+CRPA-EXTRACT eps_cg 0.3797327E+01
+CRPA-EXTRACT eps_cg_im 0.5825649E+01

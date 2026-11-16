@@ -1,0 +1,24 @@
+&inputcrpa
+  prefix = 'Si'
+  outdir = './out'
+  wannier_seedname = 'Si'
+  pert_basis = 'wannier'
+  filU = 'crpa_ln'
+  nq1 = 2
+  nq2 = 2
+  nq3 = 2
+  lrpa = .false.
+  crpa_xcmode = 'TCTC'
+  niter_max = 100
+  tr2 = 1.D-16
+  thresh_init = 1.D-10
+  cdfpt = .false.
+  crpa_epsil = .false.
+  crpa_mode = 'dHP'
+  crpa_reduce_q = .true.
+  crpa_llanczos = .true.
+  crpa_coul_lanczos_steps = 100
+  crpa_coul_extrapolation = 'no'
+  crpa_diel_extrapolation = 'no'
+  w_freq = (0.01, 0.01)
+/

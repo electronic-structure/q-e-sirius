@@ -335,6 +335,7 @@ set_target_properties(qe_gww_head_exe
         OUTPUT_NAME head.x)
 target_link_libraries(qe_gww_head_exe
     PRIVATE
+       qe_lr_modules
        qe_gww_head
        qe_gww_minpack
        qe_phonon_ph
