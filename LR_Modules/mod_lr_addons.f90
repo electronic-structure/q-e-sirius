@@ -10,7 +10,7 @@ CONTAINS
     USE uspp_param, ONLY : nh, lmaxq
     USE control_lr, ONLY : lgamma
     USE qpoint,     ONLY : xq
-    USE cell_base,  ONLY : tpiba
+    USE cell_base,  ONLY : tpiba,omega
     !
     IMPLICIT NONE
     INTEGER :: iat, ih, jh, ijh, ig
@@ -47,7 +47,7 @@ CONTAINS
       DO ih = 1, nh (iat)
         DO jh = ih, nh (iat)
           ijh = ijh + 1
-          CALL qvan2 (ngm, ih, jh, iat, qmod, atom_type(iat)%qpw(:, ijh), ylmk0)
+          CALL qvan2 (ngm, ih, jh, iat, qmod, omega, atom_type(iat)%qpw(:, ijh), ylmk0)
           atom_type(iat)%qpw_t(ijh, :) = atom_type(iat)%qpw(:, ijh)
         ENDDO
       ENDDO
