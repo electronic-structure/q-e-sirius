@@ -101,10 +101,13 @@ SUBROUTINE wfcinit()
      dirname = restart_dir ( )
      IF (ionode) CALL qexsd_readschema ( xmlfile(), ierr, output_obj )
      CALL mp_bcast(ierr, ionode_id, intra_image_comm)
-     IF ( ierr <= 0 .and.  (.not. ionode .or. &
-             output_obj%convergence_info%wf_collected_ispresent) ) THEN
+     IF ( ierr <= 0 ) THEN
         ! xml file is valid
-        IF (ionode) twfcollect_file = output_obj%convergence_info%wf_collected 
+        IF (ionode) THEN
+           twfcollect_file = output_obj%convergence_info%wf_collected_ispresent
+           IF (twfcollect_file) &
+              twfcollect_file = output_obj%convergence_info%wf_collected
+        END IF
         CALL mp_bcast(twfcollect_file, ionode_id, intra_image_comm)
         CALL qes_reset  ( output_obj )
      ELSE

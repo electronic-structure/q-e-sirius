@@ -1,4 +1,4 @@
-! Copyrigh(C) 2005-2018 Quantum ESPRESSO group
+! Copyright(C) 2005-2026 Quantum ESPRESSO group
 ! This file is distributed under the terms of the
 ! GNU General Public License. See the file `License'
 ! in the root directory of the present distribution,
@@ -29,31 +29,17 @@ MODULE exx_std
     USE wavefunctions,        ONLY : evc, psic
     USE io_files,             ONLY : nwordwfc, iunwfc
     USE buffers,              ONLY : get_buffer
-    USE wvfct,                ONLY : nbnd, npwx, wg, current_k
-    USE klist,                ONLY : ngk, nkstot, xk, wk
-    USE symm_base,            ONLY : nsym, s, sr
-    USE mp_pools,             ONLY : npool, nproc_pool, me_pool, inter_pool_comm
-    USE mp_exx,               ONLY : me_egrp, negrp, init_index_over_band,  &
-                                     my_egrp_id, inter_egrp_comm,           &
-                                     intra_egrp_comm, iexx_start, iexx_end, &
-                                     all_start, all_end
-    USE mp,                   ONLY : mp_sum, mp_bcast
-    USE xc_lib,               ONLY : xclib_get_exx_fraction, start_exx,          &
-                                     get_screening_parameter, get_gau_parameter, &
-                                     exx_is_active
+    USE wvfct,                ONLY : nbnd, npwx
+    USE klist,                ONLY : ngk, nkstot
+    USE mp_exx,               ONLY : me_egrp, inter_egrp_comm
+    USE mp,                   ONLY : mp_bcast
     USE scatter_mod,          ONLY : gather_grid, scatter_grid
     USE fft_interfaces,       ONLY : invfft
-    USE uspp,                 ONLY : nkb, vkb, okvan
+    USE uspp,                 ONLY : okvan
     USE paw_variables,        ONLY : okpaw
     USE mp_orthopools,        ONLY : intra_orthopool_comm
-    USE exx_base,             ONLY : nkqs, index_sym,  &
-                                     exx_set_symm, rir, working_pool, exxdiv, &
-                                     erfc_scrlen, gau_scrlen, exx_divergence, &
+    USE exx_base,             ONLY : nkqs, index_sym, rir, working_pool, &
                                      x_nbnd_occ, nbndproj, local_thr, d_spin
-#if defined(__CUDA)
-    USE device_memcpy_m,      ONLY : dev_memset
-    USE device_fbuff_m,       ONLY : dev_buf
-#endif
     !
     IMPLICIT NONE
     !
@@ -63,10 +49,9 @@ MODULE exx_std
     !
     ! ... local variables
     !
-    INTEGER :: ik, ibnd, i, j, k, ir, isym, ikq, ig, ierr
+    INTEGER :: ik, ibnd, i, isym, ikq, ig
     INTEGER :: ibnd_loop_start
     INTEGER :: ipol, jpol
-    REAL(DP), ALLOCATABLE :: occ(:,:)
     COMPLEX(DP),ALLOCATABLE :: temppsic(:)
 #if defined(__USE_INTEL_HBM_DIRECTIVES)
 !DIR$ ATTRIBUTES FASTMEM :: temppsic
@@ -74,10 +59,6 @@ MODULE exx_std
 !DIR$ memory(bandwidth) temppsic
 #endif
     COMPLEX(DP),ALLOCATABLE :: temppsic_nc(:,:), psic_nc(:,:)
-    COMPLEX(DP),POINTER     :: psic_nc_d(:,:)
-#if defined(__CUDA)
-    attributes(DEVICE)      :: psic_nc_d
-#endif
     COMPLEX(DP),ALLOCATABLE :: psic_exx(:)
     INTEGER :: nxxs, nrxxs
 #if defined(__MPI)
@@ -113,6 +94,7 @@ MODULE exx_std
        ALLOCATE( temppsic_nc(nrxxs, npol), psic_nc(nrxxs, npol) )
     ELSEIF ( .NOT. gamma_only ) THEN
        ALLOCATE( temppsic(nrxxs) )
+       !$acc enter data create(temppsic(1:nrxxs))
     ENDIF
     !
     CALL divide( inter_egrp_comm, x_nbnd_occ, ibnd_start, ibnd_end )
@@ -155,6 +137,7 @@ MODULE exx_std
         ELSE
            ALLOCATE( exxbuff(nrxxs*npol, ibnd_buff_start:ibnd_buff_end, nkqs))
         END IF
+        !$acc enter data create(exxbuff)
       END IF
       !
     ENDIF
@@ -171,7 +154,10 @@ MODULE exx_std
     KPOINTS_LOOP : &
     DO ik = 1, nks
        !
-       IF ( nks > 1 ) CALL get_buffer( evc, nwordwfc, iunwfc, ik )
+       IF ( nks > 1 ) THEN
+         CALL get_buffer( evc, nwordwfc, iunwfc, ik )
+         !$acc update device(evc)
+       END IF
        !
        ! ik         = index of k-point in this pool
        ! current_ik = index of k-point over all pools
@@ -232,9 +218,16 @@ MODULE exx_std
                 temppsic_nc(dfftt%nl(igk_k(1:npw,ik)),2) = evc(npwx+1:npwx+npw,ibnd)
                 CALL invfft( 'Wave', temppsic_nc(:,2), dfftt )
              ELSE
+                !$acc kernels
                 temppsic(:) = ( 0._DP, 0._DP )
-                temppsic(dfftt%nl(igk_k(1:npw,ik))) = evc(1:npw,ibnd)
+                !$acc end kernels
+                !$acc parallel loop 
+                do i = 1, npw
+                  temppsic(dfftt%nl(igk_k(i,ik))) = evc(i,ibnd)
+                end do 
+                !$acc host_data use_device(temppsic)
                 CALL invfft( 'Wave', temppsic, dfftt )
+                !$acc end host_data
              ENDIF
              !
              DO ikq = 1, nkqs
@@ -283,6 +276,7 @@ MODULE exx_std
                       exxbuff(nrxxs+1:nrxxs+nrxxs,ibnd,ikq) = -CONJG(psic_nc(:,1))
                    ENDIF
                 ELSE ! noncolinear
+                   !$acc update host(temppsic)
 #if defined(__MPI)
                    CALL gather_grid( dfftt, temppsic, temppsic_all )
                    IF ( me_egrp == 0 ) psic_all(:) = temppsic_all(rir(:,isym))
@@ -311,6 +305,7 @@ MODULE exx_std
        DEALLOCATE( temppsic_all_nc, psic_all_nc )
 #endif
     ELSE IF ( .NOT. gamma_only ) THEN
+       !$acc exit data delete(temppsic)
        DEALLOCATE( temppsic )
 #if defined(__MPI)
        DEALLOCATE( temppsic_all, psic_all )
@@ -329,26 +324,801 @@ MODULE exx_std
        ENDDO
     ENDIF
     !
+    !$acc update device(exxbuff)
+    !
   END SUBROUTINE exxinit_std
   !
+#if defined(__CUDA)
+  !
   !-----------------------------------------------------------------------
-  SUBROUTINE vexx_std_gamma(lda, n, m, psi, hpsi, becpsi)
+  SUBROUTINE vexx_std_gamma_outer(lda, n, m, psi, hpsi, becpsi)
   !-----------------------------------------------------------------------
     !
-    ! ... Gamma-specific version of vexx
+    ! ... Gamma-specific version of vexx with batched outer loop over bands
+    !     (this is a GPU-only version, howmany on CPU not implemented)
     !
-    USE constants,      ONLY : fpi, e2, pi
     USE cell_base,      ONLY : omega
-    USE gvect,          ONLY : ngm, g
-    USE wvfct,          ONLY : npwx, current_k
-    USE klist,          ONLY : xk, nks, nkstot, igk_k
+    USE wvfct,          ONLY : current_k
+    USE klist,          ONLY : nkstot, igk_k
     USE fft_interfaces, ONLY : fwfft, invfft
     USE becmod,         ONLY : bec_type
     USE mp_bands,       ONLY : inter_bgrp_comm, intra_bgrp_comm, my_bgrp_id, nbgrp
-    USE mp,             ONLY : mp_sum, mp_barrier, mp_bcast
+    USE mp,             ONLY : mp_sum, mp_bcast
     USE uspp,           ONLY : nkb, okvan
     USE paw_variables,  ONLY : okpaw
-    USE us_exx,         ONLY : bexg_merge, becxx, addusxx_g, addusxx_r, &
+    USE us_exx,         ONLY : becxx, addusxx_g, addusxx_r, &
+                               newdxx_g, newdxx_r, add_nlxx_pot, &
+                               qvan_init, qvan_clean
+    USE paw_exx,        ONLY : PAW_newdxx
+    USE exx_base,       ONLY : npwt, gt, nqs, x_occupation, g2_convolution, batchsize
+    !
+    !
+    IMPLICIT NONE
+    !
+    INTEGER                  :: lda, n, m
+    COMPLEX(DP)              :: psi(lda*npol,m)
+    COMPLEX(DP)              :: hpsi(lda*npol,m)
+    TYPE(bec_type), OPTIONAL :: becpsi ! or call a calbec(...psi) instead
+    !
+    ! local variables
+    COMPLEX(DP),ALLOCATABLE :: RESULT(:), temppsic(:)
+    !
+    COMPLEX(DP),ALLOCATABLE :: rhoc(:), deexx(:,:)
+    REAL(DP),   ALLOCATABLE :: fac(:), facmask(:)
+    INTEGER          :: ibnd
+    INTEGER          :: ir, ig, idx, idxm
+    INTEGER          :: current_ik
+    INTEGER          :: ibnd_loop_start
+    INTEGER          :: h_ibnd, nrxxs
+    REAL(DP), PARAMETER :: xkg(3) = (/0.0_dp, 0.0_dp, 0.0_dp/)
+    ! coordinates of Gamma point
+    REAL(DP) :: x1, x2
+    ! <LMS> temp array for vcut_spheric
+    INTEGER, EXTERNAL  :: global_kpoint_index
+    INTEGER :: ngmt
+    !
+    ! local variables to control FFT band batching
+    !
+    INTEGER :: nb, nb_last
+    ! number of batched bands per fft 
+    ! in principle nb=batchsize, but it may vary for the last batch (nb_last).
+    ! using a fixed batchsize prevents allocating and deallocating batched variables inside the loop
+    INTEGER :: nblocks, iblock
+    ! loop over batches
+    INTEGER :: i_global
+    ! global index of bands ranging (1...m)
+    INTEGER :: ib 
+    ! local index of bands ranging (1...nb)
+    INTEGER :: batchsize0, subbatchsize0
+    ! backup values in case FFT internal batching is changed 
+    LOGICAL, SAVE :: first_call = .true.
+    !
+    if ( mod(batchsize, 2) /= 0 ) Call errore('vexx_std_gamma_outer', 'odd batchsize values not allowed', 1)
+    !
+    ngmt = dfftt%ngm
+    ALLOCATE( fac(ngmt) )
+    nrxxs= dfftt%nnr
+    !
+    ! update internal FFT batching parameters 
+    !
+    batchsize0 = 0
+    subbatchsize0 = 0
+    if( batchsize > dfftt%batchsize ) then
+      batchsize0 = dfftt%batchsize
+      subbatchsize0 = dfftt%subbatchsize
+      ! set new batchsize and subbatchsize
+      if ( mod( batchsize, 4 ) == 0 ) then
+        dfftt%subbatchsize = batchsize / 4
+        dfftt%batchsize = batchsize
+      else
+        dfftt%subbatchsize = batchsize / 4 + 1
+        dfftt%batchsize = dfftt%subbatchsize * 4
+      endif
+    endif
+    IF( first_call ) THEN
+      write(stdout, '(5X,3(A,I4))') &
+        "EXX batchsize: ", batchsize, " FFT batchsize: ", dfftt%batchsize, " subbatchsize: ", dfftt%subbatchsize
+      first_call = .false.
+    END IF
+    !
+    nblocks = m / batchsize
+    nb_last = mod(m, batchsize)             ! number of bands in the last block
+    if( nb_last > 0 ) nblocks = nblocks + 1 ! add one more block for the last nb_last bands 
+    !
+    ALLOCATE( temppsic( batchsize/2 * nrxxs) ) ! Gamma trick here
+    ALLOCATE( rhoc(batchsize*nrxxs), RESULT(batchsize*nrxxs), facmask(nrxxs) )
+    !
+    IF(okvan) ALLOCATE(deexx(nkb, batchsize))
+    !
+    current_ik = global_kpoint_index ( nkstot, current_k )
+    !
+    ! This is to stop numerical inconsistencies creeping in through the band parallelization.
+    !
+    IF(my_bgrp_id>0) THEN
+       hpsi=0.0_DP
+       psi =0.0_DP
+    ENDIF
+    IF (nbgrp>1) THEN
+       CALL mp_bcast(hpsi,0,inter_bgrp_comm)
+       CALL mp_bcast(psi,0,inter_bgrp_comm)
+    ENDIF
+    !$acc update device(psi)
+    !
+    ! Here the loops start
+    !
+    !$acc data create(rhoc, fac, temppsic, result, facmask) copy(hpsi) present(exxbuff) 
+    !
+    ! calculate the 1/|r-r'| (actually, k+q+g) factor and place it in fac
+    CALL g2_convolution(ngmt, gt, xkg, xkg, fac)
+    !$acc update device(fac)
+    !
+    ! facmask = fac inside the ngmt sphere, 0 otherwise 
+    ! (can be used in loops over nrxxs)
+    !
+    !$acc kernels
+    facmask = 0.0_dp
+    !$acc end kernels 
+    !
+    !$acc parallel loop private(idx, idxm)
+    do ig = 1, ngmt
+      idx  = dfftt%nl(ig)
+      idxm = dfftt%nlm(ig)
+      facmask( idx ) = fac(ig) 
+      facmask( idxm) = fac(ig) 
+    end do
+    !
+    IF ( okvan .and..not.tqr ) CALL qvan_init (ngmt, xkg, xkg)
+    !
+    LOOP_ON_I_BLOCKS : &
+    DO iblock = 1, nblocks
+       !
+       ! bring a block (temppsic) of psi functions to real space
+       !
+       ! set the actual number of bands in this block
+       if(nb_last > 0 .and. iblock==nblocks) then
+         nb = nb_last 
+       else
+         nb = batchsize
+       endif
+       ! set the global band starting index for this block
+       i_global = (iblock-1) * batchsize 
+       !
+       !$acc kernels 
+       temppsic = (0.0_dp, 0.0_dp)
+       !$acc end kernels
+       !
+       !$acc parallel loop collapse(2) private(idx, idxm)
+       DO ib = 1, nb-1, 2
+         DO ig = 1, npwt
+            idx  = ((ib-1)/2) * nrxxs + dfftt%nl(ig) 
+            idxm = ((ib-1)/2) * nrxxs + dfftt%nlm(ig) 
+            temppsic ( idx  ) =       psi(ig, i_global + ib) + (0._DP,1._DP) * psi(ig, i_global + ib+1)
+            temppsic ( idxm ) = conjg(psi(ig, i_global + ib) - (0._DP,1._DP) * psi(ig, i_global + ib+1))
+         ENDDO
+       ENDDO 
+       ! when m is odd, in the last block nb_last is also odd and the previous loop
+       ! cannot increment the last iteration otherwise psi(ig,i_global+ib+1) goes out of bounds 
+       ! so this is the last iteration: 
+       if( mod(nb_last,2)==1 .and. iblock==nblocks ) then 
+         !$acc parallel loop private(idx, idxm)
+         DO ig = 1, npwt
+            idx  = (nb/2) * nrxxs + dfftt%nl(ig) 
+            idxm = (nb/2) * nrxxs + dfftt%nlm(ig) 
+            temppsic ( idx  ) =       psi(ig, i_global + nb) 
+            temppsic ( idxm ) = conjg(psi(ig, i_global + nb) )
+         ENDDO
+       end if 
+       !
+       !$acc host_data use_device(temppsic)
+       CALL invfft ('Wave', temppsic, dfftt, howmany=batchsize/2)
+       !$acc end host_data
+       !
+       ! now in temppsic there are batchsize wavefunctons, 
+       ! half in the real part, half in the imaginary part.
+       !
+       IF(okvan) deexx = 0.0_DP
+       !
+       !$acc kernels
+       RESULT = 0.0_DP
+       !$acc end kernels
+       !
+       h_ibnd = ibnd_start/2
+       IF(mod(ibnd_start,2)==0) THEN
+          h_ibnd=h_ibnd-1
+          ibnd_loop_start=ibnd_start-1
+       ELSE
+          ibnd_loop_start=ibnd_start
+       ENDIF
+       !
+       IBND_LOOP_GAM : &
+       DO ibnd=ibnd_loop_start,ibnd_end, 2 !for each band of psi
+          !
+          h_ibnd = h_ibnd + 1
+          IF( ibnd < ibnd_start ) THEN
+             x1 = 0.0_DP
+          ELSE
+             x1 = x_occupation(ibnd,  current_ik)
+          ENDIF
+          IF( ibnd == ibnd_end) THEN
+             x2 = 0.0_DP
+          ELSE
+             x2 = x_occupation(ibnd+1,  current_ik)
+          ENDIF
+          IF ( abs(x1) < eps_occ .and. abs(x2) < eps_occ ) CYCLE
+          !
+          ! calculate rho in real space. Gamma tricks are used.
+          ! temppsic is real; tempphic contains one band in the real part,
+          ! another one in the imaginary part; the same applies to rhoc
+          !
+          !$acc parallel loop collapse(2) private(idx) 
+          do ib = 1, batchsize, 2
+             DO ir = 1, nrxxs
+                idx = ib/2 *nrxxs + ir 
+                rhoc((ib-1)*nrxxs + ir ) = exxbuff(ir,h_ibnd,current_k) *  dble(temppsic(idx)) / omega
+                rhoc((ib)*nrxxs + ir )   = exxbuff(ir,h_ibnd,current_k) * aimag(temppsic(idx)) / omega
+             ENDDO
+          end do 
+          !
+          ! bring rho to G-space
+          !
+          !   >>>> add augmentation in REAL SPACE here
+          IF(okvan .and. tqr) THEN
+             !$acc update host(rhoc)
+             do ib = 1, nb
+               IF(ibnd>=ibnd_start) &
+                 CALL addusxx_r(rhoc((ib-1)*nrxxs+1:ib*nrxxs),_CX(becxx(current_ik)%r(:,ibnd)), &
+                                                                            _CX(becpsi%r(:,i_global+ib)))
+               IF(ibnd<ibnd_end) &
+                 CALL addusxx_r(rhoc((ib-1)*nrxxs+1:ib*nrxxs),_CY(becxx(current_ik)%r(:,ibnd+1)), &
+                                                                            _CX(becpsi%r(:,i_global+ib)))
+             end do
+             !$acc update device(rhoc)
+          ENDIF
+          !
+          !$acc host_data use_device(rhoc)
+          CALL fwfft ('Rho', rhoc, dfftt, howmany=batchsize)
+          !$acc end host_data
+          !
+          !   >>>> add augmentation in G SPACE here
+          IF(okvan .and. .not. tqr) THEN
+             !$acc update host(rhoc)
+             ! contribution from one band added to real (in real space) part of rhoc
+             do ib = 1, nb
+               IF(ibnd>=ibnd_start) &
+                  CALL addusxx_g(dfftt, rhoc((ib-1)*nrxxs+1), xkg,  xkg, 'r', &
+                  becphi_r=becxx(current_ik)%r(:,ibnd), becpsi_r=becpsi%r(:,i_global+ib) )
+               ! contribution from following band added to imaginary (in real space) part of rhoc
+               IF(ibnd<ibnd_end) &
+                  CALL addusxx_g(dfftt, rhoc((ib-1)*nrxxs+1), xkg,  xkg, 'i', &
+                  becphi_r=becxx(current_ik)%r(:,ibnd+1), becpsi_r=becpsi%r(:,i_global+ib) )
+             end do 
+             !$acc update device(rhoc)
+          ENDIF
+          !   >>>> charge density done
+          !
+          !$acc parallel loop collapse(2) private(idx)
+          do ib = 1, batchsize
+            do ir = 1, nrxxs
+              idx = (ib-1)*nrxxs + ir
+              rhoc( idx ) = rhoc( idx ) * facmask(ir) 
+            end do 
+          end do  
+          !
+          !   >>>>  compute <psi|H_fock G SPACE here
+          IF(okvan .and. .not. tqr) THEN
+             !$acc update host(rhoc)
+             do ib = 1, nb
+               IF(ibnd>=ibnd_start) &
+               CALL newdxx_g(dfftt, rhoc((ib-1)*nrxxs+1), xkg, xkg, 'r', deexx(:,ib), &
+                             becphi_r=x1*becxx(current_ik)%r(:,ibnd))
+               IF(ibnd<ibnd_end) &
+               CALL newdxx_g(dfftt, rhoc((ib-1)*nrxxs+1), xkg, xkg, 'i', deexx(:,ib), &
+                             becphi_r=x2*becxx(current_ik)%r(:,ibnd+1))
+             end do
+          ENDIF
+          !
+          !brings back v in real space
+          !$acc host_data use_device(rhoc)
+          CALL invfft ('Rho', rhoc, dfftt, howmany=batchsize)
+          !$acc end host_data
+          !
+          !   >>>>  compute <psi|H_fock REAL SPACE here
+          IF(okvan .and. tqr) THEN
+             !$acc update host(rhoc)
+             do ib = 1, nb 
+               IF(ibnd>=ibnd_start) &
+                 CALL newdxx_r(dfftt, rhoc((ib-1)*nrxxs+1:ib*nrxxs), _CX(x1*becxx(current_ik)%r(:,ibnd)), &
+                                                                                                     deexx(:,ib))
+               IF(ibnd<ibnd_end) &
+                 CALL newdxx_r(dfftt, rhoc((ib-1)*nrxxs+1:ib*nrxxs), _CY(x2*becxx(current_ik)%r(:,ibnd+1)), &
+                                                                                                     deexx(:,ib))
+             end do 
+          ENDIF
+          !
+          IF(okpaw) THEN
+             do ib = 1, nb
+               IF(ibnd>=ibnd_start) &
+               CALL PAW_newdxx(x1/nqs, _CX(becxx(current_ik)%r(:,ibnd)),&
+                                       _CX(becpsi%r(:,i_global+ib)), deexx(:,ib))
+               IF(ibnd<ibnd_end) &
+               CALL PAW_newdxx(x2/nqs, _CX(becxx(current_ik)%r(:,ibnd+1)), &
+                                       _CX(becpsi%r(:,i_global+ib)), deexx(:,ib))
+             end do 
+          ENDIF
+          !
+          ! accumulates over bands and k points
+          !
+          !$acc parallel loop collapse(2) private(idx)
+          do ib = 1, batchsize
+            DO ir = 1, nrxxs
+               idx  = (ib-1)*nrxxs + ir 
+               RESULT(idx) = RESULT(idx)+x1* dble(rhoc(idx))* dble(exxbuff(ir,h_ibnd,current_k))&
+                                        +x2*aimag(rhoc(idx))*aimag(exxbuff(ir,h_ibnd,current_k))
+            ENDDO
+          end do 
+          !
+       ENDDO &
+       IBND_LOOP_GAM
+       !
+       IF(okvan) THEN
+          CALL mp_sum(deexx,intra_bgrp_comm)
+          CALL mp_sum(deexx,inter_bgrp_comm)
+       ENDIF
+       !
+       !$acc host_data use_device(result)
+       CALL mp_sum( RESULT, inter_bgrp_comm)
+       !$acc end host_data
+       !
+       ! brings back result in G-space
+       !
+       !$acc host_data use_device(RESULT)
+       CALL fwfft( 'Wave' , RESULT, dfftt, howmany=batchsize )
+       !$acc end host_data
+       !
+       !$acc parallel loop collapse(2) private(idx)
+       do ib = 1, nb
+         DO ig = 1, n
+            idx  = (ib-1)*nrxxs + dfftt%nl(ig)
+            hpsi(ig,i_global+ib)=hpsi(ig,i_global+ib) - exxalfa*RESULT(idx)
+         ENDDO
+       end do 
+       !
+       ! add non-local \sum_I |beta_I> \alpha_Ii (the sum on i is outside)
+       IF(okvan) THEN
+         !$acc update host(hpsi(:,i_global+1:i_global+nb))
+         do ib = 1, nb
+           CALL add_nlxx_pot (lda, hpsi(:,i_global+ib), xkg, n, &
+                        igk_k(1,current_k), deexx(:,ib), eps_occ, exxalfa)
+         end do 
+         !$acc update device(hpsi(:,i_global+1:i_global+nb))
+       END IF
+    ENDDO &
+    LOOP_ON_I_BLOCKS
+    !
+    IF ( okvan .and..not.tqr ) CALL qvan_clean ()
+    !
+    !$acc end data
+    !
+    ! restore original FFT batching parameters
+    if( batchsize0 > 0 ) then
+      dfftt%batchsize = batchsize0
+      dfftt%subbatchsize = subbatchsize0
+    endif
+    !
+    DEALLOCATE( RESULT, temppsic)
+    !
+    DEALLOCATE(rhoc, fac, facmask )
+    !
+    IF(okvan) DEALLOCATE( deexx )
+    !
+    !-----------------------------------------------------------------------
+  END SUBROUTINE vexx_std_gamma_outer
+  !-----------------------------------------------------------------------
+  !
+  !-----------------------------------------------------------------------
+  SUBROUTINE vexx_std_k_outer(lda, n, m, psi, hpsi, becpsi)
+  !-----------------------------------------------------------------------
+    !
+    ! ... generic, k-point version of vexx
+    !     (this is a GPU-only version, howmany on CPU not implemented)
+    !
+    USE cell_base,      ONLY : omega
+    USE wvfct,          ONLY : current_k
+    USE klist,          ONLY : xk, nkstot, igk_k
+    USE fft_interfaces, ONLY : fwfft, invfft
+    USE becmod,         ONLY : bec_type
+    USE mp_bands,       ONLY : inter_bgrp_comm, intra_bgrp_comm, my_bgrp_id, nbgrp
+    USE mp,             ONLY : mp_sum, mp_bcast
+    USE uspp,           ONLY : nkb, okvan
+    USE paw_variables,  ONLY : okpaw
+    USE us_exx,         ONLY : becxx, addusxx_g, addusxx_r, &
+                               newdxx_g, newdxx_r, add_nlxx_pot, &
+                               qvan_init, qvan_clean
+    USE paw_exx,        ONLY : PAW_newdxx
+    USE exx_base,       ONLY : gt, nqs, index_xkq, x_occupation, g2_convolution, batchsize
+    !
+    !
+    IMPLICIT NONE
+    !
+    INTEGER                  :: lda, n, m
+    COMPLEX(DP)              :: psi(lda*npol,m)
+    COMPLEX(DP)              :: hpsi(lda*npol,m)
+    TYPE(bec_type), OPTIONAL :: becpsi ! or call a calbec(...psi) instead
+    !
+    ! local variables
+    COMPLEX(DP),ALLOCATABLE :: temppsic(:)
+    COMPLEX(DP),ALLOCATABLE :: result(:)
+    COMPLEX(DP),ALLOCATABLE :: rhoc(:)
+    !
+    COMPLEX(DP),ALLOCATABLE :: deexx(:,:)
+    INTEGER, ALLOCATABLE :: nl(:), nl_k(:)
+    REAL(DP),   ALLOCATABLE :: fac(:), facmask(:)
+    INTEGER          :: ibnd, ik, ikq, iq, ipol
+    INTEGER          :: ir, ig
+    INTEGER          :: current_ik
+    INTEGER          :: nrxxs
+    REAL(DP) :: xkp(3)
+    REAL(DP) :: xkq(3)
+    ! <LMS> temp array for vcut_spheric
+    INTEGER, EXTERNAL :: global_kpoint_index
+    INTEGER :: ngmt
+    REAL(DP) :: x_occ
+    !
+    ! local variables to control FFT band batching
+    !
+    INTEGER :: nb, nb_last
+    ! number of batched bands per fft 
+    ! in principle nb=batchsize, but it may vary for the last batch (nb_last).
+    ! using a fixed batchsize prevents allocating and deallocating batched variables inside the loop
+    INTEGER :: nbatch, ibatch 
+    ! loop over batches 
+    INTEGER :: im_start
+    ! global index of bands ranging (1...m)
+    INTEGER :: ib
+    ! local index of bands ranging (1...nb)
+    INTEGER :: batchsize0, subbatchsize0
+    !! backup values in case FFT internal batching is changed
+    INTEGER :: idx, jdx
+    !! index of batched quantities: 
+    !!   temppsic, result -> npol*nrxxs*batchsize
+    !!   rhoc -> nrxxs*batchsize
+    !! Strides: 
+    !!      ... (ipol-1) * batchsize * nrxxs
+    !!      ... (ib-1)   * nrxxs
+    LOGICAL, SAVE :: first_call = .true.
+    !
+    ngmt = dfftt%ngm 
+    ALLOCATE( fac(ngmt) )
+    nrxxs= dfftt%nnr
+    !
+    ! update internal FFT batching parameters 
+    !
+    batchsize0 = 0 
+    subbatchsize0 = 0
+    if( batchsize > dfftt%batchsize ) then
+      batchsize0 = dfftt%batchsize
+      subbatchsize0 = dfftt%subbatchsize
+      ! set new batchsize and subbatchsize
+      if ( mod( batchsize, 4 ) == 0 ) then
+        dfftt%subbatchsize = batchsize / 4
+        dfftt%batchsize = batchsize 
+      else
+        dfftt%subbatchsize = batchsize / 4 + 1 
+        dfftt%batchsize = dfftt%subbatchsize * 4 
+      endif
+    endif
+    IF( first_call ) THEN
+      write(stdout, '(5X,3(A,I4))') &
+        "EXX batchsize: ", batchsize, " FFT batchsize: ", dfftt%batchsize, " subbatchsize: ", dfftt%subbatchsize
+      first_call = .false.
+    END IF
+    !
+    nbatch = m / batchsize 
+    !
+    nb_last = mod( m, batchsize )  ! bands remaining in the last batch
+    if(nb_last > 0 ) nbatch = nbatch + 1 
+    !
+    ALLOCATE( nl(ngmt), nl_k(n) )
+    !
+    ALLOCATE( temppsic(npol*nrxxs*batchsize) )
+    ALLOCATE( result(npol*nrxxs*batchsize) )
+    !
+    ALLOCATE( facmask(nrxxs) )
+    ALLOCATE( rhoc(nrxxs*batchsize) )
+    !
+    IF(okvan) ALLOCATE(deexx(nkb, batchsize))
+    !
+    current_ik = global_kpoint_index ( nkstot, current_k )
+    xkp = xk(:,current_k)
+    !
+    ! This is to stop numerical inconsistencies creeping in through the band parallelization.
+    !
+    IF(my_bgrp_id>0) THEN
+       hpsi=0.0_DP
+       psi =0.0_DP
+    ENDIF
+    IF (nbgrp>1) THEN
+       CALL mp_bcast(hpsi,0,inter_bgrp_comm)
+       CALL mp_bcast(psi,0,inter_bgrp_comm)
+    ENDIF
+    !$acc update device(psi)
+    !
+    !$acc data create( rhoc, fac, facmask, nl, nl_k, temppsic, result) copy(hpsi) present(exxbuff) 
+    !
+    !$acc parallel loop
+    do ig = 1, ngmt 
+      nl(ig) = dfftt%nl(ig)
+    end do
+    !
+    !$acc parallel loop
+    do ig = 1, n  
+      nl_k(ig) = dfftt%nl(igk_k(ig,current_k))
+    end do
+    !
+    EXTERNAL_LOOP_ON_BATCHES: &
+    do ibatch = 1, nbatch
+       !
+       CALL start_clock( 'vexx_k_setup' )
+       !
+       ! set the actual number of bands in this batch
+       if(nb_last > 0 .and. ibatch==nbatch ) then
+         nb = nb_last 
+       else
+         nb = batchsize
+       endif
+       ! set the global band starting index for this batch
+       im_start = (ibatch-1) * batchsize 
+       !
+       ! inizializations on the whole allocation dimension (batchsize)
+       !$acc parallel loop collapse(3) private(idx)
+       do ipol = 1, npol
+         do ib = 1, batchsize
+           do ir = 1, nrxxs
+             idx = (ipol-1) * batchsize * nrxxs + (ib-1) * nrxxs + ir
+             temppsic( idx ) = 0._dp
+             result( idx ) = 0._dp
+           end do   
+         end do 
+       end do 
+       !
+       IF(okvan) deexx = 0._DP
+       !
+       !$acc parallel loop collapse(3) private(idx)
+       do ipol = 1, npol
+         do ib = 1, nb
+           do ig = 1, n
+              idx = (ipol-1) * batchsize * nrxxs + (ib-1) * nrxxs + nl_k(ig)
+              temppsic( idx ) = psi( (ipol-1)*lda + ig, im_start + ib)
+           enddo
+         end do 
+       end do 
+       !
+       !$acc host_data use_device(temppsic)
+       CALL invfft ('Wave', temppsic, dfftt, howmany=nb)
+       if(noncolin) CALL invfft ('Wave', temppsic(batchsize*nrxxs+1:), dfftt, howmany=nb)
+       !$acc end host_data
+       !
+       Call stop_clock('vexx_k_setup')
+       !
+       Call start_clock('vexx_k_main')
+          !
+          INTERNAL_LOOP_ON_Q : &
+          DO iq=1,nqs
+             !
+             ikq  = index_xkq(current_ik,iq)
+             ik   = index_xk(ikq)
+             xkq  = xkq_collect(:,ikq)
+             !
+             ! calculate the 1/|r-r'| (actually, k+q+g) factor and place it in fac
+             CALL g2_convolution(ngmt, gt, xkp, xkq, fac)
+             !$acc update device(fac)
+             !
+             ! facmask = fac inside the ngmt sphere, 0 otherwise 
+             ! (can be used in loops over nrxxs)
+             !
+             !$acc kernels
+             facmask = 0.0_dp
+             !$acc end kernels 
+             !
+             !$acc parallel loop private(idx)
+             do ig = 1, ngmt
+               idx  = nl(ig)
+               facmask( idx ) = fac(ig) 
+             end do
+             !
+             IF ( okvan .and..not.tqr ) CALL qvan_init (ngmt, xkq, xkp)
+             !
+             IBND_LOOP_K : &
+             DO ibnd=ibnd_start,ibnd_end !for each band of psi
+                !
+                IF ( abs(x_occupation(ibnd,ik)) < eps_occ) CYCLE IBND_LOOP_K
+                !
+                x_occ = x_occupation(ibnd,ik) / nqs
+                !
+                !loads the phi from file
+                !
+                !   >>>> calculate rho in real space
+                !$acc parallel loop collapse(2) private(idx)
+                DO ib = 1,nb 
+                  DO ir = 1, nrxxs
+                     idx = (ib-1) * nrxxs + ir
+                     rhoc( idx )=conjg(exxbuff(ir,ibnd,ikq))*temppsic( idx ) / omega
+                     IF (noncolin) THEN
+                       jdx = batchsize * nrxxs + (ib-1) * nrxxs + ir 
+                       rhoc( idx )= rhoc( idx ) + conjg(exxbuff(nrxxs+ir,ibnd,ikq))*temppsic(jdx) / omega
+                     END IF
+                  ENDDO
+                ENDDO
+                !
+                !   >>>> add augmentation in REAL space HERE
+                IF(okvan .and. tqr) THEN ! augment the "charge" in real space
+                   !$acc update host(rhoc)
+                   do ib = 1,nb
+                     idx = (ib-1) * nrxxs + 1 
+                     CALL addusxx_r( rhoc(idx:idx+nrxxs-1), becxx(ikq)%k(:,ibnd), becpsi%k(:,im_start+ib))
+                   end do 
+                   !$acc update device(rhoc)
+                ENDIF
+                !
+                !   >>>> brings it to G-space
+                !$acc host_data use_device(rhoc)
+                CALL fwfft('Rho', rhoc, dfftt, howmany=nb)
+                !$acc end host_data
+                !
+                !   >>>> add augmentation in G space HERE
+                IF(okvan .and. .not. tqr) THEN
+                   !$acc update host(rhoc)
+                   do ib = 1,nb
+                     idx = (ib-1) * nrxxs + 1
+                     CALL addusxx_g(dfftt, rhoc(idx), xkq, xkp, 'c', &
+                        becphi_c=becxx(ikq)%k(:,ibnd),becpsi_c=becpsi%k(:,im_start+ib))
+                   end do 
+                   !$acc update device(rhoc)
+                ENDIF
+                !   >>>> charge done
+                !
+                ! inizializations on the whole allocation dimension (batchsize)
+                !
+                !$acc parallel loop collapse(2) private(idx)
+                do ib = 1, nb
+                  do ir = 1, nrxxs
+                     idx = (ib-1)*nrxxs + ir 
+                     rhoc( idx ) = rhoc(idx) * facmask(ir) * x_occ 
+                  enddo
+                enddo
+                !
+                ! Add ultrasoft contribution (RECIPROCAL SPACE)
+                ! compute alpha_I,j,k+q = \sum_J \int <beta_J|phi_j,k+q> V_i,j,k,q Q_I,J(r) d3r
+                IF(okvan .and. .not. tqr) THEN
+                   !$acc update host(rhoc)
+                   do ib = 1, nb
+                     idx = (ib-1)*nrxxs + 1
+                     CALL newdxx_g(dfftt, rhoc(idx), xkq, xkp, 'c', deexx(:,ib), &
+                                 becphi_c=becxx(ikq)%k(:,ibnd))
+                   end do 
+                ENDIF
+                !
+                !brings back v in real space
+                !$acc host_data use_device(rhoc)
+                CALL invfft('Rho', rhoc, dfftt, howmany=nb)
+                !$acc end host_data
+                !
+                ! Add ultrasoft contribution (REAL SPACE)
+                IF(okvan .and. tqr) THEN
+                  !$acc update host(rhoc)
+                  do ib = 1, nb
+                    idx = (ib-1)*nrxxs + 1
+                    CALL newdxx_r(dfftt,rhoc(idx:idx+nrxxs-1), becxx(ikq)%k(:,ibnd), deexx(:,ib))
+                  end do 
+                END IF
+                !
+                ! Add PAW one-center contribution
+                IF(okpaw) THEN
+                   do ib = 1, nb
+                     CALL PAW_newdxx(x_occ , becxx(ikq)%k(:,ibnd), becpsi%k(:,im_start+ib), deexx(:,ib))
+                   end do 
+                ENDIF
+                !
+                !accumulates over bands and k points
+                !
+                !$acc parallel loop collapse(2) private(idx)
+                do ib = 1, nb
+                  do ir = 1, nrxxs
+                    idx = (ib-1)*nrxxs + ir 
+                    result( idx ) = result( idx ) + rhoc( idx )*exxbuff(ir,ibnd,ikq)
+                    IF (noncolin) THEN
+                      jdx = batchsize * nrxxs + (ib-1)*nrxxs + ir 
+                      result( jdx ) = result( jdx ) + rhoc( idx )*exxbuff(ir+nrxxs,ibnd,ikq)
+                    END IF
+                  enddo
+                end do 
+                !
+             ENDDO &
+             IBND_LOOP_K
+             IF ( okvan .and..not.tqr ) CALL qvan_clean ()
+             !
+          ENDDO &
+          INTERNAL_LOOP_ON_Q
+          !
+          IF(okvan) THEN
+            CALL mp_sum(deexx,intra_bgrp_comm)
+            CALL mp_sum(deexx,inter_bgrp_comm)
+          ENDIF
+          Call stop_clock('vexx_k_main')
+          !
+          CALL start_clock( 'vexx_k_fin' )
+          !
+          !$acc host_data use_device(result)
+          CALL fwfft('Wave', result, dfftt, howmany=nb)
+          if(noncolin) CALL fwfft('Wave', result(batchsize*nrxxs+1:), dfftt, howmany=nb)
+          !$acc end host_data
+          !
+          !$acc host_data use_device(result)
+          CALL mp_sum( result, inter_bgrp_comm)
+          !$acc end host_data
+          !
+          !$acc parallel loop collapse(3) private(idx)
+          do ipol = 1, npol
+            do ib = 1, nb
+              do ig = 1, n
+                 idx = (ipol-1) * batchsize * nrxxs + (ib-1) * nrxxs + nl_k(ig) 
+                 hpsi((ipol-1)*lda + ig,im_start+ib) = hpsi((ipol-1)*lda + ig,im_start+ib) - exxalfa*result( idx )
+              enddo
+            end do 
+          end do
+          !
+          ! add non-local \sum_I |beta_I> \alpha_Ii (the sum on i is outside)
+          IF(okvan) THEN
+            !$acc update host(hpsi(:,im_start+1:im_start+nb))
+            do ib = 1, nb
+              CALL add_nlxx_pot(lda, hpsi(:,im_start+ib), xkp, n, igk_k(:,current_k),&
+                                            deexx(:,ib), eps_occ, exxalfa)
+            end do 
+            !$acc update device(hpsi(:,im_start+1:im_start+nb))
+          END IF
+          !
+          CALL stop_clock( 'vexx_k_fin' )
+          !
+    END DO &
+    EXTERNAL_LOOP_ON_BATCHES
+    !
+    !$acc end data
+    !
+    ! restore original FFT batching parameters
+    if( batchsize0 > 0 ) then
+      dfftt%batchsize = batchsize0
+      dfftt%subbatchsize = subbatchsize0 
+    endif
+    !
+    DEALLOCATE(temppsic, result )
+    !
+    DEALLOCATE(rhoc, fac, facmask )
+    !
+    IF(okvan) DEALLOCATE( deexx)
+    !
+    !-----------------------------------------------------------------------
+  END SUBROUTINE vexx_std_k_outer
+  !-----------------------------------------------------------------------
+  !
+#else
+  !
+  !-----------------------------------------------------------------------
+  SUBROUTINE vexx_std_gamma_one(lda, n, m, psi, hpsi, becpsi)
+  !-----------------------------------------------------------------------
+    !
+    ! ... Gamma-specific version of vexx
+    !     (this is ported to GPU, but called only in CPU execution)
+    !
+    USE cell_base,      ONLY : omega
+    USE wvfct,          ONLY : current_k
+    USE klist,          ONLY : xk, nkstot, igk_k
+    USE fft_interfaces, ONLY : fwfft, invfft
+    USE becmod,         ONLY : bec_type
+    USE mp_bands,       ONLY : inter_bgrp_comm, intra_bgrp_comm, my_bgrp_id, nbgrp
+    USE mp,             ONLY : mp_sum, mp_bcast
+    USE uspp,           ONLY : nkb, okvan
+    USE paw_variables,  ONLY : okpaw
+    USE us_exx,         ONLY : becxx, addusxx_g, addusxx_r, &
                                newdxx_g, newdxx_r, add_nlxx_pot, &
                                qvan_init, qvan_clean
     USE paw_exx,        ONLY : PAW_newdxx
@@ -369,7 +1139,7 @@ MODULE exx_std
     !
     COMPLEX(DP),ALLOCATABLE :: rhoc(:), vc(:), deexx(:)
     REAL(DP),   ALLOCATABLE :: fac(:)
-    INTEGER          :: ibnd, ik, im , ikq, iq, ipol
+    INTEGER          :: ibnd, ik, im , ikq, iq
     INTEGER          :: ir, ig
     INTEGER          :: current_ik
     INTEGER          :: ibnd_loop_start
@@ -404,8 +1174,11 @@ MODULE exx_std
        CALL mp_bcast(hpsi,0,inter_bgrp_comm)
        CALL mp_bcast(psi,0,inter_bgrp_comm)
     ENDIF
+    !$acc update device(psi)
     !
     ! Here the loops start
+    !
+    !$acc data create(rhoc, vc, fac, temppsic_dble, temppsic_aimag, result) copy(hpsi) present(exxbuff) 
     !
     INTERNAL_LOOP_ON_Q : &
     DO iq=1,nqs
@@ -416,13 +1189,18 @@ MODULE exx_std
        !
        ! calculate the 1/|r-r'| (actually, k+q+g) factor and place it in fac
        CALL g2_convolution(ngmt, gt, xkp, xkq, fac)
+       !$acc update device(fac)
+       !
        IF ( okvan .and..not.tqr ) CALL qvan_init (ngmt, xkq, xkp)
        !
        LOOP_ON_PSI_BANDS : &
        DO im = 1,m !for each band of psi (the k cycle is outside band)
+          !
           IF(okvan) deexx(:) = 0.0_DP
           !
+          !$acc kernels
           RESULT = 0.0_DP
+          !$acc end kernels
           !
           l_fft_doubleband = .false.
           l_fft_singleband = .false.
@@ -431,34 +1209,56 @@ MODULE exx_std
           IF ( mod(im,2)==1 .and. im==m )     l_fft_singleband = .true.
           !
           IF( l_fft_doubleband ) THEN
-!$omp parallel do  default(shared), private(ig)
+#if defined(__CUDA)
+             !$acc parallel loop 
+#else
+             !$omp parallel do  default(shared), private(ig)
+#endif
              DO ig = 1, npwt
                 RESULT( dfftt%nl(ig) )  =       psi(ig, im) + (0._DP,1._DP) * psi(ig, im+1)
                 RESULT( dfftt%nlm(ig) ) = conjg(psi(ig, im) - (0._DP,1._DP) * psi(ig, im+1))
              ENDDO
-!$omp end parallel do
+#if !defined(__CUDA)
+             !$omp end parallel do
+#endif
           ENDIF
           !
           IF( l_fft_singleband ) THEN
-!$omp parallel do  default(shared), private(ig)
+#if defined(__CUDA)
+             !$acc parallel loop
+#else
+             !$omp parallel do  default(shared), private(ig)
+#endif
              DO ig = 1, npwt
                 RESULT( dfftt%nl(ig) )  =       psi(ig,im)
                 RESULT( dfftt%nlm(ig) ) = conjg(psi(ig,im))
              ENDDO
-!$omp end parallel do
+#if !defined(__CUDA)
+             !$omp end parallel do
+#endif
           ENDIF
           !
           IF( l_fft_doubleband.or.l_fft_singleband) THEN
+             !$acc host_data use_device(RESULT)
              CALL invfft ('Wave', RESULT, dfftt)
-!$omp parallel do default(shared), private(ir)
+             !$acc end host_data
+#if defined(__CUDA) 
+             !$acc parallel loop
+#else
+             !$omp parallel do default(shared), private(ir)
+#endif
              DO ir = 1, nrxxs
                 temppsic_dble(ir)  = dble ( RESULT(ir) )
                 temppsic_aimag(ir) = aimag( RESULT(ir) )
              ENDDO
-!$omp end parallel do
+#if !defined(__CUDA) 
+             !$omp end parallel do
+#endif
           ENDIF
           !
+          !$acc kernels
           RESULT = 0.0_DP
+          !$acc end kernels
           !
           h_ibnd = ibnd_start/2
           IF(mod(ibnd_start,2)==0) THEN
@@ -489,32 +1289,53 @@ MODULE exx_std
              ! another one in the imaginary part; the same applies to rhoc
              !
              IF( mod(im,2) == 0 ) THEN
-!$omp parallel do default(shared), private(ir)
+#if defined(__CUDA)
+                !$acc kernels present(exxbuff, rhoc, temppsic_aimag)
+#else
+                !$omp parallel do default(shared), private(ir)
+#endif
                 DO ir = 1, nrxxs
                    rhoc(ir) = exxbuff(ir,h_ibnd,current_k) * temppsic_aimag(ir) / omega
                 ENDDO
-!$omp end parallel do
+#if defined(__CUDA)
+                !$acc end kernels
+#else
+                !$omp end parallel do
+#endif
              ELSE
-!$omp parallel do default(shared), private(ir)
+#if defined(__CUDA)
+                !$acc kernels
+#else
+                !$omp parallel do default(shared), private(ir)
+#endif
                 DO ir = 1, nrxxs
                    rhoc(ir) = exxbuff(ir,h_ibnd,current_k) * temppsic_dble(ir) / omega
                 ENDDO
-!$omp end parallel do
+#if defined(__CUDA)
+                !$acc end kernels
+#else
+                !$omp end parallel do
+#endif
              ENDIF
              !
              ! bring rho to G-space
              !
              !   >>>> add augmentation in REAL SPACE here
              IF(okvan .and. tqr) THEN
+                !$acc update host(rhoc)
                 IF(ibnd>=ibnd_start) &
                 CALL addusxx_r(rhoc,_CX(becxx(ikq)%r(:,ibnd)), _CX(becpsi%r(:,im)))
                 IF(ibnd<ibnd_end) &
                 CALL addusxx_r(rhoc,_CY(becxx(ikq)%r(:,ibnd+1)),_CX(becpsi%r(:,im)))
+                !$acc update device(rhoc)
              ENDIF
              !
+             !$acc host_data use_device(rhoc)
              CALL fwfft ('Rho', rhoc, dfftt)
+             !$acc end host_data
              !   >>>> add augmentation in G SPACE here
              IF(okvan .and. .not. tqr) THEN
+                !$acc update host(rhoc)
                 ! contribution from one band added to real (in real space) part of rhoc
                 IF(ibnd>=ibnd_start) &
                    CALL addusxx_g(dfftt, rhoc, xkq,  xkp, 'r', &
@@ -523,22 +1344,34 @@ MODULE exx_std
                 IF(ibnd<ibnd_end) &
                    CALL addusxx_g(dfftt, rhoc, xkq,  xkp, 'i', &
                    becphi_r=becxx(ikq)%r(:,ibnd+1), becpsi_r=becpsi%r(:,im) )
+                !$acc update device(rhoc)
              ENDIF
              !   >>>> charge density done
              !
+             !$acc kernels
              vc = 0._DP
+             !$acc end kernels
              !
-!$omp parallel do default(shared), private(ig)
+#if defined(__CUDA) 
+             !$acc kernels present(vc, fac, rhoc)
+#else 
+             !$omp parallel do default(shared), private(ig)
+#endif
              DO ig = 1, ngmt
                 !
                 vc(dfftt%nl(ig))  = fac(ig) * rhoc(dfftt%nl(ig))
                 vc(dfftt%nlm(ig)) = fac(ig) * rhoc(dfftt%nlm(ig))
                 !
              ENDDO
-!$omp end parallel do
+#if defined(__CUDA)
+             !$acc end kernels
+#else
+             !$omp end parallel do
+#endif
              !
              !   >>>>  compute <psi|H_fock G SPACE here
              IF(okvan .and. .not. tqr) THEN
+                !$acc update host(vc)
                 IF(ibnd>=ibnd_start) &
                 CALL newdxx_g(dfftt, vc, xkq, xkp, 'r', deexx, &
                               becphi_r=x1*becxx(ikq)%r(:,ibnd))
@@ -548,10 +1381,13 @@ MODULE exx_std
              ENDIF
              !
              !brings back v in real space
+             !$acc host_data use_device(vc)
              CALL invfft ('Rho', vc, dfftt)
+             !$acc end host_data
              !
              !   >>>>  compute <psi|H_fock REAL SPACE here
              IF(okvan .and. tqr) THEN
+                !$acc update host(vc)
                 IF(ibnd>=ibnd_start) &
                 CALL newdxx_r(dfftt, vc, _CX(x1*becxx(ikq)%r(:,ibnd)), deexx)
                 IF(ibnd<ibnd_end) &
@@ -569,12 +1405,20 @@ MODULE exx_std
              !
              ! accumulates over bands and k points
              !
-!$omp parallel do default(shared), private(ir)
+#if defined(__CUDA) 
+             !$acc kernels present(RESULT, vc, exxbuff)
+#else
+             !$omp parallel do default(shared), private(ir)
+#endif
              DO ir = 1, nrxxs
                 RESULT(ir) = RESULT(ir)+x1* dble(vc(ir))* dble(exxbuff(ir,h_ibnd,current_k))&
                                        +x2*aimag(vc(ir))*aimag(exxbuff(ir,h_ibnd,current_k))
              ENDDO
-!$omp end parallel do
+#if defined(__CUDA) 
+             !$acc end kernels 
+#else
+             !$omp end parallel do
+#endif
              !
           ENDDO &
           IBND_LOOP_GAM
@@ -584,26 +1428,44 @@ MODULE exx_std
              CALL mp_sum(deexx,inter_bgrp_comm)
           ENDIF
           !
+          !$acc host_data use_device(result)
           CALL mp_sum( RESULT(1:nrxxs), inter_bgrp_comm)
+          !$acc end host_data
           !
           ! brings back result in G-space
           !
+          !$acc host_data use_device(RESULT)
           CALL fwfft( 'Wave' , RESULT, dfftt )
+          !$acc end host_data
           !
-!$omp parallel do default(shared), private(ig)
+#if defined(__CUDA) 
+          !$acc kernels present(hpsi, RESULT, dfftt%nl)
+#else  
+          !$omp parallel do default(shared), private(ig)
+#endif
           DO ig = 1, n
              hpsi(ig,im)=hpsi(ig,im) - exxalfa*RESULT(dfftt%nl(ig))
           ENDDO
-!$omp end parallel do
+#if defined(__CUDA)
+          !$acc end kernels
+#else
+          !$omp end parallel do
+#endif
           ! add non-local \sum_I |beta_I> \alpha_Ii (the sum on i is outside)
-          IF(okvan) CALL add_nlxx_pot (lda, hpsi(:,im), xkp, n, &
+          IF(okvan) THEN
+            !$acc update host(hpsi(:,im))
+            CALL add_nlxx_pot (lda, hpsi(:,im), xkp, n, &
                            igk_k(1,current_k), deexx, eps_occ, exxalfa)
+            !$acc update device(hpsi(:,im))
+          END IF
        ENDDO &
        LOOP_ON_PSI_BANDS
        IF ( okvan .and..not.tqr ) CALL qvan_clean ()
        !
     ENDDO &
     INTERNAL_LOOP_ON_Q
+    !
+    !$acc end data
     !
     DEALLOCATE( RESULT, temppsic_dble, temppsic_aimag)
     !
@@ -612,27 +1474,26 @@ MODULE exx_std
     IF(okvan) DEALLOCATE( deexx )
     !
     !-----------------------------------------------------------------------
-  END SUBROUTINE vexx_std_gamma
+  END SUBROUTINE vexx_std_gamma_one
   !-----------------------------------------------------------------------
   !
   !-----------------------------------------------------------------------
-  SUBROUTINE vexx_std_k(lda, n, m, psi, hpsi, becpsi)
+  SUBROUTINE vexx_std_k_one(lda, n, m, psi, hpsi, becpsi)
   !-----------------------------------------------------------------------
     !
     ! ... generic, k-point version of vexx
+    !     (this is ported to GPU, but called only in CPU execution)
     !
-    USE constants,      ONLY : fpi, e2, pi
     USE cell_base,      ONLY : omega
-    USE gvect,          ONLY : ngm, g
     USE wvfct,          ONLY : npwx, current_k
-    USE klist,          ONLY : xk, nks, nkstot, igk_k
+    USE klist,          ONLY : xk, nkstot, igk_k
     USE fft_interfaces, ONLY : fwfft, invfft
     USE becmod,         ONLY : bec_type
     USE mp_bands,       ONLY : inter_bgrp_comm, intra_bgrp_comm, my_bgrp_id, nbgrp
-    USE mp,             ONLY : mp_sum, mp_barrier, mp_bcast
+    USE mp,             ONLY : mp_sum, mp_bcast
     USE uspp,           ONLY : nkb, okvan
     USE paw_variables,  ONLY : okpaw
-    USE us_exx,         ONLY : bexg_merge, becxx, addusxx_g, addusxx_r, &
+    USE us_exx,         ONLY : becxx, addusxx_g, addusxx_r, &
                                newdxx_g, newdxx_r, add_nlxx_pot, &
                                qvan_init, qvan_clean
     USE paw_exx,        ONLY : PAW_newdxx
@@ -656,13 +1517,13 @@ MODULE exx_std
     INTEGER          :: ibnd, ik, im , ikq, iq, ipol
     INTEGER          :: ir, ig
     INTEGER          :: current_ik
-    INTEGER          :: ibnd_loop_start
-    INTEGER          :: h_ibnd, nrxxs
-    REAL(DP) :: x1, x2, xkp(3)
+    INTEGER          :: nrxxs
+    REAL(DP) :: xkp(3)
     REAL(DP) :: xkq(3)
     ! <LMS> temp array for vcut_spheric
     INTEGER, EXTERNAL :: global_kpoint_index
     INTEGER :: ngmt
+    REAL(DP) :: x_occ
     !
     ngmt = dfftt%ngm 
     ALLOCATE( fac(ngmt) )
@@ -692,48 +1553,72 @@ MODULE exx_std
        CALL mp_bcast(hpsi,0,inter_bgrp_comm)
        CALL mp_bcast(psi,0,inter_bgrp_comm)
     ENDIF
+    !$acc update device(psi)
+    !
+    !$acc data create(rhoc, vc, fac, temppsic, result, result_g, temppsic_nc, result_nc, result_nc_g) copy(hpsi) present(exxbuff) 
     !
     LOOP_ON_PSI_BANDS : &
     DO im = 1,m !for each band of psi (the k cycle is outside band)
        IF(okvan) deexx = 0._DP
        !
        IF (noncolin) THEN
+          !$acc kernels
           temppsic_nc = 0._DP
+          !$acc end kernels
        ELSE
+          !$acc kernels
           temppsic    = 0._DP
+          !$acc end kernels
        ENDIF
        !
        IF (noncolin) THEN
           !
-!$omp parallel do  default(shared), private(ig)
+#if defined(__CUDA)
+          !$acc parallel loop
+#else
+          !$omp parallel do  default(shared), private(ig)
+#endif
           DO ig = 1, n
              temppsic_nc(dfftt%nl(igk_k(ig,current_k)),1) = psi(ig,im)
-          ENDDO
-!$omp end parallel do
-!$omp parallel do  default(shared), private(ig)
-          DO ig = 1, n
              temppsic_nc(dfftt%nl(igk_k(ig,current_k)),2) = psi(npwx+ig,im)
           ENDDO
-!$omp end parallel do
+#if !defined(__CUDA)
+          !$omp end parallel do
+#endif
           !
+          !$acc host_data use_device(temppsic_nc)
           CALL invfft ('Wave', temppsic_nc(:,1), dfftt)
           CALL invfft ('Wave', temppsic_nc(:,2), dfftt)
+          !$acc end host_data
           !
        ELSE
           !
-!$omp parallel do  default(shared), private(ig)
+#if defined(__CUDA)
+          !$acc parallel loop
+#else
+          !$omp parallel do  default(shared), private(ig)
+#endif
           DO ig = 1, n
              temppsic( dfftt%nl(igk_k(ig,current_k)) ) = psi(ig,im)
           ENDDO
-!$omp end parallel do
+#if !defined(__CUDA)
+          !$omp end parallel do
+#endif
+          !
+          !$acc host_data use_device(temppsic)
           CALL invfft ('Wave', temppsic, dfftt)
+          !$acc end host_data
           !
        ENDIF
        !
        IF (noncolin) THEN
+          !$acc kernels
           result_nc = 0.0_DP
+          !$acc end kernels
        ELSE
+          !$acc kernels
           RESULT    = 0.0_DP
+          !$acc end kernels
        ENDIF
        !
        INTERNAL_LOOP_ON_Q : &
@@ -745,6 +1630,7 @@ MODULE exx_std
           !
           ! calculate the 1/|r-r'| (actually, k+q+g) factor and place it in fac
           CALL g2_convolution(ngmt, gt, xkp, xkq, fac)
+          !$acc update device(fac)
           IF ( okvan .and..not.tqr ) CALL qvan_init (ngmt, xkq, xkp)
           !
           IBND_LOOP_K : &
@@ -752,84 +1638,133 @@ MODULE exx_std
              !
              IF ( abs(x_occupation(ibnd,ik)) < eps_occ) CYCLE IBND_LOOP_K
              !
+             x_occ = x_occupation(ibnd,ik) / nqs
+             !
              !loads the phi from file
              !
              !   >>>> calculate rho in real space
              IF (noncolin) THEN
-!$omp parallel do default(shared), private(ir)
+#if defined(__CUDA)
+                !$acc kernels 
+#else
+                !$omp parallel do default(shared), private(ir)
+#endif
                 DO ir = 1, nrxxs
                    rhoc(ir) = ( conjg(exxbuff(ir,ibnd,ikq))*temppsic_nc(ir,1) + &
                                 conjg(exxbuff(nrxxs+ir,ibnd,ikq))*temppsic_nc(ir,2) )/omega
                 ENDDO
-!$omp end parallel do
+#if defined(__CUDA)
+                !$acc end kernels
+#else
+                !$omp end parallel do
+#endif
              ELSE
-!$omp parallel do default(shared), private(ir)
+#if defined(__CUDA)
+                !$acc kernels 
+#else
+                !$omp parallel do default(shared), private(ir)
+#endif
                 DO ir = 1, nrxxs
                    rhoc(ir)=conjg(exxbuff(ir,ibnd,ikq))*temppsic(ir) / omega
                 ENDDO
-!$omp end parallel do
+#if defined(__CUDA)
+                !$acc end kernels
+#else
+                !$omp end parallel do
+#endif
              ENDIF
              !   >>>> add augmentation in REAL space HERE
              IF(okvan .and. tqr) THEN ! augment the "charge" in real space
+                !$acc update host(rhoc)
                 CALL addusxx_r( rhoc, becxx(ikq)%k(:,ibnd), becpsi%k(:,im))
+                !$acc update device(rhoc)
              ENDIF
              !
              !   >>>> brings it to G-space
+             !$acc host_data use_device(rhoc)
              CALL fwfft('Rho', rhoc, dfftt)
+             !$acc end host_data
              !
              !   >>>> add augmentation in G space HERE
              IF(okvan .and. .not. tqr) THEN
+                !$acc update host(rhoc)
                 CALL addusxx_g(dfftt, rhoc, xkq, xkp, 'c', &
                    becphi_c=becxx(ikq)%k(:,ibnd),becpsi_c=becpsi%k(:,im))
+                !$acc update device(rhoc)
              ENDIF
              !   >>>> charge done
              !
+             !$acc kernels
              vc = 0._DP
+             !$acc end kernels
              !
-!$omp parallel do default(shared), private(ig)
+#if defined(__CUDA)
+             !$acc parallel loop present(dfftt, dfftt%nl)
+#else
+             !$omp parallel do default(shared), private(ig)
+#endif
              DO ig = 1, ngmt
-                vc(dfftt%nl(ig)) = fac(ig) * rhoc(dfftt%nl(ig)) * &
-                                             x_occupation(ibnd,ik) / nqs
+                vc(dfftt%nl(ig)) = fac(ig) * rhoc(dfftt%nl(ig)) * x_occ 
              ENDDO
-!$omp end parallel do
+#if !defined(__CUDA)
+             !$omp end parallel do
+#endif
              !
              ! Add ultrasoft contribution (RECIPROCAL SPACE)
              ! compute alpha_I,j,k+q = \sum_J \int <beta_J|phi_j,k+q> V_i,j,k,q Q_I,J(r) d3r
              IF(okvan .and. .not. tqr) THEN
+                !$acc update host(vc)
                 CALL newdxx_g(dfftt, vc, xkq, xkp, 'c', deexx, &
                               becphi_c=becxx(ikq)%k(:,ibnd))
              ENDIF
              !
              !brings back v in real space
+             !$acc host_data use_device(vc)
              CALL invfft ('Rho', vc, dfftt)
+             !$acc end host_data
              !
              ! Add ultrasoft contribution (REAL SPACE)
-             IF(okvan .and. tqr) CALL newdxx_r(dfftt,vc, becxx(ikq)%k(:,ibnd), deexx)
+             IF(okvan .and. tqr) THEN
+               !$acc update host(vc)
+               CALL newdxx_r(dfftt,vc, becxx(ikq)%k(:,ibnd), deexx)
+             END IF
              !
              ! Add PAW one-center contribution
              IF(okpaw) THEN
-                CALL PAW_newdxx(x_occupation(ibnd,ik)/nqs, becxx(ikq)%k(:,ibnd), becpsi%k(:,im), deexx)
+                CALL PAW_newdxx(x_occ , becxx(ikq)%k(:,ibnd), becpsi%k(:,im), deexx)
              ENDIF
              !
              !accumulates over bands and k points
              !
              IF (noncolin) THEN
-!$omp parallel do default(shared), private(ir)
+#if defined(__CUDA)
+                !$acc kernels
+#else
+                !$omp parallel do default(shared), private(ir)
+#endif
                 DO ir = 1, nrxxs
                    result_nc(ir,1)= result_nc(ir,1) + vc(ir) * exxbuff(ir,ibnd,ikq)
-                ENDDO
-!$omp end parallel do
-!$omp parallel do default(shared), private(ir)
-                DO ir = 1, nrxxs
                    result_nc(ir,2)= result_nc(ir,2) + vc(ir) * exxbuff(ir+nrxxs,ibnd,ikq)
                 ENDDO
-!$omp end parallel do
+#if defined(__CUDA)
+                !$acc end kernels
+#else
+                !$omp end parallel do
+#endif
              ELSE
-!$omp parallel do default(shared), private(ir)
+#if defined(__CUDA)
+                !$acc kernels
+#else
+                !$omp parallel do default(shared), private(ir)
+#endif
                 DO ir = 1, nrxxs
                    RESULT(ir) = RESULT(ir) + vc(ir)*exxbuff(ir,ibnd,ikq)
                 ENDDO
-!$omp end parallel do
+#if defined(__CUDA)
+                !$acc end kernels
+#else
+                !$omp end parallel do
+#endif
              ENDIF
              !
           ENDDO &
@@ -848,51 +1783,77 @@ MODULE exx_std
        !
        IF (noncolin) THEN
           !
+          !$acc host_data use_device(result_nc)
           CALL fwfft ('Wave', result_nc(:,1), dfftt)
           CALL fwfft ('Wave', result_nc(:,2), dfftt)
+          !$acc end host_data
           !
           !communicate result
-          DO ig = 1, n
-             result_nc_g(ig,1:npol) = result_nc(dfftt%nl(igk_k(ig,current_k)),1:npol)
+          !$acc parallel loop collapse(2)
+          DO ipol = 1, npol
+            DO ig = 1, n
+               result_nc_g(ig,ipol) = result_nc(dfftt%nl(igk_k(ig,current_k)),ipol)
+            ENDDO
           ENDDO
+          !$acc host_data use_device(result_nc_g)
           CALL mp_sum( result_nc_g(1:n,1:npol), inter_bgrp_comm)
+          !$acc end host_data
           !
           !adds it to hpsi
-!$omp parallel do default(shared), private(ig)
+#if defined(__CUDA)
+          !$acc parallel loop
+#else
+          !$omp parallel do default(shared), private(ig)
+#endif
           DO ig = 1, n
              hpsi(ig,im)    = hpsi(ig,im)     - exxalfa*result_nc_g(ig,1)
-          ENDDO
-!$omp end parallel do
-!$omp parallel do default(shared), private(ig)
-          DO ig = 1, n
              hpsi(lda+ig,im)= hpsi(lda+ig,im) - exxalfa*result_nc_g(ig,2)
           ENDDO
-!$omp end parallel do
+#if !defined(__CUDA)
+          !$omp end parallel do
+#endif
           !
        ELSE
           !
+          !$acc host_data use_device(result)
           CALL fwfft ('Wave', RESULT, dfftt)
+          !$acc end host_data
           !
           !communicate result
+          !$acc parallel loop
           DO ig = 1, n
              result_g(ig) = RESULT(dfftt%nl(igk_k(ig,current_k)))
           ENDDO
+          !$acc host_data use_device(result_g)
           CALL mp_sum( result_g(1:n), inter_bgrp_comm)
+          !$acc end host_data
           !
           !adds it to hpsi
-!$omp parallel do default(shared), private(ig)
+#if defined(__CUDA) 
+          !$acc parallel loop 
+#else
+          !$omp parallel do default(shared), private(ig)
+#endif
           DO ig = 1, n
              hpsi(ig,im)=hpsi(ig,im) - exxalfa*result_g(ig)
           ENDDO
-!$omp end parallel do
+#if !defined(__CUDA) 
+          !$omp end parallel do
+#endif
        ENDIF
        !
        ! add non-local \sum_I |beta_I> \alpha_Ii (the sum on i is outside)
-       IF(okvan) CALL add_nlxx_pot(lda, hpsi(:,im), xkp, n, igk_k(:,current_k),&
+       IF(okvan) THEN
+         !$acc update host(hpsi(:,im))
+         CALL add_nlxx_pot(lda, hpsi(:,im), xkp, n, igk_k(:,current_k),&
                                        deexx, eps_occ, exxalfa)
+         !$acc update device(hpsi(:,im))
+       END IF
        !
     ENDDO &
     LOOP_ON_PSI_BANDS
+    !
+    !$acc end data
     !
     IF (noncolin) THEN
        DEALLOCATE(temppsic_nc, result_nc, result_nc_g )
@@ -905,8 +1866,10 @@ MODULE exx_std
     IF(okvan) DEALLOCATE( deexx)
     !
     !-----------------------------------------------------------------------
-  END SUBROUTINE vexx_std_k
+  END SUBROUTINE vexx_std_k_one
   !-----------------------------------------------------------------------
+  !
+#endif
   !
   !-----------------------------------------------------------------------
   FUNCTION exx_stress_std()
@@ -914,20 +1877,19 @@ MODULE exx_std
     !
     ! This is Eq.(10) of PRB 73, 125120 (2006).
     !
-    USE constants,            ONLY : fpi, e2, pi, tpi
+    USE constants,            ONLY : fpi, e2, pi
     USE io_files,             ONLY : iunwfc, nwordwfc
     USE buffers,              ONLY : get_buffer
-    USE cell_base,            ONLY : alat, omega, bg, at, tpiba
-    USE symm_base,            ONLY : nsym, s
-    USE wvfct,                ONLY : nbnd, npwx, wg, current_k
+    USE cell_base,            ONLY : omega, bg, at, tpiba
+    USE symm_base,            ONLY : s
+    USE wvfct,                ONLY : nbnd, wg, current_k
     USE wavefunctions,        ONLY : evc
-    USE klist,                ONLY : xk, ngk, nks, igk_k
+    USE klist,                ONLY : xk, ngk, igk_k
     USE lsda_mod,             ONLY : lsda, current_spin, isk
     USE gvect,                ONLY : g
     USE mp_pools,             ONLY : npool, inter_pool_comm
     USE mp_bands,             ONLY : inter_bgrp_comm, intra_bgrp_comm
     USE mp,                   ONLY : mp_sum
-    USE fft_base,             ONLY : dffts
     USE fft_interfaces,       ONLY : fwfft, invfft
     USE uspp,                 ONLY : okvan
     USE exx_base,             ONLY : exxdiv, erfc_scrlen, gau_scrlen, grid_factor, eps, &
@@ -945,9 +1907,7 @@ MODULE exx_std
     ! local variables
     REAL(DP)   :: exx_stress_std(3,3), exx_stress_(3,3)
     !
-    COMPLEX(DP),ALLOCATABLE :: tempphic(:), temppsic(:), RESULT(:)
-    COMPLEX(DP),ALLOCATABLE :: tempphic_nc(:,:), temppsic_nc(:,:), &
-                               result_nc(:,:)
+    COMPLEX(DP),ALLOCATABLE :: tempphic(:), temppsic(:)
     COMPLEX(DP),ALLOCATABLE :: rhoc(:)
     REAL(DP),    ALLOCATABLE :: fac(:), fac_tens(:,:,:), fac_stress(:), fac_stress_div(:)
     INTEGER  :: npw, jbnd, ibnd, ik, ikk, ig, ir, ikq, iq, isym

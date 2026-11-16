@@ -10,14 +10,21 @@ SUBROUTINE clean_pw( lflag )
   !----------------------------------------------------------------------
   !! This routine deallocates dynamically allocated arrays.
   !
-  !! * If lflag=.TRUE.  all arrays are deallocated (end of calculation);
-  !! * if lflag=.FALSE. ion-related variables and arrays allocated.
+  !! * If lflag=.TRUE.  all arrays are deallocated; should be called at
+  !!   the end of a calculation, or before a completely new calculation
+  !! 
+  !! * if lflag=.FALSE. all arrays are deallocated, except those allocated
+  !!   in initialization routines: iosys, read_file, setup, read_pseudo.
+  !!   This is useful when a new calculation has to be performed on the
+  !!   same system (e.g. in neb, phonon, vc-relax). Beware: in that case, 
+  !!   the above-mentioned routines should NOT be called again.
   !
-  !! At the very beginning of the calculation (routines iosys, read_file,
-  !! setup, read_pseudo) are not deallocated; all others arrays are.
-  !! This is used when a new calculation has to be performed (e.g. in neb,
-  !! phonon, vc-relax). Beware: the new calculation should not CALL any
-  !! of the routines mentioned above.
+  !!   FIXME: should be made more granular and able to deallocate
+  !!   specific subset of arrays, e.g.: deallocate only arrays that
+  !!   - depend upon the number of k-points 
+  !!   - depend upon the cutoff
+  !!   - depend upon the FFT grid
+  !!   - ....
   !
   USE cellmd,               ONLY : lmovecell
   USE ions_base,            ONLY : deallocate_ions_base
@@ -36,6 +43,11 @@ SUBROUTINE clean_pw( lflag )
   USE uspp,                 ONLY : deallocate_uspp
   USE uspp_param,           ONLY : upf
   USE atwfc_mod,            ONLY : deallocate_tab_atwfc
+  USE beta_mod,             ONLY : deallocate_tab_beta
+  USE qrad_mod,             ONLY : deallocate_tab_qrad
+  USE vloc_mod,             ONLY : deallocate_tab_vloc
+  USE rhoat_mod,            ONLY : deallocate_tab_rhoat
+  USE rhoc_mod,             ONLY : deallocate_tab_rhc, deallocate_tab_tac
   USE m_gth,                ONLY : deallocate_gth
   USE ldaU,                 ONLY : deallocate_hubbard, order_um
   USE extfield,             ONLY : forcefield, forcegate
@@ -96,8 +108,8 @@ SUBROUTINE clean_pw( lflag )
 
   IF ( lflag ) THEN
      !
-     ! ... arrays allocated at the very beginning of the calculation
-     !
+     !! pseudopotentials, interpolation tables built from the pseudopotential
+     ! 
      IF( ALLOCATED( upf ) ) THEN
         DO nt = 1, SIZE( upf )
            CALL deallocate_pseudo_upf( upf( nt ) )
@@ -105,10 +117,20 @@ SUBROUTINE clean_pw( lflag )
         DEALLOCATE( upf )
      ENDIF
      !
-     IF (ALLOCATED(msh)) DEALLOCATE( msh )
+     CALL deallocate_tab_beta()
+     CALL deallocate_tab_qrad()
+     CALL deallocate_tab_vloc()
+     CALL deallocate_tab_rhoat()
+     CALL deallocate_tab_rhc()
+     CALL deallocate_tab_tac()
      !
+     !! atomic quantities
+     ! 
+     IF (ALLOCATED(msh)) DEALLOCATE( msh )
      CALL deallocate_radial_grid( rgrid )
      !
+     !! atomic positions, forces
+     ! 
      CALL deallocate_ions_base()
      !
      IF ( ALLOCATED( force )      ) DEALLOCATE( force      )
@@ -116,12 +138,15 @@ SUBROUTINE clean_pw( lflag )
      IF ( ALLOCATED( forcegate )  ) DEALLOCATE( forcegate  )
      IF ( ALLOCATED( irt )        ) DEALLOCATE( irt        )
      !
+     !! other arrays allocated at the very beginning of the calculation
+     !
      CALL dealloca_london()
      CALL cleanup_xdm()
      CALL ae_deallocate()
      CALL dftd3_clean()
      CALL deallocate_constraint()
      CALL deallocate_tetra()
+     IF ( ALLOCATED( f_inp ) )  DEALLOCATE( f_inp )
      !
   ENDIF
   !
@@ -129,15 +154,13 @@ SUBROUTINE clean_pw( lflag )
   !
   CALL deallocate_hubbard( lflag )
   !
-  IF ( ALLOCATED( f_inp ) .AND. lflag )  DEALLOCATE( f_inp )
-  !
-  ! ... arrays in gvect module
+  !! arrays in gvect module
   !
   CALL deallocate_gvect( lmovecell )
   !
   CALL sym_rho_deallocate()
   !
-  ! ... arrays allocated in allocate_fft.f90 ( and never deallocated )
+  !! arrays allocated in allocate_fft.f90 ( and never deallocated )
   !
   CALL destroy_scf_type( rho  )
   CALL destroy_scf_type( v    )
@@ -164,7 +187,7 @@ SUBROUTINE clean_pw( lflag )
      DEALLOCATE( vrs     )
   END IF
   !
-  ! ... arrays allocated in allocate_locpot.f90 ( and never deallocated )
+  !! arrays allocated in allocate_locpot.f90 ( and never deallocated )
   !
   IF ( ALLOCATED( vloc )      )  DEALLOCATE( vloc      )
   IF ( ALLOCATED( strf )      )  DEALLOCATE( strf      )
@@ -177,7 +200,7 @@ SUBROUTINE clean_pw( lflag )
   CALL deallocate_noncol()
   CALL deallocate_igk()
   !
-  ! ... arrays allocated in init_run.f90 ( and never deallocated )
+  !! arrays allocated in init_run.f90 ( and never deallocated )
   !
   IF ( ALLOCATED( g2kin ) ) THEN
      !$acc exit data delete(g2kin)
@@ -190,18 +213,17 @@ SUBROUTINE clean_pw( lflag )
   IF ( ALLOCATED( wg ) )         DEALLOCATE( wg )
   IF ( ALLOCATED( btype ) )      DEALLOCATE( btype )
   !
-  ! ... arrays allocated in allocate_wfc.f90 ( and never deallocated )
+  !! arrays allocated in allocate_wfc.f90 ( and never deallocated )
   !
   CALL deallocate_wfc ( )
   !
-  ! ... fft structures allocated in data_structure.f90  
+  !! fft structures allocated in data_structure.f90  
   !
   ! UGLY HACK WARNING: unlike previous versions, fft_type_deallocate
   ! removes all information about FFT grids, including FFT dimensions.
   ! If however FFT dimensions were set from input data, one may end
   ! up with a different grid if FFT grids are re-initialized later.
   ! The following workaround restores the previous functionality.
-  ! TODO: replace clean_pw with more fine-grained cleaning routines.
   !
   nr1 = dfftp%nr1; nr2 = dfftp%nr2; nr3 = dfftp%nr3
   CALL fft_type_deallocate( dfftp )
@@ -212,23 +234,24 @@ SUBROUTINE clean_pw( lflag )
   !
   dffts%nr1 = nr1; dffts%nr2 = nr2; dffts%nr3 = nr3
   !
-  ! ... stick-owner matrix allocated in sticks_base
+  !! stick-owner matrix allocated in sticks_base
   !
   CALL pstickdealloc()
   !
-  ! ... arrays allocated for dynamics
+  !! arrays allocated for dynamics
   !
   CALL deallocate_dyn_vars()
   !
-  ! ... additional arrays for PAW
+  !! additional arrays for PAW
   !
   CALL deallocate_paw_internals()
   !
-  ! ... arrays for real-space algorithm
+  !! arrays for real-space algorithm
   !
   CALL deallocate_realsp()
   !
-  ! for Wannier_ac
+  !! for Wannier_ac
+  !
   IF (use_wannier) CALL wannier_clean()
   !
   CALL deallocate_exx() 
@@ -239,7 +262,7 @@ SUBROUTINE clean_pw( lflag )
   IF (ts_vdw .or. mbd_vdw) CALL tsvdw_finalize()
   IF (mbd_vdw) CALL clean_mbd()
   !
-  ! ... arrays for RISM
+  !! arrays for RISM
   !
   CALL deallocate_rism( lflag )
   !
@@ -254,7 +277,7 @@ SUBROUTINE clean_pw( lflag )
         DEALLOCATE (oscdft_ctx%inp%occupation)
      ENDIF
 #endif
-  CALL   plugin_clean('PW', lflag) 
+  CALL plugin_clean('PW', lflag) 
   !
   RETURN
   !

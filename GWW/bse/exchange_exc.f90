@@ -12,7 +12,6 @@ use bse_wannier,      ONLY: l_truncated_coulomb, &
 USE gvect
 USE constants,        ONLY : e2, fpi
 USE cell_base,        ONLY : tpiba,omega,tpiba2
-!USE mp_wave,          ONLY : mergewf,splitwf
 USE fft_custom_gwl
 USE gvecw,              ONLY : ecutwfc
 USE io_global, ONLY : stdout, ionode, ionode_id
@@ -85,8 +84,6 @@ allocate(evc_g(fc%ngmt_g))
 call reorderwfp_col(1,a_in%npw,fc%npwt,cfac(1),fac_t(1),a_in%npw,fc%npwt, &
      & ig_l2g,fc%ig_l2gt,fc%ngmt_g,mpime, nproc,intra_pool_comm )
 
-!call  mergewf(cfac,evc_g,a_in%npw,ig_l2g,mpime,nproc,ionode_id,intra_pool_comm)
-!call  splitwf(fac_t,evc_g,fc%npwt,fc%ig_l2gt,mpime,nproc,ionode_id,intra_pool_comm)
 deallocate(evc_g)
 
 

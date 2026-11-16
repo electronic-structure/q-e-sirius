@@ -30,7 +30,6 @@ subroutine pola_basis_lanczos(n_set,nstates,numpw, nsteps,ispin)
    USE mp_pools, ONLY : intra_pool_comm
    USE gvecs,              ONLY : doublegrid
    USE fft_custom_gwl
-   USE mp_wave, ONLY : mergewf,splitwf
    USE fft_base,             ONLY : dfftp, dffts
    USE fft_interfaces,       ONLY : fwfft, invfft
 
@@ -149,10 +148,6 @@ subroutine pola_basis_lanczos(n_set,nstates,numpw, nsteps,ispin)
   else
      call reorderwfp_col(numpw,npw,fc%npwt,p_basis(1,1),p_basis_t(1,1), npw,fc%npwt, &
              & ig_l2g,fc%ig_l2gt,fc%ngmt_g,mpime, nproc,intra_pool_comm )
-     !do ii=1,numpw
-     !   call mergewf(p_basis(:,ii),evc_g,npw,ig_l2g,mpime,nproc,ionode_id,intra_pool_comm)
-     !   call splitwf(p_basis_t(:,ii),evc_g,fc%npwt,fc%ig_l2gt,mpime,nproc,ionode_id,intra_pool_comm)
-     !enddo
   endif
 !trasform to real space
   allocate(p_basis_r(fc%nrxxt,numpw))
@@ -487,10 +482,6 @@ subroutine pola_basis_lanczos(n_set,nstates,numpw, nsteps,ispin)
         else
            call reorderwfp_col(nstates,fc%npwt,npw,wp_g_t(1,1),wp_g(1,1),fc%npwt,npw, &
                 & fc%ig_l2gt,ig_l2g,fc%ngmt_g,mpime, nproc,intra_pool_comm )
-           !do ii=1,nstates
-           !   call mergewf(wp_g_t(:,ii),evc_g,fc%npwt,fc%ig_l2gt,mpime,nproc,ionode_id,intra_pool_comm)
-           !   call splitwf(wp_g(:,ii),evc_g,npw,ig_l2g,mpime,nproc,ionode_id,intra_pool_comm)
-           !enddo
         endif
         if(l_verbose) write(stdout,*) 'pola_basis update davcio',iv
         FLUSH(stdout)
@@ -2202,7 +2193,6 @@ subroutine pola_basis_lanczos_real(n_set,nstates,numpw, nsteps,ispin)
    USE mp_world, ONLY : world_comm, mpime, nproc
    USE gvecs,              ONLY : doublegrid
    USE fft_custom_gwl
-   USE mp_wave, ONLY : mergewf,splitwf
    USE fft_base,             ONLY : dfftp, dffts
    USE fft_interfaces,       ONLY : fwfft, invfft
 
@@ -2306,10 +2296,6 @@ subroutine pola_basis_lanczos_real(n_set,nstates,numpw, nsteps,ispin)
   call reorderwfp (numpw,npw, fc%npwt,p_basis(:,:),p_basis_t(:,:), &
               &npw,fc%npwt, ig_l2g,fc%ig_l2gt, fc%ngmt_g , mpime, nproc,ionode_id, intra_pool_comm )
 
-    ! do ii=1,numpw
-    !    call mergewf(p_basis(:,ii),evc_g,npw,ig_l2g,mpime,nproc,ionode_id,intra_pool_comm)
-    !    call splitwf(p_basis_t(:,ii),evc_g,fc%npwt,fc%ig_l2gt,mpime,nproc,ionode_id,intra_pool_comm)
-    ! enddo
 !trasform to real space
      allocate(p_basis_r(fc%nrxxt,numpw))
      do ii=1,numpw,2
@@ -2338,10 +2324,6 @@ subroutine pola_basis_lanczos_real(n_set,nstates,numpw, nsteps,ispin)
      call reorderwfp (num_nbndv(ispin),npw, fc%npwt,evc(:,:),evc_t(:,:), &
               &npw,fc%npwt, ig_l2g,fc%ig_l2gt, fc%ngmt_g , mpime, nproc,ionode_id, intra_pool_comm )
 
-   !   do iv=1,num_nbndv(ispin)
-   !      call mergewf(evc(:,iv),evc_g,npw,ig_l2g,mpime,nproc,ionode_id,intra_pool_comm)
-   !      call splitwf(evc_t(:,iv),evc_g,fc%npwt,fc%ig_l2gt,mpime,nproc,ionode_id,intra_pool_comm)
-   !   enddo
   endif
 
   evc_r=0.d0
@@ -2649,8 +2631,6 @@ subroutine pola_basis_lanczos_real(n_set,nstates,numpw, nsteps,ispin)
         else
            call reorderwfp (nstates,fc%npwt, npw,wp_g_t2,wp_g, &
                 &fc%npwt,npw, fc%ig_l2gt,ig_l2g, fc%ngmt_g , mpime, nproc,ionode_id, intra_pool_comm )
-           ! call mergewf(wp_g_t2(:),evc_g,fc%npwt,fc%ig_l2gt,mpime,nproc,ionode_id,intra_pool_comm)
-           ! call splitwf(wp_g(:,ii),evc_g,npw,ig_l2g,mpime,nproc,ionode_id,intra_pool_comm)
     
         endif
              

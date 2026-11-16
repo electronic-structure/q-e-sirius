@@ -19,9 +19,9 @@ subroutine calculate_wing(n_set, orthonorm)
   USE mp,                   ONLY : mp_bcast, mp_sum
   USE gvect,                ONLY : mill, ngm, gstart,g,ngm_g, ig_l2g
   USE cell_base,            ONLY : tpiba
-  USE mp_wave, ONLY : mergewf,splitwf
   USE mp_pools,  ONLY : intra_pool_comm
   USE mp_world,  ONLY : mpime, nproc, world_comm
+  USE mp_wave,  ONLY : splitwf
   USE wvfct,    ONLY :  npwx, npw
   USE cell_base, ONLY : at,bg
 

@@ -42,6 +42,8 @@ MODULE lr_dav_variables
         eign_value_order(:), energy_dif_order(:)
 
   LOGICAL :: use_ace_td
+  CHARACTER(len=80) :: exx_type = 'band_pairs' 
+  INTEGER :: exx_batch_size = 0
   LOGICAL :: dav_conv
   LOGICAL :: ploted(3)=.false., done_calc_R=.false.
   real(dp) :: max_res

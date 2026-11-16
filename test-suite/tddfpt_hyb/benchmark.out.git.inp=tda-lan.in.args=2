@@ -1,5 +1,5 @@
 
-     Program turboTDDFT v.8.0dev starts on 22Oct2026 at 15:16:44 
+     Program turboTDDFT v.8.0dev starts on 10Nov2026 at 14:53:56 
 
      This program is part of the open-source Quantum ESPRESSO suite
      for quantum simulation of materials; please cite
@@ -13,13 +13,14 @@
      Parallel version (MPI), running on     1 processors
 
      MPI processes distributed on     1 nodes
-     6068 MiB available memory on the printing compute node when the environment starts
+     3662 MiB available memory on the printing compute node when the environment starts
  
 
      Reading xml data from directory:
 
      ./out/pwscf.save/
      EXX fraction changed:   0.25
+     file H.pz-vbc.UPF: wavefunction(s)  1S renormalized
 
      IMPORTANT: XC functional enforced from input :
      Exchange-correlation= PBE0
@@ -37,6 +38,104 @@
      Using Slab Decomposition
  
      Reading collected, re-writing distributed wavefunctions
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
+     read_rhog:  17133 G-components read,  32765 not found (set to 0)
+     Zero-padding will be used
      Not using ACE in TDDFPT calculation. 
  Symmetries are disabled for the gamma_only case
      Subspace diagonalization in iterative solution of the eigenvalue problem:
@@ -79,8 +178,8 @@
      Lanczos iteration:      1   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000001)=  0.000000
-     beta (00000001)=  2.913392
-     gamma(00000001)=  2.913392
+     beta (00000001)=  2.926318
+     gamma(00000001)=  2.926318
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -88,17 +187,17 @@
      Lanczos iteration:      2   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000002)=  0.000000
-     beta (00000002)=  8.153883
-     gamma(00000002)=  8.153883
-     z1=       1  0.357301235927660E+00  0.000000000000000E+00
+     beta (00000002)=  9.177837
+     gamma(00000002)=  9.177837
+     z1=       1  0.318846179313594E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:      3   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000003)=  0.000000
-     beta (00000003)= 31.484355
-     gamma(00000003)= 31.484355
+     beta (00000003)= 33.574306
+     gamma(00000003)= 33.574306
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -106,17 +205,17 @@
      Lanczos iteration:      4   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000004)=  0.000000
-     beta (00000004)= 19.754451
-     gamma(00000004)= 19.754451
-     z1=       1 -0.569461485557870E+00  0.000000000000000E+00
+     beta (00000004)= 16.791683
+     gamma(00000004)= 16.791683
+     z1=       1 -0.637520337097768E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:      5   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000005)=  0.000000
-     beta (00000005)= 15.960413
-     gamma(00000005)= 15.960413
+     beta (00000005)= 15.254048
+     gamma(00000005)= 15.254048
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -124,17 +223,17 @@
      Lanczos iteration:      6   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000006)=  0.000000
-     beta (00000006)= 20.577267
-     gamma(00000006)= 20.577267
-     z1=       1  0.441693286743066E+00  0.000000000000000E+00
+     beta (00000006)= 22.638637
+     gamma(00000006)= 22.638637
+     z1=       1  0.429564996588529E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:      7   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000007)=  0.000000
-     beta (00000007)= 20.850239
-     gamma(00000007)= 20.850239
+     beta (00000007)= 21.393806
+     gamma(00000007)= 21.393806
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -142,17 +241,17 @@
      Lanczos iteration:      8   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000008)=  0.000000
-     beta (00000008)= 22.394118
-     gamma(00000008)= 22.394118
-     z1=       1 -0.411242378820666E+00  0.000000000000000E+00
+     beta (00000008)= 22.117831
+     gamma(00000008)= 22.117831
+     z1=       1 -0.415503222866606E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:      9   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000009)=  0.000000
-     beta (00000009)= 20.623392
-     gamma(00000009)= 20.623392
+     beta (00000009)= 20.426875
+     gamma(00000009)= 20.426875
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -160,17 +259,17 @@
      Lanczos iteration:     10   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000010)=  0.000000
-     beta (00000010)= 21.642096
-     gamma(00000010)= 21.642096
-     z1=       1  0.391885000870877E+00  0.000000000000000E+00
+     beta (00000010)= 21.629184
+     gamma(00000010)= 21.629184
+     z1=       1  0.392406491016255E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     11   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000011)=  0.000000
-     beta (00000011)= 20.242172
-     gamma(00000011)= 20.242172
+     beta (00000011)= 20.283500
+     gamma(00000011)= 20.283500
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -178,17 +277,17 @@
      Lanczos iteration:     12   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000012)=  0.000000
-     beta (00000012)= 21.380909
-     gamma(00000012)= 21.380909
-     z1=       1 -0.371013406205409E+00  0.000000000000000E+00
+     beta (00000012)= 21.600932
+     gamma(00000012)= 21.600932
+     z1=       1 -0.368473793110422E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     13   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000013)=  0.000000
-     beta (00000013)= 20.976707
-     gamma(00000013)= 20.976707
+     beta (00000013)= 21.167640
+     gamma(00000013)= 21.167640
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -196,17 +295,17 @@
      Lanczos iteration:     14   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000014)=  0.000000
-     beta (00000014)= 22.356095
-     gamma(00000014)= 22.356095
-     z1=       1  0.348121609811047E+00  0.000000000000000E+00
+     beta (00000014)= 22.074191
+     gamma(00000014)= 22.074191
+     z1=       1  0.353341186541715E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     15   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000015)=  0.000000
-     beta (00000015)= 20.976794
-     gamma(00000015)= 20.976794
+     beta (00000015)= 20.561478
+     gamma(00000015)= 20.561478
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -214,17 +313,17 @@
      Lanczos iteration:     16   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000016)=  0.000000
-     beta (00000016)= 21.227282
-     gamma(00000016)= 21.227282
-     z1=       1 -0.344013672746609E+00  0.000000000000000E+00
+     beta (00000016)= 21.053871
+     gamma(00000016)= 21.053871
+     z1=       1 -0.345077483205713E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     17   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000017)=  0.000000
-     beta (00000017)= 20.460581
-     gamma(00000017)= 20.460581
+     beta (00000017)= 20.663635
+     gamma(00000017)= 20.663635
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -232,17 +331,17 @@
      Lanczos iteration:     18   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000018)=  0.000000
-     beta (00000018)= 21.321133
-     gamma(00000018)= 21.321133
-     z1=       1  0.330128784052782E+00  0.000000000000000E+00
+     beta (00000018)= 21.359387
+     gamma(00000018)= 21.359387
+     z1=       1  0.333837077314652E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     19   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000019)=  0.000000
-     beta (00000019)= 20.801750
-     gamma(00000019)= 20.801750
+     beta (00000019)= 20.681190
+     gamma(00000019)= 20.681190
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -250,17 +349,17 @@
      Lanczos iteration:     20   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000020)=  0.000000
-     beta (00000020)= 21.403800
-     gamma(00000020)= 21.403800
-     z1=       1 -0.320842858139735E+00  0.000000000000000E+00
+     beta (00000020)= 21.384538
+     gamma(00000020)= 21.384538
+     z1=       1 -0.322857009522485E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     21   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000021)=  0.000000
-     beta (00000021)= 20.719651
-     gamma(00000021)= 20.719651
+     beta (00000021)= 20.819121
+     gamma(00000021)= 20.819121
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -268,17 +367,17 @@
      Lanczos iteration:     22   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000022)=  0.000000
-     beta (00000022)= 21.047054
-     gamma(00000022)= 21.047054
-     z1=       1  0.315851912654947E+00  0.000000000000000E+00
+     beta (00000022)= 21.117488
+     gamma(00000022)= 21.117488
+     z1=       1  0.318295402525880E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     23   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000023)=  0.000000
-     beta (00000023)= 20.544195
-     gamma(00000023)= 20.544195
+     beta (00000023)= 20.683894
+     gamma(00000023)= 20.683894
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -286,17 +385,17 @@
      Lanczos iteration:     24   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000024)=  0.000000
-     beta (00000024)= 21.282466
-     gamma(00000024)= 21.282466
-     z1=       1 -0.304895268839433E+00  0.000000000000000E+00
+     beta (00000024)= 21.450324
+     gamma(00000024)= 21.450324
+     z1=       1 -0.306922563928735E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     25   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000025)=  0.000000
-     beta (00000025)= 21.005855
-     gamma(00000025)= 21.005855
+     beta (00000025)= 21.047869
+     gamma(00000025)= 21.047869
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -304,17 +403,17 @@
      Lanczos iteration:     26   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000026)=  0.000000
-     beta (00000026)= 21.645031
-     gamma(00000026)= 21.645031
-     z1=       1  0.295891724924455E+00  0.000000000000000E+00
+     beta (00000026)= 21.621891
+     gamma(00000026)= 21.621891
+     z1=       1  0.298774328424387E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     27   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000027)=  0.000000
-     beta (00000027)= 20.989066
-     gamma(00000027)= 20.989066
+     beta (00000027)= 20.830844
+     gamma(00000027)= 20.830844
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -322,17 +421,17 @@
      Lanczos iteration:     28   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000028)=  0.000000
-     beta (00000028)= 21.385425
-     gamma(00000028)= 21.385425
-     z1=       1 -0.290407644591472E+00  0.000000000000000E+00
+     beta (00000028)= 21.198438
+     gamma(00000028)= 21.198438
+     z1=       1 -0.293593401907604E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     29   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000029)=  0.000000
-     beta (00000029)= 20.571058
-     gamma(00000029)= 20.571058
+     beta (00000029)= 20.476844
+     gamma(00000029)= 20.476844
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -340,17 +439,17 @@
      Lanczos iteration:     30   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000030)=  0.000000
-     beta (00000030)= 21.355196
-     gamma(00000030)= 21.355196
-     z1=       1  0.279744218956642E+00  0.000000000000000E+00
+     beta (00000030)= 21.396592
+     gamma(00000030)= 21.396592
+     z1=       1  0.280973074903703E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     31   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000031)=  0.000000
-     beta (00000031)= 20.693504
-     gamma(00000031)= 20.693504
+     beta (00000031)= 20.775399
+     gamma(00000031)= 20.775399
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -358,17 +457,17 @@
      Lanczos iteration:     32   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000032)=  0.000000
-     beta (00000032)= 21.528229
-     gamma(00000032)= 21.528229
-     z1=       1 -0.268897559596933E+00  0.000000000000000E+00
+     beta (00000032)= 21.545811
+     gamma(00000032)= 21.545811
+     z1=       1 -0.270926332400110E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     33   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000033)=  0.000000
-     beta (00000033)= 20.777428
-     gamma(00000033)= 20.777428
+     beta (00000033)= 20.728690
+     gamma(00000033)= 20.728690
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -376,17 +475,17 @@
      Lanczos iteration:     34   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000034)=  0.000000
-     beta (00000034)= 21.386706
-     gamma(00000034)= 21.386706
-     z1=       1  0.261237035522506E+00  0.000000000000000E+00
+     beta (00000034)= 21.333253
+     gamma(00000034)= 21.333253
+     z1=       1  0.263248544284548E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     35   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000035)=  0.000000
-     beta (00000035)= 20.447122
-     gamma(00000035)= 20.447122
+     beta (00000035)= 20.508689
+     gamma(00000035)= 20.508689
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -394,17 +493,17 @@
      Lanczos iteration:     36   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000036)=  0.000000
-     beta (00000036)= 21.391622
-     gamma(00000036)= 21.391622
-     z1=       1 -0.249702691371778E+00  0.000000000000000E+00
+     beta (00000036)= 21.414494
+     gamma(00000036)= 21.414494
+     z1=       1 -0.252113477045272E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     37   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000037)=  0.000000
-     beta (00000037)= 20.629628
-     gamma(00000037)= 20.629628
+     beta (00000037)= 20.636783
+     gamma(00000037)= 20.636783
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -412,17 +511,17 @@
      Lanczos iteration:     38   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000038)=  0.000000
-     beta (00000038)= 21.377746
-     gamma(00000038)= 21.377746
-     z1=       1  0.240964299799507E+00  0.000000000000000E+00
+     beta (00000038)= 21.439077
+     gamma(00000038)= 21.439077
+     z1=       1  0.242678872640045E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     39   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000039)=  0.000000
-     beta (00000039)= 20.689513
-     gamma(00000039)= 20.689513
+     beta (00000039)= 20.749690
+     gamma(00000039)= 20.749690
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -430,17 +529,17 @@
      Lanczos iteration:     40   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000040)=  0.000000
-     beta (00000040)= 21.539962
-     gamma(00000040)= 21.539962
-     z1=       1 -0.231450456467365E+00  0.000000000000000E+00
+     beta (00000040)= 21.435773
+     gamma(00000040)= 21.435773
+     z1=       1 -0.234911588712007E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     41   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000041)=  0.000000
-     beta (00000041)= 20.598797
-     gamma(00000041)= 20.598797
+     beta (00000041)= 20.545810
+     gamma(00000041)= 20.545810
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -448,17 +547,17 @@
      Lanczos iteration:     42   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000042)=  0.000000
-     beta (00000042)= 21.345853
-     gamma(00000042)= 21.345853
-     z1=       1  0.223350220842108E+00  0.000000000000000E+00
+     beta (00000042)= 21.367631
+     gamma(00000042)= 21.367631
+     z1=       1  0.225876644145529E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     43   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000043)=  0.000000
-     beta (00000043)= 20.738214
-     gamma(00000043)= 20.738214
+     beta (00000043)= 20.791954
+     gamma(00000043)= 20.791954
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -466,17 +565,17 @@
      Lanczos iteration:     44   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000044)=  0.000000
-     beta (00000044)= 21.343538
-     gamma(00000044)= 21.343538
-     z1=       1 -0.217015793767658E+00  0.000000000000000E+00
+     beta (00000044)= 21.406484
+     gamma(00000044)= 21.406484
+     z1=       1 -0.219392255686256E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     45   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000045)=  0.000000
-     beta (00000045)= 20.846239
-     gamma(00000045)= 20.846239
+     beta (00000045)= 20.946506
+     gamma(00000045)= 20.946506
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -484,17 +583,17 @@
      Lanczos iteration:     46   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000046)=  0.000000
-     beta (00000046)= 21.517206
-     gamma(00000046)= 21.517206
-     z1=       1  0.210248636355678E+00  0.000000000000000E+00
+     beta (00000046)= 21.498445
+     gamma(00000046)= 21.498445
+     z1=       1  0.213759704222358E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     47   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000047)=  0.000000
-     beta (00000047)= 20.749982
-     gamma(00000047)= 20.749982
+     beta (00000047)= 20.737033
+     gamma(00000047)= 20.737033
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -502,17 +601,17 @@
      Lanczos iteration:     48   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000048)=  0.000000
-     beta (00000048)= 21.396272
-     gamma(00000048)= 21.396272
-     z1=       1 -0.203897922399238E+00  0.000000000000000E+00
+     beta (00000048)= 21.343257
+     gamma(00000048)= 21.343257
+     z1=       1 -0.207688170757765E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     49   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000049)=  0.000000
-     beta (00000049)= 20.726958
-     gamma(00000049)= 20.726958
+     beta (00000049)= 20.791743
+     gamma(00000049)= 20.791743
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -520,17 +619,17 @@
      Lanczos iteration:     50   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000050)=  0.000000
-     beta (00000050)= 21.289634
-     gamma(00000050)= 21.289634
-     z1=       1  0.198508990282552E+00  0.000000000000000E+00
+     beta (00000050)= 21.431103
+     gamma(00000050)= 21.431103
+     z1=       1  0.201492148873595E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     51   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000051)=  0.000000
-     beta (00000051)= 21.065453
-     gamma(00000051)= 21.065453
+     beta (00000051)= 20.990118
+     gamma(00000051)= 20.990118
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -538,17 +637,17 @@
      Lanczos iteration:     52   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000052)=  0.000000
-     beta (00000052)= 21.442839
-     gamma(00000052)= 21.442839
-     z1=       1 -0.195015303880459E+00  0.000000000000000E+00
+     beta (00000052)= 21.228961
+     gamma(00000052)= 21.228961
+     z1=       1 -0.199225196068028E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     53   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000053)=  0.000000
-     beta (00000053)= 20.678771
-     gamma(00000053)= 20.678771
+     beta (00000053)= 20.656605
+     gamma(00000053)= 20.656605
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -556,17 +655,17 @@
      Lanczos iteration:     54   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000054)=  0.000000
-     beta (00000054)= 21.193112
-     gamma(00000054)= 21.193112
-     z1=       1  0.190282428498957E+00  0.000000000000000E+00
+     beta (00000054)= 21.263439
+     gamma(00000054)= 21.263439
+     z1=       1  0.193539547484970E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     55   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000055)=  0.000000
-     beta (00000055)= 20.828213
-     gamma(00000055)= 20.828213
+     beta (00000055)= 20.839459
+     gamma(00000055)= 20.839459
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -574,17 +673,17 @@
      Lanczos iteration:     56   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000056)=  0.000000
-     beta (00000056)= 21.376110
-     gamma(00000056)= 21.376110
-     z1=       1 -0.185405245344930E+00  0.000000000000000E+00
+     beta (00000056)= 21.288591
+     gamma(00000056)= 21.288591
+     z1=       1 -0.189456385115517E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     57   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000057)=  0.000000
-     beta (00000057)= 20.810980
-     gamma(00000057)= 20.810980
+     beta (00000057)= 20.690285
+     gamma(00000057)= 20.690285
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -592,17 +691,17 @@
      Lanczos iteration:     58   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000058)=  0.000000
-     beta (00000058)= 21.146590
-     gamma(00000058)= 21.146590
-     z1=       1  0.182462743142755E+00  0.000000000000000E+00
+     beta (00000058)= 21.113267
+     gamma(00000058)= 21.113267
+     z1=       1  0.185660830892808E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     59   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000059)=  0.000000
-     beta (00000059)= 20.758364
-     gamma(00000059)= 20.758364
+     beta (00000059)= 20.773171
+     gamma(00000059)= 20.773171
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -610,17 +709,17 @@
      Lanczos iteration:     60   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000060)=  0.000000
-     beta (00000060)= 21.108167
-     gamma(00000060)= 21.108167
-     z1=       1 -0.179438988479806E+00  0.000000000000000E+00
+     beta (00000060)= 21.157691
+     gamma(00000060)= 21.157691
+     z1=       1 -0.182286625834065E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     61   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000061)=  0.000000
-     beta (00000061)= 20.737842
-     gamma(00000061)= 20.737842
+     beta (00000061)= 20.726833
+     gamma(00000061)= 20.726833
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -628,17 +727,17 @@
      Lanczos iteration:     62   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000062)=  0.000000
-     beta (00000062)= 21.163084
-     gamma(00000062)= 21.163084
-     z1=       1  0.175833418310759E+00  0.000000000000000E+00
+     beta (00000062)= 21.214654
+     gamma(00000062)= 21.214654
+     z1=       1  0.178095026433146E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     63   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000063)=  0.000000
-     beta (00000063)= 20.687831
-     gamma(00000063)= 20.687831
+     beta (00000063)= 20.729039
+     gamma(00000063)= 20.729039
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -646,17 +745,17 @@
      Lanczos iteration:     64   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000064)=  0.000000
-     beta (00000064)= 21.254854
-     gamma(00000064)= 21.254854
-     z1=       1 -0.171142649123323E+00  0.000000000000000E+00
+     beta (00000064)= 21.249164
+     gamma(00000064)= 21.249164
+     z1=       1 -0.173735718553288E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     65   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000065)=  0.000000
-     beta (00000065)= 20.686832
-     gamma(00000065)= 20.686832
+     beta (00000065)= 20.758342
+     gamma(00000065)= 20.758342
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -664,17 +763,17 @@
      Lanczos iteration:     66   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000066)=  0.000000
-     beta (00000066)= 21.331450
-     gamma(00000066)= 21.331450
-     z1=       1  0.165970862439367E+00  0.000000000000000E+00
+     beta (00000066)= 21.375735
+     gamma(00000066)= 21.375735
+     z1=       1  0.168717730656601E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     67   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000067)=  0.000000
-     beta (00000067)= 20.841592
-     gamma(00000067)= 20.841592
+     beta (00000067)= 20.796119
+     gamma(00000067)= 20.796119
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -682,17 +781,17 @@
      Lanczos iteration:     68   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000068)=  0.000000
-     beta (00000068)= 21.229373
-     gamma(00000068)= 21.229373
-     z1=       1 -0.162939202302312E+00  0.000000000000000E+00
+     beta (00000068)= 21.271281
+     gamma(00000068)= 21.271281
+     z1=       1 -0.164948880515892E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     69   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000069)=  0.000000
-     beta (00000069)= 20.878334
-     gamma(00000069)= 20.878334
+     beta (00000069)= 20.881778
+     gamma(00000069)= 20.881778
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -700,17 +799,17 @@
      Lanczos iteration:     70   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000070)=  0.000000
-     beta (00000070)= 21.314177
-     gamma(00000070)= 21.314177
-     z1=       1  0.159607342839316E+00  0.000000000000000E+00
+     beta (00000070)= 21.336330
+     gamma(00000070)= 21.336330
+     z1=       1  0.161434789896515E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     71   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000071)=  0.000000
-     beta (00000071)= 20.893310
-     gamma(00000071)= 20.893310
+     beta (00000071)= 20.885362
+     gamma(00000071)= 20.885362
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -718,17 +817,17 @@
      Lanczos iteration:     72   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000072)=  0.000000
-     beta (00000072)= 21.441830
-     gamma(00000072)= 21.441830
-     z1=       1 -0.155524305247120E+00  0.000000000000000E+00
+     beta (00000072)= 21.377065
+     gamma(00000072)= 21.377065
+     z1=       1 -0.157721562380378E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     73   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000073)=  0.000000
-     beta (00000073)= 20.649695
-     gamma(00000073)= 20.649695
+     beta (00000073)= 20.668690
+     gamma(00000073)= 20.668690
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -736,17 +835,17 @@
      Lanczos iteration:     74   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000074)=  0.000000
-     beta (00000074)= 21.391139
-     gamma(00000074)= 21.391139
-     z1=       1  0.150133633440700E+00  0.000000000000000E+00
+     beta (00000074)= 21.491088
+     gamma(00000074)= 21.491088
+     z1=       1  0.151686044737242E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     75   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000075)=  0.000000
-     beta (00000075)= 20.752402
-     gamma(00000075)= 20.752402
+     beta (00000075)= 20.751311
+     gamma(00000075)= 20.751311
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -754,17 +853,17 @@
      Lanczos iteration:     76   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000076)=  0.000000
-     beta (00000076)= 21.287386
-     gamma(00000076)= 21.287386
-     z1=       1 -0.146360544628980E+00  0.000000000000000E+00
+     beta (00000076)= 21.319797
+     gamma(00000076)= 21.319797
+     z1=       1 -0.147641382621571E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     77   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000077)=  0.000000
-     beta (00000077)= 20.826795
-     gamma(00000077)= 20.826795
+     beta (00000077)= 20.853945
+     gamma(00000077)= 20.853945
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -772,17 +871,17 @@
      Lanczos iteration:     78   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000078)=  0.000000
-     beta (00000078)= 21.422470
-     gamma(00000078)= 21.422470
-     z1=       1  0.142290833148849E+00  0.000000000000000E+00
+     beta (00000078)= 21.392295
+     gamma(00000078)= 21.392295
+     z1=       1  0.143925896501733E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     79   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000079)=  0.000000
-     beta (00000079)= 20.680878
-     gamma(00000079)= 20.680878
+     beta (00000079)= 20.689379
+     gamma(00000079)= 20.689379
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -790,17 +889,17 @@
      Lanczos iteration:     80   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000080)=  0.000000
-     beta (00000080)= 21.492198
-     gamma(00000080)= 21.492198
-     z1=       1 -0.136919424929527E+00  0.000000000000000E+00
+     beta (00000080)= 21.416586
+     gamma(00000080)= 21.416586
+     z1=       1 -0.139038852479945E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     81   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000081)=  0.000000
-     beta (00000081)= 20.694408
-     gamma(00000081)= 20.694408
+     beta (00000081)= 20.699163
+     gamma(00000081)= 20.699163
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -808,17 +907,17 @@
      Lanczos iteration:     82   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000082)=  0.000000
-     beta (00000082)= 21.486056
-     gamma(00000082)= 21.486056
-     z1=       1  0.131874666361937E+00  0.000000000000000E+00
+     beta (00000082)= 21.512641
+     gamma(00000082)= 21.512641
+     z1=       1  0.133781245511081E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     83   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000083)=  0.000000
-     beta (00000083)= 20.815542
-     gamma(00000083)= 20.815542
+     beta (00000083)= 20.770379
+     gamma(00000083)= 20.770379
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -826,17 +925,17 @@
      Lanczos iteration:     84   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000084)=  0.000000
-     beta (00000084)= 21.325694
-     gamma(00000084)= 21.325694
-     z1=       1 -0.128719967974549E+00  0.000000000000000E+00
+     beta (00000084)= 21.387232
+     gamma(00000084)= 21.387232
+     z1=       1 -0.129922706475783E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     85   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000085)=  0.000000
-     beta (00000085)= 20.877800
-     gamma(00000085)= 20.877800
+     beta (00000085)= 20.926169
+     gamma(00000085)= 20.926169
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -844,17 +943,17 @@
      Lanczos iteration:     86   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000086)=  0.000000
-     beta (00000086)= 21.324535
-     gamma(00000086)= 21.324535
-     z1=       1  0.126023370864624E+00  0.000000000000000E+00
+     beta (00000086)= 21.327479
+     gamma(00000086)= 21.327479
+     z1=       1  0.127478003899609E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     87   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000087)=  0.000000
-     beta (00000087)= 20.759556
-     gamma(00000087)= 20.759556
+     beta (00000087)= 20.858939
+     gamma(00000087)= 20.858939
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -862,17 +961,17 @@
      Lanczos iteration:     88   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000088)=  0.000000
-     beta (00000088)= 21.467788
-     gamma(00000088)= 21.467788
-     z1=       1 -0.121865803469095E+00  0.000000000000000E+00
+     beta (00000088)= 21.536511
+     gamma(00000088)= 21.536511
+     z1=       1 -0.123467349760368E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     89   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000089)=  0.000000
-     beta (00000089)= 20.841465
-     gamma(00000089)= 20.841465
+     beta (00000089)= 20.851508
+     gamma(00000089)= 20.851508
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -880,17 +979,17 @@
      Lanczos iteration:     90   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000090)=  0.000000
-     beta (00000090)= 21.471095
-     gamma(00000090)= 21.471095
-     z1=       1  0.118292145633541E+00  0.000000000000000E+00
+     beta (00000090)= 21.484653
+     gamma(00000090)= 21.484653
+     z1=       1  0.119828809948122E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     91   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000091)=  0.000000
-     beta (00000091)= 20.900290
-     gamma(00000091)= 20.900290
+     beta (00000091)= 20.900126
+     gamma(00000091)= 20.900126
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -898,17 +997,17 @@
      Lanczos iteration:     92   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000092)=  0.000000
-     beta (00000092)= 21.546913
-     gamma(00000092)= 21.546913
-     z1=       1 -0.114742193528394E+00  0.000000000000000E+00
+     beta (00000092)= 21.390720
+     gamma(00000092)= 21.390720
+     z1=       1 -0.117080544259430E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     93   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000093)=  0.000000
-     beta (00000093)= 20.623837
-     gamma(00000093)= 20.623837
+     beta (00000093)= 20.556022
+     gamma(00000093)= 20.556022
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -916,17 +1015,17 @@
      Lanczos iteration:     94   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000094)=  0.000000
-     beta (00000094)= 21.480243
-     gamma(00000094)= 21.480243
-     z1=       1  0.110167483273887E+00  0.000000000000000E+00
+     beta (00000094)= 21.455282
+     gamma(00000094)= 21.455282
+     z1=       1  0.112173322250156E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     95   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000095)=  0.000000
-     beta (00000095)= 20.861815
-     gamma(00000095)= 20.861815
+     beta (00000095)= 20.728931
+     gamma(00000095)= 20.728931
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -934,17 +1033,17 @@
      Lanczos iteration:     96   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000096)=  0.000000
-     beta (00000096)= 21.081175
-     gamma(00000096)= 21.081175
-     z1=       1 -0.109021135322199E+00  0.000000000000000E+00
+     beta (00000096)= 21.000441
+     gamma(00000096)= 21.000441
+     z1=       1 -0.110723058314830E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     97   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000097)=  0.000000
-     beta (00000097)= 20.741004
-     gamma(00000097)= 20.741004
+     beta (00000097)= 20.765504
+     gamma(00000097)= 20.765504
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -952,17 +1051,17 @@
      Lanczos iteration:     98   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000098)=  0.000000
-     beta (00000098)= 21.306788
-     gamma(00000098)= 21.306788
-     z1=       1  0.106126169197054E+00  0.000000000000000E+00
+     beta (00000098)= 21.241046
+     gamma(00000098)= 21.241046
+     z1=       1  0.108244201112915E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:     99   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000099)=  0.000000
-     beta (00000099)= 20.457659
-     gamma(00000099)= 20.457659
+     beta (00000099)= 20.485834
+     gamma(00000099)= 20.485834
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -970,17 +1069,17 @@
      Lanczos iteration:    100   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000100)=  0.000000
-     beta (00000100)= 21.153016
-     gamma(00000100)= 21.153016
-     z1=       1 -0.102637513908756E+00  0.000000000000000E+00
+     beta (00000100)= 21.250734
+     gamma(00000100)= 21.250734
+     z1=       1 -0.104348056810355E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    101   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000101)=  0.000000
-     beta (00000101)= 20.709991
-     gamma(00000101)= 20.709991
+     beta (00000101)= 20.767452
+     gamma(00000101)= 20.767452
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -988,17 +1087,17 @@
      Lanczos iteration:    102   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000102)=  0.000000
-     beta (00000102)= 21.268244
-     gamma(00000102)= 21.268244
-     z1=       1  0.999434648425561E-01  0.000000000000000E+00
+     beta (00000102)= 21.385105
+     gamma(00000102)= 21.385105
+     z1=       1  0.101334235012947E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    103   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000103)=  0.000000
-     beta (00000103)= 20.793133
-     gamma(00000103)= 20.793133
+     beta (00000103)= 20.917051
+     gamma(00000103)= 20.917051
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1006,17 +1105,17 @@
      Lanczos iteration:    104   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000104)=  0.000000
-     beta (00000104)= 21.463527
-     gamma(00000104)= 21.463527
-     z1=       1 -0.968218175467381E-01  0.000000000000000E+00
+     beta (00000104)= 21.527399
+     gamma(00000104)= 21.527399
+     z1=       1 -0.984611922366496E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    105   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000105)=  0.000000
-     beta (00000105)= 20.698982
-     gamma(00000105)= 20.698982
+     beta (00000105)= 20.712890
+     gamma(00000105)= 20.712890
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1024,17 +1123,17 @@
      Lanczos iteration:    106   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000106)=  0.000000
-     beta (00000106)= 21.524691
-     gamma(00000106)= 21.524691
-     z1=       1  0.931076366950229E-01  0.000000000000000E+00
+     beta (00000106)= 21.465966
+     gamma(00000106)= 21.465966
+     z1=       1  0.950069452403474E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    107   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000107)=  0.000000
-     beta (00000107)= 20.774480
-     gamma(00000107)= 20.774480
+     beta (00000107)= 20.742393
+     gamma(00000107)= 20.742393
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1042,17 +1141,17 @@
      Lanczos iteration:    108   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000108)=  0.000000
-     beta (00000108)= 21.323051
-     gamma(00000108)= 21.323051
-     z1=       1 -0.907122893888059E-01  0.000000000000000E+00
+     beta (00000108)= 21.322245
+     gamma(00000108)= 21.322245
+     z1=       1 -0.924232601923100E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    109   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000109)=  0.000000
-     beta (00000109)= 20.888684
-     gamma(00000109)= 20.888684
+     beta (00000109)= 20.802316
+     gamma(00000109)= 20.802316
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1060,17 +1159,17 @@
      Lanczos iteration:    110   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000110)=  0.000000
-     beta (00000110)= 21.279122
-     gamma(00000110)= 21.279122
-     z1=       1  0.890478620806072E-01  0.000000000000000E+00
+     beta (00000110)= 21.213837
+     gamma(00000110)= 21.213837
+     z1=       1  0.906303715555848E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    111   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000111)=  0.000000
-     beta (00000111)= 20.871431
-     gamma(00000111)= 20.871431
+     beta (00000111)= 20.867793
+     gamma(00000111)= 20.867793
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1078,17 +1177,17 @@
      Lanczos iteration:    112   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000112)=  0.000000
-     beta (00000112)= 21.369075
-     gamma(00000112)= 21.369075
-     z1=       1 -0.869741141272333E-01  0.000000000000000E+00
+     beta (00000112)= 21.352601
+     gamma(00000112)= 21.352601
+     z1=       1 -0.885726196247047E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    113   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000113)=  0.000000
-     beta (00000113)= 20.811436
-     gamma(00000113)= 20.811436
+     beta (00000113)= 20.763884
+     gamma(00000113)= 20.763884
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1096,17 +1195,17 @@
      Lanczos iteration:    114   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000114)=  0.000000
-     beta (00000114)= 21.292733
-     gamma(00000114)= 21.292733
-     z1=       1  0.850081643847388E-01  0.000000000000000E+00
+     beta (00000114)= 21.200621
+     gamma(00000114)= 21.200621
+     z1=       1  0.867480069842003E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    115   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000115)=  0.000000
-     beta (00000115)= 20.779594
-     gamma(00000115)= 20.779594
+     beta (00000115)= 20.701922
+     gamma(00000115)= 20.701922
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1114,17 +1213,17 @@
      Lanczos iteration:    116   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000116)=  0.000000
-     beta (00000116)= 21.106311
-     gamma(00000116)= 21.106311
-     z1=       1 -0.836922730157899E-01  0.000000000000000E+00
+     beta (00000116)= 21.046309
+     gamma(00000116)= 21.046309
+     z1=       1 -0.853285215741865E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    117   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000117)=  0.000000
-     beta (00000117)= 20.629484
-     gamma(00000117)= 20.629484
+     beta (00000117)= 20.682173
+     gamma(00000117)= 20.682173
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1132,17 +1231,17 @@
      Lanczos iteration:    118   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000118)=  0.000000
-     beta (00000118)= 21.240770
-     gamma(00000118)= 21.240770
-     z1=       1  0.812837047079155E-01  0.000000000000000E+00
+     beta (00000118)= 21.302822
+     gamma(00000118)= 21.302822
+     z1=       1  0.828425106085000E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    119   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000119)=  0.000000
-     beta (00000119)= 20.621923
-     gamma(00000119)= 20.621923
+     beta (00000119)= 20.654923
+     gamma(00000119)= 20.654923
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1150,17 +1249,17 @@
      Lanczos iteration:    120   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000120)=  0.000000
-     beta (00000120)= 21.352941
-     gamma(00000120)= 21.352941
-     z1=       1 -0.785009567887612E-01  0.000000000000000E+00
+     beta (00000120)= 21.413690
+     gamma(00000120)= 21.413690
+     z1=       1 -0.799070888112510E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    121   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000121)=  0.000000
-     beta (00000121)= 20.889247
-     gamma(00000121)= 20.889247
+     beta (00000121)= 21.009301
+     gamma(00000121)= 21.009301
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1168,17 +1267,17 @@
      Lanczos iteration:    122   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000122)=  0.000000
-     beta (00000122)= 21.383894
-     gamma(00000122)= 21.383894
-     z1=       1  0.766850945323054E-01  0.000000000000000E+00
+     beta (00000122)= 21.379182
+     gamma(00000122)= 21.379182
+     z1=       1  0.785246138971383E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    123   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000123)=  0.000000
-     beta (00000123)= 20.931112
-     gamma(00000123)= 20.931112
+     beta (00000123)= 20.868723
+     gamma(00000123)= 20.868723
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1186,17 +1285,17 @@
      Lanczos iteration:    124   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000124)=  0.000000
-     beta (00000124)= 21.234056
-     gamma(00000124)= 21.234056
-     z1=       1 -0.755910367119251E-01  0.000000000000000E+00
+     beta (00000124)= 21.164793
+     gamma(00000124)= 21.164793
+     z1=       1 -0.774261484650385E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    125   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000125)=  0.000000
-     beta (00000125)= 20.821010
-     gamma(00000125)= 20.821010
+     beta (00000125)= 20.868290
+     gamma(00000125)= 20.868290
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1204,17 +1303,17 @@
      Lanczos iteration:    126   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000126)=  0.000000
-     beta (00000126)= 21.233667
-     gamma(00000126)= 21.233667
-     z1=       1  0.741219949446487E-01  0.000000000000000E+00
+     beta (00000126)= 21.408879
+     gamma(00000126)= 21.408879
+     z1=       1  0.754710853878473E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    127   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000127)=  0.000000
-     beta (00000127)= 21.011453
-     gamma(00000127)= 21.011453
+     beta (00000127)= 21.109232
+     gamma(00000127)= 21.109232
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1222,17 +1321,17 @@
      Lanczos iteration:    128   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000128)=  0.000000
-     beta (00000128)= 21.524487
-     gamma(00000128)= 21.524487
-     z1=       1 -0.723553046814883E-01  0.000000000000000E+00
+     beta (00000128)= 21.509275
+     gamma(00000128)= 21.509275
+     z1=       1 -0.740674279968581E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    129   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000129)=  0.000000
-     beta (00000129)= 20.951771
-     gamma(00000129)= 20.951771
+     beta (00000129)= 20.918359
+     gamma(00000129)= 20.918359
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1240,17 +1339,17 @@
      Lanczos iteration:    130   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000130)=  0.000000
-     beta (00000130)= 21.423167
-     gamma(00000130)= 21.423167
-     z1=       1  0.707631965556662E-01  0.000000000000000E+00
+     beta (00000130)= 21.302922
+     gamma(00000130)= 21.302922
+     z1=       1  0.727303538262365E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    131   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000131)=  0.000000
-     beta (00000131)= 20.751077
-     gamma(00000131)= 20.751077
+     beta (00000131)= 20.643698
+     gamma(00000131)= 20.643698
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1258,17 +1357,17 @@
      Lanczos iteration:    132   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000132)=  0.000000
-     beta (00000132)= 21.233168
-     gamma(00000132)= 21.233168
-     z1=       1 -0.691565434850596E-01  0.000000000000000E+00
+     beta (00000132)= 21.303673
+     gamma(00000132)= 21.303673
+     z1=       1 -0.704772115155526E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    133   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000133)=  0.000000
-     beta (00000133)= 20.739269
-     gamma(00000133)= 20.739269
+     beta (00000133)= 20.869615
+     gamma(00000133)= 20.869615
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1276,17 +1375,17 @@
      Lanczos iteration:    134   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000134)=  0.000000
-     beta (00000134)= 21.443726
-     gamma(00000134)= 21.443726
-     z1=       1  0.668846524248400E-01  0.000000000000000E+00
+     beta (00000134)= 21.445832
+     gamma(00000134)= 21.445832
+     z1=       1  0.685835942357339E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    135   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000135)=  0.000000
-     beta (00000135)= 21.017243
-     gamma(00000135)= 21.017243
+     beta (00000135)= 20.964268
+     gamma(00000135)= 20.964268
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1294,17 +1393,17 @@
      Lanczos iteration:    136   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000136)=  0.000000
-     beta (00000136)= 21.520334
-     gamma(00000136)= 21.520334
-     z1=       1 -0.653210596208832E-01  0.000000000000000E+00
+     beta (00000136)= 21.327136
+     gamma(00000136)= 21.327136
+     z1=       1 -0.674166881677045E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    137   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000137)=  0.000000
-     beta (00000137)= 20.745098
-     gamma(00000137)= 20.745098
+     beta (00000137)= 20.563349
+     gamma(00000137)= 20.563349
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1312,17 +1411,17 @@
      Lanczos iteration:    138   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000138)=  0.000000
-     beta (00000138)= 21.007538
-     gamma(00000138)= 21.007538
-     z1=       1  0.645050262044674E-01  0.000000000000000E+00
+     beta (00000138)= 20.931064
+     gamma(00000138)= 20.931064
+     z1=       1  0.662323186237141E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    139   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000139)=  0.000000
-     beta (00000139)= 20.532654
-     gamma(00000139)= 20.532654
+     beta (00000139)= 20.687463
+     gamma(00000139)= 20.687463
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1330,17 +1429,17 @@
      Lanczos iteration:    140   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000140)=  0.000000
-     beta (00000140)= 21.206274
-     gamma(00000140)= 21.206274
-     z1=       1 -0.624560163475058E-01  0.000000000000000E+00
+     beta (00000140)= 21.494331
+     gamma(00000140)= 21.494331
+     z1=       1 -0.637460472804155E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    141   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000141)=  0.000000
-     beta (00000141)= 20.883113
-     gamma(00000141)= 20.883113
+     beta (00000141)= 20.965927
+     gamma(00000141)= 20.965927
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1348,17 +1447,17 @@
      Lanczos iteration:    142   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000142)=  0.000000
-     beta (00000142)= 21.665027
-     gamma(00000142)= 21.665027
-     z1=       1  0.602019112678234E-01  0.000000000000000E+00
+     beta (00000142)= 21.575198
+     gamma(00000142)= 21.575198
+     z1=       1  0.619458958463627E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    143   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000143)=  0.000000
-     beta (00000143)= 20.871028
-     gamma(00000143)= 20.871028
+     beta (00000143)= 20.779467
+     gamma(00000143)= 20.779467
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1366,17 +1465,17 @@
      Lanczos iteration:    144   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000144)=  0.000000
-     beta (00000144)= 21.273662
-     gamma(00000144)= 21.273662
-     z1=       1 -0.590625073948356E-01  0.000000000000000E+00
+     beta (00000144)= 21.048339
+     gamma(00000144)= 21.048339
+     z1=       1 -0.611545991940587E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    145   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000145)=  0.000000
-     beta (00000145)= 20.527863
-     gamma(00000145)= 20.527863
+     beta (00000145)= 20.498853
+     gamma(00000145)= 20.498853
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1384,17 +1483,17 @@
      Lanczos iteration:    146   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000146)=  0.000000
-     beta (00000146)= 21.138690
-     gamma(00000146)= 21.138690
-     z1=       1  0.573558276764360E-01  0.000000000000000E+00
+     beta (00000146)= 21.231449
+     gamma(00000146)= 21.231449
+     z1=       1  0.590444440661831E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    147   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000147)=  0.000000
-     beta (00000147)= 20.769244
-     gamma(00000147)= 20.769244
+     beta (00000147)= 20.825356
+     gamma(00000147)= 20.825356
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1402,17 +1501,17 @@
      Lanczos iteration:    148   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000148)=  0.000000
-     beta (00000148)= 21.359323
-     gamma(00000148)= 21.359323
-     z1=       1 -0.557713006336209E-01  0.000000000000000E+00
+     beta (00000148)= 21.404596
+     gamma(00000148)= 21.404596
+     z1=       1 -0.574466143204054E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    149   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000149)=  0.000000
-     beta (00000149)= 20.922802
-     gamma(00000149)= 20.922802
+     beta (00000149)= 20.888491
+     gamma(00000149)= 20.888491
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1420,17 +1519,17 @@
      Lanczos iteration:    150   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000150)=  0.000000
-     beta (00000150)= 21.387106
-     gamma(00000150)= 21.387106
-     z1=       1  0.545605317741955E-01  0.000000000000000E+00
+     beta (00000150)= 21.204033
+     gamma(00000150)= 21.204033
+     z1=       1  0.565917386112655E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    151   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000151)=  0.000000
-     beta (00000151)= 20.669848
-     gamma(00000151)= 20.669848
+     beta (00000151)= 20.644597
+     gamma(00000151)= 20.644597
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1438,17 +1537,17 @@
      Lanczos iteration:    152   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000152)=  0.000000
-     beta (00000152)= 21.216733
-     gamma(00000152)= 21.216733
-     z1=       1 -0.531541728324149E-01  0.000000000000000E+00
+     beta (00000152)= 21.209548
+     gamma(00000152)= 21.209548
+     z1=       1 -0.550843263409118E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    153   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000153)=  0.000000
-     beta (00000153)= 20.679218
-     gamma(00000153)= 20.679218
+     beta (00000153)= 20.654035
+     gamma(00000153)= 20.654035
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1456,17 +1555,17 @@
      Lanczos iteration:    154   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000154)=  0.000000
-     beta (00000154)= 21.212730
-     gamma(00000154)= 21.212730
-     z1=       1  0.518173150019765E-01  0.000000000000000E+00
+     beta (00000154)= 21.326407
+     gamma(00000154)= 21.326407
+     z1=       1  0.533476467265381E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    155   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000155)=  0.000000
-     beta (00000155)= 20.860322
-     gamma(00000155)= 20.860322
+     beta (00000155)= 20.888787
+     gamma(00000155)= 20.888787
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1474,17 +1573,17 @@
      Lanczos iteration:    156   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000156)=  0.000000
-     beta (00000156)= 21.319250
-     gamma(00000156)= 21.319250
-     z1=       1 -0.507018723408783E-01  0.000000000000000E+00
+     beta (00000156)= 21.303477
+     gamma(00000156)= 21.303477
+     z1=       1 -0.523091910537695E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    157   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000157)=  0.000000
-     beta (00000157)= 20.884973
-     gamma(00000157)= 20.884973
+     beta (00000157)= 20.946970
+     gamma(00000157)= 20.946970
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1492,17 +1591,17 @@
      Lanczos iteration:    158   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000158)=  0.000000
-     beta (00000158)= 21.249033
-     gamma(00000158)= 21.249033
-     z1=       1  0.498331952638097E-01  0.000000000000000E+00
+     beta (00000158)= 21.165292
+     gamma(00000158)= 21.165292
+     z1=       1  0.517696174272673E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    159   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000159)=  0.000000
-     beta (00000159)= 20.807788
-     gamma(00000159)= 20.807788
+     beta (00000159)= 20.930717
+     gamma(00000159)= 20.930717
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1510,17 +1609,17 @@
      Lanczos iteration:    160   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000160)=  0.000000
-     beta (00000160)= 21.398552
-     gamma(00000160)= 21.398552
-     z1=       1 -0.484574167870213E-01  0.000000000000000E+00
+     beta (00000160)= 21.547797
+     gamma(00000160)= 21.547797
+     z1=       1 -0.502870532177806E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    161   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000161)=  0.000000
-     beta (00000161)= 21.070958
-     gamma(00000161)= 21.070958
+     beta (00000161)= 20.974617
+     gamma(00000161)= 20.974617
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1528,17 +1627,17 @@
      Lanczos iteration:    162   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000162)=  0.000000
-     beta (00000162)= 21.297625
-     gamma(00000162)= 21.297625
-     z1=       1  0.479416925613946E-01  0.000000000000000E+00
+     beta (00000162)= 21.248899
+     gamma(00000162)= 21.248899
+     z1=       1  0.496379440135527E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    163   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000163)=  0.000000
-     beta (00000163)= 20.937505
-     gamma(00000163)= 20.937505
+     beta (00000163)= 20.950394
+     gamma(00000163)= 20.950394
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1546,17 +1645,17 @@
      Lanczos iteration:    164   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000164)=  0.000000
-     beta (00000164)= 21.352239
-     gamma(00000164)= 21.352239
-     z1=       1 -0.470104983703616E-01  0.000000000000000E+00
+     beta (00000164)= 21.290970
+     gamma(00000164)= 21.290970
+     z1=       1 -0.488439219750367E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    165   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000165)=  0.000000
-     beta (00000165)= 20.778037
-     gamma(00000165)= 20.778037
+     beta (00000165)= 20.705767
+     gamma(00000165)= 20.705767
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1564,17 +1663,17 @@
      Lanczos iteration:    166   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000166)=  0.000000
-     beta (00000166)= 21.293243
-     gamma(00000166)= 21.293243
-     z1=       1  0.458730426675739E-01  0.000000000000000E+00
+     beta (00000166)= 21.258896
+     gamma(00000166)= 21.258896
+     z1=       1  0.475730679878381E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    167   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000167)=  0.000000
-     beta (00000167)= 20.690278
-     gamma(00000167)= 20.690278
+     beta (00000167)= 20.649072
+     gamma(00000167)= 20.649072
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1582,17 +1681,17 @@
      Lanczos iteration:    168   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000168)=  0.000000
-     beta (00000168)= 21.239779
-     gamma(00000168)= 21.239779
-     z1=       1 -0.446862468430086E-01  0.000000000000000E+00
+     beta (00000168)= 21.156554
+     gamma(00000168)= 21.156554
+     z1=       1 -0.464319345490034E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    169   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000169)=  0.000000
-     beta (00000169)= 20.615299
-     gamma(00000169)= 20.615299
+     beta (00000169)= 20.636233
+     gamma(00000169)= 20.636233
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1600,17 +1699,17 @@
      Lanczos iteration:    170   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000170)=  0.000000
-     beta (00000170)= 21.224662
-     gamma(00000170)= 21.224662
-     z1=       1  0.434032994642453E-01  0.000000000000000E+00
+     beta (00000170)= 21.185764
+     gamma(00000170)= 21.185764
+     z1=       1  0.452275513196073E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    171   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000171)=  0.000000
-     beta (00000171)= 20.598710
-     gamma(00000171)= 20.598710
+     beta (00000171)= 20.569992
+     gamma(00000171)= 20.569992
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1618,17 +1717,17 @@
      Lanczos iteration:    172   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000172)=  0.000000
-     beta (00000172)= 21.162388
-     gamma(00000172)= 21.162388
-     z1=       1 -0.422472162409044E-01  0.000000000000000E+00
+     beta (00000172)= 21.147099
+     gamma(00000172)= 21.147099
+     z1=       1 -0.439932859154825E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    173   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000173)=  0.000000
-     beta (00000173)= 20.715524
-     gamma(00000173)= 20.715524
+     beta (00000173)= 20.744684
+     gamma(00000173)= 20.744684
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1636,17 +1735,17 @@
      Lanczos iteration:    174   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000174)=  0.000000
-     beta (00000174)= 21.172832
-     gamma(00000174)= 21.172832
-     z1=       1  0.413347279801974E-01  0.000000000000000E+00
+     beta (00000174)= 21.128936
+     gamma(00000174)= 21.128936
+     z1=       1  0.431932218125441E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    175   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000175)=  0.000000
-     beta (00000175)= 20.719731
-     gamma(00000175)= 20.719731
+     beta (00000175)= 20.831374
+     gamma(00000175)= 20.831374
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1654,17 +1753,17 @@
      Lanczos iteration:    176   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000176)=  0.000000
-     beta (00000176)= 21.266460
-     gamma(00000176)= 21.266460
-     z1=       1 -0.402720727544813E-01  0.000000000000000E+00
+     beta (00000176)= 21.350677
+     gamma(00000176)= 21.350677
+     z1=       1 -0.421426513207544E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    177   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000177)=  0.000000
-     beta (00000177)= 20.864618
-     gamma(00000177)= 20.864618
+     beta (00000177)= 20.876265
+     gamma(00000177)= 20.876265
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1672,17 +1771,17 @@
      Lanczos iteration:    178   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000178)=  0.000000
-     beta (00000178)= 21.154323
-     gamma(00000178)= 21.154323
-     z1=       1  0.397205540935211E-01  0.000000000000000E+00
+     beta (00000178)= 21.125768
+     gamma(00000178)= 21.125768
+     z1=       1  0.416449319829151E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    179   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000179)=  0.000000
-     beta (00000179)= 20.900641
-     gamma(00000179)= 20.900641
+     beta (00000179)= 20.975373
+     gamma(00000179)= 20.975373
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1690,17 +1789,17 @@
      Lanczos iteration:    180   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000180)=  0.000000
-     beta (00000180)= 21.371635
-     gamma(00000180)= 21.371635
-     z1=       1 -0.388451810879361E-01  0.000000000000000E+00
+     beta (00000180)= 21.455497
+     gamma(00000180)= 21.455497
+     z1=       1 -0.407130161238790E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    181   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000181)=  0.000000
-     beta (00000181)= 21.130007
-     gamma(00000181)= 21.130007
+     beta (00000181)= 21.107186
+     gamma(00000181)= 21.107186
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1708,17 +1807,17 @@
      Lanczos iteration:    182   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000182)=  0.000000
-     beta (00000182)= 21.271197
-     gamma(00000182)= 21.271197
-     z1=       1  0.385873419295910E-01  0.000000000000000E+00
+     beta (00000182)= 21.045437
+     gamma(00000182)= 21.045437
+     z1=       1  0.408324721418622E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    183   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000183)=  0.000000
-     beta (00000183)= 20.749995
-     gamma(00000183)= 20.749995
+     beta (00000183)= 20.710639
+     gamma(00000183)= 20.710639
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1726,17 +1825,17 @@
      Lanczos iteration:    184   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000184)=  0.000000
-     beta (00000184)= 21.170108
-     gamma(00000184)= 21.170108
-     z1=       1 -0.378215912726202E-01  0.000000000000000E+00
+     beta (00000184)= 21.232643
+     gamma(00000184)= 21.232643
+     z1=       1 -0.398286053777612E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    185   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000185)=  0.000000
-     beta (00000185)= 20.945845
-     gamma(00000185)= 20.945845
+     beta (00000185)= 21.002782
+     gamma(00000185)= 21.002782
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1744,17 +1843,17 @@
      Lanczos iteration:    186   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000186)=  0.000000
-     beta (00000186)= 21.362933
-     gamma(00000186)= 21.362933
-     z1=       1  0.370831660152730E-01  0.000000000000000E+00
+     beta (00000186)= 21.409096
+     gamma(00000186)= 21.409096
+     z1=       1  0.390727160015367E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    187   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000187)=  0.000000
-     beta (00000187)= 21.162572
-     gamma(00000187)= 21.162572
+     beta (00000187)= 21.094491
+     gamma(00000187)= 21.094491
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1762,17 +1861,17 @@
      Lanczos iteration:    188   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000188)=  0.000000
-     beta (00000188)= 21.283415
-     gamma(00000188)= 21.283415
-     z1=       1 -0.368726137301466E-01  0.000000000000000E+00
+     beta (00000188)= 21.112690
+     gamma(00000188)= 21.112690
+     z1=       1 -0.390390351372208E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    189   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000189)=  0.000000
-     beta (00000189)= 20.662155
-     gamma(00000189)= 20.662155
+     beta (00000189)= 20.660246
+     gamma(00000189)= 20.660246
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1780,17 +1879,17 @@
      Lanczos iteration:    190   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000190)=  0.000000
-     beta (00000190)= 21.232247
-     gamma(00000190)= 21.232247
-     z1=       1  0.358825727475980E-01  0.000000000000000E+00
+     beta (00000190)= 21.344247
+     gamma(00000190)= 21.344247
+     z1=       1  0.377879826225471E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    191   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000191)=  0.000000
-     beta (00000191)= 21.001542
-     gamma(00000191)= 21.001542
+     beta (00000191)= 21.111604
+     gamma(00000191)= 21.111604
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1798,17 +1897,17 @@
      Lanczos iteration:    192   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000192)=  0.000000
-     beta (00000192)= 21.552147
-     gamma(00000192)= 21.552147
-     z1=       1 -0.349658592141115E-01  0.000000000000000E+00
+     beta (00000192)= 21.592512
+     gamma(00000192)= 21.592512
+     z1=       1 -0.369463700699040E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    193   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000193)=  0.000000
-     beta (00000193)= 20.958889
-     gamma(00000193)= 20.958889
+     beta (00000193)= 20.899877
+     gamma(00000193)= 20.899877
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1816,17 +1915,17 @@
      Lanczos iteration:    194   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000194)=  0.000000
-     beta (00000194)= 21.153303
-     gamma(00000194)= 21.153303
-     z1=       1  0.346444972471008E-01  0.000000000000000E+00
+     beta (00000194)= 21.146419
+     gamma(00000194)= 21.146419
+     z1=       1  0.365156205602209E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    195   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000195)=  0.000000
-     beta (00000195)= 20.781899
-     gamma(00000195)= 20.781899
+     beta (00000195)= 20.934717
+     gamma(00000195)= 20.934717
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1834,17 +1933,17 @@
      Lanczos iteration:    196   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000196)=  0.000000
-     beta (00000196)= 21.381486
-     gamma(00000196)= 21.381486
-     z1=       1 -0.336729843840368E-01  0.000000000000000E+00
+     beta (00000196)= 21.525209
+     gamma(00000196)= 21.525209
+     z1=       1 -0.355139013260399E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    197   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000197)=  0.000000
-     beta (00000197)= 20.965219
-     gamma(00000197)= 20.965219
+     beta (00000197)= 20.967242
+     gamma(00000197)= 20.967242
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1852,17 +1951,17 @@
      Lanczos iteration:    198   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000198)=  0.000000
-     beta (00000198)= 21.324141
-     gamma(00000198)= 21.324141
-     z1=       1  0.331062100987738E-01  0.000000000000000E+00
+     beta (00000198)= 21.228475
+     gamma(00000198)= 21.228475
+     z1=       1  0.350768746063985E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
 
      Lanczos iteration:    199   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000199)=  0.000000
-     beta (00000199)= 20.808681
-     gamma(00000199)= 20.808681
+     beta (00000199)= 20.660511
+     gamma(00000199)= 20.660511
      z1=       1  0.000000000000000E+00  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
@@ -1870,57 +1969,57 @@
      Lanczos iteration:    200   Pol:1
      lr_apply_liouvillian: applying interaction: Tamm-Dancoff
      alpha(00000200)=  0.000000
-     beta (00000200)= 21.131067
-     gamma(00000200)= 21.131067
-     z1=       1 -0.326011259729298E-01  0.000000000000000E+00
+     beta (00000200)= 21.054448
+     gamma(00000200)= 21.054448
+     z1=       1 -0.344205730463005E-01  0.000000000000000E+00
      z1=       2  0.000000000000000E+00  0.000000000000000E+00
      z1=       3  0.000000000000000E+00  0.000000000000000E+00
      End of Lanczos iterations
      Finished linear response calculation...
  
-     lr_main      :    151.05s CPU    181.73s WALL (       1 calls)
-     read_wf      :      0.29s CPU      0.34s WALL (       1 calls)
-     lr_solve_e   :      0.04s CPU      0.05s WALL (       1 calls)
-     one_step     :    150.15s CPU    180.47s WALL (     200 calls)
+     lr_main      :     31.78s CPU     44.23s WALL (       1 calls)
+     read_wf      :      0.29s CPU      0.42s WALL (       1 calls)
+     lr_solve_e   :      0.28s CPU      0.50s WALL (       1 calls)
+     one_step     :     30.62s CPU     42.53s WALL (     200 calls)
  
-     lr_apply     :    149.69s CPU    179.95s WALL (     200 calls)
-     lr_apply_int :    149.69s CPU    179.95s WALL (     200 calls)
+     lr_apply     :     29.43s CPU     41.30s WALL (     200 calls)
+     lr_apply_int :     29.43s CPU     41.30s WALL (     200 calls)
  
-     h_psi        :     59.58s CPU     64.55s WALL (     200 calls)
-     lr_calc_dens :     55.85s CPU     67.18s WALL (     200 calls)
-     lr_dv_setup  :      0.23s CPU      0.38s WALL (       1 calls)
-     dv_of_drho   :     18.55s CPU     28.05s WALL (     200 calls)
-     interaction  :     14.34s CPU     18.01s WALL (     200 calls)
-     lr_dot       :      0.13s CPU      0.15s WALL (     500 calls)
-     ortho        :      0.07s CPU      0.16s WALL (     201 calls)
+     h_psi        :      3.82s CPU      5.04s WALL (     200 calls)
+     lr_calc_dens :      8.00s CPU      8.36s WALL (     200 calls)
+     lr_dv_setup  :      0.02s CPU      0.03s WALL (       1 calls)
+     dv_of_drho   :     16.55s CPU     26.54s WALL (     200 calls)
+     interaction  :      0.35s CPU      0.54s WALL (     200 calls)
+     lr_dot       :      0.49s CPU      0.50s WALL (     500 calls)
+     ortho        :      0.42s CPU      0.70s WALL (     201 calls)
  
-     lr_exx_int   :     47.62s CPU     57.25s WALL (     600 calls)
+     lr_exx_int   :      7.50s CPU      7.84s WALL (     600 calls)
  
      US routines
-     lr_sm1_psi   :      0.03s CPU      0.04s WALL (     200 calls)
+     lr_sm1_psi   :      0.00s CPU      0.00s WALL (     200 calls)
  
      General routines
-     calbec       :      0.24s CPU      0.25s WALL (     201 calls)
-     fft          :      7.18s CPU      7.34s WALL (    2010 calls)
-     fftc         :     40.00s CPU     40.18s WALL (   12018 calls)
-     fftw         :     14.38s CPU     14.44s WALL (    4206 calls)
-     fftcw        :     16.34s CPU     16.51s WALL (    4209 calls)
-     interpolate  :      0.15s CPU      0.17s WALL (     200 calls)
-     davcio       :      0.00s CPU      0.01s WALL (      16 calls)
+     calbec       :      0.01s CPU      0.01s WALL (     201 calls)
+     fft          :      5.81s CPU      6.11s WALL (    2010 calls)
+     fftc         :      1.77s CPU      1.87s WALL (   12018 calls)
+     fftw         :      0.36s CPU      0.44s WALL (    3406 calls)
+     fftcw        :      0.50s CPU      0.60s WALL (    4209 calls)
+     interpolate  :      0.00s CPU      0.01s WALL (     200 calls)
+     davcio       :      0.01s CPU      0.01s WALL (      16 calls)
  
      Parallel routines
  
      EXX routines
      exx_grid     :      0.00s CPU      0.00s WALL (       1 calls)
-     exxinit      :      0.03s CPU      0.05s WALL (       1 calls)
-     vexx         :     53.65s CPU     58.57s WALL (     200 calls)
-     exxenergy    :      0.22s CPU      0.24s WALL (       1 calls)
+     exxinit      :      0.04s CPU      0.13s WALL (       1 calls)
+     vexx         :      3.31s CPU      4.45s WALL (     200 calls)
+     exxenergy    :      0.22s CPU      0.23s WALL (       1 calls)
  
  
-     turboTDDFT   :   2m31.05s CPU   3m 1.74s WALL
+     turboTDDFT   :     31.79s CPU     44.25s WALL
 
  
-   This run was terminated on:  15:19:46  22Oct2026            
+   This run was terminated on:  14:54:40  10Nov2026            
 
 =------------------------------------------------------------------------------=
    JOB DONE.

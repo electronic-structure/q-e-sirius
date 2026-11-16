@@ -87,7 +87,8 @@ SUBROUTINE lr_readin
                         & scissor, pseudo_hermitian, d0psi_rs, lshift_d0psi, &
                         & q1, q2, q3, approximation, calculator, alpha_mix, start, &
                         & end, increment, epsil, units, ethr_nscf, force_real_gamma, &
-                        & force_real_alpha, force_zero_alpha, lan_precondition, ace 
+                        & force_real_alpha, force_zero_alpha, lan_precondition, ace, &
+                        & exx_type, exx_batch_size
   NAMELIST / lr_post /    omeg, beta_gamma_z_prefix, w_T_npol, plot_type, epsil, itermax_int,sum_rule
   namelist / lr_dav /     num_eign, num_init, num_basis_max, residue_conv_thr, precondition, ace,    &
                         & reference,single_pole, sort_contr, diag_of_h, close_pre,        &
@@ -139,6 +140,8 @@ SUBROUTINE lr_readin
      scissor = 0.d0
      ethr_nscf = 1.D-11
      ace=.false.
+     exx_type = 'band_pairs'
+     exx_batch_size = 16 
      !
      ! For EELS
      !
@@ -535,6 +538,7 @@ CONTAINS
     USE xc_lib,           ONLY : xclib_dft_is
     USE ldaU,             ONLY : lda_plus_u
     USE noncollin_module, ONLY : domag
+    USE exx_base,         ONLY : exx_bgrp_type, batchsize, EXX_BGRP_BANDS, EXX_BGRP_PAIRS
 
     IMPLICIT NONE
     !
@@ -557,6 +561,26 @@ CONTAINS
         use_ace = .false.
         WRITE(stdout, '(5x,"Not using ACE in TDDFPT calculation. " )') 
       END IF
+      !
+      IF (xclib_dft_is('hybrid')) WRITE(stdout, &
+         '(/,5x,"Exact exchange band parallelism type set to ",A/)' ) trim(adjustl(exx_type))
+      !
+      IF ( exx_batch_size > 0 ) batchsize = exx_batch_size
+      !
+      select case(trim(adjustl(exx_type)))
+      case("bands")
+        exx_bgrp_type = EXX_BGRP_BANDS
+#if defined(__CUDA)
+        write(stdout, '(/,5x,"Using batched version of vexx, batching size: ",I4/)' ) batchsize 
+#else
+        write(stdout, '(/,5x,"Using sequential (non-batched) version of vexx"/)' ) 
+        if ( batchsize > 0 ) write(stdout, '(/,5x,"WARNING: user given exx_batch_size is ignored for CPU execution"/)' ) 
+#endif
+      case("band_pairs")
+        exx_bgrp_type = EXX_BGRP_PAIRS
+      case default
+        CALL errore('input','Invalid value of exx_type (values: bands, band_pairs)',2)
+      end select
       !
     END IF
     !

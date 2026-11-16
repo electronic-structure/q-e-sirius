@@ -226,8 +226,10 @@ CONTAINS
   !-----------------------------------------------------------------------
   SUBROUTINE deallocate_tab_vloc ( )
   !-----------------------------------------------------------------------
-    !$acc exit data delete(tab_vloc)
-    DEALLOCATE (tab_vloc)
+    IF ( ALLOCATED(tab_vloc) ) THEN
+       !$acc exit data delete(tab_vloc)
+       DEALLOCATE (tab_vloc)
+    END IF
     nqx = 0
     qmax = 0.0_dp
   END SUBROUTINE deallocate_tab_vloc

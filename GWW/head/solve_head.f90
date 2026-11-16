@@ -37,7 +37,7 @@ subroutine solve_head
 !  USE symme, ONLY: s
   USE mp_pools,             ONLY : inter_pool_comm, intra_pool_comm
   USE symme, only : crys_to_cart, symmatrix
-  USE mp_wave, ONLY : mergewf,splitwf
+  USE mp_wave, ONLY : mergewf
   USE fft_base,             ONLY : dfftp, dffts
   USE fft_interfaces,       ONLY : fwfft, invfft, fft_interpolate
   USE buffers,              ONLY : get_buffer

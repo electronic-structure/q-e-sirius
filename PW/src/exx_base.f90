@@ -117,12 +117,15 @@ MODULE exx_base
   ! ... band parallelism types
   enum, bind(c)
     enumerator :: EXX_BGRP_TYP   = 0 ! unset value
-    enumerator :: EXX_BGRP_BANDS = 1 ! distribute bands over band groups
-    enumerator :: EXX_BGRP_PAIRS = 2 ! distribute band pairs over band groups 
+    enumerator :: EXX_BGRP_PAIRS = 1 ! distribute band pairs over band groups 
                                      ! (see Barnes et al., Comput. Phys. Comm., Volume 214, 2017, Pages 52-58)
+    enumerator :: EXX_BGRP_BANDS = 2 ! distribute bands over band groups, FFT batching on GPU, one FFT at time on CPU
   end enum
   !! allowed values for exx_bgrp_type
   integer(kind(EXX_BGRP_TYP)) :: exx_bgrp_type ! (initialized in read_namelist)
+  !
+  integer :: batchsize = 16
+  !! FFT batching size in EXX
   !
   TYPE(fft_type_descriptor) :: dfftt 
   !

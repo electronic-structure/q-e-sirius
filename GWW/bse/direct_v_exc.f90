@@ -8,7 +8,6 @@ USE gvect,                 ONLY : ig_l2g
 USE io_global, ONLY : stdout, ionode, ionode_id
 USE mp_world, ONLY : mpime, nproc
 USE mp_pools, ONLY: intra_pool_comm
-USE mp_wave, ONLY : mergewf,splitwf
 USE io_global, ONLY : stdout,ionode
 USE lsda_mod, ONLY :nspin
 USE gvect, ONLY : gstart

@@ -1560,7 +1560,7 @@ MODULE pw_restart_new
       USE lsda_mod,             ONLY : nspin, isk
       USE klist,                ONLY : nkstot, nks, ngk, igk_k
       USE wvfct,                ONLY : npwx, nbnd
-      USE gvect,                ONLY : ig_l2g
+      USE gvect,                ONLY : ig_l2g, mill
       USE mp_bands,             ONLY : root_bgrp, intra_bgrp_comm
       USE mp_pools,             ONLY : me_pool, root_pool, intra_pool_comm
       USE mp,                   ONLY : mp_sum, mp_max
@@ -1670,9 +1670,13 @@ MODULE pw_restart_new
          !
       ENDIF
       !
-      ! ... Miller indices are read from file (but not used)
+      ! ... mill_k(:,i) contains Miller indices for (k+G)_i
+      ! ... they are used to reorder and distribute wavefunctions
       !
-      ALLOCATE( mill_k ( 3,npwx ) )
+      ALLOCATE( mill_k ( 3,ngk(ik) ) )
+      DO ig = 1, ngk (ik)
+         mill_k(:,ig) = mill(:,igk_k(ig,ik))
+      END DO
       !
       arr = (0.0_DP, 0.0_DP)
       !

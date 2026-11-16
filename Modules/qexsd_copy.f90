@@ -159,7 +159,7 @@ CONTAINS
     INTEGER, INTENT(inout),  ALLOCATABLE :: ityp(:)
     REAL(dp), INTENT(inout), ALLOCATABLE :: tau(:,:)
     !
-    CHARACTER(LEN=3), ALLOCATABLE :: symbols(:)
+    CHARACTER(LEN=6), ALLOCATABLE :: symbols(:)
     INTEGER :: iat, idx, isp
     !
     nat = atomic_structure%nat 

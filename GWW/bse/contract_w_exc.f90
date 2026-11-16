@@ -49,7 +49,6 @@ USE wavefunctions, ONLY :  psic
 USE io_global, ONLY : stdout, ionode, ionode_id
 USE mp_world, ONLY : mpime, nproc
 USE mp_pools, ONLY: intra_pool_comm
-USE mp_wave, ONLY : mergewf,splitwf
 USE polarization
 USE lsda_mod, ONLY :nspin
 USE io_global, ONLY : stdout,ionode
@@ -164,10 +163,6 @@ else
     call reorderwfp_col(z%numw_prod,npw,fc%npwt,p_basis(1,1),p_basis_t(1,1),npw,fc%npwt, &
            & ig_l2g,fc%ig_l2gt,fc%ngmt_g,mpime, nproc,intra_pool_comm )
 
-!   do ii=1,z%numw_prod
-!      call mergewf(p_basis(:,ii),evc_g,a_in%npw,ig_l2g,mpime,nproc,ionode_id,intra_pool_comm)
-!      call splitwf(p_basis_t(:,ii),evc_g,fc%npwt,fc%ig_l2gt,mpime,nproc,ionode_id,intra_pool_comm)
-!   enddo
 endif
 
 deallocate(evc_g)
@@ -341,7 +336,6 @@ USE wavefunctions, ONLY :  psic
 USE io_global, ONLY : stdout, ionode, ionode_id
 USE mp_world, ONLY : mpime, nproc
 USE mp_pools, ONLY: intra_pool_comm
-USE mp_wave, ONLY : mergewf,splitwf
 USE polarization
 USE lsda_mod, ONLY :nspin
 USE io_global, ONLY : stdout,ionode
@@ -475,7 +469,6 @@ USE gvect,                 ONLY : ig_l2g
 USE io_global, ONLY : stdout, ionode, ionode_id
 USE mp_world, ONLY : mpime, nproc
 USE mp_pools, ONLY: intra_pool_comm
-USE mp_wave, ONLY : mergewf,splitwf
 USE io_global, ONLY : stdout,ionode
 USE lsda_mod, ONLY :nspin
 USE gvect, ONLY : gstart
@@ -602,7 +595,6 @@ USE gvect,                 ONLY : ig_l2g
 USE io_global, ONLY : stdout, ionode, ionode_id
 USE mp_world, ONLY : mpime, nproc
 USE mp_pools, ONLY: intra_pool_comm
-USE mp_wave, ONLY : mergewf,splitwf
 USE io_global, ONLY : stdout,ionode
 USE lsda_mod, ONLY :nspin
 USE gvect, ONLY : gstart

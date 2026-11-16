@@ -23,7 +23,6 @@
    USE mp_pools, ONLY : intra_pool_comm
    USE mp_world, ONLY : mpime,nproc
    USE gvecs,              ONLY : doublegrid
-   USE mp_wave, ONLY : mergewf,splitwf
    USE fft_base,             ONLY : dfftp, dffts
    USE fft_interfaces,       ONLY : fwfft, invfft
   

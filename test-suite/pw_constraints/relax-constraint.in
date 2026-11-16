@@ -1,0 +1,31 @@
+&CONTROL
+  calculation  = 'relax'
+  prefix       = 'h2o2'
+  tprnfor      = .true.
+/
+&SYSTEM
+  ibrav     = 1,
+  celldm(1) = 12.0,
+  nat       = 4,
+  ntyp      = 2,
+  ecutwfc   = 24.D0,
+  ecutrho   = 144.D0,
+/
+&ELECTRONS
+  conv_thr = 1.D-9
+/
+&IONS
+  ion_dynamics = 'damp'
+/
+ATOMIC_SPECIES
+O  16.00  O_US.van
+H   1.00  H_US.van
+ATOMIC_POSITIONS {angstrom}
+O  2.43756327  2.81683945  2.96824265
+O  3.91256327  2.81683945  2.96824265
+H  2.26912453  3.77210297  2.96824265
+H  4.08100200  3.29447121  3.79552512
+K_POINTS {Gamma}
+CONSTRAINTS
+1
+'torsional_angle'  3 1 2 4  -60.0000

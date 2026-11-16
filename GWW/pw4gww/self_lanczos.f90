@@ -30,7 +30,6 @@ subroutine self_basis_lanczos(n_set,nstates,numpw, nsteps,ispin,lfull,nfull)
    USE mp_pools, ONLY : intra_pool_comm
    USE gvecs,              ONLY : doublegrid
    USE fft_custom_gwl
-   USE mp_wave, ONLY : mergewf,splitwf
    USE fft_base,             ONLY : dfftp, dffts
    USE fft_interfaces,       ONLY : fwfft, invfft
   
@@ -238,10 +237,6 @@ subroutine self_basis_lanczos(n_set,nstates,numpw, nsteps,ispin,lfull,nfull)
   else
      call reorderwfp_col(num_nbnds,npw,fc%npwt,evc(1,1),evc_t(1,1), npw,fc%npwt, &
            & ig_l2g,fc%ig_l2gt,fc%ngmt_g,mpime, nproc,intra_pool_comm )
-     !do iv=1,num_nbnds
-     !   call mergewf(evc(:,iv),evc_g,npw,ig_l2g,mpime,nproc,ionode_id,intra_pool_comm)
-     !   call splitwf(evc_t(:,iv),evc_g,fc%npwt,fc%ig_l2gt,mpime,nproc,ionode_id,intra_pool_comm)
-     !enddo
   endif
 
 
@@ -513,10 +508,6 @@ subroutine self_basis_lanczos(n_set,nstates,numpw, nsteps,ispin,lfull,nfull)
         else
            call reorderwfp_col(nstates,fc%npwt,npw,wp_g_t(1,1),wp_g(1,1),fc%npwt,npw, &
                 & fc%ig_l2gt,ig_l2g,fc%ngmt_g,mpime, nproc,intra_pool_comm )
-           !do ii=1,nstates
-           !   call mergewf(wp_g_t(:,ii),evc_g,fc%npwt,fc%ig_l2gt,mpime,nproc,ionode_id,intra_pool_comm)
-           !   call splitwf(wp_g(:,ii),evc_g,npw,ig_l2g,mpime,nproc,ionode_id,intra_pool_comm)
-           !enddo
         endif
 
         if(l_verbose) write(stdout,*) 'do davcio'
@@ -1183,7 +1174,6 @@ subroutine self_basis_lanczos_real(n_set,nstates,numpw, nsteps,ispin)
    USE gvecs,              ONLY : doublegrid
    !USE exx, ONLY : exx_divergence_new, yukawa
    USE fft_custom_gwl
-   USE mp_wave, ONLY : mergewf,splitwf
    USE fft_base,             ONLY : dfftp, dffts
    USE fft_interfaces,       ONLY : fwfft, invfft
   
@@ -1340,10 +1330,6 @@ subroutine self_basis_lanczos_real(n_set,nstates,numpw, nsteps,ispin)
      call reorderwfp (numpw,npw, fc%npwt,p_basis(:,:),p_basis_t(:,:), &
           &npw,fc%npwt, ig_l2g,fc%ig_l2gt, fc%ngmt_g , mpime, nproc,ionode_id, intra_pool_comm )
 
-     !do ii=1,numpw
-     !   call mergewf(p_basis(:,ii),evc_g,npw,ig_l2g,mpime,nproc,ionode_id,intra_pool_comm)
-     !   call splitwf(p_basis_t(:,ii),evc_g,fc%npwt,fc%ig_l2gt,mpime,nproc,ionode_id,intra_pool_comm)
-     !enddo
      !trasform to real space
      allocate(p_basis_r(fc%nrxxt,numpw))
      do ii=1,numpw,2
@@ -1371,10 +1357,6 @@ subroutine self_basis_lanczos_real(n_set,nstates,numpw, nsteps,ispin)
      call reorderwfp (num_nbnds,npw, fc%npwt,evc(:,:),evc_t(:,:), &
           &npw,fc%npwt, ig_l2g,fc%ig_l2gt, fc%ngmt_g , mpime, nproc,ionode_id, intra_pool_comm )
 
-     !do iv=1,num_nbnds
-     !   call mergewf(evc(:,iv),evc_g,npw,ig_l2g,mpime,nproc,ionode_id,intra_pool_comm)
-     !   call splitwf(evc_t(:,iv),evc_g,fc%npwt,fc%ig_l2gt,mpime,nproc,ionode_id,intra_pool_comm)
-     !enddo
   endif
 
 
@@ -1623,12 +1605,6 @@ subroutine self_basis_lanczos_real(n_set,nstates,numpw, nsteps,ispin)
            call reorderwfp (nstates,fc%npwt, npw,wp_g_t2,wp_g, &
                 &fc%npwt,npw, fc%ig_l2gt,ig_l2g, fc%ngmt_g , mpime, nproc,ionode_id, intra_pool_comm )
 
-          ! call mergewfv(min(ii+nproc-1,nstates)-ii+1,fc%ngmt_g,wp_g_t2,&
-          !      &evc_g,fc%npwt,fc%ig_l2gt,mpime,nproc,ionode_id,intra_pool_comm)
-          ! call splitwfv(min(ii+nproc-1,nstates)-ii+1,fc%ngmt_g,wp_g_t3,&
-          !      &evc_g,npw,ig_l2g,mpime,nproc,ionode_id,intra_pool_comm)
-                        
-
         endif
           
           
@@ -1665,222 +1641,6 @@ subroutine self_basis_lanczos_real(n_set,nstates,numpw, nsteps,ispin)
   return
 !NOT_TO_BE_INCLUDED_END
 end subroutine self_basis_lanczos_real
-
-
-
-
-      SUBROUTINE mergewfv ( nn,lda,pw, pwt, ngwl, ig_l2g, mpime, nproc, root, comm )
-
-! ... This subroutine merges the pieces of a wave functions (pw) splitted across 
-! ... processors into a total wave function (pwt) containing al the components
-! ... in a pre-defined order (the same as if only one processor is used)
-
-      USE kinds
-      USE parallel_include
-
-      IMPLICIT NONE
-
-      COMPLEX(DP), intent(in) :: PW(ngwl*nproc)
-      COMPLEX(DP), intent(out) :: PWT(lda*nproc)
-      INTEGER, intent(in) :: nn !number of wfcs
-      INTEGER, intent(in) :: lda!leading dimension of pwt
-      INTEGER, INTENT(IN) :: mpime     ! index of the calling processor ( starting from 0 )
-      INTEGER, INTENT(IN) :: nproc     ! number of processors
-      INTEGER, INTENT(IN) :: root      ! root processor ( the one that should receive the data )
-      INTEGER, INTENT(IN) :: comm    ! communicator
-      INTEGER, INTENT(IN) :: ig_l2g(ngwl)
-      INTEGER, INTENT(IN) :: ngwl
-
-      INTEGER, ALLOCATABLE :: ig_ip(:)
-      COMPLEX(DP), ALLOCATABLE :: pw_ip(:)
-
-      INTEGER :: ierr, i, ip, ngw_ip, ngw_lmax, itmp, igwx, gid, J
-
-#if defined __MPI
-      INTEGER :: istatus(MPI_STATUS_SIZE)
-#endif
-
-!
-! ... Subroutine Body
-!
-
-      igwx = MAXVAL( ig_l2g(1:ngwl) )
-
-#if defined __MPI
-
-      gid = comm
-
-! ... Get local and global wavefunction dimensions
-      CALL MPI_ALLREDUCE( ngwl, ngw_lmax, 1, MPI_INTEGER, MPI_MAX, gid, IERR )
-      CALL MPI_ALLREDUCE( igwx, itmp, 1, MPI_INTEGER, MPI_MAX, gid, IERR )
-      igwx = itmp
-
-#endif
-
-      IF( igwx > SIZE( pwt ) ) &
-        CALL errore(' mergewf ',' wrong size for pwt ',SIZE(pwt) )
-
-#if defined __MPI
-
-      DO ip = 1, nproc
-
-        IF( (ip-1) /= root ) THEN
-
-! ...     In turn each processors send to root the wave components and their indexes in the 
-! ...     global array
-          IF ( mpime == (ip-1) ) THEN
-            CALL MPI_SEND( ig_l2g, ngwl, MPI_INTEGER, ROOT, IP, gid, IERR )
-            CALL MPI_SEND( pw(1), ngwl*nn, MPI_DOUBLE_COMPLEX, ROOT, IP+NPROC, gid, IERR )
-          END IF
-          IF ( mpime == root) THEN
-            ALLOCATE(ig_ip(ngw_lmax))
-            ALLOCATE(pw_ip(ngw_lmax*nn))
-            CALL MPI_RECV( ig_ip, ngw_lmax, MPI_INTEGER, (ip-1), IP, gid, istatus, IERR )
-            CALL MPI_GET_COUNT( istatus, MPI_INTEGER, ngw_ip, ierr )
-            CALL MPI_RECV( pw_ip, ngw_lmax*nn, MPI_DOUBLE_COMPLEX, (ip-1), IP+NPROC, gid, istatus, IERR )
-           ! CALL MPI_GET_COUNT( istatus, MPI_DOUBLE_COMPLEX, ngw_ip, ierr )
-           ! ngw_ip=ngw_ip/nn
-            DO J=1,nn
-               DO I = 1, ngw_ip
-                  PWT(ig_ip(i)+lda*(J-1)) = pw_ip(i+(ngw_ip)*(J-1))
-               END DO
-            END DO
-            DEALLOCATE(ig_ip)
-            DEALLOCATE(pw_ip)
-          END IF
-
-        ELSE
-
-          IF(mpime == root) THEN
-             DO J=1,nn
-                DO I = 1, ngwl
-                   PWT(ig_l2g(i)+lda*(J-1)) = pw(i+ngwl*(J-1))
-                END DO
-            END DO
-          END IF
-
-        END IF
-
-        CALL MPI_BARRIER( gid, IERR )
-
-      END DO
-
-#else
-
-      do J=1,nn
-         DO I = 1, ngwl
-            ! WRITE( stdout,*) 'MW ', ig_l2g(i), i
-            PWT( ig_l2g(i)+lda*(J-1) ) = pw(i+ngwl*(J-1))
-         END DO
-      END do
-
-#endif
-
-      RETURN
-    END SUBROUTINE mergewfv
-
-!=----------------------------------------------------------------------------=!
-
-
-      SUBROUTINE splitwfv ( nn, lda, pw, pwt, ngwl, ig_l2g, mpime, nproc, root, comm )
-
-! ... This subroutine splits a total wave function (pwt) containing al the components
-! ... in a pre-defined order (the same as if only one processor is used), across 
-! ... processors (pw).
-
-      USE kinds
-      USE parallel_include
-      IMPLICIT NONE
-
-      COMPLEX(DP), INTENT(OUT) :: PW(ngwl*nproc)
-      COMPLEX(DP), INTENT(IN) :: PWT(lda*nproc)
-      INTEGER, intent(in) :: nn !number of wfcs                       
-      INTEGER, intent(in) :: lda!leading dimension of pwt                
-      INTEGER, INTENT(IN) :: mpime, nproc, root
-      INTEGER, INTENT(IN) :: comm    ! communicator
-      INTEGER, INTENT(IN) :: ig_l2g(ngwl)
-      INTEGER, INTENT(IN) :: ngwl
-
-      INTEGER, ALLOCATABLE :: ig_ip(:)
-      COMPLEX(DP), ALLOCATABLE :: pw_ip(:)
-
-      INTEGER ierr, i, ngw_ip, ip, ngw_lmax, gid, igwx, itmp, J
-
-#if defined __MPI
-      integer istatus(MPI_STATUS_SIZE)
-#endif
-
-!
-! ... Subroutine Body
-!
-
-      igwx = MAXVAL( ig_l2g(1:ngwl) )
-
-#if defined __MPI
-
-      gid = comm
-
-! ... Get local and global wavefunction dimensions
-      CALL MPI_ALLREDUCE(ngwl, ngw_lmax, 1, MPI_INTEGER, MPI_MAX, gid, IERR )
-      CALL MPI_ALLREDUCE(igwx, itmp    , 1, MPI_INTEGER, MPI_MAX, gid, IERR )
-      igwx = itmp
-
-#endif
-
-      IF( igwx > SIZE( pwt ) ) &
-        CALL errore(' splitwf ',' wrong size for pwt ',SIZE(pwt) )
-
-#if defined __MPI
-
-      DO ip = 1, nproc
-! ...   In turn each processor send to root the the indexes of its wavefunction conponents
-! ...   Root receive the indexes and send the componens of the wavefunction read from the disk (pwt)
-        IF ( (ip-1) /= root ) THEN
-          IF ( mpime == (ip-1) ) THEN
-            CALL MPI_SEND( ig_l2g, ngwl, MPI_INTEGER, ROOT, IP, gid,IERR)
-            CALL MPI_RECV( pw(1), ngwl*nn, MPI_DOUBLE_COMPLEX, ROOT, IP+NPROC, gid, istatus, IERR )
-          END IF
-          IF ( mpime == root ) THEN
-            ALLOCATE(ig_ip(ngw_lmax))
-            ALLOCATE(pw_ip(ngw_lmax*nn))
-            CALL MPI_RECV( ig_ip, ngw_lmax, MPI_INTEGER, (ip-1), IP, gid, istatus, IERR )
-            CALL MPI_GET_COUNT(istatus, MPI_INTEGER, ngw_ip, ierr)
-            DO J=1,nn
-               DO i = 1, ngw_ip
-                  pw_ip(i+ngw_ip*(J-1)) = PWT(ig_ip(i)+lda*(J-1))
-               END DO
-            END DO
-            CALL MPI_SEND( pw_ip, ngw_ip*nn, MPI_DOUBLE_COMPLEX, (ip-1), IP+NPROC, gid, IERR )
-            DEALLOCATE(ig_ip)
-            DEALLOCATE(pw_ip)
-          END IF
-        ELSE
-          IF ( mpime == root ) THEN
-             DO J=1,nn
-                DO i = 1, ngwl
-                   pw(i+ngwl*(J-1)) = PWT(ig_l2g(i)+lda*(J-1)) 
-                END DO
-             END DO
-          END IF
-        END IF
-        CALL MPI_BARRIER(gid, IERR)
-      END DO
-
-#elif ! defined __MPI
-
-      DO J=1,nn
-         DO I = 1, ngwl
-            pw(i+ngwl*(J-1)) = pwt( ig_l2g(i)+lda*(J-1) )
-         END DO
-      END DO
-#else
-
-      CALL errore(' SPLITWF ',' no communication protocol ',0)
-
-#endif
-
-      RETURN
-      END SUBROUTINE splitwfv
 
 !=----------------------------------------------------------------------------=!
 

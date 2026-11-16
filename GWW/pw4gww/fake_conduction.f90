@@ -423,10 +423,6 @@ CONTAINS
      do is=1,nspin
         call reorderwfp_col(num_nbndv(is),npw,fc%npwt,ks_wfcs(1,1,is),evc_t(1,1,is), npw,fc%npwt, &
              & ig_l2g,fc%ig_l2gt,fc%ngmt_g,mpime, nproc,intra_pool_comm )
-     !   do iv=1,num_nbndv(is)
-     !      call mergewf(ks_wfcs(:,iv,is),evc_g,npw,ig_l2g,mpime,nproc,ionode_id,intra_pool_comm)
-     !      call splitwf(evc_t(:,iv,is),evc_g,fc%npwt,fc%ig_l2gt,mpime,nproc,ionode_id,intra_pool_comm)
-     !   enddo
      enddo
   endif
 
@@ -1294,10 +1290,6 @@ CONTAINS
      else
         call reorderwfp_col(fcw_number,fc%npwt,npw,fcw_state(1,1),fcw_state_n(1,1),fc%npwt,npw, &
              & fc%ig_l2gt,ig_l2g,fc%ngmt_g,mpime, nproc,intra_pool_comm )
-   !     do ii=1,fcw_number
-   !          call mergewf(fcw_state(:,ii),evc_g,fc%npwt,fc%ig_l2gt,mpime,nproc,ionode_id,intra_pool_comm)
-   !         call splitwf(fcw_state_n(:,ii),evc_g,npw,ig_l2g,mpime,nproc,ionode_id,intra_pool_comm)
-   !     enddo
      endif
 
    CALL memstat( kilobytes )
@@ -2491,11 +2483,6 @@ end subroutine fake_conduction_wannier_real
            call reorderwfp (num_fc_eff(is),npw, fc%npwt,state_fc(:,:,is),state_fc_t(:,:,is), &
               &npw,fc%npwt, ig_l2g,fc%ig_l2gt, fc%ngmt_g , mpime, nproc,ionode_id, intra_pool_comm )
 
-     
-        !   do ii=1,num_fc_eff(is)
-        !      call mergewf(state_fc(:,ii,is),evc_g,npw,ig_l2g,mpime,nproc,ionode_id,intra_pool_comm)
-        !      call splitwf(state_fc_t(:,ii,is),evc_g,fc%npwt,fc%ig_l2gt,mpime,nproc,ionode_id,intra_pool_comm)
-        !   enddo
         enddo
         call stop_clock('fc_merge')
      endif
@@ -2560,10 +2547,6 @@ end subroutine fake_conduction_wannier_real
         call reorderwfp (num_nbndv(is),npw, fc%npwt,ks_wfcs(:,:,is),evc_t(:,:,is), &
              &npw,fc%npwt, ig_l2g,fc%ig_l2gt, fc%ngmt_g , mpime, nproc,ionode_id, intra_pool_comm )
 
-      !  do iv=1,num_nbndv(is)
-      !     call mergewf(ks_wfcs(:,iv,is),evc_g,npw,ig_l2g,mpime,nproc,ionode_id,intra_pool_comm)
-      !     call splitwf(evc_t(:,iv,is),evc_g,fc%npwt,fc%ig_l2gt,mpime,nproc,ionode_id,intra_pool_comm)
-      !  enddo
      enddo
      call stop_clock('fc_merge')
   endif
@@ -3040,8 +3023,6 @@ end subroutine fake_conduction_wannier_real
         call start_clock('fc_merge')
         call reorderwfp (fcw_number,fc%npwt, npw,fcw_state,fcw_state_n, &
              &fc%npwt,npw, fc%ig_l2gt,ig_l2g, fc%ngmt_g , mpime, nproc,ionode_id, intra_pool_comm )
-        !   call mergewf(fcw_state(:,1),evc_g,fc%npwt,fc%ig_l2gt,mpime,nproc,ionode_id,intra_pool_comm)
-        !  call splitwf(fcw_state_n(:,ii),evc_g,npw,ig_l2g,mpime,nproc,ionode_id,intra_pool_comm)
         call stop_clock('fc_merge')
      endif
     

@@ -321,6 +321,8 @@ CONTAINS
       USE becmod, ONLY: becp, calbec, allocate_bec_type, deallocate_bec_type
       USE exx,    ONLY : exxenergy2, fock2
       USE xc_lib, ONLY : xclib_dft_is
+      USE control_flags, ONLY : lscf, lbands, io_level
+      USE paw_variables, ONLY : okpaw
       !
       USE uspp_init,        ONLY : init_us_2
       !
@@ -475,6 +477,25 @@ CONTAINS
            WRITE (stdout,*) 'EXX energy       ', fock2/e2, ' au  =  ', fock2, ' Ry' 
       IF( degauss > 0.0_DP ) &
          WRITE (stdout,*) 'Smearing (-TS)   ', demet/e2, ' au  =  ', demet, ' Ry'
+
+      IF ( .NOT. lscf .AND. .NOT. lbands ) THEN
+         ! An 'nscf' run: PWscf has computed no total energy to check against,
+         ! and the terms above do not in general add up to one, the bands not
+         ! being those of the charge density. So none is printed, and PWscf's
+         ! own etot, zero, goes into the file for CASINO, which only prints
+         ! it. With no check, two things are refused that nothing else would
+         ! catch: PAW, and wavefunctions that this run was told not to keep
+         ! (disk_io), in whose place the buffer may hold the starting ones.
+         ! A 'bands' run still stops below: the Fermi energy recomputed above
+         ! is not the one it must keep.
+         IF ( okpaw ) CALL errore("pw2casino","PAW not implemented",1)
+         IF ( io_level < 0 .AND. nks > 1 ) CALL errore("pw2casino", &
+            "disk_io must keep the wavefunctions of an nscf run",1)
+         WRITE (stdout,*) 'Non-scf run: no total energy; check against PWscf skipped'
+         WRITE (stdout,*)
+         RETURN
+      END IF
+
       WRITE (stdout,*) 'Total energy     ', etot_/e2, ' au  =  ', etot_, ' Ry'
       WRITE (stdout,*)
 

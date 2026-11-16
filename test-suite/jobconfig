@@ -1,17 +1,21 @@
 # Note: unless a specific oreder of execution is desired,
 # there is no need to have for each set of tests a field below
 
+[pw_hse/]
+program = PW
+inputs_args = ('hse-si444_std.in',''), ('hse-si444.in', ''), ('hse-si222.in', ''), ('hse-si111.in','') 
+
 [pw_atom/]
 program = PW
 inputs_args = ('atom.in', ''), ('atom-lsda.in',''), ('atom-occ1.in',''), ('atom-occ2.in',''), ('atom-pbe.in',''), ('atom-sigmapbe.in', '')
 
 [pw_b3lyp/]
 program = PW
-inputs_args = ('b3lyp-O.in', ''), ('b3lyp-O_std.in', ''), ('b3lyp-h2o.in',''), ('b3lyp-h2o_std.in',''), ('x3lyp-O.in', ''), ('x3lyp-h2o.in','')
+inputs_args = ('b3lyp-h2o_std.in',''), ('b3lyp-O_std.in', ''), ('b3lyp-O.in', ''), ('b3lyp-h2o.in',''), ('x3lyp-O.in', ''), ('x3lyp-h2o.in','')
 
 [pw_cam/]
 program = PW
-inputs_args = ('cam-si111.in', ''), ('cam-si222.in', ''), ('cam-si222-noxg.in', ''), ('cam-si222_std.in', ''), ('camb3-si222.in', ''), ('cam-si-gamma.in', ''), ('cam-si222-lsda.in', ''), ('cam-pbe0-limit.in', ''), ('cam-hse-limit.in', '')
+inputs_args = ('cam-si111.in', ''), ('cam-si222.in', ''), ('cam-si222-noxg.in', ''), ('cam-si222_std.in', ''), ('camb3-si222.in', ''), ('cam-si-gamma.in', ''), ('cam-O-lsda.in', ''), ('cam-pbe0-limit.in', ''), ('cam-hse-limit.in', '')
 
 [pw_berry/]
 program = PW
@@ -40,7 +44,7 @@ inputs_args = ('metal.in' ,''), ('metal-2.in' ,''), ('metal-fermi_dirac.in' ,'')
 
 [pw_noncolin/]
 program = PW
-inputs_args = ('noncolin.in' ,''), ('noncolin-1.in' ,''), ('noncolin-2.in' ,''), ('noncolin-cg.in' ,''), ('noncolin-rmm.in',''), ('noncolin-constrain_angle.in' ,''), ('noncolin-constrain_atomic.in' ,''), ('noncolin-constrain_total.in' ,''), ('noncolin-hyb.in' ,''), ('noncolin-hyb_std.in' ,''), ('noncolin-pbe.in','')
+inputs_args = ('noncolin-hyb_std.in' ,''), ('noncolin.in' ,''), ('noncolin-1.in' ,''), ('noncolin-2.in' ,''), ('noncolin-cg.in' ,''), ('noncolin-rmm.in',''), ('noncolin-constrain_angle.in' ,''), ('noncolin-constrain_atomic.in' ,''), ('noncolin-constrain_total.in' ,''), ('noncolin-hyb.in' ,''), ('noncolin-pbe.in','')
 
 [pw_electric/]
 program = PW
@@ -68,7 +72,7 @@ inputs_args = ('scf_twochem.in', ''), ('nscf_twochem.in','2'), ('relax_twochem.i
 
 [pw_uspp/]
 program = PW
-inputs_args = ('uspp.in' ,''), ('uspp-2.in' ,''), ('uspp-cg.in' ,''), ('uspp-cg-gamma.in' ,''), ('uspp-hyb-g.in' ,''), ('uspp-hyb-g_std.in' ,''), ('uspp-hyb-k.in',''), ('uspp-hyb-k_std.in',''), ('uspp-mixing_TF.in' ,''), ('uspp-mixing_localTF.in' ,''), ('uspp-mixing_ndim.in' ,''), ('uspp-singlegrid.in' ,''), ('uspp1-coulomb.in' ,''), ('uspp1.in' ,''), ('uspp2.in' ,''), ('uspp-paro-gamma.in',''), ('uspp-paro-k.in','')
+inputs_args = ('uspp-hyb-k_std.in',''), ('uspp-hyb-g_std.in' ,''), ('uspp.in' ,''), ('uspp-2.in' ,''), ('uspp-cg.in' ,''), ('uspp-cg-gamma.in' ,''), ('uspp-hyb-g.in' ,''), ('uspp-hyb-k.in',''), ('uspp-mixing_TF.in' ,''), ('uspp-mixing_localTF.in' ,''), ('uspp-mixing_ndim.in' ,''), ('uspp-singlegrid.in' ,''), ('uspp1-coulomb.in' ,''), ('uspp1.in' ,''), ('uspp2.in' ,''), ('uspp-paro-gamma.in',''), ('uspp-paro-k.in','')
 
 [pw_md/]
 program = PW

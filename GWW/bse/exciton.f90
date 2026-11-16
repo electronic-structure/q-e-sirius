@@ -444,7 +444,6 @@ contains
     USE io_global, ONLY : stdout, ionode, ionode_id
     USE mp_world, ONLY : mpime, nproc
     USE mp_pools, ONLY : intra_pool_comm
-!    USE mp_wave, ONLY : mergewf,splitwf
     USE wavefunctions, ONLY :  psic
 
 
@@ -479,10 +478,6 @@ contains
        call reorderwfp_col(ag%numb_v,ag%npw,fc%npwt,ag%a(1,1),ag_t(1,1),ag%npw ,fc%npwt, &
            & ig_l2g,fc%ig_l2gt,fc%ngmt_g,mpime, nproc,intra_pool_comm )
 
-!       do ii=1,ag%numb_v
-!          call mergewf(ag%a(:,ii),evc_g,ag%npw,ig_l2g,mpime,nproc,ionode_id,intra_pool_comm)
-!          call splitwf(ag_t(:,ii),evc_g,fc%npwt,fc%ig_l2gt,mpime,nproc,ionode_id,intra_pool_comm)
-!       enddo
     endif
 
     do ii=1,ag%numb_v,2
@@ -516,7 +511,6 @@ contains
     USE io_global, ONLY : stdout, ionode, ionode_id
     USE mp_world, ONLY : mpime, nproc
     USE mp_pools, ONLY : intra_pool_comm
-!    USE mp_wave, ONLY : mergewf,splitwf
     USE wavefunctions, ONLY :  psic
 
 
@@ -559,10 +553,6 @@ contains
         call reorderwfp_col(ag%numb_v,fc%npwt,ag%npw,ag_t(1,1),ag%a(1,1),fc%npwt,ag%npw, &
            & fc%ig_l2gt,ig_l2g,fc%ngmt_g,mpime, nproc,intra_pool_comm )
 
-!       do iv=1, ag%numb_v
-!          call mergewf(ag_t(:,iv),evc_g,fc%npwt,fc%ig_l2gt,mpime,nproc,ionode_id,intra_pool_comm)
-!          call splitwf(ag%a(:,iv),evc_g,ag%npw,ig_l2g,mpime,nproc,ionode_id,intra_pool_comm)
-!       enddo
     endif 
 
     deallocate(evc_g)

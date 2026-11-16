@@ -59,7 +59,7 @@ SUBROUTINE h_epsi_her_apply( lda, n, nbande, psi, hpsi, pdir, e_field )
   TYPE(bec_type) :: becp0
   INTEGER :: nkbtona(nkb)
   INTEGER :: nkbtonh(nkb)
-  COMPLEX(DP) :: sca, sca1, pref
+  COMPLEX(DP) :: pref
   INTEGER :: npw, nb,mb, jkb, nhjkb, na, np, nhjkbm,jkb1,i,j,iv
   INTEGER :: jkb_bp,nt,ig, ijkb0,ibnd,jh,ih,ikb
   REAL(dp) :: eps
@@ -171,24 +171,34 @@ SUBROUTINE h_epsi_her_apply( lda, n, nbande, psi, hpsi, pdir, e_field )
   !
   IF (.NOT.okvan) THEN
      !
-     DO nb = 1, nbande
-        DO mb = 1, nbnd!index on states of evcel        
-           sca = dot_product(evcelm(1:npw,mb,pdir),psi(1:npw,nb))
-           IF (noncolin) sca = sca+dot_product(evcelm(1+npwx:npw+npwx,mb,pdir),psi(1+npwx:npw+npwx,nb))
-           sca1 = dot_product(evcelp(1:npw,mb,pdir),psi(1:npw,nb))
-           IF (noncolin) sca1 = sca1 + dot_product(evcelp(1+npwx:npw+npwx,mb,pdir),psi(1+npwx:npw+npwx,nb))
-           CALL mp_sum( sca,  intra_bgrp_comm )
-           CALL mp_sum( sca1, intra_bgrp_comm )
-           !
-           DO ig = 1, npw
-              !
-              hpsi(ig,nb) = hpsi(ig,nb) + &
-                            CONJG(fact_hepsi(ik,pdir))*evcel(ig,mb)*(sca-sca1)
-              IF (noncolin) hpsi(ig+npwx,nb) = hpsi(ig+npwx,nb) + &
-                            CONJG(fact_hepsi(ik,pdir))*evcel(ig+npwx,mb)*(sca-sca1)
-           ENDDO
-        ENDDO
-     ENDDO
+     ! Form <u_-|psi> and <u_+|psi> for all pairs of bands, with one
+     ! reduction per matrix. Sum both spinor components before reducing.
+     ! Only npw rows are active; the leading dimension includes padding
+     ! and both spinor components in the noncollinear case.
+     !
+     CALL ZGEMM( 'C', 'N', nbnd, nbande, npw, (1.0_DP,0.0_DP), evcelm(1,1,pdir), npwx*npol, &
+                 psi, npwx*npol, (0.0_DP,0.0_DP), sca_mat, nbnd )
+     IF (noncolin) THEN
+        CALL ZGEMM( 'C', 'N', nbnd, nbande, npw, (1.0_DP,0.0_DP), evcelm(npwx+1,1,pdir), npwx*npol, &
+                    psi(npwx+1,1), npwx*npol, (1.0_DP,0.0_DP), sca_mat, nbnd )
+     ENDIF
+     CALL mp_sum( sca_mat, intra_bgrp_comm )
+     CALL ZGEMM( 'C', 'N', nbnd, nbande, npw, (1.0_DP,0.0_DP), evcelp(1,1,pdir), npwx*npol, &
+                 psi, npwx*npol, (0.0_DP,0.0_DP), sca_mat1, nbnd )
+     IF (noncolin) THEN
+        CALL ZGEMM( 'C', 'N', nbnd, nbande, npw, (1.0_DP,0.0_DP), evcelp(npwx+1,1,pdir), npwx*npol, &
+                    psi(npwx+1,1), npwx*npol, (1.0_DP,0.0_DP), sca_mat1, nbnd )
+     ENDIF
+     CALL mp_sum( sca_mat1, intra_bgrp_comm )
+     !
+     ! Accumulate the field contribution without changing the padded rows.
+     sca_mat(1:nbnd,1:nbande) = sca_mat(1:nbnd,1:nbande)-sca_mat1(1:nbnd,1:nbande)
+     CALL ZGEMM( 'N', 'N', npw, nbande, nbnd, CONJG(fact_hepsi(ik,pdir)), evcel, npwx*npol, &
+                 sca_mat, nbnd, (1.0_DP,0.0_DP), hpsi, npwx*npol )
+     IF (noncolin) THEN
+        CALL ZGEMM( 'N', 'N', npw, nbande, nbnd, CONJG(fact_hepsi(ik,pdir)), evcel(npwx+1,1), &
+                    npwx*npol, sca_mat, nbnd, (1.0_DP,0.0_DP), hpsi(npwx+1,1), npwx*npol )
+     ENDIF
      !
   ELSE ! US case
      !

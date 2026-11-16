@@ -18,6 +18,9 @@ MODULE io_base
   !
   INTEGER, ALLOCATABLE::  index_file(:,:,:) 
   !! contains indices of G-components as a function of the Miller indices
+  !! Note: defined here to avoid trouble with negative indices
+  INTEGER, ALLOCATABLE::  index_l2f(:) 
+  !! contains indices of local G-components in the file
   PRIVATE
   PUBLIC :: write_wfc, read_wfc, write_rhog, read_rhog
   !
@@ -215,7 +218,6 @@ MODULE io_base
       !! if ierr is present, return 0 if everything is ok, /= 0 if not
       !------------------------------------------------------------------------
       !
-      USE mp_wave,     ONLY : splitwf, splitkg
       USE mp,          ONLY : mp_bcast, mp_size, mp_rank, mp_max
       !
 #if defined (__HDF5)
@@ -233,16 +235,15 @@ MODULE io_base
       REAL(DP),           INTENT(OUT)   :: scalef
       REAL(DP),           INTENT(OUT)   :: xk(3)
       REAL(DP),           INTENT(OUT)   :: b1(3), b2(3), b3(3)
-      INTEGER,            INTENT(OUT)   :: mill_k(:,:)
+      INTEGER,            INTENT(INOUT) :: mill_k(:,:)
       LOGICAL,            INTENT(OUT)   :: gamma_only
       INTEGER, OPTIONAL,  INTENT(OUT)   :: ierr
       !
       INTEGER                           :: j
-      INTEGER, ALLOCATABLE              :: itmp(:,:)
-      COMPLEX(DP), ALLOCATABLE, TARGET  :: wtmp(:)
-      COMPLEX(DP), POINTER              :: wtmp2(:)
+      INTEGER, ALLOCATABLE              :: mill_g(:,:)
+      COMPLEX(DP), ALLOCATABLE          :: wtmp_g(:), wtmp(:)
       INTEGER                           :: ierr_
-      INTEGER                           :: igwx, igwx_, npwx, ik_, nbnd_
+      INTEGER                           :: igwx_, npwx, ik_, nbnd_
       INTEGER                           :: me_in_group, nproc_in_group
       LOGICAL                           :: ionode_in_group
 #if defined(__HDF5)
@@ -254,9 +255,6 @@ MODULE io_base
       me_in_group     = mp_rank( intra_group_comm )
       nproc_in_group  = mp_size( intra_group_comm )
       ionode_in_group = ( me_in_group == root_in_group )
-      !
-      igwx = MAXVAL( igl(1:ngwl) )
-      CALL mp_max( igwx, intra_group_comm )
       !
       IF ( ionode_in_group ) THEN
 #if !defined __HDF5
@@ -307,41 +305,44 @@ MODULE io_base
       CALL mp_bcast( npol,   root_in_group, intra_group_comm )
       CALL mp_bcast( nbnd_,   root_in_group, intra_group_comm )
       !
-      npwx = SIZE( wfc, 1 ) / npol
-      !
       IF ( ionode_in_group ) THEN 
-         ALLOCATE( itmp( 3,MAX( igwx_, igwx ) ) )
+         ALLOCATE( mill_g(3,igwx_) )
 #if defined(__HDF5)
        CALL qeh5_open_dataset(h5file, h5dset_mill, ACTION = 'read', NAME = 'MillerIndices')
-       IF ( h5dset_mill%filespace%dims(2) .GT. MAX(igwx_, igwx)  ) &
-          CALL errore ( 'read_wfc', 'real dimensions of Miller Indices dataset do not  match with igwx attribute', 8) 
+       IF ( h5dset_mill%filespace%dims(2) > igwx_ ) &
+          CALL errore ( 'read_wfc', 'real dimensions of Miller indices dataset do not match igwx attribute', 8) 
        ! no reading of b1, b2, and b3 from file. They should be already set. 
-       CALL qeh5_read_dataset ( itmp(:,1), h5dset_mill) 
+       CALL qeh5_read_dataset ( mill_g, h5dset_mill) 
        CALL qeh5_close ( h5dset_mill) 
 #else
          READ (iuni) b1, b2, b3
-         READ (iuni) itmp(1:3,1:igwx_)
+         READ (iuni) mill_g(1:3,1:igwx_)
 #endif
-         IF ( igwx > igwx_ ) itmp(1:3,igwx_+1:igwx) = 0
-      ELSE
-         ALLOCATE( itmp( 3, 1 ) )
       END IF
-      CALL splitkg( mill_k(:,:), itmp, ngwl, igl, me_in_group, &
-           nproc_in_group, root_in_group, intra_group_comm )
-      DEALLOCATE (itmp)
+      !
+      !! fill array "index_l2f" containing the correspondence between
+      !! the local and on-file indices of G-components 
+      !! requires Miller indices for both file and local G-components
+      !
+      ALLOCATE ( index_l2f(ngwl) )
+      CALL fill_index_l2f ( root_in_group, intra_group_comm, &
+           igwx_, mill_g, gamma_only, ngwl, mill_k, index_l2f )
+      IF (ALLOCATED(mill_g))  DEALLOCATE( mill_g )
       !
       IF ( ionode_in_group ) THEN 
-         ALLOCATE( wtmp( npol*MAX( igwx_, igwx ) ) )
-         IF ( npol == 2 ) wtmp2 => wtmp(igwx_+1:2*igwx_)
+         ALLOCATE( wtmp_g( npol*igwx_ ) )
 #if defined (__HDF5) 
          CALL qeh5_open_dataset( h5file, h5dset_wfc, ACTION = 'read', NAME = 'evc')
-         CALL qeh5_set_space ( h5dset_wfc, wtmp(1), RANK = 1, DIMENSIONS = [npol*igwx_], MODE = 'm') 
+         CALL qeh5_set_space ( h5dset_wfc, wtmp_g(1), RANK = 1, DIMENSIONS = [npol*igwx_], MODE = 'm')
 #endif
       ELSE
-         ALLOCATE( wtmp(1) )
-         IF ( npol == 2 ) wtmp2 => wtmp( 1:1 )
+         ALLOCATE( wtmp_g(1) )
       ENDIF
+      !
+      ALLOCATE( wtmp(ngwl*npol) )
       nbnd = nbnd_ 
+      npwx = SIZE( wfc, 1 ) / npol
+      !
       DO j = 1, nbnd_ 
          !
          IF ( j <= SIZE( wfc, 2 ) ) THEN
@@ -350,33 +351,30 @@ MODULE io_base
 #if defined __HDF5
                
                CALL qeh5_set_file_hyperslab (h5dset_wfc, OFFSET = [0,j-1], COUNT = [2*npol*igwx_,1] )
-               CALL qeh5_read_dataset (wtmp, h5dset_wfc )
+               CALL qeh5_read_dataset (wtmp_g, h5dset_wfc )
 #else
-               READ (iuni) wtmp(1:npol*igwx_) 
+               READ (iuni) wtmp_g(1:npol*igwx_) 
 #endif
-               IF ( igwx > igwx_ ) wtmp((npol*igwx_+1):npol*igwx) = 0.0_DP
-               !
             END IF
             !
+            !! first dimension of wfc (npol*npwx) may exceed the number of
+            !! components (ngwl): ensure that no garbage is left for n>ngwl
+            !
+            wfc(:,j) = (0.0_dp, 0.0_dp)
+            !
+            !! Distribute each wave-function read from file across processors,
+            !! ensuring consistency with the ordering of the current calculation
+            !! also convert from half to full G-vector sphere, or vice versa
+            !
+            CALL distribute_vect ( root_in_group, intra_group_comm, &
+                 igwx_, wtmp_g, gamma_only, ngwl, index_l2f, npol, wtmp ) 
+            !
+            !! copy data to wfc
+            wfc(1:ngwl,j) = wtmp(1:ngwl)
+            !! noncolinear case: spin-up and spin-down PWs are not stored 
+            !! contiguously (there can be a gap in the middle and at the end)
             IF ( npol == 2 ) THEN
-               !
-               ! Quick-and-dirty noncolinear case - splitwf should be modified
-               ! Collect into wtmp(1:igwx_) first set of plane wave components
-               !
-               CALL splitwf( wfc(1:npwx,       j), wtmp ,   &
-                    ngwl, igl, me_in_group, nproc_in_group, root_in_group, &
-                    intra_group_comm )
-               !
-               ! Collect into wtmp(igwx_+1:2*igwx_) the second set of plane wave
-               ! components - instead of wtmp(igwx_+1:2*igwx_), pointer wtmp2
-               ! is used, in order to prevent a bogus out-of-bound error
-               !
-               CALL splitwf( wfc(npwx+1:2*npwx,j), wtmp2,  &
-                    ngwl, igl, me_in_group, nproc_in_group, root_in_group, &
-                    intra_group_comm )
-            ELSE
-               CALL splitwf( wfc(:,j), wtmp, ngwl, igl, me_in_group, &
-                    nproc_in_group, root_in_group, intra_group_comm )
+               wfc(npwx+1:npwx+ngwl,j) = wtmp(ngwl+1:npol*ngwl)
             END IF
             !
          END IF
@@ -392,8 +390,9 @@ MODULE io_base
 #endif
       END IF
       !
-      IF ( npol == 2 ) NULLIFY ( wtmp2 )
+      DEALLOCATE ( index_l2f )
       DEALLOCATE( wtmp )
+      DEALLOCATE( wtmp_g )
       !
       RETURN
       !
@@ -627,7 +626,7 @@ MODULE io_base
       COMPLEX(dp), ALLOCATABLE :: rho_g(:)
       REAL(dp)                 :: b1(3), b2(3), b3(3)
       INTEGER                  :: nspin_, isup, isdw
-      INTEGER                  :: iun, ns, ig, ierr
+      INTEGER                  :: iun, ns, ig, ierr, ierr_open
       INTEGER                  :: me_in_group, nproc_in_group
       LOGICAL                  :: ionode_in_group, gamma_only_
       INTEGER                  :: ngm_g_
@@ -644,6 +643,7 @@ MODULE io_base
       !
       iun  = 4
       ierr = 0
+      ierr_open = 0
       IF ( PRESENT(ier_) ) ier_ = 0
       !
       me_in_group     = mp_rank( intra_group_comm )
@@ -655,8 +655,8 @@ MODULE io_base
          CALL qeh5_openfile(h5file, TRIM(filename)//'.hdf5', ACTION = 'read', &
               error = ierr)
          IF ( ierr /= 0 .AND. PRESENT(ier_) ) THEN
-            ier_ = ierr
-            RETURN
+            ierr_open = ierr
+            GO TO 10
          END IF
          CALL qeh5_read_attribute (h5file%id, "gamma_only", tempchar, MAXLEN = len(tempchar)  )
          CALL qeh5_read_attribute (h5file%id, "ngm_g", ngm_g_ ) 
@@ -672,8 +672,8 @@ MODULE io_base
               FORM = 'unformatted', STATUS = 'old', iostat = ierr )
          IF ( ierr /= 0 ) THEN
             IF ( PRESENT(ier_) ) THEN
-               ier_ = ierr
-               RETURN
+               ierr_open = ierr
+               GO TO 10
             END IF
             ierr = 1
             GO TO 10
@@ -689,6 +689,12 @@ MODULE io_base
 10       CONTINUE 
       END IF
       !
+      ! open failure with ier_ present: all ranks must return, not just the reader
+      CALL mp_bcast( ierr_open, root_in_group, intra_group_comm )
+      IF ( ierr_open /= 0 ) THEN
+         ier_ = ierr_open
+         RETURN
+      END IF
       CALL mp_bcast( ierr, root_in_group, intra_group_comm )
       IF ( ierr > 0 ) CALL errore ( 'read_rhog','error reading file ' &
            & // TRIM( filename ), ierr )
@@ -737,10 +743,14 @@ MODULE io_base
       END IF
 #endif 
       !
-      !! fill array "index_file" with indices of G-components as a function
-      !! of the Miller indices
+      !! fill array "index_l2f" containing the correspondence between
+      !! the local and on-file indices of G-components 
+      !! requires Miller indices for both file and local G-components
       !
-      IF(ionode_in_group) CALL fill_index_file ( ngm_g_, mill_g ) 
+      ALLOCATE ( index_l2f(ngm) )
+      CALL fill_index_l2f ( root_in_group, intra_group_comm, &
+           ngm_g_, mill_g, gamma_only_, ngm, mill, index_l2f )
+      IF (ALLOCATED(mill_g))  DEALLOCATE( mill_g )
       !
       IF ( PRESENT(gamma_only) ) THEN
          IF ( gamma_only .and. .NOT. gamma_only_ ) THEN 
@@ -771,8 +781,8 @@ MODULE io_base
          !! ensuring consistency with the ordering of the current calculation
          !! also convert from half to full G-vector sphere, or vice versa
          !
-         CALL distribute_charge ( root_in_group, intra_group_comm, &
-           ngm_g_, mill_g, rho_g, gamma_only_, ngm, mill, rho(:,ns) )
+         CALL distribute_vect ( root_in_group, intra_group_comm, &
+           ngm_g_, rho_g, gamma_only_, ngm, index_l2f, 1, rho(:,ns) )
          !
       END DO
       !
@@ -782,23 +792,26 @@ MODULE io_base
       IF ( ionode_in_group ) CLOSE (UNIT = iun, status ='keep' )
 #endif
       !
-      IF(ionode_in_group) DEALLOCATE(index_file)
+      DEALLOCATE ( index_l2f )
       DEALLOCATE( rho_g )
-      IF (ALLOCATED(mill_g))  DEALLOCATE( mill_g )
       !
       RETURN
       !
     END SUBROUTINE read_rhog
     !
     !-----------------------------------------------------------------
-    SUBROUTINE distribute_charge ( root_in_group, intra_group_comm, &
-         ngm_g_file, mill_g_file, rho_g_file, gamma_only_file, &
-         ngm, mill, rho )
+    SUBROUTINE distribute_vect ( root_in_group, intra_group_comm, &
+         ngm_g_file, vect_g_file, gamma_only_file, ngm, index_l2f, npol, &
+         vect )
     !-----------------------------------------------------------------
       !
-      !! Distributes the charge density components, as read from file,
-      !! across the various MPI processing, setting the ordering
-      !! given by the "mill" array (containing Miller indices)
+      !! Distribute array "vect_g_file", containing G-vector components
+      !! as read from file, from process root_in_group to all the MPI
+      !! processes in intra_group_comm. Output in array "vect".
+      !! index_l2f contains the correspondence between local and file
+      !! ordering of G components: vect(n) = vect_g_file(index_l2f(n))
+      !! npol consecutive sets of data, of input size ngm_g_file and
+      !! output file ngm, are distributed and ordered
       !
       USE io_global,     ONLY : stdout
       USE mp,            ONLY : mp_size, mp_rank, mp_get
@@ -809,20 +822,20 @@ MODULE io_base
       !! total number of G components found in file 
       INTEGER, INTENT(in) :: ngm
       !! required number of g vectors (for this processor)
-      INTEGER, INTENT(in) :: mill_g_file(:,:)
-      !! Miller indices of all G components read from file 
-      INTEGER, INTENT(in) :: mill(:,:)
-      !! Miller indices of required G components (for this processor)
-      COMPLEX(kind=DP), INTENT(in) :: rho_g_file(:)
-      !! rho(G) read from file 
-      COMPLEX(kind=DP), INTENT(out) :: rho(:)
-      !! output rho(G) distributed according to Miller indices mill
+      INTEGER, INTENT(in) :: index_l2f(:)
+      !! n-th local component G(n) in file at position m=index_l2f(n)
+      INTEGER, INTENT(in) :: npol
+      !! Order npol consecutive sets of data 
+      COMPLEX(kind=DP), INTENT(in) :: vect_g_file(:)
+      !! vect(G) read from file 
+      COMPLEX(kind=DP), INTENT(out) :: vect(:)
+      !! output vect(G) distributed according to indices index_l2f
       LOGICAL, INTENT(in) :: gamma_only_file 
       !
       !! local variables for G components distribution in parallel case 
       !
-      COMPLEX(kind=DP), ALLOCATABLE :: rho_l(:)
-      INTEGER, ALLOCATABLE::  mill_l(:,:) 
+      COMPLEX(kind=DP), ALLOCATABLE :: vect_l(:)
+      INTEGER, ALLOCATABLE::  index_l2f_l(:) 
       INTEGER             :: ngm_l
       INTEGER             :: me_in_group, nproc_in_group, npr
       INTEGER             :: ig, ig_file, ig_read, ig_miss, ierr
@@ -837,32 +850,33 @@ MODULE io_base
       DO npr = 0, nproc_in_group-1
          IF ( npr == root_in_group ) THEN
             IF ( ionode_in_group ) THEN
-               !! here fill rho on ionode_in_group
-               CALL fill_rho (ngm, mill, gamma_only_file, rho_g_file, &
-                              rho, ierr )
+               !! here fill vect on ionode_in_group
+               CALL fill_vect (ngm, npol, index_l2f, &
+                    ngm_g_file, vect_g_file, vect, ierr )
                ig_read = ig_read + ngm
                ig_miss = ig_miss + ierr
             END IF
          ELSE 
-            !! here send ngm, mill, from processor "npr"
-            !!      receive ngm_l, mill_l, on processor "root_in_group"
-            CALL mp_get (ngm_l, ngm, me_in_group, root_in_group, npr, 1, intra_group_comm)
+            !! here send ngm, index_l2f, from processor "npr"
+            !!      receive ngm_l, index_l2f_l, on processor "root_in_group"
+            CALL mp_get (ngm_l, ngm, me_in_group, root_in_group,&
+                    npr, 1, intra_group_comm)
             IF ( ionode_in_group ) THEN
-               ALLOCATE ( rho_l(ngm_l), mill_l(3,ngm_l) )
+               ALLOCATE ( vect_l(npol*ngm_l), index_l2f_l(ngm_l) )
             ELSE
-               ALLOCATE ( rho_l(1), mill_l(3,1) )
+               ALLOCATE ( vect_l(1), index_l2f_l(1) )
             END IF
-            CALL mp_get (mill_l, mill, me_in_group, root_in_group, npr, 2, intra_group_comm)
-            !! here fill rho_l (on ionode_in_group only)
+            CALL mp_get (index_l2f_l, index_l2f, me_in_group, root_in_group, npr, 2, intra_group_comm)
+            !! here fill vect_l (on ionode_in_group only)
             IF ( ionode_in_group ) THEN
-               CALL fill_rho (ngm_l, mill_l, gamma_only_file, rho_g_file, &
-                              rho_l, ierr )
+               CALL fill_vect (ngm_l, npol, index_l2f_l, &
+                    ngm_g_file, vect_g_file, vect_l, ierr )
                ig_read = ig_read + ngm_l
                ig_miss = ig_miss + ierr
             END IF
-            !! here send rho_l back to processor "npr" from "root_in_group"
-            CALL mp_get( rho, rho_l, me_in_group, npr, root_in_group, 3, intra_group_comm)
-            DEALLOCATE ( rho_l, mill_l )
+            !! here send vect_l back to processor "npr" from "root_in_group"
+            CALL mp_get( vect, vect_l, me_in_group, npr, root_in_group, 3, intra_group_comm)
+            DEALLOCATE ( vect_l, index_l2f_l )
          END IF
       END DO
       !
@@ -871,13 +885,145 @@ MODULE io_base
          WRITE (stdout,'(5X,"Zero-padding will be used")')
       END IF
       !
-    END SUBROUTINE distribute_charge
+    END SUBROUTINE distribute_vect
     !
+    !
+    SUBROUTINE fill_vect (ngm, npol, index_l2f, ngm_g_file, &
+                    vect_g_file, vect, ig_miss )
+      !
+      !! Fill vect with G-vector components vect_g_file read from file
+      !! Negative indices in index_l2f mean "take the conjugate (-G)"
+      !
+      INTEGER, INTENT(in) :: ngm
+      !! number of output G-components
+      INTEGER, INTENT(in) :: ngm_g_file
+      !! number of G-component found in file 
+      INTEGER, INTENT(in) :: npol
+      !! number of dataset to be reordered
+      INTEGER, INTENT(in) :: index_l2f(:)
+      !! n-th local component G(n) in file at position m=index_l2f(n)
+      COMPLEX(kind=DP), INTENT(in) :: vect_g_file(:)
+      !! vect(G) read from file 
+      COMPLEX(kind=DP), INTENT(out) :: vect(:)
+      !! output vect(G) distributed according to indices index_l2f
+      INTEGER, INTENT(out) :: ig_miss
+      !! count missing components, if any
+      INTEGER :: ig, ig_file, ig_max, ipol
+      !
+      ig_miss= 0
+      ig_max = SIZE(vect_g_file,1)
+      vect (:) = (0.0_dp, 0.0_dp)
+      DO ig = 1, ngm
+         ig_file = index_l2f(ig)
+         IF ( ig_file > 0 .AND. ig_file <= ig_max ) THEN
+            do ipol = 1, npol
+               vect(ig+(ipol-1)*ngm) = vect_g_file (ig_file+(ipol-1)*ngm_g_file)
+            end do
+         ELSE IF ( ig_file < 0 .AND. -ig_file <= ig_max) THEN
+            do ipol = 1, npol
+               vect(ig+(ipol-1)*ngm) = &
+                    CONJG(vect_g_file (-ig_file+(ipol-1)* ngm_g_file))
+            end do
+         ELSE
+            ig_miss = ig_miss + 1
+         END IF
+      END DO
+      !
+    END SUBROUTINE fill_vect
+    !
+    !-----------------------------------------------------------------
+    SUBROUTINE fill_index_l2f ( root_in_group, intra_group_comm, &
+         ngm_g_file, mill_g_file, gamma_only_file, ngm, mill, index_l2f )
+    !-----------------------------------------------------------------
+      !
+      !! Compute index_l2f giving the correspondence from data read from
+      !! file and local date to be distributed across MPI processors
+      !! Requires Miller indices for both the file and the local data
+      !
+      USE io_global,     ONLY : stdout
+      USE mp,            ONLY : mp_size, mp_rank, mp_get
+      !
+      INTEGER, INTENT(in) :: root_in_group
+      INTEGER, INTENT(in) :: intra_group_comm
+      INTEGER, INTENT(in) :: ngm_g_file  
+      !! total number of G components found in file 
+      INTEGER, INTENT(in) :: mill_g_file(:,:)
+      !! Miller indices of G components read from file
+      INTEGER, INTENT(in) :: ngm
+      !! required number of g vectors (for this processor)
+      INTEGER, INTENT(in) :: mill(:,:)
+      !! Miller indices of required G components (for this processor)
+      INTEGER, INTENT(out) :: index_l2f(:)
+      !! output local-to-file indices
+      LOGICAL, INTENT(in) :: gamma_only_file 
+      !
+      !! local variables for G components distribution in parallel case 
+      !
+      INTEGER, ALLOCATABLE::  mill_l(:,:) 
+      INTEGER, ALLOCATABLE::  index_l2f_l(:) 
+      INTEGER             :: ngm_l
+      INTEGER             :: me_in_group, nproc_in_group, npr
+      INTEGER             :: ig, ig_file, ig_read, ig_miss, ierr
+      LOGICAL             :: ionode_in_group
+      !
+      me_in_group     = mp_rank( intra_group_comm )
+      nproc_in_group  = mp_size( intra_group_comm )
+      ionode_in_group = ( me_in_group == root_in_group )
+      !
+      !! next call allocates and fills the table "index_file",
+      !! on ionode ONLY! it is a big table, for all G components
+      IF(ionode_in_group) CALL fill_index_file (ngm_g_file, mill_g_file)
+      !
+      ig_read = 0
+      ig_miss = 0
+      DO npr = 0, nproc_in_group-1
+         IF ( npr == root_in_group ) THEN
+            IF ( ionode_in_group ) THEN
+
+               !! here fill index_l2f on ionode_in_group
+               CALL fill_index_l (ngm, mill, gamma_only_file, &
+                    ngm_g_file, index_l2f, ierr )
+
+               ig_read = ig_read + ngm
+               ig_miss = ig_miss + ierr
+            END IF
+         ELSE 
+            !! here send ngm, mill, from processor "npr"
+            !!      receive ngm_l, mill_l, on processor "root_in_group"
+            CALL mp_get (ngm_l, ngm, me_in_group, root_in_group,&
+                    npr, 1, intra_group_comm)
+            IF ( ionode_in_group ) THEN
+               ALLOCATE ( index_l2f_l(ngm_l), mill_l(3,ngm_l) )
+            ELSE
+               ALLOCATE ( index_l2f_l(1), mill_l(3,1) )
+            END IF
+            CALL mp_get (mill_l, mill, me_in_group, root_in_group, npr, 2, intra_group_comm)
+            !! here fill index_l2f_l (on ionode_in_group only)
+            IF ( ionode_in_group ) THEN
+               CALL fill_index_l (ngm_l, mill_l, gamma_only_file, &
+                    ngm_g_file, index_l2f_l, ierr )
+               ig_read = ig_read + ngm_l
+               ig_miss = ig_miss + ierr
+            END IF
+            !! here send index_l2f_l back to processor "npr" from "root_in_group"
+            CALL mp_get( index_l2f, index_l2f_l, me_in_group, npr, root_in_group, 3, intra_group_comm)
+            DEALLOCATE ( index_l2f_l, mill_l )
+         END IF
+      END DO
+      !
+      IF ( ig_miss > 0 ) THEN
+         WRITE (stdout,'(5X,"read_rhog: ",I6," G-components read, ",I6," not found (set to 0)")') ig_read,ig_miss
+         WRITE (stdout,'(5X,"Zero-padding will be used")')
+      END IF
+      !
+      IF(ionode_in_group) DEALLOCATE(index_file)
+      !
+    END SUBROUTINE fill_index_l2f
     !-----------------------------------------------------------------
     SUBROUTINE fill_index_file (ngm_g_file, mill_g_file)
     !-----------------------------------------------------------------
     !
-    INTEGER, INtENT(IN) :: ngm_g_file, mill_g_file(:,:)
+    INTEGER, INTENT(IN) :: ngm_g_file, mill_g_file(:,:)
     INTEGER :: n1l,n2l,n3l, n1u,n2u,n3u, n(3), ig
     !
     !! find lower and upper bounds for file "index_file"
@@ -895,37 +1041,33 @@ MODULE io_base
        index_file ( n(1), n(2), n(3) ) = ig
     END DO
     !
-    END SUBROUTINE
+    END SUBROUTINE fill_index_file
     !
-    SUBROUTINE fill_rho (ngm, mill, gamma_only_file, rho_g_file, &
-                 rho, ig_miss )
-      !
-      !! Fill charge density with G-vector components read from file
+    !-----------------------------------------------------------------
+    SUBROUTINE fill_index_l (ngm, mill, gamma_only_file, ngm_g_file, &
+                    index_l2f, ig_miss )
+      !-----------------------------------------------------------------
       !
       INTEGER, INTENT(in) :: ngm
-      !! number of g vectors found in file 
+      !! number of output G-vectors 
+      INTEGER, INTENT(in) :: ngm_g_file
+      !! number of G-vectors found in file 
       INTEGER, INTENT(in) :: mill(:,:)
       !! Miller indices of G components read from file 
-      COMPLEX(kind=DP), INTENT(in) :: rho_g_file(:)
-      !! rho(G) read from file 
-      COMPLEX(kind=DP), INTENT(out) :: rho(:)
-      !! output rho(G) distributed according to Miller indices mill
       LOGICAL, INTENT(in) :: gamma_only_file 
       !! true if half G-vector sphere read from file 
+      INTEGER, INTENT(out) :: index_l2f(:)
+      !! output local-to-file indices
       INTEGER, INTENT(out) :: ig_miss
       !! count missing components, if any
-      INTEGER :: ig, ig_file, ig_max, n(3), nlo(3), nup(3)
+      INTEGER :: ig, ig_file, ipol, n(3), nlo(3), nup(3)
       !! bounds
       LOGICAL :: is_gm
       !! is_gm=.true. : G-component is not there, look for -G instead
       !
       nlo = LBOUND (index_file)
       nup = UBOUND (index_file)
-      !! BEWARE: index_file must be in a module, not passed as argument,
-      !!         or else the upper and lower bounds will be incorrect!
-      rho (:) = (0.0_dp, 0.0_dp)
       ig_miss = 0
-      ig_max = SIZE (rho_g_file)
       DO ig = 1, ngm
          n(:) = mill(:,ig)
          !! BEWARE: gamma_only must follow here the same logic as in "ggen"
@@ -939,16 +1081,13 @@ MODULE io_base
          ELSE IF ( ALL( n >= nlo ) .AND. ALL( n <= nup ) ) THEN
             ig_file = index_file( n(1), n(2), n(3))
          END IF
-         IF ( ig_file > 0 .AND. ig_file <= ig_max) THEN
-            rho (ig) = rho_g_file (ig_file)
-         ELSE IF ( ig_file < 0 .AND. -ig_file <= ig_max) THEN
-            rho (ig) = CONJG(rho_g_file (-ig_file))
-         ELSE
+         index_l2f(ig) = ig_file
+         IF ( ig_file == 0 .AND. ig_file <= ngm_g_file) THEN
             ig_miss = ig_miss + 1
          END IF
       END DO
       !
-    END SUBROUTINE fill_rho
+    END SUBROUTINE fill_index_l
     
   END MODULE io_base
 

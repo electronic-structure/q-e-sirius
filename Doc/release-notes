@@ -19,6 +19,12 @@ New in 8.0 version
 
 Fixed in 7.6.1 version(s)
   (all changes in 7.6.1 are backports from the development version 8.0)
+  * Species label longer than 3 characters crashed all codes reading pw.x 
+    data, see issue #904. Courtesy anonymous contributor "bbimat"
+  * Constraint on torsional angle in pw.x was incorrect, see issue #906
+    Courtesy anonymous contributor "rheolo"
+  * PWCOND with separate leads was broken since v.7.6, see issue #910
+    Courtesy anonymous contributor "anun333"
   * Stress for hybrid functionals: the contribution of the q=0 divergent
     term was missing and the normalization was wrong (Pietro Delugas)
   * Gau-PBE: wrong density derivative of the exchange enhancement factor,

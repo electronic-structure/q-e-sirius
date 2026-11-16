@@ -20,7 +20,7 @@
      USE gvect,                 ONLY : g, ig_l2g, gstart
      USE mp,           ONLY : mp_sum, mp_barrier, mp_bcast
      USE mp_pools,              ONLY : inter_pool_comm, intra_pool_comm
-     USE mp_wave, ONLY : mergewf,splitwf
+     USE mp_wave, ONLY : splitwf
      USE mp_world, ONLY : mpime, nproc, world_comm
      USE fft_base,             ONLY : dfftp, dffts
      USE fft_interfaces,       ONLY : fwfft, invfft

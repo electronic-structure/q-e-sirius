@@ -15,7 +15,7 @@ MODULE mix
   USE lsda_mod,        ONLY : nspin
   USE ldaU,            ONLY : lda_plus_u, Hubbard_lmax, lda_plus_u_kind, ldmx, &
                               ldmx_b, ldmx_tot, max_num_neighbors, &
-                              is_hubbard_back, orbital_resolved
+                              is_hubbard_back, orbital_resolved, apply_U
   USE ions_base,       ONLY : nat
   USE buffers,         ONLY : open_buffer, close_buffer, get_buffer, save_buffer
   USE xc_lib,          ONLY : xclib_dft_is
@@ -259,6 +259,8 @@ SUBROUTINE mix_rho( input_rhout, rhoin, alphamix, dr2, tr2_min, iter, n_iter,&
   IF (dr2 < 0.0_DP) CALL errore('mix_rho','negative dr2',1)
   !
   conv = ( dr2 < tr2 )
+  !
+  IF ( lda_plus_u .AND. orbital_resolved .AND. .NOT.apply_U ) conv = .FALSE.
   !
 #if defined (__OSCDFT)
   IF (use_oscdft .AND. (oscdft_ctx%inp%oscdft_type==2)) THEN

@@ -423,7 +423,6 @@ MODULE bse_basic_structures
       USE wvfct,    ONLY : g2kin, npwx, npw, nbnd, nbndx
       USE io_global, ONLY : stdout, ionode, ionode_id
       USE mp_world, ONLY : mpime, nproc,world_comm
-      USE mp_wave, ONLY : mergewf,splitwf
       USE mp,             ONLY : mp_sum
       USE gvect
       USE wavefunctions, ONLY :  psic
@@ -469,10 +468,6 @@ MODULE bse_basic_structures
            call reorderwfp_col(vwfng%numb_v(is),vwfng%npw,fc%npwt,vwfng%wfn(1,1,is),vwfng_t(1,1,is),vwfng%npw,&
                  & fc%npwt,ig_l2g,fc%ig_l2gt,fc%ngmt_g,mpime, nproc,world_comm )
 
-           !do ii=1,vwfng%numb_v(is)
-           !   call mergewf(vwfng%wfn(:,ii,is),evc_g,vwfng%npw,ig_l2g,mpime,nproc,ionode_id,intra_pool_comm)
-           !   call splitwf(vwfng_t(:,ii,is),evc_g,fc%npwt,fc%ig_l2gt,mpime,nproc,ionode_id,intra_pool_comm)
-           !enddo
          enddo
       endif
 
@@ -508,7 +503,6 @@ MODULE bse_basic_structures
       USE wvfct,    ONLY : g2kin, npwx, npw, nbnd, nbndx
       USE io_global, ONLY : stdout, ionode, ionode_id
       USE mp_world, ONLY : mpime, nproc,world_comm
-      USE mp_wave, ONLY : mergewf,splitwf
       USE mp,             ONLY : mp_sum
       USE gvect
       USE wavefunctions, ONLY :  psic

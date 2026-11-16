@@ -588,7 +588,7 @@ MODULE cp_restart_new
       USE cell_base,                ONLY : ibrav, alat, s_to_r, r_to_s
       USE ions_base,                ONLY : nsp, nat, na, atm, zv, &
                                            ityp, ions_cofmass
-      USE gvect,       ONLY : ig_l2g, mill
+      USE gvect,                    ONLY : ig_l2g, mill
       USE cp_main_variables,        ONLY : nprint_nfi
       USE ldaU_cp,                  ONLY : lda_plus_U, ns, Hubbard_l, Hubbard_n, &
                                            Hubbard_lmax, Hubbard_U
@@ -1153,7 +1153,7 @@ MODULE cp_restart_new
     USE mp_bands,           ONLY : me_bgrp, root_bgrp, intra_bgrp_comm
     USE electrons_base,     ONLY : iupdwn, nupdwn
     USE gvecw,              ONLY : ngw, ngw_g
-    USE gvect,              ONLY : ig_l2g
+    USE gvect,              ONLY : ig_l2g, mill
     !
     INTEGER,               INTENT(IN)  :: ndr
     INTEGER,               INTENT(IN)  :: ik, iss, nk, nspin
@@ -1161,7 +1161,7 @@ MODULE cp_restart_new
     COMPLEX(DP),           INTENT(OUT) :: c2(:,:)
     INTEGER, OPTIONAL,     INTENT(OUT) :: ierr
     !
-    INTEGER            :: ib, nb, nbnd, is_, npol
+    INTEGER            :: ig, ib, nb, nbnd, is_, npol
     INTEGER,ALLOCATABLE:: mill_k(:,:)
     CHARACTER(LEN=320) :: filename
     REAL(DP)           :: scalef, xk(3), b1(3), b2(3), b3(3)
@@ -1178,7 +1178,14 @@ MODULE cp_restart_new
     nb = nupdwn(iss)
     ! next two lines workaround for bogus complaint due to intent(in)
     is_= iss
+    !
+    ! ... mill_k(:,i) contains Miller indices for (k+G)_i (k=0 in CP)
+    ! ... they are used to reorder and distribute wavefunctions
+    !
     ALLOCATE ( mill_k(3,ngw) )
+    DO ig = 1, ngw
+       mill_k(:,ig) = mill(:,ig)
+    END DO
     !
     ! the first processor of each "band group" reads the wave function,
     ! distributes it to the other processors in the same band group

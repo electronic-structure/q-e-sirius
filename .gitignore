@@ -63,3 +63,10 @@ spack-build-env.txt
 spack-build-out.txt
 spack-configure-args.txt
 /build-*
+# Build outputs of the in-source make build (install/extlibs_makefile, KS_Solvers/Makefile)
+/devxlib/
+/wannier90/
+/install/git_devx
+/install/git_mbd
+/install/git_w90
+/KS_Solvers/ks_solver_interfaces.fh

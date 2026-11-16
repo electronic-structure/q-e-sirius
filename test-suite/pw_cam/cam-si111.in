@@ -1,7 +1,6 @@
  &control
     calculation = 'scf'
     prefix = 'cam-si111'
-    outdir = './out'
     tstress = .true.
  /
  &system

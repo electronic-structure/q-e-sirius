@@ -1,7 +1,6 @@
 &control
 calculation  = 'scf'
 restart_mode = 'from_scratch'
-pseudo_dir   = '/home/ivan/pseudo'
 outdir       = './out'
 wf_collect   = .true.
 /
@@ -21,9 +20,9 @@ conv_thr = 1.d-10
 &ions
 /
 ATOMIC_SPECIES
-C 12.0107  C_ONCV_PBE-1.0.upf
-H 1.0079  H_ONCV_PBE-1.0.upf
-O 16.00  O_ONCV_PBE-1.0.upf
+C 12.0107  C.pz-vbc.UPF
+H 1.0079  H.pz-vbc.UPF
+O 16.00  O.pz-hgh.UPF
 ATOMIC_POSITIONS (angstrom)
 H                0.2288660529        0.5000000000       -0.2867111061
 C                1.1944070224        0.5000000000        0.2747140214

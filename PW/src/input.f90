@@ -2150,7 +2150,7 @@ SUBROUTINE exx_iosys ( ecutwfc, ecutrho )
                               gau_parameter, localization_thr, scdm, ace,  &
                               scdmden, scdmgrd, nscdm, n_proj,             & 
                               exx_fraction, exx_lr_fraction, exx_type,     &
-                              screening_parameter, ecutfock
+                              exx_batch_size, screening_parameter, ecutfock
   USE io_global,     ONLY : stdout
   USE klist,         ONLY : tot_charge
   USE ions_base,     ONLY : nat, ityp, zv
@@ -2158,13 +2158,14 @@ SUBROUTINE exx_iosys ( ecutwfc, ecutrho )
   USE xc_lib,        ONLY : xclib_set_exx_fraction, xclib_set_exx_lr_fraction, &
                             set_screening_parameter
   USE exx_base,      ONLY : x_gamma_extrapolation_ => x_gamma_extrapolation, &
-                            nq1, nq2, nq3, exx_bgrp_type, EXX_BGRP_BANDS, EXX_BGRP_PAIRS, &
+                            nq1, nq2, nq3, exx_bgrp_type, EXX_BGRP_BANDS, EXX_BGRP_PAIRS, batchsize, &
                             exxdiv_treatment_ => exxdiv_treatment, &
                             yukawa_           => yukawa, &
                             ecutvcut_         => ecutvcut
   USE exx,          ONLY :  ecutfock_         => ecutfock, &
                             use_ace, nbndproj, local_thr 
   USE loc_scdm,      ONLY : use_scdm, scdm_den, scdm_grd, n_scdm
+  USE control_flags, ONLY : gamma_only
   !
   IMPLICIT NONE
   REAL(dp), INTENT(IN):: ecutwfc, ecutrho
@@ -2217,16 +2218,21 @@ SUBROUTINE exx_iosys ( ecutwfc, ecutrho )
   IF (xclib_dft_is('hybrid')) WRITE(stdout, &
      '(/,5x,"Exact exchange band parallelism type set to ",A/)' ) trim(adjustl(exx_type))
   !
+  IF ( exx_batch_size > 0 ) batchsize = exx_batch_size
+  !
   select case(trim(adjustl(exx_type)))
   case("bands")
     exx_bgrp_type = EXX_BGRP_BANDS
 #if defined(__CUDA)
-    Call errore('input', 'exx_type = bands on GPU not present in this version (use exx_type = band_pairs)',1)
+    write(stdout, '(/,5x,"Using batched version of vexx, batching size: ",I4/)' ) batchsize 
+#else
+    write(stdout, '(/,5x,"Using sequential (non-batched) version of vexx"/)' ) 
+    if ( batchsize > 0 ) write(stdout, '(/,5x,"WARNING: user given exx_batch_size is ignored for CPU execution"/)' ) 
 #endif
   case("band_pairs")
     exx_bgrp_type = EXX_BGRP_PAIRS
   case default
-    CALL errore('input','Invalid value of exx_type (values: bands or band_pairs)',1)
+    CALL errore('input','Invalid value of exx_type (values: bands, band_pairs)',2)
   end select
   !
 END SUBROUTINE exx_iosys

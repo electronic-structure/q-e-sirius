@@ -44,7 +44,7 @@ PROGRAM do_ppacf
   USE exx,                  ONLY : exxinit, exxenergy2, exxenergyace, fock2, ecutfock, & 
                                    use_ace, aceinit, local_thr, nbndproj
   USE exx_base,             ONLY : exx_grid_init, exx_mp_init, exx_div_check, &
-                                   exxdiv_treatment
+                                   exxdiv_treatment, exx_bgrp_type, EXX_BGRP_PAIRS
   USE exx_base,             ONLY : nq1, nq2, nq3
   USE fft_base,             ONLY : dfftp
   USE fft_interfaces,       ONLY : invfft
@@ -822,6 +822,7 @@ PROGRAM do_ppacf
     nbndproj = 0
     exxdiv_treatment = "gygi-baldereschi"
     ecutfock = ecutwfc
+    exx_bgrp_type = EXX_BGRP_PAIRS
     !
     CALL xclib_set_exx_fraction( 1._DP )
     CALL enforce_input_dft( 'HF' )

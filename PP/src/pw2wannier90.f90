@@ -1261,7 +1261,8 @@ END SUBROUTINE lib_dealloc
 SUBROUTINE setup_nnkp
   !-----------------------------------------------------------------------
   !
-  USE io_global, ONLY : stdout, ionode
+  USE io_global, ONLY : stdout, ionode, ionode_id
+  USE mp_world,  ONLY : world_comm
   USE kinds,     ONLY : DP
   USE constants, ONLY : eps6, tpi, bohr => BOHR_RADIUS_ANGS
   USE cell_base, ONLY : at, bg, alat
@@ -1290,6 +1291,7 @@ SUBROUTINE setup_nnkp
   INTEGER  :: exclude_bands(nbnd)
   INTEGER  :: n_proj_found, nexcl
   INTEGER, ALLOCATABLE :: dist_k(:)
+  LOGICAL  :: win_exists
   !
   INTEGER, EXTERNAL :: global_kpoint_index
 
@@ -1339,6 +1341,11 @@ SUBROUTINE setup_nnkp
 
   WRITE(stdout,'("  - Number of atoms is (",i3,")")') nat
 
+  IF (ionode) INQUIRE(FILE=TRIM(seedname)//'.win', EXIST=win_exists)
+  CALL mp_bcast(win_exists, ionode_id, world_comm)
+  IF (.NOT. win_exists) CALL errore('setup_nnkp', TRIM(seedname)// &
+     '.win not found: wan_mode=''library'' reads the Wannier90 input from it', 1)
+
   ! The library runs on the root rank of each pool, communicating
   ! over inter_pool_comm.
   IF (me_pool == root_pool) THEN
@@ -1374,11 +1381,11 @@ SUBROUTINE setup_nnkp
         &with MPI support, or run with -nk 1', 1)
      !
      CALL input_reader_special(w90main, TRIM(seedname), w90out, w90err, ierr)
-     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in input_reader_special', ierr)
+     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in input_reader_special, see '//TRIM(seedname)//'.werr', ierr)
      CALL w90_input_reader(w90main, w90out, w90err, ierr)
-     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_input_reader', ierr)
+     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_input_reader, see '//TRIM(seedname)//'.werr', ierr)
      CALL w90_print_info(w90main, w90out, w90err, ierr)
-     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_print_info', ierr)
+     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_print_info, see '//TRIM(seedname)//'.werr', ierr)
      !
      num_bands = w90main%num_bands
      n_wannier = w90main%num_wann
@@ -1411,7 +1418,7 @@ SUBROUTINE setup_nnkp
      CALL mp_sum(dist_k, inter_pool_comm)
      dist_k(:) = dist_k(:) - 1  ! convert from 1-based to 0-based indices Wannier90 needs
      CALL set_kpoint_distribution(w90main, dist_k, w90out, w90err, ierr)
-     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in set_kpoint_distribution', ierr)
+     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in set_kpoint_distribution, see '//TRIM(seedname)//'.werr', ierr)
      DEALLOCATE( dist_k)
      !
      ! The band_loop below expects the v3 convention: an index list padded with
@@ -1424,21 +1431,21 @@ SUBROUTINE setup_nnkp
      ENDIF
      !
      CALL w90_get_nn(w90main, nnb, w90out, w90err, ierr)
-     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_get_nn', ierr)
+     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_get_nn, see '//TRIM(seedname)//'.werr', ierr)
      ALLOCATE( kpb(iknum,nnb), g_kpb(3,iknum,nnb), stat=ierr)
      IF (ierr /= 0) CALL errore('setup_nnkp', 'Error allocating kpb/g_kpb', 1)
      CALL w90_get_nnkp(w90main, kpb, w90out, w90err, ierr)
-     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_get_nnkp', ierr)
+     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_get_nnkp, see '//TRIM(seedname)//'.werr', ierr)
      CALL write_kmesh(w90main, w90out, w90err, ierr)  ! Write .nnkp file (root only IO inside the subroutine)
-     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in write_kmesh', ierr)
+     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in write_kmesh, see '//TRIM(seedname)//'.werr', ierr)
      CALL w90_get_gkpb(w90main, g_kpb, w90out, w90err, ierr)
-     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_get_gkpb', ierr)
+     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_get_gkpb, see '//TRIM(seedname)//'.werr', ierr)
      !
      ! n_proj_found is pure output here; the arrays only have to be large enough
      CALL w90_get_proj(w90main, n_proj_found, center_w, l_w, mr_w, spin_eig,   &
                        r_w, xaxis, zaxis, spin_qaxis, alpha_w,                &
                        w90out, w90err, ierr)
-     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_get_proj', ierr)
+     IF (ierr /= 0) CALL errore('setup_nnkp', 'Error in w90_get_proj, see '//TRIM(seedname)//'.werr', ierr)
      ! select_projections is applied when the .amn is read, which library mode
      ! never does, so it would be silently ignored. u_matrix_opt is
      ! (num_bands, num_wann, num_kpts): no room for extra projections either.
@@ -1621,15 +1628,15 @@ SUBROUTINE run_wannier
      u_mat_opt(:,:,:) = a_mat(:,:,:)
      !
      CALL w90_disentangle(w90main, w90out, w90err, ierr)
-     IF (ierr /= 0) CALL errore('run_wannier', 'Error in w90_disentangle', ierr)
+     IF (ierr /= 0) CALL errore('run_wannier', 'Error in w90_disentangle, see '//TRIM(seedname)//'.werr', ierr)
      CALL w90_project_overlap(w90main, w90out, w90err, ierr)
-     IF (ierr /= 0) CALL errore('run_wannier', 'Error in w90_project_overlap', ierr)
+     IF (ierr /= 0) CALL errore('run_wannier', 'Error in w90_project_overlap, see '//TRIM(seedname)//'.werr', ierr)
      CALL w90_wannierise(w90main, w90out, w90err, ierr)
-     IF (ierr /= 0) CALL errore('run_wannier', 'Error in w90_wannierise', ierr)
+     IF (ierr /= 0) CALL errore('run_wannier', 'Error in w90_wannierise, see '//TRIM(seedname)//'.werr', ierr)
      CALL write_chkpt(w90main, 'postwann', w90out, w90err, ierr)
-     IF (ierr /= 0) CALL errore('run_wannier', 'Error writing the postwann checkpoint', ierr)
+     IF (ierr /= 0) CALL errore('run_wannier', 'Error writing the postwann checkpoint, see '//TRIM(seedname)//'.werr', ierr)
      CALL w90_plot(w90main, w90out, w90err, ierr)
-     IF (ierr /= 0) CALL errore('run_wannier', 'Error in w90_plot', ierr)
+     IF (ierr /= 0) CALL errore('run_wannier', 'Error in w90_plot, see '//TRIM(seedname)//'.werr', ierr)
      !
      CALL w90_get_centres(w90main, wann_centers)
      CALL w90_get_spreads(w90main, wann_spreads)
