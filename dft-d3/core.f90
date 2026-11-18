@@ -4307,7 +4307,7 @@ contains
                     Call gkernel2(rij, r2, crit_cn, rcovij, drij(tauz,tauy,taux,linij), dc6i(iat), dc6i(jat), vec)
                   end if  
                   g_supercell(0   ,0   ,0   ,1:3,jat) = g_supercell(0   ,0   ,0   ,1:3,jat) - vec       
-                  g_supercell(tauz,tauy,taux,1:3,iat) = g_supercell(tauz,tauy,taux,1:3,iat) + vec
+                  g_supercell(-tauz,-tauy,-taux,1:3,iat) = g_supercell(-tauz,-tauy,-taux,1:3,iat) + vec
                   g(:,jat)=g(:,jat)-vec
                   !
                 elseif(jat.eq.ia) then 
@@ -4322,7 +4322,7 @@ contains
                   endif 
                   !vec = -vec
                   g_supercell(0   ,0   ,0   ,1:3,jat) = g_supercell(0   ,0   ,0   ,1:3,jat) - vec       
-                  g_supercell(tauz,tauy,taux,1:3,iat) = g_supercell(tauz,tauy,taux,1:3,iat) + vec
+                  g_supercell(-tauz,-tauy,-taux,1:3,iat) = g_supercell(-tauz,-tauy,-taux,1:3,iat) + vec
                   g(:,jat)=g(:,jat)-vec
                   !
                   rij = xyz(:,jat)  - ( xyz(:,iat) - tau )        ! undisplaced
@@ -4347,7 +4347,7 @@ contains
                     Call gkernel2(rij, r2, crit_cn, rcovij, drij(tauz,tauy,taux,linij), dc6i(iat), dc6i(jat), vec)
                   endif 
                   g_supercell(tauz,tauy,taux,1:3,jat) = g_supercell(tauz,tauy,taux,1:3,jat) - vec       
-                  g_supercell(tauz,tauy,taux,1:3,iat) = g_supercell(tauz,tauy,taux,1:3,iat) + vec       
+                  g_supercell(-tauz,-tauy,-taux,1:3,iat) = g_supercell(-tauz,-tauy,-taux,1:3,iat) + vec
                   g_supercell(0   ,0   ,0   ,1:3,jat) = g_supercell(0   ,0   ,0   ,1:3,jat) - vec
                   g_supercell(0   ,0   ,0   ,1:3,iat) = g_supercell(0   ,0   ,0   ,1:3,iat) + vec
                   g(:,jat)=g(:,jat)-vec
