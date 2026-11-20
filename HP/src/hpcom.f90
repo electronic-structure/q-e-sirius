@@ -89,6 +89,10 @@ MODULE ldaU_hp
                         tmp_dir_hp                  
   CHARACTER(LEN=5)   :: atm_new(1000)        ! Label for atomic types
   CHARACTER(LEN=2)   :: code = 'HP'         ! Name of the code
+  CHARACTER(LEN=8)   :: method              ! 'LR-cDFT': linear-response calculation of Hubbard
+                                            !            parameters (default, original HP)
+                                            ! 'cRPA'   : constrained RPA calculation of the
+                                            !            screened Coulomb interaction
   !
   INTEGER, PARAMETER :: maxter = 500        ! Maximum number of iterations
   !

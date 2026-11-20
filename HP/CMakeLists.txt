@@ -1,7 +1,39 @@
 set(src_hp
+    src/crpacom.f90
+    src/crpa_allocate_q.f90
+    src/crpa_compute_perturbation_q.f90
+    src/crpa_copy_original_xk.f90
+    src/crpa_clean_q.f90
+    src/crpa_close_q.f90
+    src/crpa_dealloc_1.f90
+    src/crpa_dealloc_2.f90
+    src/crpa_dealloc_q.f90
+    src/crpa_generate_grids.f90
+    src/crpa_init.f90
+    src/crpa_init_q.f90
+    src/crpa_load_q.f90
+    src/crpa_openfil_q.f90
+    src/crpa_postprocess_coulomb.f90
+    src/crpa_prepare_perturbations_q.f90
+    src/crpa_prepare_q.f90
+    src/crpa_print_clock.f90
+    src/crpa_q_points.f90
+    src/crpa_R_points.f90
+    src/crpa_run_nscf.f90
+    src/crpa_setup_q.f90
+    src/crpa_setup_wannier.f90
+    src/crpa_solve_linear_system.f90
+    src/crpa_stop_smoothly.f90
+    src/crpa_summary.f90
+    src/crpa_symmetry.f90
+    src/crpa_update_coulomb.f90
+    src/lr_compute_matrix_elements.f90
     src/hp_allocate_q.f90
     src/hp_bcast_input.f90
     src/hpcom.f90
+    src/crpa_bcast_input.f90
+    src/crpa_readin.f90
+    src/crpa_run.f90
     src/hp_clean_q.f90
     src/hp_close_q.f90
     src/hp_calc_chi.f90
@@ -49,6 +81,7 @@ target_link_libraries(qe_hp
     PRIVATE
         qe_pw
         qe_lr_modules
+        qe_w90
         qe_modules
         qe_fftx
         qe_upflib
@@ -70,6 +103,7 @@ target_link_libraries(qe_hp_exe
         qe_modules
         qe_lr_modules
         qe_hp
+        qe_w90
         qe_xclib)
 
 ###########################################################

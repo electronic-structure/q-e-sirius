@@ -1,0 +1,20 @@
+&INPUTHP
+   method = 'cRPA'
+   prefix = 'diam'
+   outdir = './temp/'
+   niter_max = 100
+   nmix = 12
+/
+&CRPA
+   pert_basis = 'wannier'
+   wannier_seedname = 'diam'
+   wan_dist_thr = 6.d-4
+   wan_dist_thr_mels = 2.5   ! larger than wan_dist_thr: extra matrix-element pairs
+   lrpa = .true.
+   tr2 = 1.d-16
+   reduce_io = .true.
+   qplot = .true.
+/
+2
+  0.0   0.0   0.0   1
+  0.5  -0.5   0.5   1

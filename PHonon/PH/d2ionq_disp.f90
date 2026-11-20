@@ -6,7 +6,7 @@
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
 !---------------------------------------------------------------------------
-SUBROUTINE d2ionq_dispd3( alat, nat, at, q, der2disp )
+SUBROUTINE d2ionq_dispd3( alat, nat, at, bg, tau, q, der2disp )
   !------------------------------------------------------------------------
   USE kinds,         ONLY: DP
   USE io_global,     ONLY: ionode, ionode_id, stdout
@@ -26,6 +26,10 @@ SUBROUTINE d2ionq_dispd3( alat, nat, at, q, der2disp )
   !! number of atoms in the unit cell
   REAL(DP), INTENT(IN) :: at(3,3)
   !! at(:,i) is lattice vector i in alat units
+  REAL(DP), INTENT(IN) :: bg(3,3)
+  !! reciprocal basis in 2pi/alat units
+  REAL(DP), INTENT(IN) :: tau(3,nat)
+  !! saved atomic positions in alat units
   REAL(DP), INTENT(IN) :: q(3)
   !! wavevector in 2pi/alat units
   COMPLEX(DP), INTENT(INOUT) :: der2disp(3,nat,3,nat)
@@ -39,6 +43,7 @@ SUBROUTINE d2ionq_dispd3( alat, nat, at, q, der2disp )
   REAL(DP), ALLOCATABLE :: d3hess(:,:,:,:,:,:,:), buffer(:)
   COMPLEX(DP), ALLOCATABLE :: mmat(:,:,:,:)
   COMPLEX(DP) :: eiqr, tt(3)
+  REAL(DP) :: cell_shift(3,nat)
   LOGICAL :: do_run_d3hess = .FALSE. ! whether to run d3hess in the automatic mode
   ! 
   IF ( ionode ) THEN
@@ -148,8 +153,14 @@ SUBROUTINE d2ionq_dispd3( alat, nat, at, q, der2disp )
       DO jrep = -rep(2), rep(2)
         DO irep = -rep(1), rep(1)
           !
-          tt(:) = alat * ( irep * at(:,1) + jrep * at(:,2) + krep * at(:,3) )
-          eiqr = EXP(- tpi * (0_dp,1_dp) * ( q(1)*tt(1)+q(2)*tt(2)+q(3)*tt(3) ) )
+          ! Match the PH Fourier convention (see the ionic term in d2ionq.f90):
+          ! C_ij(Q) = sum_R H_ij(R) * exp(+i*Q.R).
+          ! Atom i is in cell 0; atom j is in the cell translated by lattice vector R.
+          ! D3 is added to the other PH terms in dynmat0.f90, so these conventions
+          ! must agree before the matrices are added.
+          ! Q = (2*pi/alat)*q is in inverse bohr; tt = R/alat.
+          tt(:) = irep * at(:,1) + jrep * at(:,2) + krep * at(:,3)
+          eiqr = EXP(  tpi * (0_dp,1_dp) * ( q(1)*tt(1)+q(2)*tt(2)+q(3)*tt(3) ) )
           DO ixyz = 1, 3
             DO iat = 1, nat
               DO jxyz = 1, 3
@@ -167,6 +178,23 @@ SUBROUTINE d2ionq_dispd3( alat, nat, at, q, der2disp )
         END DO 
       END DO 
     END DO 
+    !
+    ! d3hess_mod.f90 chooses a periodic copy of each atom near the origin.
+    ! Reconstruct the lattice shifts removed by its NINT operation.
+    ! At finite q, different copies carry different displacement phases.
+    ! Correct each atom-pair block to use the original atomic positions
+    ! stored in the PW data and used by PH, before adding the D3 term.
+    cell_shift(:,:) = tau(:,:)
+    CALL cryst_to_cart(nat, cell_shift, bg, -1)
+    cell_shift(:,:) = REAL(NINT(cell_shift(:,:)), DP)
+    DO iat = 1, nat
+      DO jat = 1, nat
+        tt(:) = MATMUL(at, cell_shift(:,iat)-cell_shift(:,jat))
+        eiqr = EXP(tpi*(0._dp,1._dp)*SUM(q*tt))
+        der2disp(:,iat,:,jat) = der2disp(:,iat,:,jat)*eiqr
+        mmat(:,iat,:,jat) = mmat(:,iat,:,jat)*eiqr
+      END DO
+    END DO
     !
     if(q_gamma) then 
       write(string,'(A)' ) 'true'

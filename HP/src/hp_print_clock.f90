@@ -21,6 +21,7 @@ SUBROUTINE hp_print_clock
   CALL print_clock ('init_us_1')
   CALL print_clock ('newd')
   CALL print_clock ('add_vuspsi')
+  CALL print_clock ('fft_scatter')
   !
   WRITE( stdout, * )
   WRITE( stdout, * )  '    PRINTING TIMING FROM HP ROUTINES: '

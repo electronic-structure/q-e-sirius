@@ -341,6 +341,30 @@ inputs_args = ('bn.scf.in', '1'), ('bn.hp.in', '3')
 program = HP
 inputs_args = ('bn.scf.in', '1'), ('bn.hp.in', '3'), ('bn.scf.in', '2'), ('bn.hp.in', '4')
 
+# cRPA (hp.x method='cRPA'). Calc numbers: 5 = hp cRPA no pools (band basis),
+# 6 = hp cRPA with pools (Wannier), 7 = pw2wannier90 with wan_mode='library'.
+# Band basis: nq-grid case (tests automatic q generation); Wannier cases use
+# qplot with 2 q-points (q=0 and q!=0).
+[hp_crpa_band/]
+program = HP
+inputs_args = ('scf.in', '1'), ('crpa1.in', '5')
+
+[hp_crpa_wann/]
+program = HP
+inputs_args = ('scf.in', '1'), ('pw2wan.in', '7'), ('crpa1.in', '6'), ('crpa2.in', '6'), ('crpa3.in', '6')
+
+[hp_crpa_wann_gamma/]
+program = HP
+inputs_args = ('scf.in', '1'), ('pw2wan.in', '7'), ('crpa1.in', '6')
+
+[hp_crpa_cdfpt/]
+program = HP
+inputs_args = ('scf.in', '1'), ('pw2wan.in', '7'), ('crpa1.in', '6'), ('crpa2.in', '6')
+
+[hp_crpa_metal2d/]
+program = HP
+inputs_args = ('scf.in', '1'), ('pw2wan.in', '7'), ('crpa1.in', '6'), ('crpa2.in', '6')
+
 [kcw_wann/]
 program = KCW
 inputs_args = ('Si.scf.in', '1'), ('Si.win', '2'), ('Si.pw2wann.in', '3'), ('Si.win', '4'), ('Si.kcw-wann2kcw.in', '5'), ('Si.kcw-screen.in', '6'), ('Si.kcw-ham.in', '7')
@@ -438,6 +462,7 @@ ph_all = ph_*??
 pp_all = pp_*??
 epw_all = epw_*??
 hp_all = hp_*??
+crpa_all = hp_crpa_*??
 epw_partial = epw_qdpt epw_base epw_trev epw_trev_uspp epw_metal epw_soc epw_super epw_polar epw_pl epw_mob epw_hall
 zg_all = zg_*??
 tddfpt_all = tddfpt_*??

@@ -1,0 +1,6 @@
+&inputpp
+   outdir   = './temp/'
+   prefix   = 'diam'
+   seedname = 'diam'
+   wan_mode = 'library'
+/

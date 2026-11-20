@@ -27,7 +27,6 @@ SUBROUTINE hp_summary_q
   USE funct,         ONLY : write_dft_name
   USE control_flags, ONLY : iverbosity
   USE lr_symm_base,  ONLY : irotmq, minus_q, nsymq
-  USE ldaU_hp,       ONLY : conv_thr_chi
   USE noncollin_module, ONLY : noncolin, domag, lspinorb
 
   IMPLICIT NONE

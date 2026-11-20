@@ -14,6 +14,7 @@ set(sources
     cgsolve_all.f90
     cg_psi.f90
     ch_psi_all.f90
+    constrained_dfpt.f90
     Coul_cut_2D_ph.f90
     check_q_points_sym.f90
     dnsq_scf.f90
