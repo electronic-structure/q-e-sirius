@@ -48,13 +48,10 @@ PROGRAM hp_main
   !
   ! Initialize MPI, clocks, print initial messages
   !
-  CALL mp_startup()
+  CALL mp_startup(start_images = .TRUE.)
 #if defined(__SIRIUS)
   CALL sirius_initialize(call_mpi_init=.false.)
 #endif
-=======
-  CALL mp_startup(start_images = .TRUE.)
->>>>>>> upstream/develop
   !
   CALL environment_start(code)
   !
