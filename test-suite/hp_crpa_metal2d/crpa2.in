@@ -1,0 +1,25 @@
+&INPUTHP
+   method = 'cRPA'
+   prefix = 'MoS2'
+   outdir = './temp/'
+   niter_max = 150
+   nmix = 16
+/
+&CRPA
+   pert_basis = 'wannier'
+   wannier_seedname = 'MoS2'
+   wan_dist_thr = 1.d-3
+   wan_dist_thr_mels = 1.d-3
+   lrpa = .false.
+   tr2 = 1.d-16
+   reduce_io = .true.
+   qplot = .true.
+   ! Constrained DFPT: exclude the Wannier manifold (bands 12-17) from screening
+   cdfpt = .true.
+   cdfpt_active_space = 'bands'
+   cdfpt_bands_min = 12
+   cdfpt_bands_max = 17
+/
+2
+  0.00000000   0.00000000   0.00000000   1
+  0.33333333   0.57735027   0.00000000   1

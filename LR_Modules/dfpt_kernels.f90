@@ -83,9 +83,9 @@ SUBROUTINE dfpt_kernel(code, npert, iter0, lrdvpsi, iudvpsi, dr2, dfpt_data, &
    !------------------------------------------------------------------------------
    !
    USE kinds,                ONLY : DP
-   USE mp_pools,             ONLY : inter_pool_comm
+   USE mp_pools,             ONLY : inter_pool_comm, root_pool, my_pool_id
    USE mp_bands,             ONLY : intra_bgrp_comm
-   USE mp,                   ONLY : mp_sum
+   USE mp,                   ONLY : mp_sum, mp_bcast
    USE fft_base,             ONLY : dfftp, dffts
    USE fft_interfaces,       ONLY : fft_interpolate
    USE buffers,              ONLY : get_buffer
@@ -107,7 +107,7 @@ SUBROUTINE dfpt_kernel(code, npert, iter0, lrdvpsi, iudvpsi, dr2, dfpt_data, &
    USE efermi_shift,         ONLY : ef_shift_new, ef_shift_wfc_new
    USE lrus,                 ONLY : int3_paw, int3_nc
    USE control_lr,           ONLY : lgamma, niter_ph, nmix_ph, tr2_ph, alpha_mix, convt, &
-                                    lgamma_gamma, flmixdpot, where_rec, lnoloc
+                                    lgamma_gamma, flmixdpot, where_rec, lnoloc, thresh_init
    USE dv_of_drho_lr,        ONLY : dv_of_drho
    USE lr_nc_mag,            ONLY : int3_nc_save
    USE apply_dpot_mod,       ONLY : apply_dpot_allocate, apply_dpot_deallocate
@@ -190,7 +190,16 @@ SUBROUTINE dfpt_kernel(code, npert, iter0, lrdvpsi, iudvpsi, dr2, dfpt_data, &
    !
    CALL start_clock('dfpt_kernel')
    !
-   finite_freq = PRESENT(w_freq)
+   finite_freq = .FALSE.
+   IF (PRESENT(w_freq)) THEN
+      IF (ABS(w_freq) > 1.0d-10) THEN
+         finite_freq = .TRUE.
+      ENDIF
+   ENDIF
+   !
+   IF (finite_freq) THEN
+      WRITE(stdout, '(5x, A, 2F12.5, A)') "TD-DFPT with complex-valued frequency ", w_freq, " Ry"
+   ENDIF
    !
    nsolv = 1
    IF ((noncolin .AND. domag) .OR. finite_freq) nsolv = 2
@@ -261,7 +270,7 @@ SUBROUTINE dfpt_kernel(code, npert, iter0, lrdvpsi, iudvpsi, dr2, dfpt_data, &
       !
       IF (first_iter .OR. kter == 1) THEN
          ! If first iteration or first iteration after restart
-         thresh = 1.0d-2
+         thresh = thresh_init
       ELSE
          thresh = min(1.d-1 * sqrt(dr2), thresh)
       ENDIF
@@ -390,20 +399,29 @@ SUBROUTINE dfpt_kernel(code, npert, iter0, lrdvpsi, iudvpsi, dr2, dfpt_data, &
          ENDDO
       ENDIF
       !
-      !   And we mix with the old potential: dvscftmp -> dvscfp
+      !   Mix on one pool and broadcast the result, as done with mix_rho in PW:
+      !   pools may not give bitwise-identical results on the same data, which
+      !   can make them disagree on convt when dr2 is close to tr2.
+      !   dvscftmp -> dvscfp
       !
-      IF (okpaw) THEN
-         !
-         !  In this case we mix also dbecsum
-         !
-         CALL setmixout(ndim_pot, ndim_paw, mixout, dvscftmp, dfpt_data%dbecsum, ndim, -1)
-         CALL mix_potential(2 * (ndim_pot + ndim), mixout, mixin, alpha_mix(kter), dr2, &
-                            npert * tr2_ph / npol, iter, nmix_ph, flmixdpot, convt)
-         CALL setmixout(ndim_pot, ndim_paw, mixin, dfpt_data%dvscfp, dfpt_data%dbecsum, ndim, 1)
-      ELSE
-         CALL mix_potential(2 * ndim_pot, dvscftmp, dfpt_data%dvscfp, alpha_mix(kter), dr2, &
-                            npert * tr2_ph / npol, iter, nmix_ph, flmixdpot, convt)
+      IF (my_pool_id == root_pool) THEN
+         IF (okpaw) THEN
+            ! Mix dbecsum together with the potential
+            CALL setmixout(ndim_pot, ndim_paw, mixout, dvscftmp, dfpt_data%dbecsum, ndim, -1)
+            CALL mix_potential(2 * (ndim_pot + ndim), mixout, mixin, alpha_mix(kter), dr2, &
+                               npert * tr2_ph / npol, iter, nmix_ph, flmixdpot, convt)
+            CALL setmixout(ndim_pot, ndim_paw, mixin, dfpt_data%dvscfp, dfpt_data%dbecsum, ndim, 1)
+         ELSE
+            ! Mix the potential only
+            CALL mix_potential(2 * ndim_pot, dvscftmp, dfpt_data%dvscfp, alpha_mix(kter), dr2, &
+                               npert * tr2_ph / npol, iter, nmix_ph, flmixdpot, convt)
+         ENDIF
       ENDIF
+      !
+      CALL mp_bcast(dfpt_data%dvscfp, root_pool, inter_pool_comm)
+      IF (okpaw) CALL mp_bcast(dfpt_data%dbecsum, root_pool, inter_pool_comm)
+      CALL mp_bcast(dr2, root_pool, inter_pool_comm)
+      CALL mp_bcast(convt, root_pool, inter_pool_comm)
       !
       !   fft_interpolate or copy potential from hard to smooth grid: dvscfp -> dvscfs
       !

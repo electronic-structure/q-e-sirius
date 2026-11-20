@@ -1,0 +1,32 @@
+ &control
+    calculation  = 'scf'
+    prefix       = 'diam'
+    restart_mode = 'from_scratch'
+    pseudo_dir   = '../../pseudo/'
+    outdir       = './temp/'
+ /
+ &system
+    ibrav     = 2
+    celldm(1) = 6.70346805
+    nat       = 2
+    ntyp      = 1
+    ecutwfc   = 40.0
+    ecutrho   = 200.0  ! for testing different dffts and dfftp
+    nbnd      = 4
+    nosym     = .true.
+    noinv     = .true.
+ /
+ &electrons
+    conv_thr    = 1.0d-12
+    mixing_beta = 0.7
+    ! Deterministic start: the random part of 'atomic+random' depends on the
+    ! number of processes and changed the SCF iteration count (12 to 29)
+    startingwfc = 'atomic'
+ /
+ATOMIC_SPECIES
+ C  12.011  C.pz-vbc.UPF
+ATOMIC_POSITIONS crystal
+ C  0.000   0.000   0.000
+ C  0.250   0.250   0.250
+K_POINTS automatic
+ 1 1 1 0 0 0

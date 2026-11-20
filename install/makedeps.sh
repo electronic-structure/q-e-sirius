@@ -22,7 +22,7 @@ dirs=" LAXlib FFTXlib/src UtilXlib \
        dft-d3 \
        KS_Solvers/Davidson KS_Solvers/Davidson_RCI KS_Solvers/CG \
        KS_Solvers/ParO  KS_Solvers/DENSE  KS_Solvers/RMM  KS_Solvers/Direct \
-       upflib XClib Modules LR_Modules \
+       upflib XClib Modules LR_Modules W90_Modules \
        PW/src CPV/src PW/tools PP/src PWCOND/src \
        PHonon/Gamma PHonon/PH PHonon/FD HP/src atomic/src \
        EPW/src EPW/ZG/src XSpectra/src NEB/src TDDFPT/src \
@@ -96,6 +96,8 @@ for dir in $dirs; do
              DEPENDS="$LEVEL1/include $LEVEL1/UtilXlib $LEVEL1/Modules" ;;
         LR_Modules )
              DEPENDS="$DEPEND1 $LEVEL1/Modules $LEVEL1/PW/src" ;;
+        W90_Modules )
+             DEPENDS="$DEPEND1 $LEVEL1/Modules $LEVEL1/PW/src" ;;
         FFTXlib/src )
              DEPENDS="$LEVEL1/include" ;;
 	KS_Solvers/Davidson | KS_Solvers/Davidson_RCI | KS_Solvers/CG | KS_Solvers/ParO | KS_Solvers/DENSE | KS_Solvers/RMM | KS_Solvers/Direct )
@@ -112,8 +114,10 @@ for dir in $dirs; do
 	     DEPENDS="$DEPEND3 $LEVEL2/PW/src" ;;
 	PHonon/PH )
 	     DEPENDS="$DEPEND3 $LEVEL2/PW/src $LEVEL2/LR_Modules $LEVEL2/dft-d3" ;;
-	PHonon/FD | PHonon/PH | PHonon/Gamma | HP/src | TDDFPT/src | XSpectra/src  | GIPAW/src | KCW/src )
+	PHonon/FD | PHonon/PH | PHonon/Gamma | TDDFPT/src | XSpectra/src  | GIPAW/src | KCW/src )
 	     DEPENDS="$DEPEND3 $LEVEL2/PW/src $LEVEL2/LR_Modules" ;;
+	HP/src )
+	     DEPENDS="$DEPEND3 $LEVEL2/PW/src $LEVEL2/LR_Modules $LEVEL2/W90_Modules" ;;
 	KCW/PP )
 	     DEPENDS="$DEPEND3 $LEVEL2/PW/src $LEVEL2/LR_Modules $LEVEL1/src" ;;
         EPW/src )

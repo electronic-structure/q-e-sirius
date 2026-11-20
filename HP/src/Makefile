@@ -8,11 +8,44 @@ VPATH = @srcdir@
 MODFLAGS= $(BASEMOD_FLAGS) \
 	  $(MOD_FLAG)../../PW/src \
           $(MOD_FLAG)../../dft-d3 \
-          $(MOD_FLAG)../../LR_Modules
+          $(MOD_FLAG)../../LR_Modules \
+          $(MOD_FLAG)../../W90_Modules
 HPOBJS = \
+crpacom.o \
+crpa_allocate_q.o \
+crpa_compute_perturbation_q.o \
+crpa_copy_original_xk.o \
+crpa_clean_q.o \
+crpa_close_q.o \
+crpa_dealloc_1.o \
+crpa_dealloc_2.o \
+crpa_dealloc_q.o \
+crpa_generate_grids.o \
+crpa_init.o \
+crpa_init_q.o \
+crpa_load_q.o \
+crpa_openfil_q.o \
+crpa_postprocess_coulomb.o \
+crpa_prepare_perturbations_q.o \
+crpa_prepare_q.o \
+crpa_print_clock.o \
+crpa_q_points.o \
+crpa_R_points.o \
+crpa_run_nscf.o \
+crpa_setup_q.o \
+crpa_setup_wannier.o \
+crpa_solve_linear_system.o \
+crpa_stop_smoothly.o \
+crpa_summary.o \
+crpa_symmetry.o \
+crpa_update_coulomb.o \
+lr_compute_matrix_elements.o \
 hp_allocate_q.o \
 hp_bcast_input.o \
 hpcom.o \
+crpa_bcast_input.o \
+crpa_readin.o \
+crpa_run.o \
 hp_clean_q.o \
 hp_close_q.o \
 hp_calc_chi.o \
@@ -56,20 +89,21 @@ hp_write_chi_full.o \
 hp_write_dnsq.o 
 
 LRMODS = ../../LR_Modules/liblrmod.a
+W90MODS = ../../W90_Modules/libw90mod.a
 PWOBJS = ../../PW/src/libpw.a ../../KS_Solvers/libks_solvers.a ../../dft-d3/libdftd3qe.a
 QEMODS = $(BASEMODS)
 
 # see comments in file tldeps for explanations
-TLDEPS=pwlibs lrmods
+TLDEPS=pwlibs lrmods w90mods
 include ../../install/tldeps
 
-all : hplibs hp.x 
+all : hplibs hp.x
 
-hplibs : libhp.a 
+hplibs : libhp.a
 
-hp.x : hp_main.o libhp.a $(PWOBJS) $(LRMODS)
+hp.x : hp_main.o libhp.a $(PWOBJS) $(LRMODS) $(W90MODS)
 	$(LD) $(LDFLAGS) -o $@ hp_main.o libhp.a \
-		$(LRMODS) $(PWOBJS) $(QEMODS) $(QELIBS)
+		$(LRMODS) $(W90MODS) $(PWOBJS) $(QEMODS) $(QELIBS)
 	- ( cd ../../bin ; ln -fs ../HP/src/hp.x . )
 
 libhp.a : $(HPOBJS)

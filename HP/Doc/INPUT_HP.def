@@ -12,6 +12,14 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program hp.x 
 	   ...
 	@b /
 
+	[ @b &CRPA           ]   ( read only when @ref method = 'cRPA' )
+	[    ...             ]
+	[ @b /               ]
+
+	[ nqaux              ]   ( q-point card, read only when @ref qplot = .true. )
+	[ xq(1) xq(2) xq(3) wq ]
+	[ ...                ]
+
     }
 
     namelist INPUTHP {
@@ -33,6 +41,35 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program hp.x 
 		Directory containing input, output, and scratch files;
                 must be the same as specified in the calculation of
                 the unperturbed system.
+            }
+        }
+
+        var method -type CHARACTER {
+            default { 'LR-cDFT' }
+            options {
+                info {
+                    Method used by hp.x. It selects which quantity is
+                    computed from the linear response of the system.
+                }
+                opt -val 'LR-cDFT' {
+                    Linear-response theory calculation of the Hubbard
+                    parameters U (and V), as described in
+                    PRB 98, 085127 (2018) and PRB 103, 045141 (2021).
+                    This is the standard HP behavior.
+                }
+                opt -val 'cRPA' {
+                    Constrained random phase approximation (cRPA):
+                    computes screened (and bare) Coulomb interaction
+                    matrix elements in a basis of bands or Wannier
+                    functions. When @ref method = 'cRPA' the additional
+                    namelist @b &CRPA (see below) is read after @b &INPUTHP,
+                    and most of the LR-cDFT-specific keywords of @b &INPUTHP
+                    are ignored. The q-point grid (@ref nq1, @ref nq2,
+                    @ref nq3), the DFPT-iteration knobs (@ref niter_max,
+                    @ref nmix, @ref alpha_mix, @ref thresh_init) and the
+                    q-range selection (@ref start_q, @ref last_q) of
+                    @b &INPUTHP are still used.
+                }
             }
         }
 
@@ -287,14 +324,14 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program hp.x 
 	    }
 	    dimensionality { dimensionless }
 	    info {
-		Mixing parameter (for the i-th iteration) for updating 
-                the response SCF potential using the modified Broyden 
+		Mixing parameter (for the i-th iteration) for updating
+                the response SCF potential using the modified Broyden
                 method. See: D.D. Johnson, PRB 38, 12807 (1988).
 	    }
 	}
 
 	var nmix   -type INTEGER {
-	    default { 4 }
+	    default { 12 }
 	    info {
                 Number of iterations used in potential mixing
                 using the modified Broyden method. See:
@@ -382,5 +419,290 @@ input_description -distribution {Quantum ESPRESSO} -package PWscf -program hp.x 
             }
         }
 
-}  
+}
+
+    namelist CRPA {
+
+        label {
+            This namelist is read only when @ref method = 'cRPA'. It
+            controls the constrained-RPA calculation of the (screened and
+            bare) Coulomb interaction matrix elements. It must appear right
+            after the @b &INPUTHP namelist in the input file.
+        }
+
+        var pert_basis -type CHARACTER {
+            status { REQUIRED }
+            options {
+                info {
+                    Basis in which the perturbations (and the resulting
+                    Coulomb matrix elements) are defined.
+                }
+                opt -val 'bands' {
+                    Use products of Bloch bands with band indices from
+                    @ref pert_bands_min to @ref pert_bands_max as the
+                    perturbation basis.
+                }
+                opt -val 'wannier' {
+                    Use products of Wannier functions (read from the
+                    Wannier90 files identified by @ref wannier_seedname)
+                    as the perturbation basis.
+                }
+            }
+        }
+
+        var pert_bands_min -type INTEGER {
+            default { 0 }
+            see { pert_bands_max, pert_basis }
+            info {
+                Used only when @ref pert_basis = 'bands'. Minimum band
+                index of the active space that defines the perturbations.
+            }
+        }
+
+        var pert_bands_max -type INTEGER {
+            default { 0 }
+            see { pert_bands_min, pert_basis }
+            info {
+                Used only when @ref pert_basis = 'bands'. Maximum band
+                index of the active space that defines the perturbations.
+            }
+        }
+
+        var wannier_seedname -type CHARACTER {
+            default { '' }
+            see { pert_basis }
+            info {
+                Seedname of the Wannier90 calculation (files
+                seedname.chk, seedname.eig, ...). Used only when
+                @ref pert_basis = 'wannier', to construct the Wannier
+                functions that define the perturbation basis.
+            }
+        }
+
+        var folder_wan_Rr -type CHARACTER {
+            default { outdir/HP<image> (i.e. tmp_dir_hp) }
+            see { write_wan_Rr }
+            info {
+                Folder where the collected real-space Wannier functions
+                are stored (files prefix.wan_Rr.xxx and prefix.wan_R.dat).
+                If @ref write_wan_Rr = .true. this folder is created (if
+                needed) and the Wannier functions are written to it.
+                If @ref write_wan_Rr = .false. this folder must already
+                exist and contain those files. If left empty, the
+                image-specific scratch directory tmp_dir_hp
+                (outdir/HP<image_id>) is used.
+            }
+        }
+
+        var write_wan_Rr -type LOGICAL {
+            default { .true. }
+            see { folder_wan_Rr }
+            info {
+                If .true. the real-space Wannier functions are computed
+                and written to @ref folder_wan_Rr. If .false. they are
+                read back from @ref folder_wan_Rr (which must already
+                contain the files prefix.wan_Rr.xxx and prefix.wan_R.dat).
+            }
+        }
+
+        var wan_dist_thr -type REAL {
+            default { 1.D-4 }
+            dimensionality { length }
+            units { bohr }
+            see { wan_dist_thr_mels }
+            info {
+                Cutoff distance (in bohr) between the two Wannier-function
+                centers of a pair, used to select the perturbations for
+                the self-consistent response calculation. The number of
+                DFPT perturbations is determined by this parameter.
+                Used only when @ref pert_basis = 'wannier'. A small value
+                such as 1.D-4 (with @ref wan_dist_thr_mels at its default)
+                computes only the diagonal (density-density) interactions,
+                provided no two Wannier functions share a center.
+            }
+        }
+
+        var wan_dist_thr_mels -type REAL {
+            default { same as @ref wan_dist_thr }
+            dimensionality { length }
+            units { bohr }
+            see { wan_dist_thr }
+            info {
+                Cutoff distance (in bohr) between Wannier-function centers
+                used when computing the Coulomb matrix elements (after the
+                self-consistent response is available). It can be much
+                larger than @ref wan_dist_thr with little extra cost, since
+                it only affects the matrix-element evaluation. By default
+                it equals @ref wan_dist_thr.
+            }
+        }
+
+        var tr2 -type REAL {
+            default { 1.D-20 }
+            dimensionality { dimensionless }
+            info {
+                Convergence threshold for the iterative solution of the
+                linear-response (Sternheimer) equations at each DFPT
+                iteration.
+            }
+        }
+
+        var lrpa -type LOGICAL {
+            default { .false. }
+            info {
+                If .true. the exchange-correlation kernel is neglected in
+                the response potential (dv_of_drho), i.e. the response is
+                computed at the RPA (Hartree-only) level. If .false. the
+                full (Hartree + exchange-correlation) response is used.
+            }
+        }
+
+        var w_freq_eV -type COMPLEX {
+            default { (0.d0, 0.d0) }
+            dimensionality { energy }
+            units { eV }
+            info {
+                Complex frequency at which the finite-frequency DFPT
+                response is evaluated, in eV. The default (0,0) corresponds
+                to the static response. Not available with @ref cdfpt.
+            }
+        }
+
+        var diagonalization -type CHARACTER {
+            default { 'david' }
+            options {
+                info {
+                    Diagonalization method used in the non-self-consistent
+                    (NSCF) calculation at k and k+q.
+                }
+                opt -val 'david' {
+                    Davidson iterative diagonalization
+                    ('davidson' is accepted as a synonym).
+                }
+                opt -val 'cg' {
+                    Conjugate-gradient iterative diagonalization.
+                }
+            }
+        }
+
+        var conv_thr_nscf -type REAL {
+            default { 1.D-9 }
+            dimensionality { dimensionless }
+            info {
+                Convergence threshold for the eigenvalues of the
+                non-self-consistent (NSCF) calculation at k and k+q. This
+                is the cRPA counterpart of @ref ethr_nscf (which is used by
+                the LR-cDFT method).
+            }
+        }
+
+        var reduce_io -type LOGICAL {
+            default { .false. }
+            info {
+                If .true. reduce the amount of I/O to disk (sets the
+                internal io_level to 0), keeping more data in memory.
+            }
+        }
+
+        var cdfpt -type LOGICAL {
+            default { .false. }
+            see { cdfpt_active_space }
+            info {
+                If .true. use constrained DFPT (cDFPT): the response of an
+                "active space" is subtracted from the full susceptibility,
+                so that the screening from the active states is excluded.
+                The active space is specified by @ref cdfpt_active_space.
+                Static DFPT only (@ref w_freq_eV = 0).
+            }
+        }
+
+        var cdfpt_active_space -type CHARACTER {
+            default { '' }
+            see { cdfpt, cdfpt_bands_min, cdfpt_bands_max }
+            info {
+                Definition of the cDFPT active space (read only when
+                @ref cdfpt = .true.).
+            }
+            options {
+                opt -val 'bands' {
+                    The active space is the set of bands from
+                    @ref cdfpt_bands_min to @ref cdfpt_bands_max.
+                }
+                opt -val 'wannier' {
+                    The active space is defined by Wannier functions.
+                    @b Note: not yet implemented (the code stops if
+                    requested).
+                }
+            }
+        }
+
+        var cdfpt_bands_min -type INTEGER {
+            default { 0 }
+            see { cdfpt_active_space }
+            info {
+                Minimum band index of the cDFPT active space. Used only
+                when @ref cdfpt = .true. and @ref cdfpt_active_space =
+                'bands' (must be >= 1 in that case).
+            }
+        }
+
+        var cdfpt_bands_max -type INTEGER {
+            default { 0 }
+            see { cdfpt_active_space }
+            info {
+                Maximum band index of the cDFPT active space. Used only
+                when @ref cdfpt = .true. and @ref cdfpt_active_space =
+                'bands' (must be >= @ref cdfpt_bands_min).
+            }
+        }
+
+        var qplot -type LOGICAL {
+            default { .false. }
+            info {
+                If .true. the list of q points is read from the q-point
+                card that follows the @b &CRPA namelist, instead of being
+                generated from the (@ref nq1, @ref nq2, @ref nq3)
+                Monkhorst-Pack grid.
+            }
+        }
+
+    }
+
+    card qPointsSpecs {
+        label {
+            Optional q-point card, read (right after the @b &CRPA namelist)
+            only when @ref qplot = .true. Used only for @ref method = 'cRPA';
+            method = 'LR-cDFT' does not read it.
+        }
+        syntax {
+            line {
+                var nqaux -type INTEGER {
+                    info {
+                        Number of q points in the list below.
+                    }
+                }
+            }
+            table qPoints {
+                rows -start 1 -end nqaux {
+                    colgroup -type REAL {
+                        info {
+                            q-point coordinates, in units of 2pi/a0
+                            (a0 = lattice parameter).
+                        }
+                        col xq1
+                        col xq2
+                        col xq3
+                    }
+                    col wq -type INTEGER {
+                        info {
+                            Weight of the q point (integer). Currently
+                            read but not used (each q point is treated
+                            explicitly).
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 }

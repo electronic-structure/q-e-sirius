@@ -189,7 +189,7 @@ phlibs: pwlibs lrmods
 	if test -d PHonon; then \
 	( cd PHonon; $(MAKE) phlibs || exit 1) ; fi
 
-hplibs: pwlibs lrmods
+hplibs: pwlibs lrmods w90mods
 	if test -d HP; then \
 	( cd HP; $(MAKE) hplibs || exit 1) ; fi
 
@@ -228,6 +228,9 @@ libupf : libutil libdevx
 
 lrmods : mods pwlibs
 	( cd LR_Modules ; $(MAKE) all || exit 1 )
+
+w90mods : pwlibs mods
+	( cd W90_Modules ; $(MAKE) all || exit 1 )
 
 dftd3 : mods
 	( cd dft-d3 ; $(MAKE) all || exit 1 )
@@ -307,7 +310,7 @@ clean :
 	touch make.inc
 	for dir in \
 		LAXlib FFTXlib XClib UtilXlib upflib Modules KS_Solvers \
-		dft-d3 LR_Modules PW CPV PP PHonon HP EPW NEB TDDFPT GWW \
+		dft-d3 LR_Modules W90_Modules PW CPV PP PHonon HP EPW NEB TDDFPT GWW \
 		XSpectra PWCOND atomic QEHeat KCW PIOUD COUPLE Doc GUI \
 		dev-tools ACFDT Environ \
 	; do \

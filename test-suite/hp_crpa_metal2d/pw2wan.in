@@ -1,0 +1,6 @@
+&inputpp
+   outdir   = './temp/'
+   prefix   = 'MoS2'
+   seedname = 'MoS2'
+   wan_mode = 'library'
+/
