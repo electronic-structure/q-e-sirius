@@ -128,12 +128,9 @@ SUBROUTINE sternheimer_kernel(first_iter, time_reversed, npert, lrdvpsi, iudvpsi
    REAL(DP), ALLOCATABLE :: h_diag(:, :)
    !! diagonal part of the Hamiltonian, used for preconditioning
    COMPLEX(DP) , ALLOCATABLE :: aux2(:, :)
-<<<<<<< HEAD
-=======
    !! temporary storage used in apply_dpot_bands
    COMPLEX(DP) , ALLOCATABLE :: dvpsi_copy(:, :)
    !! copy of dvpsi. Used for cDFPT.
->>>>>>> upstream/develop
    !
    EXTERNAL ch_psi_all, cg_psi
    !! functions passed to cgsolve_all
