@@ -15,7 +15,9 @@ SUBROUTINE w90_readwrite_wan_Rr(iRs, wan_Rr, io, tmp_dir_wfc)
   USE kinds,            ONLY : DP
   USE mp_pools,         ONLY : me_pool, root_pool
   USE io_files,         ONLY : prefix, diropn
+#if defined(__MPI)
   USE scatter_mod,      ONLY : gather_grid, scatter_grid
+#endif
   USE fft_base,         ONLY : dffts
   USE noncollin_module, ONLY : npol
   USE w90_interface,    ONLY : num_wann
@@ -82,9 +84,13 @@ SUBROUTINE w90_readwrite_wan_Rr(iRs, wan_Rr, io, tmp_dir_wfc)
     ! Write wan_Rr wavefunction to file
     !
     DO iw = 1, num_wann
+#if defined(__MPI)
       DO ipol = 1, npol
         CALL gather_grid(dffts, wan_Rr(:, ipol, iw), wan_Rr_gathered(:, ipol))
       ENDDO
+#else
+      wan_Rr_gathered(:, :) = wan_Rr(:, :, iw)
+#endif
       !
       IF (me_pool == root_pool) THEN
         CALL davcio(wan_Rr_gathered, lrwfc, iun, iw, +1)
@@ -102,9 +108,13 @@ SUBROUTINE w90_readwrite_wan_Rr(iRs, wan_Rr, io, tmp_dir_wfc)
         CALL davcio(wan_Rr_gathered, lrwfc, iun, iw, -1)
       ENDIF
       !
+#if defined(__MPI)
       DO ipol = 1, npol
         CALL scatter_grid(dffts, wan_Rr_gathered(:, ipol), wan_Rr(:, ipol, iw))
       ENDDO
+#else
+      wan_Rr(:, :, iw) = wan_Rr_gathered(:, :)
+#endif
     ENDDO
     !
   ELSE

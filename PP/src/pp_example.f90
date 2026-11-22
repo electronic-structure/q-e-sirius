@@ -98,7 +98,7 @@ SUBROUTINE re_diagonalize ( )
   !
   IMPLICIT NONE
   !
-  INCLUDE 'laxlib.h'
+  INCLUDE 'laxlib.fh'
   !
   COMPLEX(DP), ALLOCATABLE :: aux(:,:)
   COMPLEX(DP), ALLOCATABLE :: hc(:,:), sc(:,:), vc(:,:)
