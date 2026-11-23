@@ -5,4 +5,5 @@
    nq2          = 1, 
    nq3          = 1,
    conv_thr_chi = 8.0d-3,
+   nmix = 4
  /

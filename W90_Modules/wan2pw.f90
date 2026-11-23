@@ -194,7 +194,7 @@ PROGRAM wan2pw
     COMPLEX(DP), ALLOCATABLE :: hc(:,:), sc(:,:), vc(:,:)
     REAL(DP),    ALLOCATABLE :: en(:)
     !
-    INCLUDE 'laxlib.h'
+    INCLUDE 'laxlib.fh'
     !
     ! 1. Read u_nk(G) wavefunctions from file
     ! 2. Multiply gauge matrix to get u_ik(G)
